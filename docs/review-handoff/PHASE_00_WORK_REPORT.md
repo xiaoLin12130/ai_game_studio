@@ -6,9 +6,9 @@
 > - 项目：AI Game Studio（AI 游戏研发顾问 + 自动化开发平台）
 > - 阶段：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
 > - 日期：2026-11-10
-> - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（当前为 **public**）
+> - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`
 > - 分支：`phase/00-feasibility`
-> - 审查基线：以该分支 HEAD 为准；其中 PHASE 00 代码实施提交为 `91a44d8`，其后为文档与诊断壳补充提交
+> - 审查基线提交：`5658479016fda62989a52baaf257c174cc897e02`
 > - 阶段判定：**`PARTIALLY_VERIFIED`（不是 PASS）**
 
 ---
@@ -193,19 +193,19 @@ Error: atomic-write: timed out waiting for the writer lock at ...\profiles\node_
 | 7 | Session 恢复/审批能力已验证或明确标记不支持 | PASS | 均标 `NOT_SUPPORTED`，有 `unknown method` 证据 |
 | 8 | 技术选型 ADR 写明取舍和风险 | PASS | ADR-0001 / ADR-0002 |
 | 9 | 无密钥进入日志或 Git | PASS | 见 §11 |
-| 10 | GitHub 推送与复审交接完成 | **BLOCKED** | 见 §7 |
+| 10 | GitHub 推送与复审交接完成 | **PASS**（2026-11-10 18:13 达成） | 已推送 `phase/00-feasibility`，远端 SHA 与本地一致，见 §14 |
 
-**综合：`PARTIALLY_VERIFIED`。** 按阶段文件约定，不得标 PASS，不得进入 PHASE 01。
+**综合：`PARTIALLY_VERIFIED`。** 10 条门禁中 8 条 PASS、2 条 BLOCKED（均因模型账号余额）。按阶段文件约定，**不得标 PASS，不得进入 PHASE 01**。
 
 ---
 
-## 7. 阻塞项（3 项，都不是代码问题）
+## 7. 阻塞项（1 项未解除 + 1 项已解除 + 1 项待决策）
 
-| 编号 | 阻塞 | 影响 | 解除方式 |
+| 编号 | 阻塞 | 影响 | 状态 / 解除方式 |
 |---|---|---|---|
-| **B-001** | DeepSeek 账号余额不足（HTTP 402 / QUOTA） | 门禁 3、5 无法转 PASS；A/D/E/F 停在 BLOCKED | 充值，或提供有余额的 `DEEPSEEK_API_KEY` |
-| **B-002** | 执行环境到 `github.com` 的网络出口被代理拒绝（`CONNECT tunnel failed, response 502`），而 `api.github.com`、`registry.npmjs.org` 正常 | 无法 `git push` | 恢复出口，或在本地执行报告末尾的推送命令 |
-| **B-003** | 仓库当前是 **public**，而项目规范 `docs/10` 建议使用私有仓库 | 阶段材料（含本机绝对路径）会公开可读 | 用户确认是否改为 private |
+| **B-001** | DeepSeek 账号余额不足（HTTP 402 / QUOTA） | 门禁 3、5 无法转 PASS；A/D/E/F 停在 BLOCKED | **未解除**。充值，或提供有余额的 `DEEPSEEK_API_KEY` |
+| ~~B-002~~ | ~~到 github.com 的网络出口不通~~ | 无法 `git push` | **已解除**。两个叠加原因：① git 未走本机代理 `127.0.0.1:7890`；② 本机保存的 GitHub 凭据属于 `vJackLin2v`，而仓库属主是 `xiaoLin12130`。已在**仓库级**指定代理与账号（不改全局配置），推送成功 |
+| **B-003** | 仓库当前是 **public**，而项目规范 `docs/10` 建议使用私有仓库 | 阶段材料（含本机绝对路径）公开可读 | **待用户决策**。若转 private，外部评审需另行提供 ZIP 或访问授权 |
 
 关于 B-003 的说明：本阶段材料经过密钥扫描（无 token/private key/凭据文件），但证据文件里包含本机绝对路径（如 `H:\AI与开发\...`）。这些不是密钥，但属于环境信息。**是否公开属于产品决定，Agent 不擅自更改仓库可见性。**
 
@@ -301,22 +301,32 @@ node src/studio-diag.mjs "Say hi"   # 最小诊断壳
 ## 14. 提交与推送状态
 
 ```
-分支：phase/00-feasibility
-PHASE 00 实施提交：91a44d861585c58dcb033265e84acfa5ebe11c73
-后续：文档回填提交 + 诊断壳提交 + 本报告提交
-远端：https://github.com/xiaoLin12130/ai_game_studio （public）
-推送状态：**未完成** —— 执行环境到 github.com 的 CONNECT 被代理拒绝（502）
+远端仓库：https://github.com/xiaoLin12130/ai_game_studio  （public）
+分支：    phase/00-feasibility
+审查基线提交：5658479016fda62989a52baaf257c174cc897e02
+远端状态：已推送（远端该分支 SHA 与本行一致）
 ```
 
-需在可访问 GitHub 的环境执行：
+提交序列：
+
+| SHA | 内容 |
+|---|---|
+| `91a44d8` | PHASE 00 实施：探针、MCP server、证据、ADR、报告 |
+| `ad94dae` | 文档：回填阶段提交 SHA |
+| `b3fdfb7` | 诊断壳 `studio-diag.mjs` |
+| `5658479` | **本工作报告 + 远端状态记录（审查基线）** |
+
+> 本文件自身在基线之后还有一次回填提交（补充推送信息），因此分支 HEAD 会略新于 `5658479`。审查时以 `git rev-parse HEAD` 为准；两者差异仅为本文件第 14 节与状态文件。
+
+拉取与复现：
 
 ```bash
-cd <本地仓库路径>
-git remote add origin https://github.com/xiaoLin12130/ai_game_studio.git
-git push -u origin phase/00-feasibility
+git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
+cd ai_game_studio/spike/dsh-probe
+npm install && node run-all.mjs
 ```
 
-推送后请把 `git rev-parse HEAD` 的输出作为审查用的不可变 SHA。
+> 仓库为 public，评审方可直接以只读方式 clone；若改为 private，需另行提供 ZIP 或访问授权。
 
 ---
 

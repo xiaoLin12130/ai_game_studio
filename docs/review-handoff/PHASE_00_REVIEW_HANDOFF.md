@@ -2,9 +2,9 @@
 
 - Product：AI Game Studio
 - Phase：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
-- Repository URL：**尚无 remote**（本地仓库 `H:\AI与开发\ai_game_studio_starter`，需用户创建 GitHub 私有仓库后补填）
+- Repository URL：`https://github.com/xiaoLin12130/ai_game_studio`（public）
 - Branch：`phase/00-feasibility`
-- Full Commit SHA：**见本文件末尾「提交信息」一节**（提交后填入；未推送故远端不存在该 SHA）
+- Full Commit SHA：`5658479016fda62989a52baaf257c174cc897e02`（审查基线；本文件后续回填提交会使其略新，以 `git rev-parse HEAD` 为准）
 - Status：**`PARTIALLY_VERIFIED`** — 核心链路已验证；模型层被账号余额阻断
 
 ---
@@ -113,7 +113,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 | 编号 | 阻塞 | 需要谁做 | 解除后能看到什么 |
 |---|---|---|---|
 | B-001 | DeepSeek 账号余额不足（HTTP 402 `QUOTA`） | 用户充值或提供有余额的 `DEEPSEEK_API_KEY` | 门禁 3、5 转 PASS；A/D/E/F 从 BLOCKED 转 PASS |
-| B-002 | 仓库无 remote，本机无 `gh` | 用户创建 GitHub **私有**仓库并提供 HTTPS URL | 可推送 `phase/00-feasibility` 并把实际 commit SHA 写入下方 |
+| ~~B-002~~ | ~~仓库无 remote / 网络不通~~ **已解除** | — | 叠加原因：git 未走本机代理 `127.0.0.1:7890`，且本机凭据属于 `vJackLin2v` 而仓库属主是 `xiaoLin12130`。已按仓库级指定代理与账号（未改全局配置），于 2026-11-10 18:13 推送成功 |
 
 解除 B-001 后执行 `cd spike/dsh-probe && node run-all.mjs`，期望退出码 `0`。
 
@@ -142,20 +142,21 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 ---
 
-## 提交信息（提交后回填）
+## 提交信息（已回填）
 
-- 阶段实施提交（implementation commit）：`91a44d861585c58dcb033265e84acfa5ebe11c73`
+- 审查基线提交：`5658479016fda62989a52baaf257c174cc897e02`（已在远端）
 - 分支：`phase/00-feasibility`
 - 工作区状态：干净（`git status --porcelain` 为空）
-- 远端状态：`NOT_PUSHED_NO_REMOTE`
-- 复审应以该分支最新 HEAD 为准；本文件随附的 SHA 提交只回填此段说明，不含功能改动。
+- 远端状态：**已推送**，远端 `refs/heads/phase/00-feasibility` 与该 SHA 一致
+- 提交序列：`91a44d8` 阶段实施 → `ad94dae` 回填 SHA → `b3fdfb7` 诊断壳 → `5658479` 工作报告
+- 审查以该分支最新 HEAD 为准；其后仅为本文件的推送信息回填提交，不含功能改动
 
-推送命令（用户建仓后）：
+克隆与复现：
 
 ```bash
-cd H:\AI与开发\ai_game_studio_starter
-git remote add origin https://github.com/<owner>/<repo>.git
-git push -u origin phase/00-feasibility
+git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
+cd ai_game_studio/spike/dsh-probe
+npm install && node run-all.mjs
 ```
 
-> Agent 不猜仓库地址、不擅自创建公开仓库；这一段留给用户填。
+> 仓库为 public，评审方可只读 clone。若后续改为 private，需另行提供 ZIP 或访问授权。

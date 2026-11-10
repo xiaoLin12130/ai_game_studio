@@ -3,7 +3,7 @@
 - 当前项目：AI Game Studio。
 - 当前阶段：PHASE 00 — **已完成执行，等待外部复审**。
 - 当前状态：`PARTIALLY_VERIFIED`（核心链路已验证；模型层被账号余额阻断）。
-- 阶段分支：`phase/00-feasibility`；**尚未推送**（仓库无 remote）。
+- 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio ，审查基线 `5658479`。
 - 尚无正式需求基线；不得提前进入业务功能开发。
 
 ## 一句话状态

@@ -31,10 +31,12 @@
     "current_branch": "phase/00-feasibility",
     "last_reviewed_commit": null,
     "last_review_result": null,
-    "push_status": "BLOCKED_NETWORK_PROXY_502_ON_GITHUB_CONNECT",
+    "push_status": "PUSHED",
     "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73",
-    "visibility": "public (docs/10 recommends private — pending user decision)",
-    "pushed_commit": null
+    "visibility": "public",
+    "pushed_commit": null,
+    "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
+    "pushed_at": "2026-11-10T10:13:00Z"
   },
   "phase_00": {
     "gate_results": {
@@ -47,7 +49,7 @@
       "session_resume_and_approval_classified": "PASS",
       "tech_selection_adr": "PASS",
       "no_secrets_in_git_or_logs": "PASS",
-      "github_push_and_review_handoff": "BLOCKED"
+      "github_push_and_review_handoff": "PASS"
     },
     "overall": "PARTIALLY_VERIFIED",
     "blocking_issue": {
@@ -92,5 +94,5 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00. Do NOT start PHASE 01 until an explicit approval arrives. If the DeepSeek account is funded, re-run the probe suite first so gates 3 and 5 can move from BLOCKED to PASS.",
-  "updated_at": "2026-11-10T10:04:06.199Z"
+  "updated_at": "2026-11-10T10:16:05.653Z"
 }
