@@ -40,7 +40,8 @@
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
     "last_pushed_at": "2026-11-10T10:51:08.280Z",
-    "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3"
+    "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
+    "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99"
   },
   "phase_00": {
     "gate_results": {
@@ -98,7 +99,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T11:30:53.977Z",
+  "updated_at": "2026-11-10T11:31:10.783Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
