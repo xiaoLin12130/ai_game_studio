@@ -5,7 +5,7 @@
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-10
-> - 提交 SHA：R1.3 复审基线 `<R13_SHA>`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
+> - 提交 SHA：R1.3 复审基线 `1985fb010684de4abd2bb6b9ea54cf06360ffc1e`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
 
 ---
 

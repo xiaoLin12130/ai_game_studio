@@ -4,7 +4,7 @@
 - Phase：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
 - Repository URL：`https://github.com/xiaoLin12130/ai_game_studio`（public）
 - Branch：`phase/00-feasibility`
-- Full Commit SHA：`5658479016fda62989a52baaf257c174cc897e02`（审查基线；本文件后续回填提交会使其略新，以 `git rev-parse HEAD` 为准）
+- Full Commit SHA：`1985fb010684de4abd2bb6b9ea54cf06360ffc1e`（**R1.3 复审基线**；其后仅回填本段的文档提交，以 `git rev-parse HEAD` 为准）
 - Status：**`PARTIALLY_VERIFIED`** — 核心链路已验证；模型层被账号余额阻断
 
 ---
@@ -142,21 +142,37 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 ---
 
-## 提交信息（已回填）
+## 提交信息（R1.3）
 
-- 审查基线提交：`5658479016fda62989a52baaf257c174cc897e02`（已在远端）
+- 复审基线提交：`1985fb010684de4abd2bb6b9ea54cf06360ffc1e`（已在远端）
 - 分支：`phase/00-feasibility`
 - 工作区状态：干净（`git status --porcelain` 为空）
 - 远端状态：**已推送**，远端 `refs/heads/phase/00-feasibility` 与该 SHA 一致
-- 提交序列：`91a44d8` 阶段实施 → `ad94dae` 回填 SHA → `b3fdfb7` 诊断壳 → `5658479` 工作报告
-- 审查以该分支最新 HEAD 为准；其后仅为本文件的推送信息回填提交，不含功能改动
+- 提交序列：
+  - `91a44d8` PHASE 00 实施
+  - `ad94dae` 回填阶段 SHA
+  - `b3fdfb7` 诊断壳
+  - `5658479` 工作报告
+  - `852d234` R1 实施（commandcode 实测）
+  - `207feac` R1.1
+  - `052319a` R1.2
+  - `5364d20` R1.2 路径示例改写
+  - `1985fb0` **R1.3**（脱敏门禁、依赖锁、断言修复）
 
-克隆与复现：
+克隆与复现（**跑生产目标那一套，不是 legacy**）：
 
 ```bash
 git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
-cd ai_game_studio/spike/dsh-probe
-npm install && node run-all.mjs
+cd ai_game_studio/spike/dsh-probe/current-0.2.1
+npm install
+npm test        # setup-profiles → 6 个探针
+```
+
+脱敏门禁：
+
+```bash
+cd spike/dsh-probe
+node scrub-evidence.mjs --check
 ```
 
 > 仓库为 public，评审方可只读 clone。若后续改为 private，需另行提供 ZIP 或访问授权。

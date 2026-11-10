@@ -31,13 +31,22 @@
     "dsh-atomic-write never checks whether the lock-holder pid is alive; a dead-pid profiles/node_modules.lock makes the next boot fail after a 2000 ms deadline, surfaced only as JSON-RPC input closed.",
     "Startup time is bimodal: 2-3 s warm vs 73-128 s when profiles/node_modules must be rebuilt (187 entries, 164 symlinks); the SDK default initializeTimeoutMs of 10 s is unusable.",
     "This host injects a safe-delete shim via NODE_OPTIONS that can abort DSH profile maintenance with SAFE_DELETE_BULK_CONFIRM_REQUIRED; that is environment interference, not a runtime defect.",
-    "Patch files use two shapes: insert: for new rows, a bare id: row to override an existing row. Inserting llm-commandcode alone does not change the default model; agent-default-model must be overridden too."
+    "Patch files use two shapes: insert: for new rows, a bare id: row to override an existing row. Inserting llm-commandcode alone does not change the default model; agent-default-model must be overridden too.",
+    "A redaction gate must be falsifiable: the first two versions of scrub-evidence.mjs reported \"0 residual\" because the Windows pattern required two backslashes while decoded paths have one, and because only four directories were scanned. It now scans git-tracked files (152), parses JSON first, and is validated by planting a leak and confirming exit 1.",
+    "Scripted string replacement can silently comment out code: a literal //n (an un-escaped newline) made // swallow the first route assertion in CC-3 and CC-4, so only the second run/turn was checked while the report claimed both were. Read back and assert on actual values after any scripted edit.",
+    "fs.cpSync and bulk fs.rmSync terminate this node process with exit 127 and no message under the host safe-delete shim; manual recursive copy works and npm ci is unaffected. Setup therefore never deletes a tree.",
+    "A dependency fingerprint is not a lockfile. profile-locks/<profile>/package-lock.json is a real npm lockfile used by npm ci; a version that disagrees with it raises DependencyDriftError and aborts the run.",
+    "CC-0 is a CLI probe and emits no request/header event, so it cannot prove which provider served the request. Only CC-1..CC-4 carry route assertions.",
+    "Each probe run so far observed exactly one request/header per turn, including the tool-using CC-2, so multi-hop (tool call then second request) route coverage is still unobserved."
   ],
   "do_not_assume": [
     "Electron is not approved yet; ADR-0001 is PROPOSED / CONDITIONAL pending packaged smoke tests.",
     "Local database choice is still deferred to PHASE 01.",
     "Never upgrade the user global DSH or change ~/.dsh profiles; verify against an isolated DSH_HOME.",
     "Repository visibility is public by explicit user instruction; do not change it.",
-    "Do not claim tool-approval callbacks exist; they do not in 0.1.5 or 0.2.1."
+    "Do not claim tool-approval callbacks exist; they do not in 0.1.5 or 0.2.1.",
+    "Do not cite CC-0 as provider-route evidence; it has no request/header.",
+    "Do not treat \"no approval callback observed\" as \"no approval callback exists\" — it is UNKNOWN/NOT_OBSERVED.",
+    "Do not run fs.cpSync or bulk fs.rmSync against dsh-home or node_modules on this host; the shim kills the process."
   ]
 }

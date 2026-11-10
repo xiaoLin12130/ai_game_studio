@@ -39,9 +39,10 @@
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-10T10:51:08.280Z",
+    "last_pushed_at": "2026-11-10T11:52:10.882Z",
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
-    "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99"
+    "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
+    "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e"
   },
   "phase_00": {
     "gate_results": {
@@ -275,7 +276,18 @@
         "electron packaged chain",
         "0.2.2 capabilities",
         "multi-hop request/header coverage (only one request observed per run so far)"
-      ]
+      ],
+      "commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
+      "gates": {
+        "documents_consistent": "PASS - approval split applied to 8 files; README at 6/6",
+        "public_repo_unchanged_sanitised": "PASS - visibility public, no remote change, scrub 152 files 0 residual, positive control verified",
+        "evidence_outputs_sanitised": "PASS - no free text in CC-0, console forwarded through redact(), setup prints relative paths",
+        "deterministic_profile_install": "PASS - real npm lockfile per profile, npm ci, drift aborts the run",
+        "route_assertions_scope_correct": "PASS - SDK probes assert every request; CC-0 documented as CLI-only",
+        "test_quality_fixes": "PASS - CC-4 non-empty guard, CC-0 dual-stream classification",
+        "commented_out_assertions_restored": "PASS - CC-3/CC-4 route assertions now evaluate both sides",
+        "clean_room_suite": "PASS - 6/6, exit 0, 57s"
+      }
     }
   }
 }
