@@ -1,0 +1,82 @@
+{
+  "project_id": "ai-game-studio",
+  "project_name": "AI Game Studio",
+  "product_status": "PHASE_00_PARTIALLY_VERIFIED",
+  "current_phase": "PHASE_00",
+  "phase_status": {
+    "PHASE_00": "PARTIALLY_VERIFIED_DSH_BLOCKED_ON_MODEL_QUOTA",
+    "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_02": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_03": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_04": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_05": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW"
+  },
+  "product_scope": {
+    "target_os": "Windows local single-user first",
+    "initial_engine": "Cocos Creator 3.8.6",
+    "initial_platform": "WeChat Mini Game",
+    "ai_runtime": "DeepSeek Harness (DSH) official SDK",
+    "post_release_monitoring": false,
+    "post_release_iteration": false
+  },
+  "requirement_baseline": {
+    "version": null,
+    "status": "NOT_CREATED",
+    "content_hash": null
+  },
+  "github": {
+    "remote_url": null,
+    "current_branch": "phase/00-feasibility",
+    "last_reviewed_commit": null,
+    "last_review_result": null,
+    "push_status": "NOT_PUSHED_NO_REMOTE_CONFIGURED"
+  },
+  "phase_00": {
+    "gate_results": {
+      "environment_inventory": "PASS",
+      "sdk_version_compatibility": "PASS",
+      "real_prompt_with_trackable_result": "BLOCKED",
+      "events_visible_in_cli_or_ui": "PASS",
+      "studio_readonly_tool_invoked_by_dsh": "BLOCKED",
+      "runtime_exit_code_recorded": "PASS",
+      "session_resume_and_approval_classified": "PASS",
+      "tech_selection_adr": "PASS",
+      "no_secrets_in_git_or_logs": "PASS",
+      "github_push_and_review_handoff": "BLOCKED"
+    },
+    "overall": "PARTIALLY_VERIFIED",
+    "blocking_issue": {
+      "kind": "MODEL_QUOTA",
+      "detail": "DeepSeek provider returned HTTP 402 Insufficient Balance for both the SDK probe and dsh --profile headless",
+      "single_user_action": "Top up the DeepSeek account or provide a funded DEEPSEEK_API_KEY, then re-run spike/dsh-probe/node run-all.mjs"
+    },
+    "verified_runtime_facts": {
+      "dsh_cli_version": "0.1.5-rc.1",
+      "sdk_client_version": "0.1.5-rc.2",
+      "bundled_runtime_version": "0.1.5-rc.2",
+      "server_info": "deepseek-harness-sdk-runtime 0.0.1",
+      "provider_route": "deepseek-official",
+      "warm_start_ms": [2252, 2582],
+      "cold_or_healing_start_ms": [73129, 116466, 118998, 128688],
+      "close_ms": [53, 67],
+      "clean_exit_code": 0,
+      "failed_boot_exit_code": 1,
+      "cancel_supported": false,
+      "session_resume_supported": false,
+      "tool_approval_callback_supported": false,
+      "tool_bridge": "MCP only (dsh-mcp-client), tools named mcp__<server>__<tool>",
+      "session_log_path": "$DSH_HOME/sessions/<escaped-workspace>/<sessionId>/session.v3.jsonl.zstd"
+    },
+    "adrs": {
+      "tech_stack": "docs/decisions/ADR-0001-tech-stack.md (PROPOSED: Electron + React + TS)",
+      "dsh_integration": "docs/decisions/ADR-0002-dsh-integration.md (PROPOSED)"
+    },
+    "evidence": "docs/phase-reports/PHASE_00_EVIDENCE.md",
+    "report": "docs/phase-reports/PHASE_00_REPORT.md",
+    "reproduce": "cd spike/dsh-probe && node run-all.mjs"
+  },
+  "next_action": "Await external review of PHASE 00. Do NOT start PHASE 01 until an explicit approval arrives. If the DeepSeek account is funded, re-run the probe suite first so gates 3 and 5 can move from BLOCKED to PASS.",
+  "updated_at": "2026-11-10T09:40:00Z"
+}

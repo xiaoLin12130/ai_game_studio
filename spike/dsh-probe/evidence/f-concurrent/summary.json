@@ -1,0 +1,49 @@
+{
+  "probe": "F-concurrent",
+  "startedAt": "2026-11-10T09:30:03.798Z",
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+  },
+  "sessions": [
+    "session-84cfdee638e64bd0a04e6f4a2ac58811",
+    "session-c1ac227708b74a1091b23e567b7a4176"
+  ],
+  "totalMs": 654,
+  "runA": {
+    "sessionId": "session-84cfdee638e64bd0a04e6f4a2ac58811",
+    "finalResponse": "",
+    "eventCount": 15,
+    "eventSessions": [
+      "session-84cfdee638e64bd0a04e6f4a2ac58811"
+    ]
+  },
+  "runB": {
+    "sessionId": "session-c1ac227708b74a1091b23e567b7a4176",
+    "finalResponse": "",
+    "eventCount": 15,
+    "eventSessions": [
+      "session-c1ac227708b74a1091b23e567b7a4176"
+    ]
+  },
+  "assertions": {
+    "distinctSessions": true,
+    "bothSettled": true,
+    "noCrossTalkInA": true,
+    "noCrossTalkInB": true,
+    "bothProducedText": false,
+    "answersNotSwapped": true
+  },
+  "modelBlocker": {
+    "blocked": true,
+    "kind": "MODEL_QUOTA",
+    "code": "QUOTA",
+    "status": 402,
+    "message": "Insufficient Balance (request_id: 98b79ac1-982b-4168-8134-88e1ca3e3e4b)"
+  },
+  "childGoneAfterClose": true,
+  "finishedAt": "2026-11-10T09:30:07.057Z",
+  "verdict": "BLOCKED"
+}

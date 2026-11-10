@@ -1,0 +1,3 @@
+{"ts":"2026-11-10T09:30:06.013Z","type":"runs.completed","totalMs":654,"runA":{"sessionId":"session-84cfdee638e64bd0a04e6f4a2ac58811","finalResponse":"","eventCount":15,"eventSessions":["session-84cfdee638e64bd0a04e6f4a2ac58811"]},"runB":{"sessionId":"session-c1ac227708b74a1091b23e567b7a4176","finalResponse":"","eventCount":15,"eventSessions":["session-c1ac227708b74a1091b23e567b7a4176"]}}
+{"ts":"2026-11-10T09:30:06.014Z","type":"assertions","distinctSessions":true,"bothSettled":true,"noCrossTalkInA":true,"noCrossTalkInB":true,"bothProducedText":false,"answersNotSwapped":true}
+{"ts":"2026-11-10T09:30:07.057Z","type":"verdict","verdict":"BLOCKED"}

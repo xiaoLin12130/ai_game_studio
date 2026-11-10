@@ -1,0 +1,9 @@
+{
+  "package": "AI Game Studio Starter",
+  "version": "0.1.0",
+  "created_date": "2026-11-10",
+  "initial_phase": "PHASE_00",
+  "phase_count": 8,
+  "contains_application_source_code": false,
+  "purpose": "Product charter, agent rules, staged implementation plan, state templates, and GitHub review protocol"
+}

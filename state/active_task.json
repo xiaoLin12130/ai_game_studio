@@ -1,0 +1,18 @@
+{
+  "task_id": null,
+  "phase": "PHASE_00",
+  "status": "READY",
+  "title": "Verify DSH integration and technical feasibility",
+  "dsh_session_id": null,
+  "workspace": null,
+  "allowed_write_roots": ["./"],
+  "forbidden_actions": [
+    "Do not skip PHASE_00",
+    "Do not implement future phases",
+    "Do not hand-roll DSH JSON-RPC",
+    "Do not commit secrets",
+    "Do not force-push or delete user data"
+  ],
+  "checkpoint": null,
+  "next_action": "Inspect environment and verify official DSH SDK integration."
+}

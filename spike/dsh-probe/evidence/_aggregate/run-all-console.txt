@@ -1,0 +1,63 @@
+
+===== A-basic-run =====
+[probe] cleared stale profile lock {"stalePid":27200}
+[probe] starting runtime via official SDK {"provider":"deepseek-official","model":"deepseek-v4-flash"}
+[probe] runtime handshake complete 114990ms
+[probe] live dsh child process observed 23148,21892
+[probe] session opened session-f317768074e848989d8ad618b7aecfcd
+[probe] prompt completed {"runMs":766,"events":15}
+[probe] final response ""
+[probe] closing runtime
+[probe] post-close child check {"gone":true,"waitedMs":963}
+[probe] summary written H:\AI与开发\ai_game_studio_starter\spike\dsh-probe\evidence\a-basic-run\summary.json
+[probe] PROBE_A_RESULT=BLOCKED {"infraOk":true,"modelResponded":false,"blocker":"MODEL_QUOTA"}
+
+===== B-protocol-facts =====
+[probe] client.start() issued
+[probe] initialize ok {"name":"deepseek-harness-sdk-runtime","version":"0.0.1"}
+[probe] prompt queued 42ef9851-8fe3-472e-982e-323588e3ffa4
+[probe] idle observed {"idleWaitMs":825,"statuses":["running","idle"]}
+[probe] method existence checked {"session/cancel":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/cancel"},"session/resume":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/resume"},"session/close":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/close"},"session/snapshot":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/snapshot"}}
+[probe] PROBE_B_RESULT=PASS {"cancelUnsupported":true,"resumeUnsupported":true,"sawRunning":true,"sawIdle":true,"modelBlocker":"MODEL_QUOTA"}
+
+===== C-resume =====
+[probe] turn1 settled {"events":15,"blocker":"MODEL_QUOTA"}
+[probe] session log after turn1 {"compressedBytes":18073,"decompressedBytes":210,"lines":1,"turnStartMarkers":0,"userMessageMarkers":0,"schemaSample":"{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""}
+[probe] turn2 rejected on session reuse session "probe-resume-1794302985613" already exists
+[probe] PROBE_C_RESULT=PASS {"conclusion":"NO_RESUME_AT_SDK_LEVEL","assertions":{"firstProcessReaped":true,"sessionLogPersisted":true,"sessionLogCompressedBytes":18073,"sessionIdReuseRejected":true,"sessionLogStillReadable":true,"modelRecalledCodeword":false}}
+
+===== D-abandon =====
+[probe] long prompt queued, waiting for running state
+[probe] running observed {"sawRunning":true}
+[probe] caller abandoned the wait {"childStillAlive":true,"lastStatus":"idle","eventsKeptArriving":true}
+[probe] closed and reaped {"gone":true,"closeMs":48}
+[probe] PROBE_D_RESULT=BLOCKED {"agentReachedRunning":true,"stillRunningAtAbandon":false,"processSurvivedAbandonedWait":true,"processGoneAfterClose":true,"noWireCancelMethod":true,"longTurnKeptProducingWork":false}
+
+===== E-tools =====
+[probe] profile patch written H:\AI与开发\ai_game_studio_starter\spike\dsh-probe\tmp\patches\studio-mcp.cordis.yml
+[probe] runtime started with MCP patch
+[probe] model answered ""
+[probe] studio audit {"totalRecords":4,"kinds":["server.started","initialize","notification","tools/list"],"toolCalls":[],"servedCount":0,"initializedWith":{"ts":"2026-11-10T09:30:01.843Z","kind":"initialize","clientProtocolVersion":"2025-11-25","clientInfo":{"name":"dsh-mcp-client","version":"0.0.1"}}}
+[probe] PROBE_E_RESULT=BLOCKED {"registrationVerified":true,"invocationVerified":false,"blocker":"MODEL_QUOTA"}
+
+===== F-concurrent =====
+[probe] runtime started
+[probe] both runs settled {"totalMs":654}
+[probe] assertions {"distinctSessions":true,"bothSettled":true,"noCrossTalkInA":true,"noCrossTalkInB":true,"bothProducedText":false,"answersNotSwapped":true}
+[probe] PROBE_F_RESULT=BLOCKED {"isolationOk":true,"modelOk":false}
+
+===== G-exit-code =====
+[probe] clean EOF shutdown {"exitCode":0,"ms":127694}
+[probe] boot with stale lock (fresh home) {"exitCode":1,"ms":2439}
+[probe] PROBE_G_RESULT=PASS {"cleanExitCodeZero":true,"cleanNoStderr":true,"staleLockExitCodeOne":true,"staleLockMentionsLock":true}
+
+===== SUMMARY =====
+BLOCKED A-basic-run  (exit 3, 118998ms)
+PASS    B-protocol-facts  (exit 0, 2554ms)
+PASS    C-resume  (exit 0, 5910ms)
+BLOCKED D-abandon  (exit 3, 8640ms)
+BLOCKED E-tools  (exit 3, 3639ms)
+BLOCKED F-concurrent  (exit 3, 3322ms)
+PASS    G-exit-code  (exit 0, 130313ms)
+
+PASS 3/7  BLOCKED 4  FAIL 0

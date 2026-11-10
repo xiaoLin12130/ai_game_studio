@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-11-10T09:32:17.376Z",
+  "node": "v22.22.2",
+  "total": 7,
+  "passed": 3,
+  "blocked": 4,
+  "failed": 0,
+  "buckets": {
+    "PASS": [
+      "B-protocol-facts",
+      "C-resume",
+      "G-exit-code"
+    ],
+    "BLOCKED": [
+      "A-basic-run",
+      "D-abandon",
+      "E-tools",
+      "F-concurrent"
+    ],
+    "FAIL": []
+  },
+  "results": [
+    {
+      "name": "A-basic-run",
+      "script": "src/probe-basic.mjs",
+      "exitCode": 3,
+      "timedOut": false,
+      "ms": 118998,
+      "stdoutTail": "[probe] cleared stale profile lock {\"stalePid\":27200}\n[probe] starting runtime via official SDK {\"provider\":\"deepseek-official\",\"model\":\"deepseek-v4-flash\"}\n[probe] runtime handshake complete 114990ms\n[probe] live dsh child process observed 23148,21892\n[probe] session opened session-f317768074e848989d8ad618b7aecfcd\n[probe] prompt completed {\"runMs\":766,\"events\":15}\n[probe] final response \"\"\n[probe] closing runtime\n[probe] post-close child check {\"gone\":true,\"waitedMs\":963}\n[probe] summary written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\evidence\\a-basic-run\\summary.json\n[probe] PROBE_A_RESULT=BLOCKED {\"infraOk\":true,\"modelResponded\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "stderrTail": "",
+      "outcome": "BLOCKED"
+    },
+    {
+      "name": "B-protocol-facts",
+      "script": "src/probe-protocol.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 2554,
+      "stdoutTail": "[probe] client.start() issued\n[probe] initialize ok {\"name\":\"deepseek-harness-sdk-runtime\",\"version\":\"0.0.1\"}\n[probe] prompt queued 42ef9851-8fe3-472e-982e-323588e3ffa4\n[probe] idle observed {\"idleWaitMs\":825,\"statuses\":[\"running\",\"idle\"]}\n[probe] method existence checked {\"session/cancel\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/cancel\"},\"session/resume\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/resume\"},\"session/close\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/close\"},\"session/snapshot\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/snapshot\"}}\n[probe] PROBE_B_RESULT=PASS {\"cancelUnsupported\":true,\"resumeUnsupported\":true,\"sawRunning\":true,\"sawIdle\":true,\"modelBlocker\":\"MODEL_QUOTA\"}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "C-resume",
+      "script": "src/probe-resume.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 5910,
+      "stdoutTail": "[probe] turn1 settled {\"events\":15,\"blocker\":\"MODEL_QUOTA\"}\n[probe] session log after turn1 {\"compressedBytes\":18073,\"decompressedBytes\":210,\"lines\":1,\"turnStartMarkers\":0,\"userMessageMarkers\":0,\"schemaSample\":\"{\\\"type\\\":\\\"session\\\",\\\"version\\\":3,\\\"id\\\":\\\"probe-resume-1794302985613\\\",\\\"createdAt\\\":1794302987175,\\\"cwd\\\":\\\"H:\\\\\\\\AI与开发\\\\\\\\ai_game_studio_starter\\\\\\\\spike\\\\\\\\dsh-probe\\\\\\\\tmp\\\\\\\\workspace\\\",\\\"isSeeded\\\":false,\\\"delegationDepth\\\"\"}\n[probe] turn2 rejected on session reuse session \"probe-resume-1794302985613\" already exists\n[probe] PROBE_C_RESULT=PASS {\"conclusion\":\"NO_RESUME_AT_SDK_LEVEL\",\"assertions\":{\"firstProcessReaped\":true,\"sessionLogPersisted\":true,\"sessionLogCompressedBytes\":18073,\"sessionIdReuseRejected\":true,\"sessionLogStillReadable\":true,\"modelRecalledCodeword\":false}}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "D-abandon",
+      "script": "src/probe-cancel.mjs",
+      "exitCode": 3,
+      "timedOut": false,
+      "ms": 8640,
+      "stdoutTail": "[probe] long prompt queued, waiting for running state\n[probe] running observed {\"sawRunning\":true}\n[probe] caller abandoned the wait {\"childStillAlive\":true,\"lastStatus\":\"idle\",\"eventsKeptArriving\":true}\n[probe] closed and reaped {\"gone\":true,\"closeMs\":48}\n[probe] PROBE_D_RESULT=BLOCKED {\"agentReachedRunning\":true,\"stillRunningAtAbandon\":false,\"processSurvivedAbandonedWait\":true,\"processGoneAfterClose\":true,\"noWireCancelMethod\":true,\"longTurnKeptProducingWork\":false}\n",
+      "stderrTail": "",
+      "outcome": "BLOCKED"
+    },
+    {
+      "name": "E-tools",
+      "script": "src/probe-tools.mjs",
+      "exitCode": 3,
+      "timedOut": false,
+      "ms": 3639,
+      "stdoutTail": "[probe] profile patch written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\patches\\studio-mcp.cordis.yml\n[probe] runtime started with MCP patch\n[probe] model answered \"\"\n[probe] studio audit {\"totalRecords\":4,\"kinds\":[\"server.started\",\"initialize\",\"notification\",\"tools/list\"],\"toolCalls\":[],\"servedCount\":0,\"initializedWith\":{\"ts\":\"2026-11-10T09:30:01.843Z\",\"kind\":\"initialize\",\"clientProtocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"dsh-mcp-client\",\"version\":\"0.0.1\"}}}\n[probe] PROBE_E_RESULT=BLOCKED {\"registrationVerified\":true,\"invocationVerified\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "stderrTail": "",
+      "outcome": "BLOCKED"
+    },
+    {
+      "name": "F-concurrent",
+      "script": "src/probe-concurrent.mjs",
+      "exitCode": 3,
+      "timedOut": false,
+      "ms": 3322,
+      "stdoutTail": "[probe] runtime started\n[probe] both runs settled {\"totalMs\":654}\n[probe] assertions {\"distinctSessions\":true,\"bothSettled\":true,\"noCrossTalkInA\":true,\"noCrossTalkInB\":true,\"bothProducedText\":false,\"answersNotSwapped\":true}\n[probe] PROBE_F_RESULT=BLOCKED {\"isolationOk\":true,\"modelOk\":false}\n",
+      "stderrTail": "",
+      "outcome": "BLOCKED"
+    },
+    {
+      "name": "G-exit-code",
+      "script": "src/probe-exitcode.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 130313,
+      "stdoutTail": "[probe] clean EOF shutdown {\"exitCode\":0,\"ms\":127694}\n[probe] boot with stale lock (fresh home) {\"exitCode\":1,\"ms\":2439}\n[probe] PROBE_G_RESULT=PASS {\"cleanExitCodeZero\":true,\"cleanNoStderr\":true,\"staleLockExitCodeOne\":true,\"staleLockMentionsLock\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    }
+  ]
+}

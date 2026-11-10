@@ -1,0 +1,28 @@
+[
+  {
+    "ts": "2026-11-10T09:30:01.841Z",
+    "kind": "server.started",
+    "serverName": "ai-game-studio-tools",
+    "version": "0.0.1-phase00",
+    "auditLog": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/audit/studio-mcp-audit.jsonl"
+  },
+  {
+    "ts": "2026-11-10T09:30:01.843Z",
+    "kind": "initialize",
+    "clientProtocolVersion": "2025-11-25",
+    "clientInfo": {
+      "name": "dsh-mcp-client",
+      "version": "0.0.1"
+    }
+  },
+  {
+    "ts": "2026-11-10T09:30:01.851Z",
+    "kind": "notification",
+    "method": "notifications/initialized"
+  },
+  {
+    "ts": "2026-11-10T09:30:01.851Z",
+    "kind": "tools/list",
+    "count": 1
+  }
+]

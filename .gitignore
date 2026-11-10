@@ -1,0 +1,52 @@
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Local DSH/runtime data
+.dsh/
+dsh-home/
+.dsh-home/
+**/dsh-home/
+**/.dsh-home/
+
+# Local machine and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+out/
+coverage/
+.cache/
+tmp/
+temp/
+
+# Logs and local databases (commit sanitized fixtures only)
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# Cocos/engine generated caches (review and adjust once real project is detected)
+**/library/
+**/temp/
+**/local/
+**/profiles/
+
+# Large generated artifacts
+*.zip
+*.7z
+*.rar

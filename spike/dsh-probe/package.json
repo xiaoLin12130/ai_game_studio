@@ -1,0 +1,27 @@
+{
+  "name": "dsh-probe",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "PHASE 00 vertical slice: drive the real DSH runtime through the official @deepseek-ai/dsh-sdk-client",
+  "scripts": {
+    "probe:basic": "node src/probe-basic.mjs",
+    "probe:protocol": "node src/probe-protocol.mjs",
+    "probe:resume": "node src/probe-resume.mjs",
+    "probe:abandon": "node src/probe-cancel.mjs",
+    "probe:concurrent": "node src/probe-concurrent.mjs",
+    "probe:tools": "node src/probe-tools.mjs",
+    "test": "node run-all.mjs"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/cordis-plugin-group": "1.0.2",
+    "@deepseek-ai/cordis-plugin-hmr": "1.0.17",
+    "@deepseek-ai/cordis-plugin-include": "1.0.7",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.3",
+    "@deepseek-ai/cordis-plugin-timer": "1.1.4",
+    "@deepseek-ai/dsh-sdk-client": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-sdk-protocol": "0.1.5-rc.2"
+  },
+  "//": "The @deepseek-ai/cordis* pins mirror the peer ranges declared by @deepseek-ai/dsh-app-boot and the versions shipped inside the working global dsh 0.1.5 install. npm 10 cannot resolve this graph on its own: the newer cordis-plugin-timer@1.2.0 and cordis-plugin-include@1.1.0 require cordis ~4.1.0 while dsh-app-boot pins cordis 4.0.2 exactly, so caret ranges drift into an unsolvable tree. Pinning the whole family keeps `npm install` reproducible without --legacy-peer-deps. See docs/phase-reports/PHASE_00_EVIDENCE.md."
+}
