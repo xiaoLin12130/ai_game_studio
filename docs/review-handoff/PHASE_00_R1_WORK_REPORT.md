@@ -5,7 +5,7 @@
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-10
-> - 提交 SHA：见 §12（提交后回填）
+> - 提交 SHA：`852d234cec16ed75de2a40809be0fc1bd42bb47b`（R1 实施提交；其后仅回填本行）
 
 ---
 
@@ -301,7 +301,7 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 ```
 分支：    phase/00-feasibility
 仓库：    https://github.com/xiaoLin12130/ai_game_studio （public）
-提交：    <见本文件提交后的 git log；本报告随整改提单一并入库>
+提交：    852d234cec16ed75de2a40809be0fc1bd42bb47b（R1 实施提交，已推送）
 复现：    cd spike/dsh-probe/current-0.2.1 && node run-all.mjs   # 期望 PASS 5/5, exit 0
           cd spike/dsh-probe && node run-all.mjs                 # legacy 0.1.5 基线
 ```

@@ -37,7 +37,9 @@
     "visibility": "public",
     "pushed_commit": null,
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
-    "pushed_at": "2026-11-10T10:13:00Z"
+    "pushed_at": "2026-11-10T10:13:00Z",
+    "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
+    "last_pushed_at": "2026-11-10T10:51:08.280Z"
   },
   "phase_00": {
     "gate_results": {
@@ -124,7 +126,7 @@
       "11_adr_0001_revised": "PASS",
       "12_adr_0002_revised": "PASS",
       "13_automation_and_regression": "PARTIALLY_VERIFIED",
-      "14_commit_and_push": "PENDING",
+      "14_commit_and_push": "PASS",
       "15_independent_review_handoff": "PASS"
     },
     "suite_results": {
