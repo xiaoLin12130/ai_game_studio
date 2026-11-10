@@ -40,10 +40,11 @@
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-10T11:52:10.882Z",
+    "last_pushed_at": "2026-11-10T12:44:10.985Z",
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
-    "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e"
+    "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
+    "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef"
   },
   "phase_00": {
     "gate_results": {
@@ -296,7 +297,7 @@
       "review_round": 5,
       "baseline_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
       "start_commit": "e3176bfe850fc0aa7902eff41390d43f2baafdff",
-      "delivery_commit": null,
+      "delivery_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
       "result": "READY_FOR_EXTERNAL_REVIEW",
       "stage_status": "PARTIALLY_VERIFIED",
       "suite": {

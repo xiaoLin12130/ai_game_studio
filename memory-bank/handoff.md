@@ -5,7 +5,7 @@
 - 当前状态：六探针 **6/6 PASS**，依赖门禁与脱敏门禁 **PASS**，回归测试 **68/68**，套件退出码 **0**。
 - 运行组合：**DSH 0.2.1-rc.3（桌面端自带）+ commandcode 插件 0.15.4 + `deepseek/deepseek-v4.1-flash`**。PATH 上的 `dsh` 0.1.5-rc.1 不是目标版本。
 - 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio 。
-- 复审基线：`<R14_SHA>`（回填后以 `state/project_state.json` 的 `r14.delivery_commit` 为准）。
+- 复审基线：`1928fb1628b8dc3ac057fd618936aa601d9267ef`（回填后以 `state/project_state.json` 的 `r14.delivery_commit` 为准）。
 - 尚无正式需求基线；**不得提前进入业务功能开发**。
 
 ## 一句话状态
