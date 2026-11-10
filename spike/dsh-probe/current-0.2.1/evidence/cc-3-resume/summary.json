@@ -1,0 +1,55 @@
+{
+  "probe": "CC-3-resume",
+  "startedAt": "2026-11-10T10:40:46.203Z",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "token": "recall-cf3228",
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "error": null
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "turn1": {
+    "text": "STORED",
+    "events": 18,
+    "statuses": [
+      "running",
+      "idle"
+    ]
+  },
+  "turn1Blocker": {
+    "blocked": false
+  },
+  "turn1Reaped": true,
+  "resumeUnknownSessionRejected": true,
+  "resumeUnknownError": "session \"definitely-not-a-real-session-id\" not found",
+  "resumeError": null,
+  "turn2": {
+    "text": "recall-cf3228",
+    "events": 9,
+    "statuses": [
+      "running",
+      "idle"
+    ]
+  },
+  "turn2Blocker": {
+    "blocked": false
+  },
+  "turn2Reaped": true,
+  "assertions": {
+    "apiExists": true,
+    "unknownSessionRejected": true,
+    "resumeCallSucceeded": true,
+    "historyRecalled": true,
+    "processReapedBothRuns": true
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-10T10:41:03.738Z",
+  "conclusion": "RESUME_RESTORES_HISTORY"
+}

@@ -1,0 +1,49 @@
+{
+  "probe": "D-abandon",
+  "startedAt": "2026-11-10T09:29:51.520Z",
+  "abandonAfterMs": 4000,
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "sessionId": "probe-abandon-1794302993084",
+  "sawRunning": true,
+  "abandon": {
+    "waitedMs": 4003,
+    "childStillAlive": true,
+    "lastStatus": "idle",
+    "eventCountAtAbandon": 6,
+    "eventCountAfterAbandon": 18,
+    "eventsKeptArriving": true,
+    "childProcesses": [
+      {
+        "pid": 26868,
+        "name": "node.exe"
+      },
+      {
+        "pid": 12960,
+        "name": "powershell.exe"
+      }
+    ]
+  },
+  "cancelAvailable": false,
+  "closeMs": 48,
+  "childGoneAfterClose": true,
+  "reapWaitMs": 983,
+  "finishedAt": "2026-11-10T09:30:00.096Z",
+  "assertions": {
+    "agentReachedRunning": true,
+    "stillRunningAtAbandon": false,
+    "processSurvivedAbandonedWait": true,
+    "processGoneAfterClose": true,
+    "noWireCancelMethod": true,
+    "longTurnKeptProducingWork": false
+  },
+  "verdict": "BLOCKED"
+}

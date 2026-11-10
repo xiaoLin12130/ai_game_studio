@@ -81,7 +81,23 @@ try {
     staleLockExitCodeOne: blocked.exitCode === 1,
     staleLockMentionsLock: /writer lock/i.test(blocked.stderr),
   }
-  summary.verdict = Object.values(summary.assertions).every(Boolean) ? 'PASS' : 'FAIL'
+
+  // This host injects a `safe-delete` shim into node that refuses bulk deletes.
+  // A clean profile boot can legitimately prune the profile module fallback, so the
+  // shim can abort the boot for reasons that have nothing to do with DSH. Record it
+  // as environment interference (BLOCKED) instead of blaming the runtime.
+  const shimmed = /safe-delete|SAFE_DELETE/i.test(clean.stderr) || /safe-delete|SAFE_DELETE/i.test(blocked.stderr)
+  summary.environmentInterference = shimmed
+    ? {
+        kind: 'SAFE_DELETE_SHIM',
+        detail:
+          'The host injects F:\\workbuddy\\...\\node-safe-delete-shim.cjs into child node processes; it aborts bulk deletes during profile maintenance.',
+        cleanStderrSample: clean.stderr.slice(0, 400),
+      }
+    : null
+
+  const allPass = Object.values(summary.assertions).every(Boolean)
+  summary.verdict = allPass ? 'PASS' : shimmed ? 'BLOCKED' : 'FAIL'
 } catch (error) {
   summary.error = { name: error?.constructor?.name, message: String(error?.message ?? error) }
   ev.append('probe.error', summary.error)

@@ -1,0 +1,51 @@
+{
+  "probe": "CC-4-concurrent",
+  "startedAt": "2026-11-10T10:41:03.808Z",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "error": null
+  },
+  "sessions": [
+    "session-77d0a620110b459bb31350e5dfa39a79",
+    "session-84dd41957a7742118a1d27e143bece93"
+  ],
+  "totalMs": 2573,
+  "runA": {
+    "sessionId": "session-77d0a620110b459bb31350e5dfa39a79",
+    "text": "APPLE",
+    "eventSessions": [
+      "session-77d0a620110b459bb31350e5dfa39a79"
+    ]
+  },
+  "runB": {
+    "sessionId": "session-84dd41957a7742118a1d27e143bece93",
+    "text": "BANANA",
+    "eventSessions": [
+      "session-84dd41957a7742118a1d27e143bece93"
+    ]
+  },
+  "modelBlocker": {
+    "blocked": false
+  },
+  "assertions": {
+    "distinctSessionIds": true,
+    "eventsOnlyForOwnSessionA": true,
+    "eventsOnlyForOwnSessionB": true,
+    "bothProducedText": true,
+    "answersNotSwapped": true,
+    "noLeftoversAfterClose": true
+  },
+  "reap": {
+    "status": "PROCESS_ABSENT",
+    "waitedMs": 1004,
+    "remaining": [],
+    "error": null
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-10T10:41:12.092Z"
+}

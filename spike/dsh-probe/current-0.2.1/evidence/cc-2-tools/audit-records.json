@@ -1,0 +1,52 @@
+[
+  {
+    "ts": "2026-11-10T10:40:36.752Z",
+    "kind": "server.started",
+    "serverName": "ai-game-studio-tools",
+    "version": "0.0.1-phase00",
+    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1/tmp/studio-mcp-audit-cc.jsonl"
+  },
+  {
+    "ts": "2026-11-10T10:40:36.755Z",
+    "kind": "unsupported.method",
+    "method": "server/discover"
+  },
+  {
+    "ts": "2026-11-10T10:40:36.833Z",
+    "kind": "server.started",
+    "serverName": "ai-game-studio-tools",
+    "version": "0.0.1-phase00",
+    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1/tmp/studio-mcp-audit-cc.jsonl"
+  },
+  {
+    "ts": "2026-11-10T10:40:36.836Z",
+    "kind": "initialize",
+    "clientProtocolVersion": "2025-11-25",
+    "clientInfo": {
+      "name": "dsh-mcp-client",
+      "version": "0.0.1"
+    }
+  },
+  {
+    "ts": "2026-11-10T10:40:36.840Z",
+    "kind": "notification",
+    "method": "notifications/initialized"
+  },
+  {
+    "ts": "2026-11-10T10:40:36.841Z",
+    "kind": "tools/list",
+    "count": 1
+  },
+  {
+    "ts": "2026-11-10T10:40:42.312Z",
+    "kind": "tools/call",
+    "name": "get_studio_health",
+    "arguments": {}
+  },
+  {
+    "ts": "2026-11-10T10:40:42.313Z",
+    "kind": "tools/call.served",
+    "name": "get_studio_health",
+    "status": "ok"
+  }
+]

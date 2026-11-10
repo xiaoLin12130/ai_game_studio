@@ -1,115 +1,157 @@
-# ADR-0002｜DSH 集成方式：Runtime 生命周期、事件、工具桥接与会话连续性
+# ADR-0002｜DSH 集成：Runtime 生命周期、恢复、审批、工具桥接与隔离
 
-- 状态：**PROPOSED**（待外部复审确认）
-- 日期：2026-11-10
-- 阶段：PHASE 00
+- 状态：**PROPOSED / CONDITIONAL**（待外部复审确认）
+- 日期：2026-11-10（初稿）／2026-11-10 修订（PHASE 00-R1）
+- 阶段：PHASE 00-R1
 - 相关：`ADR-0001-tech-stack.md`、`docs/04_DSH_INTEGRATION_SPEC.md`、`docs/phase-reports/PHASE_00_EVIDENCE.md`
 
 ---
 
+## 0. 本版修订了什么（R1）
+
+| # | 原表述 | 问题 | 本版处理 |
+|---|---|---|---|
+| 1 | 「当前 DSH **没有**取消/恢复/审批」 | 把 0.1.5 的限制写成了 DSH 的永久限制 | 改为**版本化能力矩阵**（§2），0.2.1 实测 `session/resume` 存在且**真正恢复历史** |
+| 2 | 「Studio 自建上下文再水化替代恢复」 | 前提错了 | 改为「**优先官方 Resume，失败再水化**」（§3A） |
+| 3 | 「一个 Studio → 一个 Runtime」 | 固化成最终架构；0.2.1 仍无 Runtime 级取消，一个 Runtime 承载多任务会导致「停一个、停全部」 | 改为 **RuntimeSupervisor Manager + 多 Runtime 拓扑**（§3B） |
+| 4 | 审批只提到「两条通道」 | 未验证新版本是否有 SDK 审批回调 | 明确 0.2.1 **仍无**服务端→客户端请求，重验方法记录在 §3C |
+| 5 | 生产要换官方 MCP SDK，但没验证兼容性 | 空头承诺 | §3D 给出验证结论与 PHASE 01 动作 |
+
 ## 1. 结论摘要
 
-Studio 通过**官方 TypeScript SDK**（`@deepseek-ai/dsh-sdk-client`）在子进程中启动 `dsh --profile sdk`，用 `DeepSeekHarness` 跑会话、用 `HarnessClient` 做底层控制；**工具桥接只走官方 MCP 通道**（`@deepseek-ai/dsh-mcp-client` + Studio 自建 stdio MCP server）；**会话恢复、运行中取消、工具审批回调在当前版本均不存在**，Studio 必须用自己的状态机承载这些语义。以上全部由 PHASE 00 实测得出，证据见 `PHASE_00_EVIDENCE.md`。
+Studio 用官方 TypeScript SDK（`@deepseek-ai/dsh-sdk-client@0.2.1-rc.3`）驱动用户实际运行的 **DSH 0.2.1-rc.3 + commandcode provider**；会话恢复**优先用官方 `session/resume`**（已实测能恢复历史），Studio 自己的状态持久化仍是唯一业务真相；Runtime 从「单例」改为**受控多实例**，由 `RuntimeSupervisorManager` 分配；工具只走 MCP；Studio 业务审批与 DSH 工具许可**彻底分离**。
 
-## 2. 实测到的能力边界（当前安装版本）
+## 2. 版本化能力矩阵（实测，不是推测）
 
-| 能力 | 现状 | 证据 |
-|---|---|---|
-| 启动 Runtime | 可用。`DeepSeekHarness.start()` / `HarnessClient.start()` | 探针 A、B |
-| 握手 | 可用。`initialize{cwd, provider, model, reasoningEffort?, maxTokens?}` → `serverInfo{name:"deepseek-harness-sdk-runtime", version:"0.0.1"}` | 探针 B `initialize.result` |
-| 发送 Prompt | 可用。`session/prompt{sessionId, contentBlocks}` → `{messageId}`（仅入队回执） | 探针 B |
-| 事件 | 可用且足够。`session.event`（完整 session log 事件）、`session.status`（`running`/`idle`）、`subagent.started`/`subagent.finished` | 探针 A：单轮 15 条事件；B：状态序列 `running → idle` |
-| 关闭 | 可用。协议 `shutdown` → stdin EOF → SIGTERM → SIGKILL，直到进程真退出 | 探针 A/D：关闭后 51–1057 ms 内子进程消失 |
-| 运行中取消 | **不存在**。`session/cancel` 被拒 | 探针 B：`unknown ... SDK runtime method: session/cancel` |
-| 会话恢复 | **不存在**。`session/resume` 被拒；复用已存在的 sessionId 直接报错 `session "..." already exists` | 探针 B、C |
-| 会话关闭 | **不存在**。`session/close` 被拒 | 探针 B |
-| 工具审批回调 | **不存在**。协议明确「server→client requests 是死能力，服务器从不发送」 | 文档 + 探针 B（无任何 server→client 请求出现） |
-| 工具桥接 | 可用，且**只有 MCP 一条路**。SDK 协议没有任何工具注册方法 | 探针 E：Studio MCP server 完成 `initialize`(protocolVersion `2025-11-25`, client `dsh-mcp-client@0.0.1`) 与 `tools/list`，工具以 `mcp__studio__get_studio_health` 出现在模型工具清单（26 个工具中） |
-| 并发 | 同一 Runtime 可并行两个 session，事件按 sessionId 隔离 | 探针 F |
+| 能力 | 0.1.5-rc.2 | 0.2.1-rc.3（用户实际运行） | 生产是否需要 | 证据 |
+|---|---|---|---|---|
+| Runtime 启动 / 握手 | PASS | **PASS** | 必须 | `cc-1-reply`、`legacy-0.1.5/evidence/a-basic-run` |
+| 真实模型对话（commandcode） | 不适用（插件 0.15.4 要求 0.2.1 线；0.1.5 上被跳过） | **PASS**（回显随机口令 + 自述模型） | 必须 | `cc-1-reply` |
+| MCP 工具注册 | PASS（注册成功） | **PASS** | 必须 | `cc-2-tools` stage1/2 |
+| MCP 工具**实际调用** | BLOCKED（无模型可用） | **PASS**（模型调用 + Server 执行 + 回复用工具数据） | 必须 | `cc-2-tools` stage3 |
+| Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **PASS**（重启进程后经 `session/resume` 答出随机口令） | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY` |
+| 工具审批回调 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（无 server→client 请求） | 需要（但可绕过，见 §3C） | `cc-5-capability` |
+| Runtime 级取消 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/cancel` → unknown method） | 不假设存在 | `cc-5-capability` |
+| Session 关闭 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/close` → unknown method） | — | `cc-5-capability` |
+| 工作目录查询/设置 | 无 | **SUPPORTED**（`session/working-directory/get|set`） | 有用 | `cc-5-capability` |
+| 并发 Session | 部分（无模型） | **PASS**（两会话并行，答案未互换，无串台） | 需要 | `cc-4-concurrent` |
+| 进程退出与回收 | 部分（仅直接子进程） | **PASS**（三态检测，含孤儿匹配） | 必须 | 全部 new probes |
+
+**只有上表标 PASS 的才可写进实现假设。** 0.1.5 一列是历史基线，保留用于说明「插件与运行时强绑定」。
 
 ## 3. 决策
 
 ### D1｜只用官方 SDK，不自建传输层
 
-`AGENTS.md` 2 与 `docs/04` 明令禁止手写 JSON-RPC。本 ADR 进一步收紧：**Studio 代码中不得出现任何 `\n` 分隔 JSON-RPC 帧的拼装或解析**。所有调用经 `DeepSeekHarness` / `HarnessClient`；所有工具经 MCP。
+Studio 代码中不得出现任何 JSON-RPC 帧的拼装或解析。所有会话经 `DeepSeekHarness` / `HarnessClient`；所有工具经 MCP。
 
-副产品：Studio 侧的 MCP server 是**自己的实现**，它讲的 MCP 协议（公开标准）不是 DSH 协议。PHASE 00 的探针实现为免依赖手写了 MCP 握手；**生产必须换用 `@modelcontextprotocol/sdk` 的 server**，理由是这样才能跟上 MCP 版本演进（实测 DSH 协商的是 `2025-11-25`）。
+MCP Server 侧：PHASE 00 为免依赖手写了协议。**生产必须换 `@modelcontextprotocol/sdk`**，因为实测 DSH 的 MCP Client 协商的是 `2025-11-25` 版本，跟随演进只能靠官方实现。PHASE 01 首任务做兼容性冒烟（server 起得来、工具进清单、能被调用）。
 
-### D2｜`RuntimeSupervisor` 独占 Runtime，且以「进程真实退出」为唯一成功判据
+### D2｜RuntimeSupervisor：唯一所有权 + 三态进程判据
 
-- 一个 Studio 进程对应一个 supervisor，一个 supervisor 对应至多一个 dsh 子进程。
-- 启动：spawn → `initialize` 握手 → 记录 `serverInfo`；失败则按 `AggregateError` 语义上报，不重试到天荒地老。
-- 关闭：调用 `close()`，随后**轮询 OS 进程表**确认子进程消失，记录耗时与退出码；不得只把 UI 置灰。
-- 超时：`initializeTimeoutMs` 不能沿用 SDK 默认 10 s。实测首次冷启动 **73 s**（要物化 profile 的 `node_modules` 回退），热启动约 **2.2 s**。Studio 需两档超时（冷启动 ≥180 s 且向用户显示阶段），否则首启动即误报失败。
+- 一个 Runtime 由一个 supervisor 独占；supervisor 负责启动、握手、事件转发、`close()`、**进程树清空校验**。
+- 关闭成功的唯一判据是 **OS 进程表里查不到该 Runtime 及其后代与孤儿**，不是 `close()` 返回，也不是 UI 关闭。
+- 进程检测必须三态：`PROCESS_PRESENT` / `PROCESS_ABSENT` / `PROCESS_CHECK_FAILED`。**查询失败不得当作「已退出」**（PHASE 00 的 `catch → []` 就是反例，已修正）。
+- 孤儿检测不能只走父子链：Windows 上父进程死后子进程会被重挂，必须同时用命令行标记（隔离的 `DSH_HOME` 路径、MCP server 脚本路径）匹配。
+- 两档超时：常规启动 ≤ 30 s；需要重建 profile 模块回退时 ≤ 300 s，并向用户显示阶段。
 
-### D3｜取消语义：把「停止等待」和「停止工作」在 UI 上分开表达
+### D3｜Runtime 隔离粒度：Manager + 多 Runtime（不再固化单例）
 
-协议无取消。Studio 的「停止」只有两种诚实实现：
+0.2.1 **仍无 Runtime 级取消**。若一个 Runtime 承载多个项目/任务，停止任一任务只能杀掉整个 Runtime，会连带中止其他任务。因此拓扑改为：
 
-1. **停止查看**：断开订阅，Runtime 继续跑。UI 必须显示「Agent 仍在运行」。
-2. **停止运行**：`close()` 杀掉 Runtime 进程树。UI 必须显示「运行时已关闭，未完成的 turn 已中止」。
+```
+Studio
+│
+├── RuntimeSupervisorManager
+│     ├── Advisor Runtime        项目 A/B 的顾问会话（可共享，只读场景）
+│     ├── Project A Execution Runtime   当前开发任务（写权限）
+│     ├── Project B Execution Runtime   当前开发任务（写权限）
+│     └── QA Runtime             独立复审会话
+```
 
-禁止出现「已取消」这种既不真停也不说明的第三态。这与 `AGENTS.md` 5 末句、`docs/04` 生命周期段一致。
+必须满足的约束：
 
-### D4｜会话连续性由 Studio 负责，不依赖 DSH 恢复
+1. 顾问与代码执行**有隔离边界**：顾问 Runtime 不挂写工具。
+2. 不同项目的执行任务**有独立停止边界**：停 A 不影响 B。
+3. 同一项目的写入任务**仍然串行**：跨 Runtime 也要有项目级写锁（锁在 Studio 侧，不在 Runtime 侧）。
+4. Agent 不得绕开写锁：写工具只在持锁的 Runtime 上注册。
+5. 关闭一个 Runtime 不得影响其他：每个 supervisor 只跟踪自己的进程树。
+6. Runtime 崩溃后能定位到具体任务：`DSHSessionLink{runtimeId, sessionId, projectId, taskId}` 持久化。
+7. 资源上限：每个 Runtime 都有独立内存/进程预算，超限先降级（拒绝新任务）再回收。
 
-实测结论：`NO_RESUME_AT_SDK_LEVEL`（探针 C）。同一 sessionId 在新进程中复用会被拒绝，说明「沿用旧 session」这条路是关的。
+具体实例数量按资源实测调整，但**拓扑不得退回单例**。
 
-因此 Studio 的恢复设计为：
+### D4｜会话恢复：优先官方 Resume，Studio 状态永远是真源
 
-- 业务状态、任务契约、事件游标、审批记录一律存 Studio 自己的库（`docs/03` 已要求「业务状态以 Studio 为准」）。
-- Runtime 重启后**新建 session**，由 Studio 编译一份「上下文再水化包」（当前任务、已批准基线摘要、未完成项、上次事件游标）作为首条 prompt 的上下文注入。
-- Session 的持久日志（`$DSH_HOME/sessions/<workspace>/<sessionId>/session.v3.jsonl.zstd`）只作**审计证据**，不作恢复依据。
+0.2.1 实测 `session/resume` 能把历史恢复（重启进程后仍答出随机口令），因此恢复流程改为：
 
-### D5｜工具桥接分层，且审批分成两条独立通道
+```
+Runtime 崩溃
+   ↓
+① 恢复 Studio 侧状态（项目/任务/契约/基线/Commit/审批/事件游标）
+   ↓
+② 检查原 DSH Session 是否仍在磁盘
+   ↓
+③ 尝试官方 session/resume（失败则新建 session）
+   ↓
+④ 校验上下文：用一条探针 prompt 确认关键事实仍在（如当前任务 id）
+   ↓
+⑤ 校验副作用：Shell/PTY/MCP 等外部进程是否已随崩溃消失，重新建立
+   ↓
+⑥ 由任务状态机决定继续 / 重试 / 请求用户
+```
 
-- Studio 起一个 stdio MCP server（每个 Runtime 一个，绑定当前 `projectId`），通过 `--patch` 注入 `dsh-mcp-client`。
-- 工具命名固定 `mcp__studio__<tool>`；PHASE 00 只暴露只读 `get_studio_health`。
-- **DSH 工具许可审批当前不可用**（无 server→client 请求）。Studio 的业务审批（冻结基线、批准变更、批准构建与发布）是**自建 UI + 状态机**，与 DSH 无关。两者不得共用一套「已批准」标记——这正是 `docs/04` 「审批必须区分两层」的落地方式。
-- 危险能力（任意路径写、无限制 shell）**不通过 MCP 暴露**；构建、Git、文件写入由 Studio 自己的适配器执行，受项目写锁约束。
+**必须写进实现的两条**：
 
-### D6｜版本钉死 + 探针即回归用例
+- Session 恢复 ≠ 外部进程恢复。Shell、PTY、MCP Server、构建进程都要重新检查与重建。
+- Studio 数据库是业务状态的唯一真相；Session 只是对话载体。禁止用 Session 历史推断任务状态。
 
-实测发现依赖图在 caret 范围内会漂移成不可解：
+### D5｜工具桥接与「审批双通道」
 
-- `dsh-app-boot` 精确要求 `@deepseek-ai/cordis@4.0.2`；
-- 但 `cordis-plugin-include@1.1.0` / `cordis-plugin-timer@1.2.0` 要求 `cordis ~4.1.0` → `npm install` 直接 `ERESOLVE`。
+- 工具只经 MCP 暴露，命名固定 `mcp__studio__<tool>`；先只读，再提案，最后受控写入。
+- 危险能力（任意路径写、无限制 shell）**不经 MCP 暴露**，由 Studio 适配器执行并受写锁约束。
+- **DSH 工具许可审批在 0.2.1 仍不存在**（无 server→client 请求、无审批通知）。因此：
+  - Studio 业务审批（冻结基线、批准变更、批准构建/发布、危险文件操作）是**自建 UI + 状态机**，与 DSH 无关。
+  - 若未来版本提供 SDK Approval Callback，必须先实测其 UI 映射（请求 id、超时、拒绝后的工具语义），再接入；接入后**仍然不能**用「某次工具被批准」替代业务审批。
+  - 在此之前，"需要人工确认的工具"只能通过**不给工具**或**要求模型先提案、Studio 再执行**来实现，不能假装有审批弹窗。
 
-可行组合（与全局 `dsh@0.1.5-rc.1` 内部一致）：`cordis 4.0.2`、`cordis-plugin-group 1.0.2`、`cordis-plugin-hmr 1.0.17`、`cordis-plugin-include 1.0.7`、`cordis-plugin-loader 1.0.3`、`cordis-plugin-timer 1.1.4`。
+### D6｜版本钉死 + 探针即回归
 
-因此：
+- 依赖整族精确钉版本（cordis 4.0.5 / group 1.0.5 / include 1.0.10 / loader 1.0.6 / sdk-client 0.2.1-rc.3）。
+- **不要升级用户全局 DSH**。`dsh` on PATH 是 0.1.5-rc.1，用户日常用的是桌面端 0.2.1-rc.3；Studio 应自带/锁定自己的运行时，不依赖 PATH。
+- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/run-all.mjs`（5/5 PASS 是当前基线）与 `legacy-0.1.5` 套件；协议随时可能变。
 
-- 这 6 个包 + `dsh-sdk-client` **全部精确版本、写进 `package.json` 与 lockfile**，不使用 `^`。
-- SDK 客户端会把**同版本的 `@deepseek-ai/dsh`** 作为依赖带入，因此 Studio 不必依赖用户全局安装的 `dsh`。当前全局是 `0.1.5-rc.1`，npm 上 `latest` 已是 `0.2.2-rc.1`——**升级前必须重跑本阶段探针套件**，因为协议随时可能变。
-- `spike/dsh-probe` 保留为可执行回归基线，`node run-all.mjs` 退出码即门禁（0 全通过 / 2 有 BLOCKED / 1 有 FAIL）。
+## 4. 已实测的缺陷与防御
 
-## 4. 已知缺陷与必须的防御
-
-| ID | 缺陷 | 后果 | Studio 侧措施 |
+| ID | 缺陷 | 后果 | 措施 |
 |---|---|---|---|
-| F1 | 崩溃的 profile 启动会遗留 `$DSH_HOME/profiles/node_modules.lock`（内容是持有者 pid）；`dsh-atomic-write` **不校验 pid 存活**，只在 2,000 ms 内重试后抛错 | 下次启动在 2 秒后失败，SDK 只报 `JSON-RPC input closed`，用户看不到原因 | 启动前检查锁：pid 不存活则清理并记审计；仍失败则把原始 stderr 摘要呈现给用户。参考实现 `clearStaleProfileLock()`（探针 G 已复现该缺陷） |
-| F2 | 未知方法返回 `-32603` 而非其文档声称的 `-32601` | 用错误码判断「能力是否存在」会误判 | 判断依据改用错误消息 `unknown ... method`，并记录码值差异 |
-| F3 | `session/prompt` 的 `messageId` 只表示用户消息入队，不代表 assistant 回复 | 把回执当结果会读到空内容 | 以 `session.status → idle` 为边界收敛，再取区间内最后一条 assistant 消息（SDK `RunResult.finalResponse` 已按此实现） |
-| F4 | 启动耗时不稳：热启动 2.2–2.6 s，需要重建 `profiles/node_modules` 模块回退时 **73–128 s**（该目录本机实测 187 条目 / 164 符号链接）；SDK 默认握手超时 10 s | 误报初始化失败；用户以为应用卡死 | 两档超时 + 进度提示（D2）；PHASE 01 评估安装期预热 profile |
-| F5 | 供应商错误（如 402 QUOTA）在事件流里以 `turn/end reason.kind=error` 出现，SDK 不抛异常 | 用户只看到「没回复」 | Studio 必须解析 `turn/end.reason` 并映射为可读文案；`detectModelBlocker()` 是参考实现 |
+| F1 | 崩溃的 profile 启动遗留 `profiles/node_modules.lock`；`dsh-atomic-write` 不校验 pid 存活，2 s 后抛错 | 下次启动失败，SDK 只报 `JSON-RPC input closed` | 启动前清理死 pid 锁；stderr 摘要透出 |
+| F2 | 未知方法返回 `-32603` 而非文档所称 `-32601` | 用错误码判能力会误判 | 用消息文本 `unknown ... method` 判定；同时区分「方法存在但参数被拒」 |
+| F3 | `session/prompt` 的 `messageId` 只是入队回执 | 把回执当结果会读到空 | 以 `session.status → idle` 为边界收敛 |
+| F4 | 启动耗时双峰（2–3 s vs 73–128 s） | 默认 10 s 超时误报失败 | 两档超时 + 进度反馈 |
+| F5 | Provider 错误以 `turn/end reason.kind=error` 出现，SDK 不抛异常 | 用户只看到「没回复」 | 解析 `turn/end.reason` 映射为可读文案 |
+| F6 | 0.1.5 上加载不兼容插件会被**静默跳过并回退**到别的 provider | 测试结果张冠李戴（PHASE 00 的 402 就是 DeepSeek 回退，不是用户模型） | 每次运行必须记录 `request/header.config.provider/model`，并对「是否发生 Provider 回退」做断言 |
+
+F6 是 PHASE 00-R1 最重要的教训：**不看路由证据就会把 A Provider 的失败当成 B Provider 不可用。**
 
 ## 5. 凭据与隔离
 
-- Studio **不复制、不打印、不提交** 用户 `~/.dsh` 内容。PHASE 00 探针全程使用隔离 `DSH_HOME`（`spike/dsh-probe/tmp/dsh-home`，已 gitignore）；只有 `DEEPSEEK_API_KEY` 从环境继承。
-- 生产形态待定（PHASE 01 ADR）：**每项目一个隔离 DSH_HOME** vs 复用用户 `~/.dsh`。倾向前者（隔离会话与插件），代价是用户需要重新授权/provider 配置，需产品确认。
-- 任何 `.credentials.yaml`、token、`DSH_HOME` 实体目录**不得**进入 Git；`.gitignore` 已覆盖 `.dsh/`、`dsh-home/`、`.env`。
+- Studio 不复制、不打印、不提交 `~/.dsh` 内容。探针全程使用隔离 `DSH_HOME`。
+- Provider 凭据只以**环境变量名**形式出现在 patch 里（`apiKeyEnv: COMMANDCODE_API_KEY`），值由运行时的 credential seam 解析。
+- 生产形态待定：**每项目一个隔离 DSH_HOME**（隔离会话/插件/权限）vs **复用用户 `~/.dsh`**（用户已登录、插件已装）。倾向隔离，但代价是用户需重新配置 provider；PHASE 01 需实测「隔离 home 里加载 commandcode 需要哪些前置」。
+- `.credentials.yaml`、token、`DSH_HOME` 实体目录一律不进 Git。
 
-## 6. 未验证项（不得当作已通过）
+## 6. 仍未验证
 
-1. **模型真实回复**：账号余额不足（402），探针 A/C/E/F 的「模型产出文本」类断言均为 `BLOCKED`。
-2. **模型主动调用 Studio 工具**：工具已注册并出现在模型工具清单，但缺少模型实际发起 `tools/call` 的记录（同上）。MCP 握手与注册已验证。
-3. **工具审批回调**：当前协议根本不支持，非「未测」而是「不存在」。
-4. **Python SDK**（`packages/python`）存在但未验证；本阶段只用 TypeScript SDK，避免引入第三种运行时。
-5. **`sdk-minimal` profile 是否更适合生产**（更小攻击面、只暴露一个 shell）：未验证其是否可挂 MCP。
-6. **Electron 打包后 `dsh` 子进程可用性**：见 ADR-0001 R4。
+1. Electron 打包后上述链路是否成立（ADR-0001 §5）。
+2. 隔离 `DSH_HOME` 下加载 commandcode 的完整前置（本次是用独立 profile + 手工安装插件达成的，生产安装流程未设计）。
+3. Runtime 崩溃后「外部进程是否随崩溃消失」的实测。
+4. MCP Server 换成官方 SDK 后的兼容性。
+5. 多 Runtime 拓扑的资源占用与启动成本。
+6. 0.2.2 线是否补上取消/审批（本次未测 0.2.2，只用 0.2.1-rc.3，因为它与用户插件声明兼容）。
 
 ## 7. 复审关注点
 
-1. 接受「无取消 + 无恢复」作为当前版本的既定约束，由 Studio 承接语义吗？若不接受，需要重新评估 DSH 版本（`0.2.2-rc.1` 是否已补齐）——但这会改变已验证基线。
-2. 上下文再水化（D4）是否足以替代 session 恢复？它的代价是每次重启都要消耗一次较大的 prompt。
-3. 工具桥接目前只读；进入写操作前，是否需要先补一套「Studio 侧审批 + 审计」的强制门禁（本 ADR 认为必须有）。
+1. D3 的多 Runtime 拓扑是否接受？它把「取消」问题转化为「隔离」问题，但会增加进程数与内存。
+2. D4 的恢复流程中，"用一条探针 prompt 确认上下文仍在" 是否可接受（会消耗一次模型调用）。
+3. D5 在无审批回调时的降级方案（不给工具 / 模型先提案）是否足以满足 P3 风险操作的门禁要求。

@@ -16,7 +16,7 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
-import { waitForNoDshChild, clearStaleProfileLock } from './lib/proc.mjs'
+import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
 
 const MODEL = process.env.PROBE_MODEL ?? 'deepseek-v4-flash'
@@ -106,15 +106,15 @@ try {
   ev.append('turn1.completed', summary.turn1)
   step('turn1 settled', { events: run1.events.length, blocker: summary.turn1.modelBlocker.kind ?? null })
   await first.close()
-  const reaped1 = await waitForNoDshChild(15000)
-  summary.turn1ProcessReaped = reaped1.gone
+  const reaped1 = await waitForRuntimeGone({ dshHome, boundMs: 20000 })
+  summary.turn1ProcessReaped = reaped1.status === PROC.ABSENT
 
   summary.sessionLogAfterTurn1 = findSessionLog()
   summary.turnCountAfterTurn1 = readTurnCount(summary.sessionLogAfterTurn1)
   ev.append('session.log.afterTurn1', {
     file: summary.sessionLogAfterTurn1,
     counts: summary.turnCountAfterTurn1,
-    processReaped: reaped1.gone,
+    processReaped: reaped1.status === PROC.ABSENT, reapStatus: reaped1.status,
   })
   step('session log after turn1', summary.turnCountAfterTurn1)
 
@@ -157,7 +157,7 @@ try {
   summary.resumeRecalledCodeword = String(summary.turn2?.finalResponse ?? '').includes(CODEWORD)
 
   await second.close()
-  await waitForNoDshChild(15000)
+  await waitForRuntimeGone({ dshHome, boundMs: 20000 })
 } catch (error) {
   summary.error = { name: error?.constructor?.name, message: String(error?.message ?? error) }
   ev.append('probe.error', summary.error)

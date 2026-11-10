@@ -1,94 +1,96 @@
 {
-  "generatedAt": "2026-11-10T09:32:17.376Z",
+  "generatedAt": "2026-11-10T10:49:11.625Z",
   "node": "v22.22.2",
   "total": 7,
-  "passed": 3,
-  "blocked": 4,
-  "failed": 0,
+  "passed": 0,
+  "blocked": 2,
+  "failed": 5,
   "buckets": {
-    "PASS": [
-      "B-protocol-facts",
-      "C-resume",
-      "G-exit-code"
-    ],
+    "PASS": [],
     "BLOCKED": [
       "A-basic-run",
+      "G-exit-code"
+    ],
+    "FAIL": [
+      "B-protocol-facts",
+      "C-resume",
       "D-abandon",
       "E-tools",
       "F-concurrent"
-    ],
-    "FAIL": []
+    ]
   },
   "results": [
     {
       "name": "A-basic-run",
       "script": "src/probe-basic.mjs",
-      "exitCode": 3,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 118998,
-      "stdoutTail": "[probe] cleared stale profile lock {\"stalePid\":27200}\n[probe] starting runtime via official SDK {\"provider\":\"deepseek-official\",\"model\":\"deepseek-v4-flash\"}\n[probe] runtime handshake complete 114990ms\n[probe] live dsh child process observed 23148,21892\n[probe] session opened session-f317768074e848989d8ad618b7aecfcd\n[probe] prompt completed {\"runMs\":766,\"events\":15}\n[probe] final response \"\"\n[probe] closing runtime\n[probe] post-close child check {\"gone\":true,\"waitedMs\":963}\n[probe] summary written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\evidence\\a-basic-run\\summary.json\n[probe] PROBE_A_RESULT=BLOCKED {\"infraOk\":true,\"modelResponded\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "ms": 16221,
+      "stdoutTail": "uddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:806:5)\r\n    at wrappedPromisesRm (F:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:850:15)\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:143:9)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n[probe] closing runtime\n[probe] post-close process check {\"status\":\"PROCESS_ABSENT\",\"waitedMs\":1040}\n[probe] summary written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\evidence\\a-basic-run\\summary.json\n[probe] PROBE_A_RESULT=FAIL {\"infraOk\":false,\"modelResponded\":false,\"blocker\":null}\n",
       "stderrTail": "",
-      "outcome": "BLOCKED"
+      "outcome": "BLOCKED",
+      "outcomeReason": "SAFE_DELETE_SHIM"
     },
     {
       "name": "B-protocol-facts",
       "script": "src/probe-protocol.mjs",
-      "exitCode": 0,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 2554,
-      "stdoutTail": "[probe] client.start() issued\n[probe] initialize ok {\"name\":\"deepseek-harness-sdk-runtime\",\"version\":\"0.0.1\"}\n[probe] prompt queued 42ef9851-8fe3-472e-982e-323588e3ffa4\n[probe] idle observed {\"idleWaitMs\":825,\"statuses\":[\"running\",\"idle\"]}\n[probe] method existence checked {\"session/cancel\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/cancel\"},\"session/resume\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/resume\"},\"session/close\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/close\"},\"session/snapshot\":{\"errorName\":\"JsonRpcResponseError\",\"isJsonRpcError\":true,\"code\":-32603,\"message\":\"unknown DeepSeek Harness SDK runtime method: session/snapshot\"}}\n[probe] PROBE_B_RESULT=PASS {\"cancelUnsupported\":true,\"resumeUnsupported\":true,\"sawRunning\":true,\"sawIdle\":true,\"modelBlocker\":\"MODEL_QUOTA\"}\n",
+      "ms": 2859,
+      "stdoutTail": "r/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n[probe] PROBE_B_RESULT=FAIL {\"cancelUnsupported\":false,\"resumeUnsupported\":false,\"modelBlocker\":null}\n",
       "stderrTail": "",
-      "outcome": "PASS"
+      "outcome": "FAIL"
     },
     {
       "name": "C-resume",
       "script": "src/probe-resume.mjs",
-      "exitCode": 0,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 5910,
-      "stdoutTail": "[probe] turn1 settled {\"events\":15,\"blocker\":\"MODEL_QUOTA\"}\n[probe] session log after turn1 {\"compressedBytes\":18073,\"decompressedBytes\":210,\"lines\":1,\"turnStartMarkers\":0,\"userMessageMarkers\":0,\"schemaSample\":\"{\\\"type\\\":\\\"session\\\",\\\"version\\\":3,\\\"id\\\":\\\"probe-resume-1794302985613\\\",\\\"createdAt\\\":1794302987175,\\\"cwd\\\":\\\"H:\\\\\\\\AI与开发\\\\\\\\ai_game_studio_starter\\\\\\\\spike\\\\\\\\dsh-probe\\\\\\\\tmp\\\\\\\\workspace\\\",\\\"isSeeded\\\":false,\\\"delegationDepth\\\"\"}\n[probe] turn2 rejected on session reuse session \"probe-resume-1794302985613\" already exists\n[probe] PROBE_C_RESULT=PASS {\"conclusion\":\"NO_RESUME_AT_SDK_LEVEL\",\"assertions\":{\"firstProcessReaped\":true,\"sessionLogPersisted\":true,\"sessionLogCompressedBytes\":18073,\"sessionIdReuseRejected\":true,\"sessionLogStillReadable\":true,\"modelRecalledCodeword\":false}}\n",
+      "ms": 2844,
+      "stdoutTail": "{lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n[probe] PROBE_C_RESULT=FAIL {\"conclusion\":\"ID_REUSE_ACCEPTED_BUT_HISTORY_NOT_RECALLED\",\"assertions\":{\"firstProcessReaped\":false,\"sessionLogPersisted\":false,\"sessionLogCompressedBytes\":null,\"sessionIdReuseRejected\":false,\"sessionLogStillReadable\":false,\"modelRecalledCodeword\":false}}\n",
       "stderrTail": "",
-      "outcome": "PASS"
+      "outcome": "FAIL"
     },
     {
       "name": "D-abandon",
       "script": "src/probe-cancel.mjs",
-      "exitCode": 3,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 8640,
-      "stdoutTail": "[probe] long prompt queued, waiting for running state\n[probe] running observed {\"sawRunning\":true}\n[probe] caller abandoned the wait {\"childStillAlive\":true,\"lastStatus\":\"idle\",\"eventsKeptArriving\":true}\n[probe] closed and reaped {\"gone\":true,\"closeMs\":48}\n[probe] PROBE_D_RESULT=BLOCKED {\"agentReachedRunning\":true,\"stillRunningAtAbandon\":false,\"processSurvivedAbandonedWait\":true,\"processGoneAfterClose\":true,\"noWireCancelMethod\":true,\"longTurnKeptProducingWork\":false}\n",
+      "ms": 3859,
+      "stdoutTail": "throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n[probe] PROBE_D_RESULT=FAIL {\"A_runtimeAliveAfterAbandon\":false,\"B_stillRunningAtAbandon\":false,\"C_newAssistantContentAfterAbandon\":false,\"D_processTreeGoneAfterClose\":true,\"E_noLeftoverExternalProcesses\":true}\n",
       "stderrTail": "",
-      "outcome": "BLOCKED"
+      "outcome": "FAIL"
     },
     {
       "name": "E-tools",
       "script": "src/probe-tools.mjs",
-      "exitCode": 3,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 3639,
-      "stdoutTail": "[probe] profile patch written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\patches\\studio-mcp.cordis.yml\n[probe] runtime started with MCP patch\n[probe] model answered \"\"\n[probe] studio audit {\"totalRecords\":4,\"kinds\":[\"server.started\",\"initialize\",\"notification\",\"tools/list\"],\"toolCalls\":[],\"servedCount\":0,\"initializedWith\":{\"ts\":\"2026-11-10T09:30:01.843Z\",\"kind\":\"initialize\",\"clientProtocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"dsh-mcp-client\",\"version\":\"0.0.1\"}}}\n[probe] PROBE_E_RESULT=BLOCKED {\"registrationVerified\":true,\"invocationVerified\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "ms": 3865,
+      "stdoutTail": " input closed\nexit code: 1\nstderr tail:\nfile:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n",
       "stderrTail": "",
-      "outcome": "BLOCKED"
+      "outcome": "FAIL"
     },
     {
       "name": "F-concurrent",
       "script": "src/probe-concurrent.mjs",
-      "exitCode": 3,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 3322,
-      "stdoutTail": "[probe] runtime started\n[probe] both runs settled {\"totalMs\":654}\n[probe] assertions {\"distinctSessions\":true,\"bothSettled\":true,\"noCrossTalkInA\":true,\"noCrossTalkInB\":true,\"bothProducedText\":false,\"answersNotSwapped\":true}\n[probe] PROBE_F_RESULT=BLOCKED {\"isolationOk\":true,\"modelOk\":false}\n",
+      "ms": 3868,
+      "stdoutTail": "BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n[probe] PROBE_F_RESULT=FAIL {\"isolationOk\":false,\"modelOk\":false}\n",
       "stderrTail": "",
-      "outcome": "BLOCKED"
+      "outcome": "FAIL"
     },
     {
       "name": "G-exit-code",
       "script": "src/probe-exitcode.mjs",
-      "exitCode": 0,
+      "exitCode": 1,
       "timedOut": false,
-      "ms": 130313,
-      "stdoutTail": "[probe] clean EOF shutdown {\"exitCode\":0,\"ms\":127694}\n[probe] boot with stale lock (fresh home) {\"exitCode\":1,\"ms\":2439}\n[probe] PROBE_G_RESULT=PASS {\"cleanExitCodeZero\":true,\"cleanNoStderr\":true,\"staleLockExitCodeOne\":true,\"staleLockMentionsLock\":true}\n",
+      "ms": 154,
+      "stdoutTail": "[probe] ERROR [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}\n[probe] PROBE_G_RESULT=FAIL null\n",
       "stderrTail": "",
-      "outcome": "PASS"
+      "outcome": "BLOCKED",
+      "outcomeReason": "SAFE_DELETE_SHIM"
     }
   ]
 }

@@ -15,7 +15,7 @@
 import fs from 'node:fs'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
-import { waitForNoDshChild, clearStaleProfileLock } from './lib/proc.mjs'
+import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, STUDIO_TOOL_NAME, advertisedTools, detectModelBlocker } from './lib/outcome.mjs'
 
 const MODEL = process.env.PROBE_MODEL ?? 'deepseek-v4-flash'
@@ -170,9 +170,9 @@ try {
   } catch (error) {
     summary.closeError = String(error?.message ?? error)
   }
-  const reaped = await waitForNoDshChild(15000)
-  summary.childGoneAfterClose = reaped.gone
-  ev.append('runtime.reap', { gone: reaped.gone, waitedMs: reaped.waitedMs })
+  const reaped = await waitForRuntimeGone({ dshHome, boundMs: 20000 })
+  summary.childGoneAfterClose = reaped.status === PROC.ABSENT
+  ev.append('runtime.reap', { status: reaped.status, waitedMs: reaped.waitedMs, remaining: reaped.lastMatches })
   summary.finishedAt = new Date().toISOString()
   ev.writeJson('summary.json', summary)
 }

@@ -1,9 +1,10 @@
 # 当前交接
 
 - 当前项目：AI Game Studio。
-- 当前阶段：PHASE 00 — **已完成执行，等待外部复审**。
-- 当前状态：`PARTIALLY_VERIFIED`（核心链路已验证；模型层被账号余额阻断）。
-- 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio ，审查基线 `5658479`。
+- 当前阶段：**PHASE 00-R1（复审整改）— 已完成，等待外部复审**。
+- 当前状态：模型链路已用用户真实 provider 跑通（`current-0.2.1` 套件 5/5 PASS）；0.1.5 legacy 套件在本机不可稳定复现（环境安全垫）。
+- 运行组合：**DSH 0.2.1-rc.3（桌面端自带）+ commandcode 插件 0.15.4 + `deepseek/deepseek-v4.1-flash`**。PATH 上的 `dsh` 0.1.5-rc.1 不是目标版本。
+- 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio 。
 - 尚无正式需求基线；不得提前进入业务功能开发。
 
 ## 一句话状态
@@ -38,3 +39,12 @@ DSH 的「启动 / 会话 / 事件 / 关闭 / 工具桥接注册」五条链路�
 - `spike/dsh-probe/mcp/studio-mcp-server.mjs` 是手写 MCP 实现，生产必须换 `@modelcontextprotocol/sdk`。
 - `clearStaleProfileLock()` 目前只是探针里的参考实现，需落到 `RuntimeSupervisor`。
 - 启动耗时 2.5 s vs 73–128 s 的双档体验未解决，需要评估安装期预热 profile。
+
+## R1 结论速览（2026-11-10）
+
+1. **模型可用**：commandcode + deepseek/deepseek-v4.1-flash 在 0.2.1-rc.3 上 CLI 与 SDK 都跑通，随机标识回显可验证。
+2. **工具真的被调用**：模型调用 mcp__studio__get_studio_health，Studio MCP Server 审计到 tools/call + tools/call.served。
+3. **resume 存在且有效**：0.2.1 的 session/resume 重启后仍能答出历史口令；0.1.5 无此方法。
+4. **取消/审批仍不存在**：session/cancel、session/approve 在两个版本都没有。
+5. 权威事实源：state/project_state.json 的 phase_00_r1.gate_results。
+6. 报告：docs/review-handoff/PHASE_00_R1_WORK_REPORT.md。

@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-11-10T10:41:16.351Z",
+  "runtime": "0.2.1-rc.3",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "node": "v22.22.2",
+  "total": 5,
+  "passed": 5,
+  "blocked": 0,
+  "failed": 0,
+  "buckets": {
+    "PASS": [
+      "CC-1-reply",
+      "CC-2-tools",
+      "CC-3-resume",
+      "CC-4-concurrent",
+      "CC-5-capability"
+    ],
+    "BLOCKED": [],
+    "FAIL": []
+  },
+  "results": [
+    {
+      "name": "CC-1-reply",
+      "script": "src/probe-commandcode.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 10874,
+      "stdoutTail": "[probe] runtime started with commandcode patch {\"startMs\":3173}\n[probe] model answered \"验证标识：studio-74963f73\\n\\n当前使用的模型是 `deepseek/deepseek-v4.1-flash`，运行在 DeepSeek Harness 中。\"\n[probe] CC1_RESULT=PASS {\"echoToken\":true,\"nonEmptyResponse\":true,\"routeIsCommandcode\":true,\"modelAsRequested\":true,\"noProviderFallback\":true,\"processTreeGone\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-2-tools",
+      "script": "src/probe-cc-tools.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 12036,
+      "stdoutTail": "[probe] runtime started with commandcode + studio MCP\n[probe] model answered \"status=ok\\nphase=PHASE_00\"\n[probe] tool chain {\"stage1_serverStarted\":true,\"stage1_handshaken\":true,\"stage2_toolAdvertised\":true,\"stage3_modelCalledTool\":true,\"stage3_serverExecuted\":true,\"stage3_responseUsesToolData\":true,\"routeIsCommandcode\":true}\n[probe] CC2_RESULT=PASS {\"called\":true,\"executed\":true,\"reaped\":\"PROCESS_ABSENT\"}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-3-resume",
+      "script": "src/probe-cc-resume.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 17608,
+      "stdoutTail": "[probe] turn1 taught {\"textLength\":6,\"blocker\":null}\n[probe] turn2 recall \"recall-cf3228\"\n[probe] CC3_RESULT=PASS {\"conclusion\":\"RESUME_RESTORES_HISTORY\",\"assertions\":{\"apiExists\":true,\"unknownSessionRejected\":true,\"resumeCallSucceeded\":true,\"historyRecalled\":true,\"processReapedBothRuns\":true}}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-4-concurrent",
+      "script": "src/probe-cc-concurrent.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 8354,
+      "stdoutTail": "[probe] both settled {\"totalMs\":2573,\"a\":\"APPLE\",\"b\":\"BANANA\"}\n[probe] CC4_RESULT=PASS {\"distinctSessionIds\":true,\"eventsOnlyForOwnSessionA\":true,\"eventsOnlyForOwnSessionB\":true,\"bothProducedText\":true,\"answersNotSwapped\":true,\"noLeftoversAfterClose\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-5-capability",
+      "script": "src/probe-capability.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 4251,
+      "stdoutTail": "[probe] method scan {\"session/resume\":\"SUPPORTED\",\"session/wait\":\"SUPPORTED\",\"session/working-directory/get\":\"SUPPORTED\",\"session/working-directory/set\":\"SUPPORTED\",\"session/cancel\":\"NOT_SUPPORTED\",\"session/approve\":\"NOT_SUPPORTED\",\"session/close\":\"NOT_SUPPORTED\"}\n[probe] CC5_RESULT=PASS {\"definite\":true,\"reap\":\"PROCESS_ABSENT\"}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    }
+  ]
+}

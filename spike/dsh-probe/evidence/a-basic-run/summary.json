@@ -1,75 +1,37 @@
 {
   "probe": "A-basic-run",
-  "startedAt": "2026-11-10T09:27:44.055Z",
+  "startedAt": "2026-11-10T10:48:38.021Z",
   "runtime": {
     "platform": "win32",
     "osVersion": null,
     "node": "v22.22.2",
     "arch": "x64",
-    "pid": 26460,
+    "pid": 22996,
     "execPath": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe"
   },
   "lockRecovery": {
     "checked": true,
     "cleared": true,
-    "stalePid": 27200,
-    "path": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "stalePid": 27576,
+    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock",
+    "error": null
   },
-  "startMs": 114990,
-  "childrenWhileRunning": [
-    {
-      "pid": 23148,
-      "name": "node.exe",
-      "commandline": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe H:\\AI�뿪��\\ai_game_studio_starter\\spike\\dsh-probe\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js --profile sdk"
-    },
-    {
-      "pid": 21892,
-      "name": "powershell.exe",
-      "commandline": "powershell -NoProfile -NonInteractive -Command \"$pid0 = 26460; Get-CimInstance Win32_Process -Filter \\\"ParentProcessId=$pid0\\\" | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress -Depth 3\""
-    }
-  ],
-  "sessionId": "session-f317768074e848989d8ad618b7aecfcd",
-  "runMs": 766,
-  "finalResponse": "",
-  "eventCount": 15,
-  "notificationCount": 17,
-  "notificationMethods": [
-    "session.event",
-    "session.status"
-  ],
-  "sawRunningStatus": true,
-  "sawIdleStatus": true,
-  "eventKinds": [
-    "agent/inbox/spliced",
-    "turn/start",
-    "step/start",
-    "system/message",
-    "user/message",
-    "request/header",
-    "request/context",
-    "session/title",
-    "assistant/attempt",
-    "step/end",
-    "turn/end"
-  ],
-  "modelBlocker": {
-    "blocked": true,
-    "kind": "MODEL_QUOTA",
-    "code": "QUOTA",
-    "status": 402,
-    "message": "Insufficient Balance (request_id: 8ccf4b91-a3ad-43b0-91d0-496cdb2e7c70)"
+  "error": {
+    "name": "TransportClosedError",
+    "message": "dsh profile \"sdk\": JSON-RPC input closed\nexit code: 1\nstderr tail:\nF:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:243\r\n            throw new Error(detail);\r\n                  ^\r\n\r\nError: [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}\r\n    at checkBulkDeleteGuard (F:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:243:19)\r\n    at tryTrash (F:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:595:5)\r\n    at tryRm (F:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:806:5)\r\n    at wrappedPromisesRm (F:\\workbuddy\\resources\\app.asar.unpacked\\cli\\vendor\\shim\\node-safe-delete-shim.cjs:850:15)\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:143:9)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r"
   },
-  "closeMs": 46,
+  "closeMs": 0,
+  "reap": {
+    "status": "PROCESS_ABSENT",
+    "waitedMs": 1040,
+    "remaining": [],
+    "error": null
+  },
   "dshChildGoneAfterClose": true,
-  "reapWaitMs": 963,
-  "childrenAfterClose": [
-    {
-      "pid": 25868,
-      "name": "powershell.exe"
-    }
-  ],
-  "finishedAt": "2026-11-10T09:29:42.991Z",
-  "verdict": "BLOCKED",
-  "infrastructureOk": true,
+  "reapWaitMs": 1040,
+  "childrenAfterClose": [],
+  "finishedAt": "2026-11-10T10:48:54.167Z",
+  "verdict": "FAIL",
+  "infrastructureOk": false,
   "modelResponded": false
 }

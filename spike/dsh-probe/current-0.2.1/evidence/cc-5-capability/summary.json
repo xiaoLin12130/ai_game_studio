@@ -1,0 +1,55 @@
+{
+  "probe": "CC-5-capability",
+  "startedAt": "2026-11-10T10:41:12.161Z",
+  "profile": "cc-sdk",
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "error": null
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "methods": {
+    "session/resume": {
+      "status": "SUPPORTED",
+      "detail": "answered without error"
+    },
+    "session/wait": {
+      "status": "SUPPORTED",
+      "detail": "answered without error"
+    },
+    "session/working-directory/get": {
+      "status": "SUPPORTED",
+      "detail": "answered without error"
+    },
+    "session/working-directory/set": {
+      "status": "SUPPORTED",
+      "detail": "answered without error"
+    },
+    "session/cancel": {
+      "status": "NOT_SUPPORTED",
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/cancel"
+    },
+    "session/approve": {
+      "status": "NOT_SUPPORTED",
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/approve"
+    },
+    "session/close": {
+      "status": "NOT_SUPPORTED",
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/close"
+    }
+  },
+  "reap": {
+    "status": "PROCESS_ABSENT",
+    "waitedMs": 995
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-10T10:41:16.344Z"
+}

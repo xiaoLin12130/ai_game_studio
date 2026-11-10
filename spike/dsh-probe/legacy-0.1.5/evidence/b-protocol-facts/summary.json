@@ -1,0 +1,66 @@
+{
+  "probe": "B-protocol-facts",
+  "startedAt": "2026-11-10T09:29:43.055Z",
+  "runtime": {
+    "platform": "win32",
+    "osVersion": null,
+    "node": "v22.22.2",
+    "arch": "x64",
+    "pid": 23928,
+    "execPath": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe"
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "sessionId": "probe-proto-1794302984645",
+  "promptMessageId": "42ef9851-8fe3-472e-982e-323588e3ffa4",
+  "idleWaitMs": 825,
+  "sawRunning": true,
+  "sawIdle": true,
+  "statusSequence": [
+    "running",
+    "idle"
+  ],
+  "notificationMethods": [
+    "session.event",
+    "session.status"
+  ],
+  "modelBlocker": {
+    "blocked": true,
+    "kind": "MODEL_QUOTA",
+    "code": "QUOTA",
+    "status": 402,
+    "message": "Insufficient Balance (request_id: 4b73f8cc-bda8-424d-ab06-90979aa88c09)"
+  },
+  "unsupportedMethods": {
+    "session/cancel": {
+      "errorName": "JsonRpcResponseError",
+      "isJsonRpcError": true,
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/cancel"
+    },
+    "session/resume": {
+      "errorName": "JsonRpcResponseError",
+      "isJsonRpcError": true,
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/resume"
+    },
+    "session/close": {
+      "errorName": "JsonRpcResponseError",
+      "isJsonRpcError": true,
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/close"
+    },
+    "session/snapshot": {
+      "errorName": "JsonRpcResponseError",
+      "isJsonRpcError": true,
+      "code": -32603,
+      "message": "unknown DeepSeek Harness SDK runtime method: session/snapshot"
+    }
+  },
+  "finishedAt": "2026-11-10T09:29:45.546Z",
+  "unknownMethodErrorCode": -32603,
+  "protocolDocClaimsCode": -32601,
+  "verdict": "PASS"
+}

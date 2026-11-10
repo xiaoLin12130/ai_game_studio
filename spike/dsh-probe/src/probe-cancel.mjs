@@ -1,23 +1,26 @@
 /**
- * Probe D — "the caller stopped waiting" is not "the agent stopped working".
+ * Probe D — "the caller stopped waiting" versus "the runtime stopped working".
  *
- * AGENTS.md 5 and docs/04 both require this distinction to be measured, not
- * asserted. The current protocol has no cancel method, so this probe:
- *   1. starts a long turn,
- *   2. abandons the wait after a short while, exactly as an impatient UI would,
- *   3. checks the OS: is the runtime process still alive and is the agent still
- *      reporting `running`?
- *   4. only then closes, and proves the process exits.
+ * PHASE 00-R1 review: the first version collapsed several different facts into one
+ * verdict, and counted a growing event stream as evidence that the agent was still
+ * producing work. Provider error retries also emit events, so that was wrong.
+ * This version keeps five assertions separate:
+ *
+ *   1. runtime alive after the caller abandoned the wait
+ *   2. agent still `running` at the moment of abandonment
+ *   3. the model produced genuinely new assistant content after abandonment
+ *   4. runtime process tree gone after close()
+ *   5. no leftover external processes (MCP server / shell) after close()
  */
 import fs from 'node:fs'
 import { HarnessClient } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
-import { hasLiveDshChild, listChildProcesses, waitForNoDshChild, clearStaleProfileLock } from './lib/proc.mjs'
-import { EXIT } from './lib/outcome.mjs'
+import { findRuntimeProcesses, waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
+import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
 
 const MODEL = process.env.PROBE_MODEL ?? 'deepseek-v4-flash'
 const PROVIDER = process.env.PROBE_PROVIDER ?? 'deepseek-official'
-const ABANDON_AFTER_MS = Number(process.env.PROBE_ABANDON_MS ?? 4000)
+const ABANDON_AFTER_MS = Number(process.env.PROBE_ABANDON_MS ?? 5000)
 const LONG_PROMPT =
   'Write a careful 900-word technical explanation of how TCP congestion control works. Do not summarize; produce the full text.'
 
@@ -35,12 +38,24 @@ const client = new HarnessClient({
   dshHome,
   initializeTimeoutMs: Number(process.env.PROBE_INIT_TIMEOUT_MS ?? 180000),
 })
+
 const statuses = []
-const events = []
+const sessionEvents = []
+
+/** Visible assistant text, used to detect genuinely new output. */
+function assistantText(event) {
+  if (event?.type !== 'assistant/message') return ''
+  const data = event?.data ?? {}
+  const blocks = data.message?.content ?? data.content ?? []
+  return blocks
+    .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+    .map((block) => block.text)
+    .join('')
+}
 
 try {
   client.start()
-  const init = await client.initialize({ cwd: workspace, provider: PROVIDER, model: MODEL, maxTokens: 4000 })
+  const init = await client.initialize({ cwd: workspace, provider: PROVIDER, model: MODEL, maxTokens: 6000 })
   summary.serverInfo = init.serverInfo
 
   const subscription = client.subscribe()
@@ -48,7 +63,7 @@ try {
     try {
       for await (const notification of subscription) {
         if (notification.method === 'session.status') statuses.push(notification.params?.status)
-        if (notification.method === 'session.event') events.push(notification.params)
+        if (notification.method === 'session.event') sessionEvents.push(notification.params?.event)
       }
     } catch {
       /* expected on close */
@@ -59,44 +74,50 @@ try {
   summary.sessionId = sessionId
   await client.prompt(sessionId, [{ type: 'text', text: LONG_PROMPT }])
   ev.append('prompt.queued', { sessionId })
-  step('long prompt queued, waiting for running state')
+  step('long prompt queued')
 
-  // Wait until the agent is actually running, bounded.
   const runWaitStart = Date.now()
-  while (Date.now() - runWaitStart < 30000 && !statuses.includes('running')) {
+  while (Date.now() - runWaitStart < 45000 && !statuses.includes('running')) {
     await new Promise((r) => setTimeout(r, 150))
   }
   summary.sawRunning = statuses.includes('running')
-  ev.append('agent.running', { sawRunning: summary.sawRunning, waitedMs: Date.now() - runWaitStart })
-  step('running observed', { sawRunning: summary.sawRunning })
 
-  // ---- Simulate the caller giving up. We stop waiting; we do NOT close.
+  // ---- The caller walks away here: we stop waiting, we do not close.
   const abandonStart = Date.now()
-  const eventsAtAbandon = events.length
+  const textAtAbandon = sessionEvents.map(assistantText).join('').length
+  const eventsAtAbandon = sessionEvents.length
+  const statusAtAbandon = statuses.at(-1) ?? null
+  const procAtAbandon = findRuntimeProcesses({ dshHome })
+
   await new Promise((r) => setTimeout(r, ABANDON_AFTER_MS))
-  const eventsAfterAbandon = events.length
+
+  const procAfter = findRuntimeProcesses({ dshHome })
+  const textAfter = sessionEvents.map(assistantText).join('').length
+  const eventsAfter = sessionEvents.length
 
   summary.abandon = {
     waitedMs: Date.now() - abandonStart,
-    childStillAlive: hasLiveDshChild(),
+    statusAtAbandon,
+    processStatusAtAbandon: procAtAbandon.status,
+    processStatusAfter: procAfter.status,
+    processCountAfter: procAfter.matches.length,
+    checkError: procAfter.error,
+    eventsAtAbandon,
+    eventsAfter,
+    assistantCharsAtAbandon: textAtAbandon,
+    assistantCharsAfter: textAfter,
+    newAssistantChars: textAfter - textAtAbandon,
     lastStatus: statuses.at(-1) ?? null,
-    eventCountAtAbandon: eventsAtAbandon,
-    eventCountAfterAbandon: eventsAfterAbandon,
-    eventsKeptArriving: eventsAfterAbandon > eventsAtAbandon,
-    childProcesses: listChildProcesses().map((c) => ({ pid: c.ProcessId, name: c.Name })),
   }
   ev.append('caller.abandoned', summary.abandon)
   step('caller abandoned the wait', {
-    childStillAlive: summary.abandon.childStillAlive,
-    lastStatus: summary.abandon.lastStatus,
-    eventsKeptArriving: summary.abandon.eventsKeptArriving,
+    processStatusAfter: procAfter.status,
+    statusAtAbandon,
+    newAssistantChars: summary.abandon.newAssistantChars,
   })
 
   summary.cancelAvailable = false
-  ev.append('cancel.availability', {
-    available: false,
-    evidence: 'probe B: session/cancel answered -32601; protocol README states no cancel method',
-  })
+  summary.modelBlocker = detectModelBlocker(sessionEvents)
 
   subscription.close()
   await drain
@@ -112,40 +133,36 @@ try {
   } catch (error) {
     summary.closeError = String(error?.message ?? error)
   }
-  const reaped = await waitForNoDshChild(15000)
-  summary.childGoneAfterClose = reaped.gone
-  summary.reapWaitMs = reaped.waitedMs
-  ev.append('runtime.closed', { closeMs: summary.closeMs ?? null, gone: reaped.gone, waitedMs: reaped.waitedMs })
-  step('closed and reaped', { gone: reaped.gone, closeMs: summary.closeMs })
 
-  summary.finishedAt = new Date().toISOString()
-  ev.writeJson('summary.json', summary)
+  const reaped = await waitForRuntimeGone({ dshHome, boundMs: 20000 })
+  summary.reap = { status: reaped.status, waitedMs: reaped.waitedMs, remaining: reaped.lastMatches, error: reaped.error }
+  ev.append('runtime.reap', summary.reap)
 
-  const ok = summary.error
-    ? false
-    : summary.sawRunning === true && summary.abandon?.childStillAlive === true && summary.childGoneAfterClose === true
-  // The strong claim — "the agent was still working when the caller walked away" —
-  // requires the turn to still be `running` at the moment of abandonment. With a
-  // provider refusal the turn may already have ended, so record that distinctly
-  // instead of dressing error-retry events up as productive work.
-  const stillRunningAtAbandon = summary.abandon?.lastStatus === 'running'
-  const longTurnExercised = stillRunningAtAbandon && summary.abandon?.eventsKeptArriving === true
+  // Independent assertions, each with its own evidence.
   summary.assertions = {
-    agentReachedRunning: summary.sawRunning === true,
-    stillRunningAtAbandon,
-    processSurvivedAbandonedWait: summary.abandon?.childStillAlive === true,
-    processGoneAfterClose: summary.childGoneAfterClose === true,
-    noWireCancelMethod: true,
-    longTurnKeptProducingWork: longTurnExercised,
+    A_runtimeAliveAfterAbandon: summary.abandon?.processStatusAfter === PROC.PRESENT,
+    B_stillRunningAtAbandon: summary.abandon?.statusAtAbandon === 'running',
+    C_newAssistantContentAfterAbandon: (summary.abandon?.newAssistantChars ?? 0) > 0,
+    D_processTreeGoneAfterClose: reaped.status === PROC.ABSENT,
+    E_noLeftoverExternalProcesses: reaped.status === PROC.ABSENT && (reaped.lastMatches?.length ?? 0) === 0,
   }
-  summary.verdict = ok ? (longTurnExercised ? 'PASS' : 'BLOCKED') : 'FAIL'
-  ev.append('verdict', { verdict: summary.verdict, assertions: summary.assertions })
+
+  const checkFailed = reaped.status === PROC.FAILED || summary.abandon?.processStatusAfter === PROC.FAILED
+  const lifecycleOk = summary.assertions.A_runtimeAliveAfterAbandon && summary.assertions.D_processTreeGoneAfterClose
+  const workProven = summary.assertions.B_stillRunningAtAbandon && summary.assertions.C_newAssistantContentAfterAbandon
+
+  // FAIL only when our own machinery or the lifecycle claim is wrong. When the
+  // provider refuses, the work assertions cannot be exercised → BLOCKED.
+  if (checkFailed) summary.verdict = 'FAIL'
+  else if (lifecycleOk && workProven) summary.verdict = 'PASS'
+  else if (lifecycleOk && summary.modelBlocker?.blocked) summary.verdict = 'BLOCKED'
+  else summary.verdict = 'FAIL'
+
   summary.finishedAt = new Date().toISOString()
+  ev.append('verdict', { verdict: summary.verdict, assertions: summary.assertions })
   ev.writeJson('summary.json', summary)
   step(`PROBE_D_RESULT=${summary.verdict}`, summary.assertions)
   process.exitCode = EXIT[summary.verdict]
 }
 
-// The SDK keeps a child process and subscriptions alive; without an explicit exit a
-// hung child would block the whole probe run and look like a silent pass.
-process.exit(typeof process.exitCode === "number" ? process.exitCode : 0)
+process.exit(typeof process.exitCode === 'number' ? process.exitCode : 0)

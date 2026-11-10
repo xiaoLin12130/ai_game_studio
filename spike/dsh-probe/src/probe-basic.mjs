@@ -12,7 +12,7 @@
 import fs from 'node:fs'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
-import { listChildProcesses, waitForNoDshChild, runtimeVersionFacts, clearStaleProfileLock } from './lib/proc.mjs'
+import { findRuntimeProcesses, waitForRuntimeGone, runtimeVersionFacts, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
 
 const MODEL = process.env.PROBE_MODEL ?? 'deepseek-v4-flash'
@@ -59,16 +59,14 @@ try {
   ev.append('runtime.started', { startMs: summary.startMs })
   step('runtime handshake complete', `${summary.startMs}ms`)
 
-  summary.childrenWhileRunning = listChildProcesses().map((c) => ({
-    pid: c.ProcessId,
-    name: c.Name,
-    commandline: String(c.CommandLine ?? '').slice(0, 300),
-  }))
-  ev.append('runtime.children', { children: summary.childrenWhileRunning })
-  if (!summary.childrenWhileRunning.some((c) => /dsh/i.test(c.commandline))) {
-    throw new Error('expected a live dsh child process after start(); none found')
+  const running = findRuntimeProcesses({ dshHome })
+  summary.processStateWhileRunning = running.status
+  summary.childrenWhileRunning = running.matches
+  ev.append('runtime.children', { status: running.status, matches: running.matches, error: running.error })
+  if (running.status !== PROC.PRESENT) {
+    throw new Error(`expected PROCESS_PRESENT after start(), got ${running.status} (${running.error ?? 'no matches'})`)
   }
-  step('live dsh child process observed', summary.childrenWhileRunning.map((c) => c.pid).join(','))
+  step('live runtime processes observed', running.matches.map((c) => c.pid).join(','))
 
   const session = harness.session()
   summary.sessionId = session.id
@@ -134,16 +132,14 @@ try {
     ev.append('runtime.close.error', summary.closeError)
   }
 
-  const reaped = await waitForNoDshChild(15000)
-  summary.dshChildGoneAfterClose = reaped.gone
+  // Reap check: three-state. PROCESS_CHECK_FAILED is never read as "gone".
+  const reaped = await waitForRuntimeGone({ dshHome, boundMs: 20000 })
+  summary.reap = { status: reaped.status, waitedMs: reaped.waitedMs, remaining: reaped.lastMatches, error: reaped.error }
+  summary.dshChildGoneAfterClose = reaped.status === PROC.ABSENT
   summary.reapWaitMs = reaped.waitedMs
-  summary.childrenAfterClose = listChildProcesses().map((c) => ({ pid: c.ProcessId, name: c.Name }))
-  ev.append('runtime.reap', {
-    gone: reaped.gone,
-    waitedMs: reaped.waitedMs,
-    remainingChildren: summary.childrenAfterClose,
-  })
-  step('post-close child check', { gone: reaped.gone, waitedMs: reaped.waitedMs })
+  summary.childrenAfterClose = reaped.lastMatches
+  ev.append('runtime.reap', summary.reap)
+  step('post-close process check', { status: reaped.status, waitedMs: reaped.waitedMs })
 
   summary.finishedAt = new Date().toISOString()
 
@@ -156,7 +152,8 @@ try {
     summary.dshChildGoneAfterClose === true
   const modelOk = typeof summary.finalResponse === 'string' && summary.finalResponse.length > 0
 
-  summary.verdict = infraOk && modelOk ? 'PASS' : infraOk && summary.modelBlocker?.blocked ? 'BLOCKED' : 'FAIL'
+  summary.verdict =
+    infraOk && modelOk ? 'PASS' : infraOk && summary.modelBlocker?.blocked ? 'BLOCKED' : 'FAIL'
   summary.infrastructureOk = infraOk
   summary.modelResponded = modelOk
   const file = ev.writeJson('summary.json', summary)

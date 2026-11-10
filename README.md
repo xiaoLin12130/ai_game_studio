@@ -53,43 +53,52 @@
 
 ---
 
-## 当前状态（PHASE 00 执行后）
+## 当前状态（PHASE 00-R1 之后）
 
 | 项 | 值 |
 |---|---|
-| 阶段 | PHASE 00 — 技术可行性与 DSH 最小垂直切片 |
-| 结果 | `PARTIALLY_VERIFIED`（核心链路通过；模型层被账号余额阻断） |
+| 阶段 | **PHASE 00-R1**（复审整改） |
+| 结果 | 模型链路已用用户真实 provider 跑通（5/5 PASS）；待外部复审 |
+| 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |
 | 分支 | `phase/00-feasibility` |
-| 推送 | **未推送**（仓库尚无 remote） |
-| 下一阶段 | 未授权。PHASE 01 及之后保持 `BLOCKED_BY_PREVIOUS_REVIEW` |
+| 仓库 | public（按用户要求保持公开） |
+| 下一阶段 | 未授权。PHASE 01 保持 `BLOCKED_BY_PREVIOUS_REVIEW` |
 
-详细结论见 `docs/phase-reports/PHASE_00_REPORT.md`，复审入口见 `docs/review-handoff/PHASE_00_REVIEW_HANDOFF.md`。
+> 注意：PATH 上的 `dsh` 是 0.1.5-rc.1，**不是**用户日常运行的版本。本项目的验证目标是 0.2.1-rc.3。
 
-## 如何在本机验证（真实命令）
+权威事实源：`state/project_state.json` 的 `phase_00_r1.gate_results`。
+整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`。
 
-前提：Node ≥ 22、环境变量 `DEEPSEEK_API_KEY` 可用。
+## 如何验证（真实命令）
+
+前提：Node ≥ 22；环境变量 `COMMANDCODE_API_KEY` 可用（由 DSH 的 credential seam 解析）。
+
+### 生产目标组合（0.2.1-rc.3 + commandcode）
+
+```bash
+cd spike/dsh-probe/current-0.2.1
+npm install       # 依赖精确钉版本
+node run-all.mjs  # 期望：PASS 5/5，退出码 0
+```
+
+CLI 基准（同一 profile）：
+
+```bash
+DSH_HOME=$(pwd)/dsh-home \
+  node ./node_modules/@deepseek-ai/dsh/lib/bin.js \
+  --profile cc-cli --patch tmp/cc-cli.patch.yml \
+  "回复一行，包含：验证标识 <随机值>，并说明你使用的模型名"
+```
+
+### 0.1.5 legacy 基线（仅作历史对照）
 
 ```bash
 cd spike/dsh-probe
-npm install          # 依赖已精确钉版本，不要改成 ^
-node run-all.mjs     # 全部探针；退出码 0=全 PASS，2=有 BLOCKED，1=有 FAIL
+node run-all.mjs
 ```
 
-首次运行可能很慢（需重建 profile 的模块回退，实测 1–2 分钟），这不是卡死。
-
-预期结果（当前账号状态）：
-
-```
-BLOCKED A-basic-run      SDK/会话/事件/关闭已验证，模型返回 402
-PASS    B-protocol-facts  无 cancel / 无 resume（-32603 unknown method）
-PASS    C-resume         sessionId 复用被拒 → NO_RESUME_AT_SDK_LEVEL
-BLOCKED D-abandon        进程在放弃等待后仍存活；长 turn 因 402 未成立
-BLOCKED E-tools          MCP 握手+工具注册 PASS，模型调用被 402 阻断
-BLOCKED F-concurrent     会话隔离 PASS，文本断言被 402 阻断
-PASS    G-exit-code      正常关闭 exit 0；陈旧锁导致启动 exit 1
-```
-
-账号充值后重跑，A/D/E/F 应转为 PASS。证据落在 `spike/dsh-probe/evidence/`。
+该套件在本机可能整体 BLOCKED：0.1.5 无法加载 commandcode 0.15.4，且本机安全垫会干扰 profile 维护。
+详见 `spike/dsh-probe/evidence/README.md`。
 
 ## 本阶段产出的文件
 

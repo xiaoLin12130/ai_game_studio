@@ -1,93 +1,145 @@
 # ADR-0001｜桌面容器、前端框架与本地数据方案
 
-- 状态：**PROPOSED**（待外部复审确认）
-- 日期：2026-11-10
-- 阶段：PHASE 00
-- 决策人：用户（待批准）／本 ADR 由执行 Agent 起草
+- 状态：**PROPOSED / CONDITIONAL**（保留 Electron 为优先候选，最终批准需用户决策 + PHASE 01 打包冒烟）
+- 日期：2026-11-10（PHASE 00 初稿）／2026-11-10 修订（PHASE 00-R1）
+- 阶段：PHASE 00-R1
 - 相关：`ADR-0002-dsh-integration.md`、`docs/03_SYSTEM_ARCHITECTURE.md`、`docs/02_SCOPE_AND_NON_GOALS.md`
 
 ---
 
-## 1. 背景与不可回避的约束
+## 0. 本版修订了什么（R1）
 
-`docs/03_SYSTEM_ARCHITECTURE.md` 明确「尚未锁定 UI 框架、桌面容器和本地数据库」，要求 PHASE 00 用证据决定。PHASE 00 实测得到三条硬约束，它们把选项空间压得很小：
+外部复审指出三处问题，本版逐一修正：
+
+| # | 原表述 | 问题 | 本版处理 |
+|---|---|---|---|
+| 1 | 「Electron 主进程 + 单进程即可」被读成单进程架构 | 事实错误：Electron 天然是**多进程**（main / renderer / GPU / utility），且 DSH Runtime 还是**子进程** | §2 给出真实进程拓扑图，删除「单进程」表述 |
+| 2 | Tauri 被否的理由之一是「跨进程锁不可靠」 | 论证偷懒：只要 Node sidecar 独占文件/构建/Git，锁所有权仍然清晰 | §3 重新评价 Tauri，承认其可行 |
+| 3 | 未验证打包后能否运行 | 缺证据 | §5 列出 PHASE 01 必做的打包冒烟清单 |
+
+同时补入 PHASE 00-R1 的新事实：用户实际运行的是 **DSH Desktop 0.2.1-rc.3**（不是 PATH 上的 0.1.5-rc.1），provider 是 **commandcode**。
+
+## 1. 约束重述（已被实测确认）
 
 | 编号 | 约束 | 证据 |
 |---|---|---|
-| C1 | **DSH Runtime 是 Node 程序**，官方 SDK 客户端是 TypeScript/Node 库，通过 spawn 子进程 + stdio JSON-RPC 驱动 | `@deepseek-ai/dsh` 的 `bin` 为 `lib/bin.js`；`dsh-sdk-client` 依赖 `@deepseek-ai/dsh@0.1.5-rc.2` 并自行解析同版本可执行文件。见 `PHASE_00_EVIDENCE.md` §2 |
-| C2 | **DSH 凭据与 Profile 走本机 `DSH_HOME` 语义**，Runtime 需要在文件系统上物化 profile 目录与 `node_modules` 回退 | 隔离 `DSH_HOME` 首次启动会生成 `profiles/` 与 `profiles/node_modules`，冷启动实测 73 s |
-| C3 | **无 wire 级取消能力**，停止一次 turn 只能关闭 Runtime 进程 | `session/cancel` 返回 `-32601`；协议文档写明 “No cancel or session-close methods”。见 `PHASE_00_EVIDENCE.md` §4 |
+| C1 | DSH Runtime 是 Node 程序；官方 SDK 是 TypeScript/Node 库，通过 spawn 子进程 + stdio JSON-RPC 驱动 | `@deepseek-ai/dsh-sdk-client@0.2.1-rc.3` 依赖同版本 `@deepseek-ai/dsh` 并自行解析可执行文件 |
+| C2 | 用户实际 Provider 是第三方插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，要求 DSH `>=0.2.1-rc.2 <0.2.2` | 插件 `package.json` 的 `dsh.compatibility`；桌面端 0.2.1-rc.3 |
+| C3 | 0.2.1-rc.3 有 `session/resume`，但**仍无** Runtime 级取消、无工具审批回调 | `spike/dsh-probe/current-0.2.1/evidence/cc-5-capability/summary.json` |
 
-C1 的直接影响：无论选哪个外壳，**本机必须有一个 Node 运行时来承载 DSH SDK**。这决定了「把 Node 作为独立 sidecar 进程」还是「把 Node 放进主进程」是本次选型的主轴，而不是 UI 框架之争。
+C1+C2 的直接结论：**本机必须有一个能加载第三方 bundle 的 Node 运行时来承载 DSH**，且该运行时的版本必须与插件兼容（0.2.1 线）。
 
-## 2. 候选方案
+## 2. Electron 的真实进程拓扑
 
-只保留两个候选。两者都用 **React + TypeScript** 做界面层：这一层与本 ADR 的核心取舍无关，单独为它再开分支没有证据价值；差异全部集中在容器、Node 承载方式与打包上。
+不能再用「单进程」描述它：
 
-### 方案 A：Electron 主进程内承载 DSH SDK
+```
+AI Game Studio (Electron)
+│
+├── Main Process (Node)
+│   ├── Studio 业务服务层（任务/状态/审批/锁）
+│   ├── DSH SDK Client  ← @deepseek-ai/dsh-sdk-client
+│   │   └── spawn → DSH Runtime (node.exe, profile=cc-sdk)
+│   │       ├── commandcode provider 插件
+│   │       ├── MCP Client ── stdio ──→ Studio MCP Server (node.exe)
+│   │       └── Shell / PTY 等工具子进程
+│   └── SQLite / 文件适配器
+│
+├── Renderer Process (Chromium)  ← 只拿序列化事件，不持有 SDK
+├── GPU Process
+└── Utility Processes (crashpad 等)
+```
 
-- 外壳：Electron（Chromium + 内置 Node）。
-- 进程结构：**单进程即可**。Electron 主进程直接 `import { DeepSeekHarness }`，由它 spawn `dsh --profile sdk` 子进程；渲染进程通过 `contextBridge` 暴露的类型化 IPC 拿事件。
-- 数据：SQLite（`better-sqlite3`，需 `electron-rebuild`）或先文件型 JSON 状态，后续迁移。
-- 打包：`electron-builder` → NSIS 安装包；`electron-updater` 做增量升级。
+由此得到两条必须写进实现的约束：
 
-### 方案 B：Tauri 外壳 + Node sidecar
+1. **进程回收不是一个 `kill`**。关闭顺序必须是：`SDK.close()` → 等 DSH Runtime 退出 → 等 MCP Server 退出 → 校验进程树为空（三态检测，见 `proc.mjs`）。任何一步只等 UI 都是错。
+2. **渲染进程不得 import SDK**。`contextIsolation: true`、`nodeIntegration: false`，事件经 `contextBridge` 白名单通道传递。
 
-- 外壳：Tauri（Rust + 系统 WebView2）。
-- 进程结构：**双运行时**。Rust 主进程负责窗口、权限、文件对话框；Node sidecar 进程承载 DSH SDK 与业务服务层；两者之间再定义一层 IPC（stdio 或本地 HTTP）。
-- 数据：Rust 侧 `rusqlite`，或由 Node sidecar 独占数据库，Rust 只做转发。
-- 打包：Tauri bundler → MSI/NSIS，sidecar 作为 externalBin 一起签名分发。
+## 3. 重新评价 Tauri（不再为了证明 Electron 而贬低它）
 
-## 3. 评估
+Tauri 拓扑：
 
-| 维度 | 方案 A（Electron） | 方案 B（Tauri + Node sidecar） |
+```
+AI Game Studio (Tauri)
+│
+├── Rust Host
+│   ├── 窗口 / WebView2 / 菜单 / 文件对话框
+│   └── IPC 转发层
+│
+└── Node Sidecar (独立进程)
+    └── DSH SDK Client
+        └── DSH Runtime
+            ├── commandcode provider
+            └── MCP Client → Studio MCP Server
+```
+
+复审的两点批评成立，本版接受：
+
+- **跨进程锁并非不可靠**。只要约定「文件 / 构建 / Git / 任务执行全部由 Node sidecar 独占」，Rust 侧只读 UI 状态，锁的所有权就是单一且清晰的。这一点我上一版说错了。
+- **Tauri 的体积与内存优势是真实的**（外壳 ~10 MB + WebView2 复用系统组件），对「本地单用户工具」并非无意义。
+
+那么两者的真实差异收敛为三条，而不是「能不能做」：
+
+| 维度 | Electron | Tauri + Node sidecar |
 |---|---|---|
-| Windows 本地单用户适配 | 满足。单一运行时，与 C1 天然一致 | 满足。但需同时维护 Rust 与 Node 两套运行时与两套依赖 |
-| DSH SDK 运行与回收 | 主进程内 `try/finally` + `close()`，子进程归属清晰；实测 `close()` 后 950 ms 内进程消失 | sidecar 与 Rust 双份生命周期管理；崩溃恢复要处理两个进程的退出顺序 |
-| UI ↔ 本地服务通信 | Electron IPC（`ipcMain`/`ipcRenderer` + `contextBridge`），类型可共享 | Rust↔Node 需自定义协议，WebView↔Rust 再一层；链路更长、故障点更多 |
-| 本地数据与备份 | 单一 SQLite 文件 + WAL；备份=复制文件/定时快照 | 同左，但数据库归属需先决定在 Rust 还是 Node，否则出现双写 |
-| 文件/Git/构建隔离与锁 | Node 侧 `child_process` + 进程内锁；与 DSH 工具执行同一运行时，锁语义一致 | 文件操作可能同时来自 Rust 与 Node，锁必须跨进程实现 |
-| 打包体积 | 较大（~120–180 MB） | 较小（~10 MB 外壳 + Node sidecar ~60 MB） |
-| 升级成本 | `electron-updater` 成熟；整包替换 | 需同时升级 Rust 二进制与 sidecar，签名链路更长 |
-| 故障恢复 | 一个进程树，`taskkill`/重启语义明确 | 需处理「外壳活着但 sidecar 死了」等组合状态 |
-| 主要风险 | 原生模块 ABI（若用 `better-sqlite3`）；Electron 版本升级需回归 | 双运行时复杂度；WebView2 依赖系统组件；sidecar 打包/签名未验证 |
+| 运行时数量 | 1 个 Node（main process 内） | 2 个（Rust + Node） |
+| 关闭/崩溃的失败组合 | 1 个进程树的退出顺序 | 外壳活着 + sidecar 死了 / sidecar 活着 + 外壳死了 / 各自持有部分子进程 |
+| 打包与签名 | electron-builder 一条链 | Tauri bundler + sidecar externalBin，两条链 |
+| 团队门槛 | 纯 TS | Rust + TS 双栈 |
+| 体积/内存 | 较大 | 明显更小 |
+| 安全模型 | Node 全权 | Rust 侧可做能力收窄 |
 
-## 4. 决策
+**本 ADR 的判断**：本产品的风险重心不在安装体积，而在「Agent 子进程的生命周期与写锁」——因为 DSH 没有取消能力，停止一个任务只能关进程（C3），一旦一个 Runtime 承载多任务，关闭边界就是产品正确性问题。每多一个运行时，就多一组「谁还活着」的状态组合。因此在**当前阶段**仍推荐 Electron。
 
-**采用方案 A：Electron + React + TypeScript，DSH SDK 由主进程直接承载。**
+但这是**有条件的推荐**，条件写在 §5。如果 PHASE 01 的打包冒烟失败，Tauri 是**完全可行**的备选，而不是退路。
 
-理由（按权重排序）：
+## 4. 推荐方案（条件批准）
 
-1. **与 C1 一致**。DSH 的官方 SDK 是 Node 库，Electron 主进程本身就是 Node，不需要为「跑一个 Node 依赖」再引入第二套运行时。方案 B 的双运行时是纯粹为外壳语言付出的复杂度。
-2. **生命周期与 C3 匹配**。既然没有 wire 级取消、停止只能靠关进程，那么「谁拥有 DSH 子进程」必须是唯一的、可审计的。单进程模型让所有权天然唯一；方案 B 需要跨进程协调「关掉 sidecar 里的 dsh 子进程」。
-3. **锁与隔离实现成本最低**。`AGENTS.md` 5 要求「同一项目同一时刻最多一个写任务、构建独占」。锁只有在单一进程内才可靠；跨 Rust/Node 需要额外机制。
-4. **故障恢复面最小**。Studio 需要保证「崩溃后下次能起来」，而 PHASE 00 已经踩到 DSH profile 陈旧锁导致启动阻塞（见 §6 风险 R2）。少一层进程就少一类残留状态。
+**Electron + React + TypeScript；DSH SDK 只在主进程；SQLite 选型推迟。**
 
-同时明确**不采用**的具体理由：
+理由按权重：
 
-- 方案 B 被否，不是因为它不好，而是它的优势（体积、内存、安全模型）在本产品「单用户本地工具、主要成本在模型与构建」的场景下权重低，而复杂度直接落在最脆弱的地方（生命周期与锁）。
-- 纯浏览器 + 本地 HTTP 服务（不打包外壳）曾作为第三选项考虑，未列入候选：它把「打开应用」降级为「先起服务再开浏览器」，与产品承诺 1「用户不必理解内部架构」冲突。若 Electron 打包在后续阶段被证明不可行，可回退到此形态，届时需新开 ADR。
+1. 与 C1 一致：不引入第二个运行时来跑一个 Node 依赖。
+2. 与 C3 一致：无取消 → 关闭即停止 → 进程所有权必须唯一可审计。
+3. 锁与隔离的落点单一：所有写操作（文件/Git/构建）只在主进程的适配器里。
+4. 团队门槛低：单语言栈，PHASE 01–07 的迭代成本最低。
 
-## 5. 实施约束（本 ADR 生效即必须遵守）
+明确不选的替代：纯浏览器 + 本地 HTTP 服务。它把「打开应用」降级为「先起服务再开浏览器」，与产品承诺「用户不必理解内部架构」冲突。若 Electron 打包失败，此形态可作为临时验证手段，但需新开 ADR。
 
-1. **渲染进程不得直接持有 DSH 客户端**。所有 SDK 调用只在主进程，渲染进程通过 `contextBridge` 暴露的白名单通道拿**已序列化的事件**，`nodeIntegration: false`、`contextIsolation: true`。
-2. **DSH 子进程必须由一个 `RuntimeSupervisor` 独占持有**，负责：启动握手、事件转发、`close()` 与退出码记录、陈旧锁自愈。任何时候只允许一个 supervisor 实例。
-3. **每个项目一个 DSH `DSH_HOME` 子目录或一个受控 profile**，不得与用户日常 `~/.dsh` 混用（隔离原则，见 ADR-0002 §5）。
-4. **数据库选型延后到 PHASE 01**：PHASE 00 不写业务数据。PHASE 01 需实测 `better-sqlite3` 在目标 Electron 版本下的 ABI，或验证 Electron 内置 Node 的 `node:sqlite` 可用性（本机 Node 22.22 已提供 `node:sqlite`，但 Electron 内置版本不同，**未验证**）。
-5. **时间戳与版本记录**：所有证据文件写入 Build/Run 标识与时间戳，禁止只写「成功」。
+## 5. PHASE 01 必做的打包冒烟（Electron 批准的前置条件）
 
-## 6. 未验证风险
+打包版必须逐条验证，任何一条失败都要回到本 ADR：
 
-| ID | 风险 | 影响 | 缓解/下一步 |
+| # | 冒烟项 | 为什么必须 |
+|---|---|---|
+| 1 | 打包后 SDK 能 `start()` | asar 内 `dsh` 可执行性未验证 |
+| 2 | 打包后 DSH Runtime 能启动（0.2.1-rc.3） | 依赖 Node 版本与路径解析 |
+| 3 | 打包后 **commandcode 能加载** | 第三方 bundle 需要 node_modules 解析链 |
+| 4 | 打包后 MCP Server 能启动并被调用 | 需要绝对路径，asar 内不可执行 |
+| 5 | 关闭后进程树为空（三态检测） | 防止「UI 关了但 Agent 还在跑」 |
+| 6 | 不依赖开发环境的 Node 路径 | 开发机 `process.execPath` 与打包后不同 |
+| 7 | 不写用户已有 `~/.dsh` 配置 | 隔离原则，见 ADR-0002 §5 |
+
+配套工程约束：DSH Runtime 与 MCP Server 必须 `asarUnpack` 或放在 `resources/runtime/`；启动前做依赖自检，缺失时给可读错误而不是 `JSON-RPC input closed`。
+
+## 6. 数据方案（推迟，但有边界）
+
+- 本阶段无业务数据，不锁定 SQLite 具体实现。
+- PHASE 01 首个任务验证两条路：`better-sqlite3`（需 `electron-rebuild`）或 Electron 内置 Node 的 `node:sqlite`（版本可用性未验证）。
+- 无论选哪条，**数据库文件必须可备份**：单文件 + WAL，导出/导入走显式命令。
+
+## 7. 未验证风险
+
+| ID | 风险 | 影响 | 缓解 |
 |---|---|---|---|
-| R1 | Electron 目标版本内置 Node 的 `node:sqlite` 或 `better-sqlite3` ABI 未验证 | 数据层返工 | PHASE 01 首任务即做 ABI 冒烟 |
-| R2 | DSH 启动耗时不稳：热启动 2.2–2.6 s，需重建 profile 模块回退时 73–128 s（本机实测），默认 `initializeTimeoutMs` 10 s 会误判失败 | 首启动即报错，或用户以为卡死 | 已在探针中把超时提到 180 s；Studio 必须分「重建/冷启动」与「常规启动」两档超时并给进度反馈；PHASE 01 评估安装期预热 |
-| R3 | DSH profile 陈旧锁（`profiles/node_modules.lock` 持有者 pid 已死）会让下次启动在 2 s 后失败，SDK 只报 `JSON-RPC input closed` | 应用「打不开」且原因不可读 | 已实现 `clearStaleProfileLock()` 参考实现（探针 G 复现缺陷并验证自愈）；Studio 需内置并把可读原因映射到 UI |
-| R4 | 未验证 Electron 打包后 `dsh` 子进程在 asar 内的可执行性 | 打包版可能无法启动 Runtime | PHASE 01 用 `asarUnpack` 或外置 runtime 目录，并做安装包冒烟 |
-| R5 | 未验证代码签名/自动更新链路 | 无法分发 | 属 PHASE 07 范围，届时评估 |
+| R1 | Electron 打包后运行时解析失败 | 打包版不可用 | §5 冒烟 1–7 |
+| R2 | 启动耗时双峰（热 2.2–3.2 s；重建 profile 模块回退 73–128 s） | 首启动像卡死 | 两档超时 + 进度反馈；PHASE 01 评估安装期预热 |
+| R3 | 陈旧 `profiles/node_modules.lock` 让下次启动 2 s 后失败，且 SDK 只报 `JSON-RPC input closed` | 应用「打不开」且原因不可读 | 启动前 `clearStaleProfileLock()`；stderr 摘要透出 |
+| R4 | commandcode 插件要求 0.2.1 线，Electron 内置 Node 版本可能不满足 | Runtime 起不来 | 打包时外置 Node 24 或校验版本 |
+| R5 | 代码签名 / 自动更新链路未做 | 无法分发 | PHASE 07 |
 
-## 7. 复审时需要关注的问题
+## 8. 复审关注点
 
-1. 是否接受「主进程承载 Node 依赖」而不是 sidecar 隔离？若担心主进程被 Agent 工具调用阻塞，需要说明：**DSH 的子进程是独立进程**，主进程只做 IPC 转发与生命周期管理，长任务不在主进程执行。
-2. 是否接受把数据库选型推迟到 PHASE 01？本阶段没有业务数据可放，提前锁定只会制造返工。
-3. 对 R2/R3 的处理方式（分档超时 + 陈旧锁自愈）是否符合「不谎称已停止」的要求。
+1. 是否接受「当前阶段推荐 Electron，但 Tauri 为等价可行备选」这一条件表述？
+2. §5 的 7 条冒烟是否足够作为 Electron 的批准前置条件？
+3. 是否接受把数据库选型继续推迟到 PHASE 01 初期？

@@ -1,0 +1,75 @@
+{
+  "probe": "A-basic-run",
+  "startedAt": "2026-11-10T09:27:44.055Z",
+  "runtime": {
+    "platform": "win32",
+    "osVersion": null,
+    "node": "v22.22.2",
+    "arch": "x64",
+    "pid": 26460,
+    "execPath": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe"
+  },
+  "lockRecovery": {
+    "checked": true,
+    "cleared": true,
+    "stalePid": 27200,
+    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+  },
+  "startMs": 114990,
+  "childrenWhileRunning": [
+    {
+      "pid": 23148,
+      "name": "node.exe",
+      "commandline": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe H:\\AI�뿪��\\ai_game_studio_starter\\spike\\dsh-probe\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js --profile sdk"
+    },
+    {
+      "pid": 21892,
+      "name": "powershell.exe",
+      "commandline": "powershell -NoProfile -NonInteractive -Command \"$pid0 = 26460; Get-CimInstance Win32_Process -Filter \\\"ParentProcessId=$pid0\\\" | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress -Depth 3\""
+    }
+  ],
+  "sessionId": "session-f317768074e848989d8ad618b7aecfcd",
+  "runMs": 766,
+  "finalResponse": "",
+  "eventCount": 15,
+  "notificationCount": 17,
+  "notificationMethods": [
+    "session.event",
+    "session.status"
+  ],
+  "sawRunningStatus": true,
+  "sawIdleStatus": true,
+  "eventKinds": [
+    "agent/inbox/spliced",
+    "turn/start",
+    "step/start",
+    "system/message",
+    "user/message",
+    "request/header",
+    "request/context",
+    "session/title",
+    "assistant/attempt",
+    "step/end",
+    "turn/end"
+  ],
+  "modelBlocker": {
+    "blocked": true,
+    "kind": "MODEL_QUOTA",
+    "code": "QUOTA",
+    "status": 402,
+    "message": "Insufficient Balance (request_id: 8ccf4b91-a3ad-43b0-91d0-496cdb2e7c70)"
+  },
+  "closeMs": 46,
+  "dshChildGoneAfterClose": true,
+  "reapWaitMs": 963,
+  "childrenAfterClose": [
+    {
+      "pid": 25868,
+      "name": "powershell.exe"
+    }
+  ],
+  "finishedAt": "2026-11-10T09:29:42.991Z",
+  "verdict": "BLOCKED",
+  "infrastructureOk": true,
+  "modelResponded": false
+}

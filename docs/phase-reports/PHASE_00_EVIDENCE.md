@@ -15,7 +15,7 @@
 | 项 | 值 | 取得方式 |
 |---|---|---|
 | OS | Windows 10.0.19045.6466（`MINGW64_NT-10.0-19045`） | `cmd /c ver`、`uname -a` |
-| 主机名 | DESKTOP-JPNC37C | `uname -a` |
+| 主机名 | <host> | `uname -a` |
 | Node | v22.22.2 | `node --version` |
 | npm | 10.9.7 | `npm --version` |
 | pnpm | 11.21.0 | `pnpm --version` |

@@ -1,13 +1,13 @@
 [
   {
-    "ts": "2026-11-10T09:30:01.841Z",
+    "ts": "2026-11-10T10:42:07.299Z",
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
-    "auditLog": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/audit/studio-mcp-audit.jsonl"
+    "auditLog": "<repo>/spike/dsh-probe/tmp/audit/studio-mcp-audit.jsonl"
   },
   {
-    "ts": "2026-11-10T09:30:01.843Z",
+    "ts": "2026-11-10T10:42:07.304Z",
     "kind": "initialize",
     "clientProtocolVersion": "2025-11-25",
     "clientInfo": {
@@ -16,12 +16,12 @@
     }
   },
   {
-    "ts": "2026-11-10T09:30:01.851Z",
+    "ts": "2026-11-10T10:42:07.309Z",
     "kind": "notification",
     "method": "notifications/initialized"
   },
   {
-    "ts": "2026-11-10T09:30:01.851Z",
+    "ts": "2026-11-10T10:42:07.311Z",
     "kind": "tools/list",
     "count": 1
   }

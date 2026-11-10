@@ -2,7 +2,7 @@
   {
     "type": "agent/inbox/spliced",
     "seq": 3,
-    "time": 1794302980227,
+    "time": 1794307301560,
     "data": {
       "target": "next-turn",
       "start": 0,
@@ -18,7 +18,7 @@
             "kind": "user"
           },
           "role": "user",
-          "id": "18a69355-764d-489f-95b0-fdcd2fdc1048"
+          "id": "0cf60325-d176-410b-955f-e0280469ecb5"
         }
       ]
     }
@@ -26,7 +26,7 @@
   {
     "type": "turn/start",
     "seq": 4,
-    "time": 1794302980228,
+    "time": 1794307301562,
     "data": {
       "turn": 1
     }
@@ -34,7 +34,7 @@
   {
     "type": "agent/inbox/spliced",
     "seq": 5,
-    "time": 1794302980229,
+    "time": 1794307301562,
     "data": {
       "target": "next-turn",
       "start": 0,
@@ -45,7 +45,7 @@
   {
     "type": "step/start",
     "seq": 6,
-    "time": 1794302980293,
+    "time": 1794307301636,
     "data": {
       "turn": 1,
       "step": 1
@@ -54,7 +54,7 @@
   {
     "type": "system/message",
     "seq": 7,
-    "time": 1794302980295,
+    "time": 1794307301637,
     "data": {
       "turn": 1,
       "step": 1,
@@ -70,7 +70,7 @@
           "kind": "plugin",
           "plugin": "@deepseek-ai/dsh-system-prompt"
         },
-        "id": "6c6946fd-ee67-43df-9bfd-932eb3ee2585"
+        "id": "57386928-5c9f-4b63-b9ce-c720d147b6fc"
       }
     },
     "surfaceOp": "append"
@@ -78,7 +78,7 @@
   {
     "type": "user/message",
     "seq": 8,
-    "time": 1794302980295,
+    "time": 1794307301638,
     "data": {
       "content": [
         {
@@ -90,14 +90,14 @@
         "kind": "user"
       },
       "role": "user",
-      "id": "18a69355-764d-489f-95b0-fdcd2fdc1048"
+      "id": "0cf60325-d176-410b-955f-e0280469ecb5"
     },
     "surfaceOp": "append"
   },
   {
     "type": "user/message",
     "seq": 9,
-    "time": 1794302980296,
+    "time": 1794307301639,
     "data": {
       "content": [
         {
@@ -120,14 +120,14 @@
         ]
       },
       "role": "user",
-      "id": "312e43e0-5456-4f46-9007-9ba534cbeffa"
+      "id": "1cf3780e-8b36-45ae-b9de-d27055d842a2"
     },
     "surfaceOp": "append"
   },
   {
     "type": "user/message",
     "seq": 10,
-    "time": 1794302980296,
+    "time": 1794307301639,
     "data": {
       "content": [
         {
@@ -151,14 +151,14 @@
         ]
       },
       "role": "user",
-      "id": "f7be13d1-570e-40dc-9273-0ac4299dee3b"
+      "id": "b2274f27-b649-43f7-90e8-e3fc27e59659"
     },
     "surfaceOp": "append"
   },
   {
     "type": "user/message",
     "seq": 11,
-    "time": 1794302980297,
+    "time": 1794307301640,
     "data": {
       "content": [
         {
@@ -185,14 +185,14 @@
         ]
       },
       "role": "user",
-      "id": "e1aa161f-80c2-4624-9bcc-4f6e3497e807"
+      "id": "af838aff-9379-4685-a4c3-e260a0487be5"
     },
     "surfaceOp": "append"
   },
   {
     "type": "request/header",
     "seq": 12,
-    "time": 1794302980298,
+    "time": 1794307301641,
     "data": {
       "header": {
         "config": {
@@ -846,7 +846,7 @@
   {
     "type": "request/context",
     "seq": 13,
-    "time": 1794302980299,
+    "time": 1794307301642,
     "data": {
       "provider": "deepseek-official",
       "model": "deepseek-v4-flash",
@@ -856,7 +856,7 @@
   {
     "type": "session/title",
     "seq": 14,
-    "time": 1794302980301,
+    "time": 1794307301645,
     "data": {
       "title": "Reply with exactly one word:",
       "messageSeqs": [
@@ -870,20 +870,20 @@
   {
     "type": "assistant/attempt",
     "seq": 15,
-    "time": 1794302980975,
+    "time": 1794307302269,
     "data": {
       "turn": 1,
       "step": 1,
       "stream": [
         {
           "type": "chunk",
-          "time": 1794302980974,
+          "time": 1794307302269,
           "chunk": {
             "type": "finish",
             "reason": {
               "kind": "error",
               "failure": {
-                "message": "Insufficient Balance (request_id: 8ccf4b91-a3ad-43b0-91d0-496cdb2e7c70)",
+                "message": "Insufficient Balance (request_id: f58bc41c-c1bf-45ee-9716-d26660026fa9)",
                 "code": "QUOTA",
                 "status": 402
               }
@@ -896,7 +896,7 @@
   {
     "type": "step/end",
     "seq": 16,
-    "time": 1794302980975,
+    "time": 1794307302270,
     "data": {
       "turn": 1,
       "step": 1
@@ -905,13 +905,13 @@
   {
     "type": "turn/end",
     "seq": 17,
-    "time": 1794302980976,
+    "time": 1794307302271,
     "data": {
       "turn": 1,
       "reason": {
         "kind": "error",
         "error": {
-          "message": "Insufficient Balance (request_id: 8ccf4b91-a3ad-43b0-91d0-496cdb2e7c70)",
+          "message": "Insufficient Balance (request_id: f58bc41c-c1bf-45ee-9716-d26660026fa9)",
           "code": "QUOTA",
           "status": 402
         }

@@ -1,0 +1,58 @@
+{
+  "probe": "CC-1-reply",
+  "startedAt": "2026-11-10T10:40:23.293Z",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "profile": "cc-sdk",
+  "token": "studio-74963f73",
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "error": null
+  },
+  "patchPath": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\current-0.2.1\\tmp\\cc-provider.cordis.yml",
+  "startMs": 3173,
+  "processStatusWhileRunning": "PROCESS_PRESENT",
+  "processCountWhileRunning": 1,
+  "sessionId": "session-cc09116965444cba89bfdde12fe32222",
+  "prompt": "请严格按照以下要求回答：\n生成一个随机标识并在回复中原样返回：验证标识：studio-74963f73\n\n除此之外，用一句话说明你当前使用的是什么模型。",
+  "runMs": 4265,
+  "finalResponse": "验证标识：studio-74963f73\n\n当前使用的模型是 `deepseek/deepseek-v4.1-flash`，运行在 DeepSeek Harness 中。",
+  "eventCount": 15,
+  "notificationMethods": [
+    "session.event",
+    "session.status"
+  ],
+  "modelBlocker": {
+    "blocked": false
+  },
+  "requestRoute": {
+    "provider": "commandcode",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "maxTokens": 512
+  },
+  "requestContext": {
+    "provider": "commandcode",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "contextWindow": 1000000
+  },
+  "assertions": {
+    "echoToken": true,
+    "nonEmptyResponse": true,
+    "routeIsCommandcode": true,
+    "modelAsRequested": true,
+    "noProviderFallback": true,
+    "processTreeGone": true
+  },
+  "closeMs": 74,
+  "reap": {
+    "status": "PROCESS_ABSENT",
+    "waitedMs": 2281,
+    "remaining": [],
+    "error": null
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-10T10:40:34.093Z"
+}

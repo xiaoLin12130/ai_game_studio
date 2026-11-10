@@ -1,30 +1,11 @@
 {
   "probe": "G-exit-code",
-  "startedAt": "2026-11-10T09:30:07.113Z",
+  "startedAt": "2026-11-10T10:49:11.531Z",
   "dshHome": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home",
-  "cleanShutdown": {
-    "exitCode": 0,
-    "signal": null,
-    "ms": 127694,
-    "stdout": "",
-    "stderr": ""
+  "error": {
+    "name": "Error",
+    "message": "[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}"
   },
-  "staleLockBoot": {
-    "exitCode": 1,
-    "signal": null,
-    "ms": 2439,
-    "stdout": "",
-    "stderr": "file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home-locktest\\profiles\\node_modules.lock\r\n    at withFileLock (file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///C:/Users/LIN/AppData/Roaming/npm/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r\n",
-    "simulatedLockPid": 999999,
-    "home": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home-locktest"
-  },
-  "lockCleanedUp": true,
-  "assertions": {
-    "cleanExitCodeZero": true,
-    "cleanNoStderr": true,
-    "staleLockExitCodeOne": true,
-    "staleLockMentionsLock": true
-  },
-  "verdict": "PASS",
-  "finishedAt": "2026-11-10T09:32:17.371Z"
+  "verdict": "FAIL",
+  "finishedAt": "2026-11-10T10:49:11.617Z"
 }

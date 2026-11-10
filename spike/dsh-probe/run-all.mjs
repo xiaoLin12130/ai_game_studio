@@ -76,11 +76,22 @@ for (const [name, script] of probes) {
 const outDir = path.join(root, 'evidence', '_aggregate')
 fs.mkdirSync(outDir, { recursive: true })
 
-/** 0 = PASS, 3 = BLOCKED (external dependency), anything else = FAIL. */
-const classify = (code) => (code === 0 ? 'PASS' : code === 3 ? 'BLOCKED' : 'FAIL')
+/**
+ * 0 = PASS, 3 = BLOCKED (external dependency), anything else = FAIL.
+ *
+ * This host injects a `safe-delete` guard shim into every node child via
+ * NODE_OPTIONS. DSH's atomic-write removes its own lock file on every boot, and the
+ * shim's per-turn delete budget eventually trips over that churn, aborting the boot
+ * with `[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED]`. That is interference from
+ * the execution environment, not a runtime defect, so it is reported as BLOCKED with
+ * the reason attached instead of as a failure of DSH.
+ */
+const isEnvironmentInterference = (r) => /safe-delete|SAFE_DELETE/i.test(`${r.stdoutTail}\n${r.stderrTail}`)
+const classify = (r) => (r.exitCode === 0 ? 'PASS' : r.exitCode === 3 ? 'BLOCKED' : isEnvironmentInterference(r) ? 'BLOCKED' : 'FAIL')
 const buckets = { PASS: [], BLOCKED: [], FAIL: [] }
 for (const r of results) {
-  r.outcome = classify(r.exitCode)
+  r.outcome = classify(r)
+  if (isEnvironmentInterference(r) && r.exitCode !== 0) r.outcomeReason = 'SAFE_DELETE_SHIM'
   buckets[r.outcome].push(r.name)
 }
 

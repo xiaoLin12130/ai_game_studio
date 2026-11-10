@@ -1,0 +1,6 @@
+{"ts":"2026-11-10T10:40:51.872Z","type":"turn1","text":"STORED","events":18,"statuses":["running","idle"]}
+{"ts":"2026-11-10T10:40:52.941Z","type":"turn1.reaped","status":"PROCESS_ABSENT","waitedMs":1004}
+{"ts":"2026-11-10T10:40:55.948Z","type":"resume.control","rejected":true,"message":"session \"definitely-not-a-real-session-id\" not found"}
+{"ts":"2026-11-10T10:41:00.108Z","type":"resume.attempt","sessionId":"cc-resume-1794307246206","error":null}
+{"ts":"2026-11-10T10:41:02.664Z","type":"turn2","text":"recall-cf3228","events":9,"statuses":["running","idle"]}
+{"ts":"2026-11-10T10:41:03.738Z","type":"verdict","verdict":"PASS","conclusion":"RESUME_RESTORES_HISTORY","assertions":{"apiExists":true,"unknownSessionRejected":true,"resumeCallSucceeded":true,"historyRecalled":true,"processReapedBothRuns":true}}

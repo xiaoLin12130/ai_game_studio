@@ -1,12 +1,14 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "stable_user_preferences": [
     "Use plain Chinese explanations and concrete steps.",
     "Do not rush into implementation before confirming product direction.",
     "The user wants to manage the game, not manually manage Agents or Sessions.",
     "Preserve the existing AGENTS.md, docs, memory-bank, state and prompt management approach.",
     "Prefer evidence-backed claims; mark unknown and unverified facts explicitly.",
-    "Review each implementation phase through a pushed GitHub commit before allowing the next phase."
+    "Review each implementation phase through a pushed GitHub commit before allowing the next phase.",
+    "Keep the repository public and sanitize any host/user paths in published evidence.",
+    "All model-dependent verification must use the real commandcode provider; never substitute another provider to make a test pass."
   ],
   "confirmed_product_decisions": [
     "AI Game Studio is an AI game R&D advisor and automation platform.",
@@ -18,23 +20,24 @@
     "Exclude post-release monitoring, operation analytics, post-release advisor and iteration."
   ],
   "verified_technical_facts": [
-    "DSH Runtime is a Node program; the official TypeScript SDK (@deepseek-ai/dsh-sdk-client) spawns `dsh --profile sdk` as a child process over stdio JSON-RPC.",
-    "The SDK wire protocol exposes only initialize, session/prompt and shutdown. There is NO cancel, NO session/resume and NO session/close method (verified: -32603 'unknown ... method').",
-    "Reusing a sessionId that already exists on disk is rejected with 'session \"...\" already exists', so session continuity cannot rely on DSH.",
-    "There is no server->client request, therefore no DSH tool-approval callback exists in 0.1.5. DSH tool permission and Studio business approval must stay two separate mechanisms.",
-    "The only sanctioned tool bridge is MCP via @deepseek-ai/dsh-mcp-client; tools appear as mcp__<serverName>__<tool>. A launcher --patch file must wrap new rows in `insert:`.",
-    "Runtime exit codes observed: 0 for a clean stdin-EOF shutdown, 1 for a failed profile boot.",
-    "A crashed profile boot leaves $DSH_HOME/profiles/node_modules.lock; dsh-atomic-write never checks whether the recorded pid is alive and fails after a 2000 ms deadline, which the SDK surfaces only as 'JSON-RPC input closed'.",
-    "Startup is either ~2.5 s (warm) or 73-128 s when the profile module fallback must be rebuilt (187 entries / 164 symlinks on this machine). The SDK default initializeTimeoutMs of 10 s is therefore unusable.",
-    "The @deepseek-ai dependency graph is only installable with the whole cordis plugin family pinned to exact versions; caret ranges produce an unsolvable ERESOLVE, and --legacy-peer-deps yields a broken tree.",
-    "Session logs are zstd-compressed documents at $DSH_HOME/sessions/<escaped-workspace>/<sessionId>/session.v3.jsonl.zstd (append-only frames).",
-    "DeepSeek account balance was insufficient (HTTP 402 QUOTA) during PHASE 00, blocking all model-output assertions."
+    "The user runs DSH Desktop 0.2.1-rc.3 (bundled runtime) with provider commandcode (@mars-sea/dsh-commandcode-provider@0.15.4) and model deepseek/deepseek-v4.1-flash. The dsh CLI on PATH is 0.1.5-rc.1 and is NOT what the user actually runs.",
+    "The commandcode plugin declares dsh compatibility >=0.2.1-rc.2 <0.2.2-0, so it cannot be used on 0.1.5; an incompatible plugin is skipped silently and the runtime falls back to another provider (observed: deepseek-official -> HTTP 402).",
+    "Every probe must assert request/header.config.provider and .model, otherwise a provider fallback is mistaken for a model failure.",
+    "DSH 0.2.1-rc.3 SDK protocol methods: initialize, session/prompt, session/resume, session/wait, session/working-directory/get|set, shutdown. No cancel, no approve, no session/close.",
+    "session/resume on 0.2.1 restores conversation history across a full process restart (verified by token recall); 0.1.5 has no resume and rejects sessionId reuse with already exists.",
+    "MCP is the only tool-registration path; on 0.2.1 the model really invoked mcp__studio__get_studio_health and the Studio server recorded tools/call + tools/call.served.",
+    "Process reclamation must be three-state (PRESENT/ABSENT/CHECK_FAILED); a failed query is never evidence of absence. Orphan matching needs command-line markers, not just the parent-child chain.",
+    "A process check must exclude its own enumeration process (unique sentinel) and conhost.exe, or it observes itself and reports a phantom leftover.",
+    "dsh-atomic-write never checks whether the lock-holder pid is alive; a dead-pid profiles/node_modules.lock makes the next boot fail after a 2000 ms deadline, surfaced only as JSON-RPC input closed.",
+    "Startup time is bimodal: 2-3 s warm vs 73-128 s when profiles/node_modules must be rebuilt (187 entries, 164 symlinks); the SDK default initializeTimeoutMs of 10 s is unusable.",
+    "This host injects a safe-delete shim via NODE_OPTIONS that can abort DSH profile maintenance with SAFE_DELETE_BULK_CONFIRM_REQUIRED; that is environment interference, not a runtime defect.",
+    "Patch files use two shapes: insert: for new rows, a bare id: row to override an existing row. Inserting llm-commandcode alone does not change the default model; agent-default-model must be overridden too."
   ],
   "do_not_assume": [
-    "Final desktop container and frontend framework are not approved yet; ADR-0001 recommends Electron but is PROPOSED.",
-    "Final local database is not selected; ADR-0001 defers it to PHASE 01.",
-    "DSH versions drift quickly (global 0.1.5-rc.1, npm latest 0.2.2-rc.1); any upgrade must re-run spike/dsh-probe and may invalidate the verified facts above.",
-    "True-device WeChat validation availability must be checked, never assumed.",
-    "The SDK contract surface must be re-read from the installed package typings, not from this file or from old docs."
+    "Electron is not approved yet; ADR-0001 is PROPOSED / CONDITIONAL pending packaged smoke tests.",
+    "Local database choice is still deferred to PHASE 01.",
+    "Never upgrade the user global DSH or change ~/.dsh profiles; verify against an isolated DSH_HOME.",
+    "Repository visibility is public by explicit user instruction; do not change it.",
+    "Do not claim tool-approval callbacks exist; they do not in 0.1.5 or 0.2.1."
   ]
 }

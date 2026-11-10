@@ -1,13 +1,13 @@
 [
   {
-    "ts": "2026-11-10T09:29:44.657Z",
+    "ts": "2026-11-10T10:41:45.726Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "permission/preset",
         "seq": 0,
-        "time": 1794302984655,
+        "time": 1794307305724,
         "data": {
           "preset": "workspace-write"
         }
@@ -15,14 +15,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.657Z",
+    "ts": "2026-11-10T10:41:45.726Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "sandbox/mode",
         "seq": 1,
-        "time": 1794302984657,
+        "time": 1794307305726,
         "data": {
           "mode": "workspace-write"
         }
@@ -30,14 +30,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.658Z",
+    "ts": "2026-11-10T10:41:45.726Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "approval/policy",
         "seq": 2,
-        "time": 1794302984657,
+        "time": 1794307305726,
         "data": {
           "policy": "ask"
         }
@@ -45,14 +45,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.660Z",
+    "ts": "2026-11-10T10:41:45.729Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "agent/inbox/spliced",
         "seq": 3,
-        "time": 1794302984660,
+        "time": 1794307305729,
         "data": {
           "target": "next-turn",
           "start": 0,
@@ -68,7 +68,7 @@
                 "kind": "user"
               },
               "role": "user",
-              "id": "42ef9851-8fe3-472e-982e-323588e3ffa4"
+              "id": "50d1788e-3f44-451e-bc10-f50cf6e13afb"
             }
           ]
         }
@@ -76,22 +76,22 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.661Z",
+    "ts": "2026-11-10T10:41:45.729Z",
     "method": "session.status",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "status": "running"
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.662Z",
+    "ts": "2026-11-10T10:41:45.730Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "turn/start",
         "seq": 4,
-        "time": 1794302984661,
+        "time": 1794307305730,
         "data": {
           "turn": 1
         }
@@ -99,14 +99,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.663Z",
+    "ts": "2026-11-10T10:41:45.731Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "agent/inbox/spliced",
         "seq": 5,
-        "time": 1794302984662,
+        "time": 1794307305731,
         "data": {
           "target": "next-turn",
           "start": 0,
@@ -117,14 +117,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.729Z",
+    "ts": "2026-11-10T10:41:45.808Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "step/start",
         "seq": 6,
-        "time": 1794302984728,
+        "time": 1794307305808,
         "data": {
           "turn": 1,
           "step": 1
@@ -133,14 +133,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.730Z",
+    "ts": "2026-11-10T10:41:45.810Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "system/message",
         "seq": 7,
-        "time": 1794302984729,
+        "time": 1794307305809,
         "data": {
           "turn": 1,
           "step": 1,
@@ -156,7 +156,7 @@
               "kind": "plugin",
               "plugin": "@deepseek-ai/dsh-system-prompt"
             },
-            "id": "1bebb7f7-5434-4ab2-89d0-81cee8a118d8"
+            "id": "485d04b7-79a3-42da-88e2-937354d196da"
           }
         },
         "surfaceOp": "append"
@@ -164,14 +164,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.731Z",
+    "ts": "2026-11-10T10:41:45.810Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "user/message",
         "seq": 8,
-        "time": 1794302984730,
+        "time": 1794307305810,
         "data": {
           "content": [
             {
@@ -183,21 +183,21 @@
             "kind": "user"
           },
           "role": "user",
-          "id": "42ef9851-8fe3-472e-982e-323588e3ffa4"
+          "id": "50d1788e-3f44-451e-bc10-f50cf6e13afb"
         },
         "surfaceOp": "append"
       }
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.731Z",
+    "ts": "2026-11-10T10:41:45.811Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "user/message",
         "seq": 9,
-        "time": 1794302984731,
+        "time": 1794307305811,
         "data": {
           "content": [
             {
@@ -220,21 +220,21 @@
             ]
           },
           "role": "user",
-          "id": "6bbcbdc2-0f50-4a99-819b-57158e49026b"
+          "id": "e91fbc94-5191-4052-b9f4-daa17abec4e8"
         },
         "surfaceOp": "append"
       }
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.732Z",
+    "ts": "2026-11-10T10:41:45.811Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "user/message",
         "seq": 10,
-        "time": 1794302984731,
+        "time": 1794307305811,
         "data": {
           "content": [
             {
@@ -258,21 +258,21 @@
             ]
           },
           "role": "user",
-          "id": "173bac2f-d10f-4b9e-9d5a-4b7315f6f348"
+          "id": "59ef94cd-b1c6-4922-8a01-14c8806ee979"
         },
         "surfaceOp": "append"
       }
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.732Z",
+    "ts": "2026-11-10T10:41:45.811Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "user/message",
         "seq": 11,
-        "time": 1794302984732,
+        "time": 1794307305811,
         "data": {
           "content": [
             {
@@ -299,21 +299,21 @@
             ]
           },
           "role": "user",
-          "id": "1e64d2cf-ec1c-45a2-bb8d-1998e393f75c"
+          "id": "f93c7fb0-75b3-4795-bba3-3d6d2242f99f"
         },
         "surfaceOp": "append"
       }
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.734Z",
+    "ts": "2026-11-10T10:41:45.814Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "request/header",
         "seq": 12,
-        "time": 1794302984733,
+        "time": 1794307305812,
         "data": {
           "header": {
             "config": {
@@ -967,14 +967,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.734Z",
+    "ts": "2026-11-10T10:41:45.814Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "request/context",
         "seq": 13,
-        "time": 1794302984734,
+        "time": 1794307305814,
         "data": {
           "provider": "deepseek-official",
           "model": "deepseek-v4-flash",
@@ -984,14 +984,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:44.736Z",
+    "ts": "2026-11-10T10:41:45.816Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "session/title",
         "seq": 14,
-        "time": 1794302984736,
+        "time": 1794307305816,
         "data": {
           "title": "Reply with exactly one word:",
           "messageSeqs": [
@@ -1005,27 +1005,27 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:45.299Z",
+    "ts": "2026-11-10T10:41:46.482Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "assistant/attempt",
         "seq": 15,
-        "time": 1794302985298,
+        "time": 1794307306482,
         "data": {
           "turn": 1,
           "step": 1,
           "stream": [
             {
               "type": "chunk",
-              "time": 1794302985298,
+              "time": 1794307306482,
               "chunk": {
                 "type": "finish",
                 "reason": {
                   "kind": "error",
                   "failure": {
-                    "message": "Insufficient Balance (request_id: 4b73f8cc-bda8-424d-ab06-90979aa88c09)",
+                    "message": "Insufficient Balance (request_id: 4523663b-d461-4461-8d55-84d496a7ed34)",
                     "code": "QUOTA",
                     "status": 402
                   }
@@ -1038,14 +1038,14 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:45.300Z",
+    "ts": "2026-11-10T10:41:46.483Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "step/end",
         "seq": 16,
-        "time": 1794302985299,
+        "time": 1794307306483,
         "data": {
           "turn": 1,
           "step": 1
@@ -1054,20 +1054,20 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:45.300Z",
+    "ts": "2026-11-10T10:41:46.484Z",
     "method": "session.event",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "event": {
         "type": "turn/end",
         "seq": 17,
-        "time": 1794302985300,
+        "time": 1794307306484,
         "data": {
           "turn": 1,
           "reason": {
             "kind": "error",
             "error": {
-              "message": "Insufficient Balance (request_id: 4b73f8cc-bda8-424d-ab06-90979aa88c09)",
+              "message": "Insufficient Balance (request_id: 4523663b-d461-4461-8d55-84d496a7ed34)",
               "code": "QUOTA",
               "status": 402
             }
@@ -1077,10 +1077,10 @@
     }
   },
   {
-    "ts": "2026-11-10T09:29:45.301Z",
+    "ts": "2026-11-10T10:41:46.484Z",
     "method": "session.status",
     "params": {
-      "sessionId": "probe-proto-1794302984645",
+      "sessionId": "probe-proto-1794307305712",
       "status": "idle"
     }
   }

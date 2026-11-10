@@ -1,74 +1,139 @@
 
 ===== A-basic-run =====
-[probe] cleared stale profile lock {"stalePid":27200}
+[probe] cleared stale profile lock {"stalePid":27576}
 [probe] starting runtime via official SDK {"provider":"deepseek-official","model":"deepseek-v4-flash"}
-[probe] runtime handshake complete 114990ms
-[probe] live dsh child process observed 23148,21892
-[probe] session opened session-f317768074e848989d8ad618b7aecfcd
-[probe] prompt completed {"runMs":766,"events":15}
-[probe] final response ""
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+F:\workbuddy\resources\app.asar.unpacked\cli\vendor\shim\node-safe-delete-shim.cjs:243
+            throw new Error(detail);
+                  ^
+
+Error: [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {"count":50,"threshold":50,"scope":"turn","targets":["H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock"],"targetCount":1}
+    at checkBulkDeleteGuard (F:\workbuddy\resources\app.asar.unpacked\cli\vendor\shim\node-safe-delete-shim.cjs:243:19)
+    at tryTrash (F:\workbuddy\resources\app.asar.unpacked\cli\vendor\shim\node-safe-delete-shim.cjs:595:5)
+    at tryRm (F:\workbuddy\resources\app.asar.unpacked\cli\vendor\shim\node-safe-delete-shim.cjs:806:5)
+    at wrappedPromisesRm (F:\workbuddy\resources\app.asar.unpacked\cli\vendor\shim\node-safe-delete-shim.cjs:850:15)
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:143:9)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
 [probe] closing runtime
-[probe] post-close child check {"gone":true,"waitedMs":963}
-[probe] summary written H:\AI与开发\ai_game_studio_starter\spike\dsh-probe\evidence\a-basic-run\summary.json
-[probe] PROBE_A_RESULT=BLOCKED {"infraOk":true,"modelResponded":false,"blocker":"MODEL_QUOTA"}
+[probe] post-close process check {"status":"PROCESS_ABSENT","waitedMs":1040}
+[probe] summary written <repo>\spike\dsh-probe\evidence\a-basic-run\summary.json
+[probe] PROBE_A_RESULT=FAIL {"infraOk":false,"modelResponded":false,"blocker":null}
 
 ===== B-protocol-facts =====
 [probe] client.start() issued
-[probe] initialize ok {"name":"deepseek-harness-sdk-runtime","version":"0.0.1"}
-[probe] prompt queued 42ef9851-8fe3-472e-982e-323588e3ffa4
-[probe] idle observed {"idleWaitMs":825,"statuses":["running","idle"]}
-[probe] method existence checked {"session/cancel":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/cancel"},"session/resume":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/resume"},"session/close":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/close"},"session/snapshot":{"errorName":"JsonRpcResponseError","isJsonRpcError":true,"code":-32603,"message":"unknown DeepSeek Harness SDK runtime method: session/snapshot"}}
-[probe] PROBE_B_RESULT=PASS {"cancelUnsupported":true,"resumeUnsupported":true,"sawRunning":true,"sawIdle":true,"modelBlocker":"MODEL_QUOTA"}
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136
+		if (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);
+		                                  ^
+
+Error: atomic-write: timed out waiting for the writer lock at <repo>\spike\dsh-probe\tmp\dsh-home\profiles\node_modules.lock
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
+[probe] PROBE_B_RESULT=FAIL {"cancelUnsupported":false,"resumeUnsupported":false,"modelBlocker":null}
 
 ===== C-resume =====
-[probe] turn1 settled {"events":15,"blocker":"MODEL_QUOTA"}
-[probe] session log after turn1 {"compressedBytes":18073,"decompressedBytes":210,"lines":1,"turnStartMarkers":0,"userMessageMarkers":0,"schemaSample":"{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""}
-[probe] turn2 rejected on session reuse session "probe-resume-1794302985613" already exists
-[probe] PROBE_C_RESULT=PASS {"conclusion":"NO_RESUME_AT_SDK_LEVEL","assertions":{"firstProcessReaped":true,"sessionLogPersisted":true,"sessionLogCompressedBytes":18073,"sessionIdReuseRejected":true,"sessionLogStillReadable":true,"modelRecalledCodeword":false}}
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136
+		if (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);
+		                                  ^
+
+Error: atomic-write: timed out waiting for the writer lock at <repo>\spike\dsh-probe\tmp\dsh-home\profiles\node_modules.lock
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
+[probe] PROBE_C_RESULT=FAIL {"conclusion":"ID_REUSE_ACCEPTED_BUT_HISTORY_NOT_RECALLED","assertions":{"firstProcessReaped":false,"sessionLogPersisted":false,"sessionLogCompressedBytes":null,"sessionIdReuseRejected":false,"sessionLogStillReadable":false,"modelRecalledCodeword":false}}
 
 ===== D-abandon =====
-[probe] long prompt queued, waiting for running state
-[probe] running observed {"sawRunning":true}
-[probe] caller abandoned the wait {"childStillAlive":true,"lastStatus":"idle","eventsKeptArriving":true}
-[probe] closed and reaped {"gone":true,"closeMs":48}
-[probe] PROBE_D_RESULT=BLOCKED {"agentReachedRunning":true,"stillRunningAtAbandon":false,"processSurvivedAbandonedWait":true,"processGoneAfterClose":true,"noWireCancelMethod":true,"longTurnKeptProducingWork":false}
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136
+		if (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);
+		                                  ^
+
+Error: atomic-write: timed out waiting for the writer lock at <repo>\spike\dsh-probe\tmp\dsh-home\profiles\node_modules.lock
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
+[probe] PROBE_D_RESULT=FAIL {"A_runtimeAliveAfterAbandon":false,"B_stillRunningAtAbandon":false,"C_newAssistantContentAfterAbandon":false,"D_processTreeGoneAfterClose":true,"E_noLeftoverExternalProcesses":true}
 
 ===== E-tools =====
-[probe] profile patch written H:\AI与开发\ai_game_studio_starter\spike\dsh-probe\tmp\patches\studio-mcp.cordis.yml
-[probe] runtime started with MCP patch
-[probe] model answered ""
-[probe] studio audit {"totalRecords":4,"kinds":["server.started","initialize","notification","tools/list"],"toolCalls":[],"servedCount":0,"initializedWith":{"ts":"2026-11-10T09:30:01.843Z","kind":"initialize","clientProtocolVersion":"2025-11-25","clientInfo":{"name":"dsh-mcp-client","version":"0.0.1"}}}
-[probe] PROBE_E_RESULT=BLOCKED {"registrationVerified":true,"invocationVerified":false,"blocker":"MODEL_QUOTA"}
+[probe] profile patch written <repo>\spike\dsh-probe\tmp\patches\studio-mcp.cordis.yml
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136
+		if (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);
+		                                  ^
+
+Error: atomic-write: timed out waiting for the writer lock at <repo>\spike\dsh-probe\tmp\dsh-home\profiles\node_modules.lock
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
 
 ===== F-concurrent =====
-[probe] runtime started
-[probe] both runs settled {"totalMs":654}
-[probe] assertions {"distinctSessions":true,"bothSettled":true,"noCrossTalkInA":true,"noCrossTalkInB":true,"bothProducedText":false,"answersNotSwapped":true}
-[probe] PROBE_F_RESULT=BLOCKED {"isolationOk":true,"modelOk":false}
+[probe] ERROR dsh profile "sdk": JSON-RPC input closed
+exit code: 1
+stderr tail:
+file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136
+		if (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);
+		                                  ^
+
+Error: atomic-write: timed out waiting for the writer lock at <repo>\spike\dsh-probe\tmp\dsh-home\profiles\node_modules.lock
+    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)
+    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)
+    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)
+    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)
+    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)
+    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23
+
+Node.js v22.22.2
+[probe] PROBE_F_RESULT=FAIL {"isolationOk":false,"modelOk":false}
 
 ===== G-exit-code =====
-[probe] clean EOF shutdown {"exitCode":0,"ms":127694}
-[probe] boot with stale lock (fresh home) {"exitCode":1,"ms":2439}
-[probe] PROBE_G_RESULT=PASS {"cleanExitCodeZero":true,"cleanNoStderr":true,"staleLockExitCodeOne":true,"staleLockMentionsLock":true}
+[probe] ERROR [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {"count":50,"threshold":50,"scope":"turn","targets":["H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock"],"targetCount":1}
+[probe] PROBE_G_RESULT=FAIL null
 
 ===== SUMMARY =====
-BLOCKED A-basic-run  (exit 3, 118998ms)
-PASS    B-protocol-facts  (exit 0, 2554ms)
-PASS    C-resume  (exit 0, 5910ms)
-BLOCKED D-abandon  (exit 3, 8640ms)
-BLOCKED E-tools  (exit 3, 3639ms)
-BLOCKED F-concurrent  (exit 3, 3322ms)
-PASS    G-exit-code  (exit 0, 130313ms)
+BLOCKED A-basic-run  (exit 1, 16221ms)
+FAIL    B-protocol-facts  (exit 1, 2859ms)
+FAIL    C-resume  (exit 1, 2844ms)
+FAIL    D-abandon  (exit 1, 3859ms)
+FAIL    E-tools  (exit 1, 3865ms)
+FAIL    F-concurrent  (exit 1, 3868ms)
+BLOCKED G-exit-code  (exit 1, 154ms)
 
-PASS 3/7  BLOCKED 4  FAIL 0
-
-===== diagnostic shell (studio-diag.mjs) — separate manual run =====
-runtime       CONNECTED in 115896 ms
-session id    session-58b8b166eb3b4e2ebd5cda810046d4ed
-status        RUNNING  (+24 ms)
-status        IDLE  (+675 ms)
-events        15
-outcome       ERROR (MODEL_QUOTA QUOTA/402)
-reason        Insufficient Balance (request_id: a4dd8fbd-76eb-4c4a-8ced-84246f274a96)
-close()       49 ms
-process gone  yes (987 ms)
+PASS 0/7  BLOCKED 2  FAIL 5

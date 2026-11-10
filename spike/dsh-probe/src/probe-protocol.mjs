@@ -14,7 +14,7 @@
 import fs from 'node:fs'
 import { HarnessClient, JsonRpcResponseError } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
-import { runtimeVersionFacts } from './lib/proc.mjs'
+import { runtimeVersionFacts, clearStaleProfileLock } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
 
 const MODEL = process.env.PROBE_MODEL ?? 'deepseek-v4-flash'
@@ -29,6 +29,7 @@ const dshHome = p('tmp', 'dsh-home')
 const workspace = p('tmp', 'workspace')
 fs.mkdirSync(dshHome, { recursive: true })
 fs.mkdirSync(workspace, { recursive: true })
+summary.lockRecovery = clearStaleProfileLock(dshHome)
 
 const client = new HarnessClient({ profile: 'sdk', dshHome, initializeTimeoutMs: Number(process.env.PROBE_INIT_TIMEOUT_MS ?? 180000) })
 const notifications = []

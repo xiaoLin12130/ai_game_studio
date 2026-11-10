@@ -1,17 +1,18 @@
 {
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
-  "product_status": "PHASE_00_PARTIALLY_VERIFIED",
-  "current_phase": "PHASE_00",
+  "product_status": "PHASE_00_R1_COMPLETED_PENDING_REVIEW",
+  "current_phase": "PHASE_00-R1",
   "phase_status": {
-    "PHASE_00": "PARTIALLY_VERIFIED_DSH_BLOCKED_ON_MODEL_QUOTA",
+    "PHASE_00": "SUPERSEDED_BY_R1",
     "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_02": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_03": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_04": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_05": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW"
+    "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_00-R1": "PARTIALLY_VERIFIED_PENDING_REVIEW"
   },
   "product_scope": {
     "target_os": "Windows local single-user first",
@@ -93,6 +94,72 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "Await external review of PHASE 00. Do NOT start PHASE 01 until an explicit approval arrives. If the DeepSeek account is funded, re-run the probe suite first so gates 3 and 5 can move from BLOCKED to PASS.",
-  "updated_at": "2026-11-10T10:16:05.653Z"
+  "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
+  "updated_at": "2026-11-10T10:48:46.580Z",
+  "phase_00_r1": {
+    "authored_at": "2026-11-10T10:48:46.579Z",
+    "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
+    "cli_on_path": "0.1.5-rc.1 (stale, not used as target)",
+    "sdk_client": "@deepseek-ai/dsh-sdk-client@0.2.1-rc.3",
+    "provider": "commandcode",
+    "provider_plugin": "@mars-sea/dsh-commandcode-provider@0.15.4",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "profiles_used": {
+      "sdk": "cc-sdk (isolated DSH_HOME)",
+      "cli": "cc-cli (isolated DSH_HOME)",
+      "user_daily": "desktop (read-only inspection)"
+    },
+    "provider_fallback_detected": false,
+    "gate_results": {
+      "01_docs_and_state_consistent": "PASS",
+      "02_public_repo_and_secrets_checked": "PASS",
+      "03_commandcode_config_confirmed": "PASS",
+      "04_cli_real_dialog": "PASS",
+      "05_sdk_real_dialog": "PASS",
+      "06_mcp_tool_registered": "PASS",
+      "07_mcp_tool_invoked_and_executed": "PASS",
+      "08_process_tree_reclaimed": "PASS",
+      "09_probe_granularity_fixed": "PASS",
+      "10_version_capability_matrix": "PASS",
+      "11_adr_0001_revised": "PASS",
+      "12_adr_0002_revised": "PASS",
+      "13_automation_and_regression": "PARTIALLY_VERIFIED",
+      "14_commit_and_push": "PENDING",
+      "15_independent_review_handoff": "PASS"
+    },
+    "suite_results": {
+      "current-0.2.1": {
+        "command": "cd spike/dsh-probe/current-0.2.1 && node run-all.mjs",
+        "pass": 5,
+        "total": 5,
+        "exit": 0
+      },
+      "legacy-0.1.5": {
+        "command": "cd spike/dsh-probe && node run-all.mjs",
+        "note": "legacy baseline; provider-incompatible with commandcode 0.15.4 and partly blocked by host safe-delete shim"
+      }
+    },
+    "verified_capability_deltas": {
+      "session_resume": "SUPPORTED in 0.2.1 (restores history); NOT_SUPPORTED in 0.1.5",
+      "tool_approval_callback": "NOT_SUPPORTED in both tested versions",
+      "runtime_cancel": "NOT_SUPPORTED in both tested versions",
+      "session_close": "NOT_SUPPORTED in both tested versions",
+      "working_directory_get_set": "SUPPORTED in 0.2.1"
+    },
+    "open_items": [
+      "U1 electron packaged smoke",
+      "U2 DSH_HOME policy for production",
+      "U3 multi-runtime resource cost",
+      "U4 external process behaviour on crash",
+      "U5 official MCP SDK compatibility",
+      "U6 0.2.2 capability untested",
+      "U7 interrupted-turn resume untested",
+      "U8 legacy suite stability"
+    ],
+    "report": "docs/review-handoff/PHASE_00_R1_WORK_REPORT.md",
+    "adrs": {
+      "ADR-0001": "PROPOSED / CONDITIONAL",
+      "ADR-0002": "PROPOSED / CONDITIONAL"
+    }
+  }
 }

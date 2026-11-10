@@ -1,62 +1,29 @@
 {
   "probe": "C-resume",
-  "startedAt": "2026-11-10T09:29:45.613Z",
-  "sessionId": "probe-resume-1794302985613",
+  "startedAt": "2026-11-10T10:48:57.102Z",
+  "sessionId": "probe-resume-1794307737100",
   "codeword": "ALPHA7",
   "lockRecovery": {
-    "checked": false,
+    "checked": true,
     "cleared": false,
-    "stalePid": null,
-    "path": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "stalePid": 26876,
+    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock",
+    "error": "[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}"
   },
-  "turn1": {
-    "sessionId": "probe-resume-1794302985613",
-    "finalResponse": "",
-    "eventCount": 15,
-    "modelBlocker": {
-      "blocked": true,
-      "kind": "MODEL_QUOTA",
-      "code": "QUOTA",
-      "status": 402,
-      "message": "Insufficient Balance (request_id: f32cf91f-b8dc-4ef2-8bb7-2438594c2d56)"
-    }
+  "error": {
+    "name": "TransportClosedError",
+    "message": "dsh profile \"sdk\": JSON-RPC input closed\nexit code: 1\nstderr tail:\nfile:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r"
   },
-  "turn1ProcessReaped": true,
-  "sessionLogAfterTurn1": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\sessions\\--H-AI~4E0E~5F00~53D1-ai_game_studio_starter-spike-dsh-probe-tmp-workspace--\\probe-resume-1794302985613\\session.v3.jsonl.zstd",
-  "turnCountAfterTurn1": {
-    "compressedBytes": 18073,
-    "decompressedBytes": 210,
-    "lines": 1,
-    "turnStartMarkers": 0,
-    "userMessageMarkers": 0,
-    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""
-  },
-  "turn2": {
-    "error": "session \"probe-resume-1794302985613\" already exists"
-  },
-  "sessionReuseRejected": true,
-  "sessionLogAfterTurn2": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\sessions\\--H-AI~4E0E~5F00~53D1-ai_game_studio_starter-spike-dsh-probe-tmp-workspace--\\probe-resume-1794302985613\\session.v3.jsonl.zstd",
-  "turnCountAfterTurn2": {
-    "compressedBytes": 18073,
-    "decompressedBytes": 210,
-    "lines": 1,
-    "turnStartMarkers": 0,
-    "userMessageMarkers": 0,
-    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""
-  },
-  "sameLogFile": true,
-  "logGrew": false,
-  "resumeRecalledCodeword": false,
   "assertions": {
-    "firstProcessReaped": true,
-    "sessionLogPersisted": true,
-    "sessionLogCompressedBytes": 18073,
-    "sessionIdReuseRejected": true,
-    "sessionLogStillReadable": true,
+    "firstProcessReaped": false,
+    "sessionLogPersisted": false,
+    "sessionLogCompressedBytes": null,
+    "sessionIdReuseRejected": false,
+    "sessionLogStillReadable": false,
     "modelRecalledCodeword": false
   },
   "resumeSupported": false,
-  "conclusion": "NO_RESUME_AT_SDK_LEVEL",
-  "verdict": "PASS",
-  "finishedAt": "2026-11-10T09:29:51.456Z"
+  "conclusion": "ID_REUSE_ACCEPTED_BUT_HISTORY_NOT_RECALLED",
+  "verdict": "FAIL",
+  "finishedAt": "2026-11-10T10:48:59.870Z"
 }

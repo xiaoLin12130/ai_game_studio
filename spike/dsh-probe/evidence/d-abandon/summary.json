@@ -1,49 +1,32 @@
 {
   "probe": "D-abandon",
-  "startedAt": "2026-11-10T09:29:51.520Z",
-  "abandonAfterMs": 4000,
+  "startedAt": "2026-11-10T10:48:59.944Z",
+  "abandonAfterMs": 5000,
   "lockRecovery": {
-    "checked": false,
+    "checked": true,
     "cleared": false,
-    "stalePid": null,
-    "path": "H:/AI与开发/ai_game_studio_starter/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "stalePid": 26876,
+    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock",
+    "error": "[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}"
   },
-  "serverInfo": {
-    "name": "deepseek-harness-sdk-runtime",
-    "version": "0.0.1"
+  "error": {
+    "name": "TransportClosedError",
+    "message": "dsh profile \"sdk\": JSON-RPC input closed\nexit code: 1\nstderr tail:\nfile:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136\r\n\t\tif (Date.now() >= deadline) throw new Error(`atomic-write: timed out waiting for the writer lock at ${lockPath}`);\r\n\t\t                                  ^\r\n\r\nError: atomic-write: timed out waiting for the writer lock at H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\profiles\\node_modules.lock\r\n    at withFileLock (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-atomic-write/lib/index.js:136:37)\r\n    at async healProfilesModuleFallback (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh-app-boot/lib/index.js:662:51)\r\n    at async composeProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:234:2)\r\n    at async runProfile (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/profile-boot-Dk-7KqJc.js:283:19)\r\n    at async runCli (file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:146:4)\r\n    at async file:///H:/AI%E4%B8%8E%E5%BC%80%E5%8F%91/ai_game_studio_starter/spike/dsh-probe/node_modules/@deepseek-ai/dsh/lib/bin.js:168:23\r\n\r\nNode.js v22.22.2\r"
   },
-  "sessionId": "probe-abandon-1794302993084",
-  "sawRunning": true,
-  "abandon": {
-    "waitedMs": 4003,
-    "childStillAlive": true,
-    "lastStatus": "idle",
-    "eventCountAtAbandon": 6,
-    "eventCountAfterAbandon": 18,
-    "eventsKeptArriving": true,
-    "childProcesses": [
-      {
-        "pid": 26868,
-        "name": "node.exe"
-      },
-      {
-        "pid": 12960,
-        "name": "powershell.exe"
-      }
-    ]
+  "closeMs": 0,
+  "reap": {
+    "status": "PROCESS_ABSENT",
+    "waitedMs": 1027,
+    "remaining": [],
+    "error": null
   },
-  "cancelAvailable": false,
-  "closeMs": 48,
-  "childGoneAfterClose": true,
-  "reapWaitMs": 983,
-  "finishedAt": "2026-11-10T09:30:00.096Z",
   "assertions": {
-    "agentReachedRunning": true,
-    "stillRunningAtAbandon": false,
-    "processSurvivedAbandonedWait": true,
-    "processGoneAfterClose": true,
-    "noWireCancelMethod": true,
-    "longTurnKeptProducingWork": false
+    "A_runtimeAliveAfterAbandon": false,
+    "B_stillRunningAtAbandon": false,
+    "C_newAssistantContentAfterAbandon": false,
+    "D_processTreeGoneAfterClose": true,
+    "E_noLeftoverExternalProcesses": true
   },
-  "verdict": "BLOCKED"
+  "verdict": "FAIL",
+  "finishedAt": "2026-11-10T10:49:03.728Z"
 }

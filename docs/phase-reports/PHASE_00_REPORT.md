@@ -1,5 +1,18 @@
 # PHASE 00｜技术可行性与 DSH 最小垂直切片 — 阶段报告
 
+> ## ⚠️ 本报告已被 PHASE 00-R1 部分取代（2026-11-10）
+>
+> 本文件保留为 **0.1.5 运行时的历史记录**，不再作为当前事实来源。三处结论已修正：
+>
+> 1. **「模型被账号余额阻断」是错的。** 真实原因是探针用了 `deepseek-official` 而非用户实际使用的 `commandcode`，且运行时静默回退到 DeepSeek 才出现 402。改用 commandcode 后，CLI 与 SDK 的真实对话均 PASS。
+> 2. **「DSH 无 session resume」只对 0.1.5 成立。** 用户实际运行的 0.2.1-rc.3 有 `session/resume`，实测可恢复历史。
+> 3. **门禁 10（GitHub 推送）已 PASS**，本文件表格中的 BLOCKED 为当时状态。
+>
+> 当前权威事实以 `state/project_state.json` 的 `phase_00_r1.gate_results` 为准；
+> 完整整改报告见 **`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`**。
+>
+> 下表为 0.1.5 当时的状态，仅供追溯，**不要引用为当前结论**。
+
 - 阶段：PHASE 00
 - 状态：**PARTIALLY_VERIFIED / BLOCKED**（见 §5 门禁表；核心链路已验证，模型层被账号余额阻断）
 - 日期：2026-11-10
