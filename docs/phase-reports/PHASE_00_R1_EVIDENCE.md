@@ -23,7 +23,7 @@
 
 | 探针 | 结果 | 关键证据文件 |
 |---|---|---|
-| CC-0 CLI 基准 | PASS | `evidence/cc-0-cli-baseline/stdout.txt`（回显随机标识 + 自述模型名） |
+| CC-0 CLI 基准 | PASS | `evidence/cc-0-cli-baseline/summary.json`（`tokenEchoed` + `modelNamed`；原始输出已按 R1.2 要求移除，改由结构化字段承载） |
 | CC-1 真实对话 | PASS | `evidence/cc-1-reply/summary.json`（`requestRoute.provider = commandcode`） |
 | CC-2 MCP 工具 | PASS | `evidence/cc-2-tools/audit-records.json`（`tools/call` + `tools/call.served`） |
 | CC-3 会话恢复 | PASS | `evidence/cc-3-resume/summary.json`（`RESUME_RESTORES_HISTORY`） |

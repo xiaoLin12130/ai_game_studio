@@ -14,7 +14,7 @@
 | 阶段 | PHASE 00-R1.4（集中收尾，不新增技术探索） |
 | 基线 | 代码基线 `1985fb0`（上轮评审固定），本轮实际起点 `e3176bf` |
 | 探针 | **6/6 PASS**（CC-0 CLI、CC-1 Reply、CC-2 Tools、CC-3 Resume、CC-4 Concurrent、CC-5 Capability） |
-| 门禁 | 依赖门禁 **PASS**；脱敏门禁 **PASS**（扫描 163 个文件，泄漏 0） |
+| 门禁 | 依赖门禁 **PASS**；脱敏门禁 **PASS**（扫描 167 个文件，泄漏 0） |
 | 回归测试 | **68/68 PASS**（含阳性/阴性/反向用例） |
 | 套件退出码 | **0**（`OVERALL PASS`） |
 | 阶段判定 | `PARTIALLY_VERIFIED` — 本轮要求的工程门禁已建立，冻结范围外能力仍为 `UNKNOWN` |
@@ -111,11 +111,13 @@ node ./node_modules/@deepseek-ai/dsh/lib/bin.js \
   "请回复一行，原样包含：验证标识 CC-cli-1794307597。并说明你使用的模型名。"
 ```
 
-输出（`evidence/cc-0-cli-baseline/stdout.txt`）：
+输出：当时保存的原始 stdout 已按 R1.2 的安全要求删除，改由
+`evidence/cc-0-cli-baseline/summary.json` 的结构化字段承载（`tokenEchoed=true`、`modelNamed=true`、
+`exitCode=0`、`diagnostics.kind=null`）。当时的原始回显内容形如：
 
 ```
 No tools needed.
-验证标识 CC-cli-1794307597；我使用的模型名是 deepseek/deepseek-v4.1-flash。
+验证标识 CC-cli-<随机值>；我使用的模型名是 deepseek/deepseek-v4.1-flash。
 EXIT=0
 ```
 
@@ -761,7 +763,7 @@ node scrub-evidence.mjs --check
 
 | 缺陷 | 修正 |
 |---|---|
-| 只扫 4 个目录 | 改为 `git ls-files --cached --others --exclude-standard`，扫「会被发布的那批文件」（本轮 163） |
+| 只扫 4 个目录 | 改为 `git ls-files --cached --others --exclude-standard`，扫「会被发布的那批文件」（本轮 167） |
 | 正则要求两个反斜杠，解码后是一个 → 永远匹配不上 | 改为先解析 JSON 再匹配字符串值；同时覆盖盘符/正斜杠/UNC |
 | 只认已知前缀（仓库根、家目录） | 改为形状识别：盘符 + 两级分隔、系统根、UNC、`/Users /home /root /mnt /tmp /opt /var /private /workspace /srv` |
 | JSON 转义 `\n` 被当成路径 | 要求至少两级分隔，纯转义片段不可能构成 |
@@ -785,7 +787,7 @@ node scrub-evidence.mjs --check
 ```text
 PASS  gate:dependency
 PASS  CC-0-cli … CC-5-capability
-FAIL  gate:leak  (scanned 167, leaks 2)
+FAIL  gate:leak  (scanned 168, leaks 1)
 PASS 6/6  BLOCKED 0  FAIL 0  GATES PASS/FAIL
 OVERALL FAIL      exit 1
 ```
@@ -861,7 +863,7 @@ OVERALL FAIL      exit 1
 | # | 验收项 | 状态 | 证据 |
 |---|---|---|---|
 | 1 | 所有输出出口统一脱敏 | CONFIRMED | `safe-output.mjs` 为唯一出口；`tests.json` 阴性 12 例 |
-| 2 | 扫描范围明确、阳性/阴性通过 | CONFIRMED | `scrub.json`（163 文件 / 0 泄漏）+ 14 阳性 / 12 阴性 |
+| 2 | 扫描范围明确、阳性/阴性通过 | CONFIRMED | `scrub.json`（167 文件 / 0 泄漏）+ 14 阳性 / 12 阴性 |
 | 3 | 泄漏时整体失败 | CONFIRMED | `negative-leak-gate.json`：6/6 PASS 仍 OVERALL FAIL / exit 1 |
 | 4 | Profile 依赖可校验（新旧环境） | CONFIRMED | 五场景测试 |
 | 5 | Lockfile 缺失/漂移/损坏有明确策略 | CONFIRMED | 四个错误码测试 |
