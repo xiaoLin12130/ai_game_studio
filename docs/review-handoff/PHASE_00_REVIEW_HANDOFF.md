@@ -28,6 +28,7 @@
 | `spike/dsh-probe/src/probe-tools.mjs` | E：MCP 工具桥接（生成 patch + 校验审计日志） |
 | `spike/dsh-probe/src/probe-concurrent.mjs` | F：并发会话与事件隔离 |
 | `spike/dsh-probe/src/probe-exitcode.mjs` | G：退出码与陈旧锁缺陷复现 |
+| `spike/dsh-probe/src/studio-diag.mjs` | 最小诊断壳（CLI）：展示连接/版本/会话/事件/错误/回收 |
 | `spike/dsh-probe/mcp/studio-mcp-server.mjs` | Studio 只读 MCP tool server（仅 `get_studio_health`） |
 | `spike/dsh-probe/src/lib/outcome.mjs` | PASS / BLOCKED / FAIL 三态判定与退出码语义 |
 | `spike/dsh-probe/src/lib/proc.mjs` | OS 进程探测 + `clearStaleProfileLock()` 参考实现 |

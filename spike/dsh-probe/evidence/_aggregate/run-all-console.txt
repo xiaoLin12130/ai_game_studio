@@ -61,3 +61,14 @@ BLOCKED F-concurrent  (exit 3, 3322ms)
 PASS    G-exit-code  (exit 0, 130313ms)
 
 PASS 3/7  BLOCKED 4  FAIL 0
+
+===== diagnostic shell (studio-diag.mjs) — separate manual run =====
+runtime       CONNECTED in 115896 ms
+session id    session-58b8b166eb3b4e2ebd5cda810046d4ed
+status        RUNNING  (+24 ms)
+status        IDLE  (+675 ms)
+events        15
+outcome       ERROR (MODEL_QUOTA QUOTA/402)
+reason        Insufficient Balance (request_id: a4dd8fbd-76eb-4c4a-8ced-84246f274a96)
+close()       49 ms
+process gone  yes (987 ms)

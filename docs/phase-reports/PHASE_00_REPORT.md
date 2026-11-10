@@ -20,6 +20,7 @@
 | 类型 | 路径 | 说明 |
 |---|---|---|
 | 可运行验证代码 | `spike/dsh-probe/` | 7 个探针 + 1 个 Studio MCP tool server，`node run-all.mjs` 一键复跑 |
+| 最小应用壳（诊断） | `spike/dsh-probe/src/studio-diag.mjs` | CLI 诊断壳：环境版本、连接、会话、`RUNNING/IDLE`、结果/错误、关闭回收。因技术栈未批准，故意不做窗口 |
 | Studio 只读工具 | `spike/dsh-probe/mcp/studio-mcp-server.mjs` | 仅暴露 `get_studio_health`，只读、无写能力 |
 | 证据原始数据 | `spike/dsh-probe/evidence/` | 每次运行的 JSONL / JSON，含事件流、审计日志、控制台输出 |
 | 阶段报告 | `docs/phase-reports/PHASE_00_REPORT.md` | 本文件 |

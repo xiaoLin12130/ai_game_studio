@@ -26,6 +26,16 @@ node src/probe-concurrent.mjs  # F：并发会话隔离
 node src/probe-exitcode.mjs    # G：退出码与陈旧锁缺陷
 ```
 
+### 最小诊断壳
+
+`src/studio-diag.mjs` 是本阶段交付的「最小应用壳」——因为技术栈尚未批准，故意做成 CLI 而不是窗口。它展示未来 UI 必须渲染的全部状态面：
+
+```bash
+node src/studio-diag.mjs "Say hi"
+```
+
+输出包含：环境版本 → 连接耗时 → 子进程 pid → 会话 id → `RUNNING/IDLE` 实时状态 → 结果或错误原因 → `close()` 耗时与进程是否真消失。模型被拒时它会明确打印 `ERROR (MODEL_QUOTA QUOTA/402)` 与原始原因，而不是显示一个空回复。
+
 ## 前置条件
 
 - Node ≥ 22（用到 `node:zlib` 的 zstd 解压）
