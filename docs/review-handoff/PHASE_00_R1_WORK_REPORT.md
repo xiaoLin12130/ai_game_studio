@@ -5,7 +5,7 @@
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-10
-> - 提交 SHA：R1.2 复审基线 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
+> - 提交 SHA：R1.3 复审基线 `<R13_SHA>`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
 
 ---
 
@@ -26,7 +26,7 @@ SDK 集成测试结果：      PASS（5/5 探针）
 是否发生 Provider 回退：否（每次运行都断言 request/header.config.provider === commandcode）
 ```
 
-**关于「是否发生 Provider 回退」的说明**：PHASE 00 的探针没有断言路由，导致 DeepSeek 官方 provider 的 402 被误当成「用户模型不可用」。整改后每个探针都读取 `request/header.config` 并断言 provider 与 model，回退会被判成 FAIL 而不是静默通过。
+**关于「是否发生 Provider 回退」的说明**：PHASE 00 的探针没有断言路由，导致 DeepSeek 官方 provider 的 402 被误当成「用户模型不可用」。整改后**所有会发模型请求的 SDK 探针**（CC-1…CC-4）都读取 `request/header.config` 并断言 provider 与 model，回退会被判成 FAIL 而不是静默通过。**CC-0 是 CLI 探针，没有 `request/header` 事件**，它只断言退出码、随机标识回显、模型自述与失败类别——CLI 链路的 provider 归属靠「自述模型名 + 无回退类错误」间接佐证，不构成路由证明。
 
 ---
 
@@ -154,7 +154,8 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 | MCP 工具注册 | PASS | PASS | 必须 |
 | MCP 工具**实际调用** | BLOCKED（无可用模型） | **PASS** | 必须 |
 | Session Resume | **NOT_SUPPORTED**（`already exists`） | **PASS（恢复历史）** | 强烈需要 |
-| 工具审批回调 | NOT_SUPPORTED | **NOT_SUPPORTED** | 需要 |
+| 工具审批回调（DSH 原生、可依赖） | `UNKNOWN / NOT_OBSERVED` | `UNKNOWN / NOT_OBSERVED`（协议无审批消息类型，实测未出现 server→client 请求） | 需要 |
+| `session/approve` 协议方法 | NOT_SUPPORTED | **NOT_SUPPORTED**（`unknown method`） | 需要 |
 | Runtime 级取消 | NOT_SUPPORTED | **NOT_SUPPORTED** | 不假设存在 |
 | Session 关闭 | NOT_SUPPORTED | **NOT_SUPPORTED** | — |
 | working-directory get/set | 无 | **SUPPORTED** | 有用 |
@@ -437,7 +438,7 @@ PASS 5/5   exit 0
 |---|---|
 | 崩溃恢复（强杀 → resume） | `UNKNOWN`，PHASE 01 早期验证 |
 | 中断中的最后一轮恢复 | `UNKNOWN` |
-| 工具审批回调的 UI 映射 | `NOT_SUPPORTED`（协议无消息类型，服务端未发起请求） |
+| 工具审批回调的 UI 映射 | `UNKNOWN / NOT_OBSERVED`（协议无审批消息类型，实测未出现 server→client 请求；「没观测到」不等于「不存在」） |
 | 多 Runtime 并发上限与资源成本 | `UNKNOWN` |
 | Electron 打包后完整链路 | `UNKNOWN`，PHASE 01 |
 | 0.1.5 legacy 套件本机稳定复现 | `BLOCKED`（环境安全垫），以冻结快照为记录 |
@@ -466,7 +467,7 @@ PASS 5/5   exit 0
 
 **修复**：
 
-1. `redact()` 增加按形态匹配：`X:/...`、`X:/...`、以及「至少两级」的 `X:/a/b`
+1. `redact()` 增加按形态匹配：`<abs-path> `<abs-path>
    （后者专门覆盖被转义前缀破坏边界的情况）；POSIX 家目录路径同样处理。
 2. 证据写入三条路径（JSONL / summary.json / 聚合）统一走 `redact()`。
 3. 新增 `spike/dsh-probe/scrub-evidence.mjs`：**先解析 JSON/JSONL 再脱敏**（解码后的值才有真实分隔符），
@@ -550,3 +551,157 @@ PASS 6/6   exit 0
 | 全部请求的路由断言 | `FIXED`（`allRequestsOnExpectedRoute` 全 true） |
 | 审批回调分类 | `FIXED`（拆为 NOT_SUPPORTED / NOT_OBSERVED / UNVERIFIED） |
 | 崩溃恢复、中断轮次、多 Runtime 成本、Electron 打包 | 仍为 `UNKNOWN`，按 ADR 放到 PHASE 01 |
+
+---
+
+# R1.3 修正（回应第四次外部复审，2026-11-10）
+
+复审结论：核心技术链路 CONFIRMED，但 4 项里有 3 项只能算 `PARTIALLY_VERIFIED`。
+这一轮不加新功能，只把门禁做实、把旧结论统一。
+
+## R1.3-1｜证据输出（P1a）：三处出口 + 一个失效的扫描器
+
+### A. CLI 的 stderr 仍在保存模型文本
+
+复审准确：删掉 `stdout.txt` 不等于清干净。模型把推理写在**诊断流**里，`stderrTail` 接着它落盘了。
+
+现在 CC-0 **不保存任何自由文本**，只保留：
+
+- 退出码、耗时
+- 随机标识是否回显、是否自述模型名
+- 截断到 200 字符的答案行
+- **失败类别**（`QUOTA` / `AUTH` / `PLUGIN_INCOMPATIBLE` / `PROFILE_BOOT` / `TIMEOUT`），由 stdout **和** stderr 一起判定，但不保存判定依据的原文
+
+实际产物：`cc-0-cli-baseline/summary.json` 的键里已经没有 `stderrTail`，`diagnostics = {kind:null, stdoutBytes:51, stderrBytes:0}`。
+
+### B. 扫描器：范围不对，正则也是错的
+
+两个独立缺陷，都让 `79 files, 0 residual` 这个结论无效：
+
+| 缺陷 | 后果 |
+|---|---|
+| 只扫 `evidence/` 与 `docs/` 四个目录 | `state/`、`memory-bank/`、`README.md`、源码从未被检查 |
+| 正则要求**两个**反斜杠，而解码后是**一个** | 真实路径永远匹配不上，检查必然通过 |
+
+修正：
+
+- 范围改为 `git ls-files --cached --others --exclude-standard` —— 扫**会被发布的那批文件**（本轮 152 个），
+  自动排除 `node_modules`、生成的 `dsh-home`、构建产物。
+- 判定改为「解析 JSON 后检查字符串值」，并要求路径**至少两级分隔**。
+  这一条同时解决两类误报：JSON 转义 `\n` / `\t` 被当成路径分隔符，以及 URL 里的 `https:/`。
+
+**阳性对照（必须有，否则又是空门禁）**：
+
+```
+planted  docs/_scrub_selftest/leak.md  →  一个形如 <drive>:\Users\<name>\file.txt 的路径
+run      node scrub-evidence.mjs --check
+result   LEAKS (1) … exit 1
+removed  → 再次运行 exit 0
+```
+
+### C. 控制台也脱敏
+
+- `run-all.mjs` 按**行**转发子进程输出，逐行过 `redact()`（按 chunk 脱敏会漏掉跨块的路径）。
+- `setup-profiles.mjs` 不再打印绝对路径：仓库内显示 `<probe>/…`，仓库外显示 `<external>/<basename>`；
+  `--json` 整份走 `redact()`。
+
+## R1.3-2｜依赖锁（P1b）：从「指纹」换成真 lockfile，漂移即失败
+
+复审指出 `*.deps.json` 不是 lockfile，且漂移只打印不失败。两点都成立。
+
+现在：
+
+```
+profile-locks/<profile>/package.json       插件钉版本
+profile-locks/<profile>/package-lock.json  真实 npm 锁（lockfileVersion 3，含 integrity）
+```
+
+- 安装走 `npm ci`（在 staging 目录），再把解析结果复制进 profile —— 装到什么是锁决定的，不是注册表当天给什么。
+- 版本与锁不符 → `DependencyDriftError` → **整轮中止**，退出码 1，并把原因写进 `_aggregate/run-all.json`。
+- **实测**：把锁里的版本改成 `0.15.3` 后运行 → 退出码 1，错误信息点名 profile 与两个版本。
+
+关于「只有一个条目」：该插件 `dependencies` 为空，`peerDependencies` 由 profile bundles 提供，
+所以它的可安装树确实只有一个包。这是完整的树，不是漏记。
+
+附带发现（环境层）：本机安全垫会让 `fs.cpSync` 与批量 `fs.rmSync` **直接终止进程**（退出 127，无错误信息）。
+初始化脚本因此改用手写递归复制，且从不删除目录树；`npm ci` 本身不受影响。
+
+README 已同步：6/6、六个探针、Windows 环境变量写法（PowerShell 与 cmd 各一份）、lockfile 说明。
+
+## R1.3-3｜测试质量：两处误通过
+
+| 问题 | 修正 |
+|---|---|
+| CC-4 用 `eventSessions.every(...)`，空数组也返回 true | 新增 `notificationsPresentA/B`，先要求非空再比对 |
+| CC-0 只用 stderr 判定失败类别 | 改为 stdout + stderr 一起判定；仍不保存文本 |
+
+## R1.3-4｜我自查发现的更严重问题：两条路由断言被注释掉了
+
+复审没有提到，但我在核对 CC-4 源码时发现行内出现 `//n`：
+
+```js
+routeBothRunsCommandcode://n      routeMatches(summary.runA.route, …) &&
+  routeMatches(summary.runB.route, …),
+```
+
+这是早前一次脚本化改写把换行转义写成了字面量 `//n`，于是 `//` 把**第一个** `routeMatches` 变成了注释。
+后果很直接：
+
+- CC-4 的 `routeBothRunsCommandcode` 与 `allRequestsOnExpectedRoute` 实际**只检查了 runB**；
+- CC-3 的对应两条**只检查了 turn2**。
+
+也就是说，R1.2 报告里「两轮都查」「两个并发会话都查」在当时是**不成立的**。
+两个文件已重写，本轮复跑后四条断言均为 true，`summary.json` 里能看到 `turn1Routes`/`turn2Routes`、
+`runA.routes`/`runB.routes` 各 1 条记录。
+
+**边界说明**：每次运行只观测到 **1 个** `request/header`（含带工具调用的 CC-2），
+所以「覆盖全部请求」目前是「覆盖了 SDK 暴露的全部请求」，
+**多跳（工具调用后再次请求）场景尚未观测到**，已列入未验证项。
+
+## R1.3-5｜文档一致性
+
+复审指出新章节写对了、旧结论没改。已统一：
+
+| 位置 | 原值 | 现值 |
+|---|---|---|
+| 报告 §5 能力矩阵 | 工具审批回调 `NOT_SUPPORTED` | `UNKNOWN / NOT_OBSERVED`（并新增 `session/approve` 一行 = `NOT_SUPPORTED`） |
+| 报告「R1.1 之后仍未解决」 | 审批 UI 映射 `NOT_SUPPORTED` | `UNKNOWN / NOT_OBSERVED` |
+| ADR-0002 能力矩阵 | 同上 | 同上，两行拆分 |
+| ADR-0001 C3 | 「无工具审批回调」 | 「未观察到（UNKNOWN）」 |
+| `PHASE_00_REPORT.md` / `PHASE_00_EVIDENCE.md` | 「不存在」 | 「未观察到」 |
+| `docs/11` D-016 | `CONFIRMED 没有` | `UNKNOWN / NOT_OBSERVED` |
+| `project_state.verified_capability_deltas` | `NOT_SUPPORTED in both` | 拆成 4 项：回调=UNKNOWN、`session/approve`=NOT_SUPPORTED、`onRequest` 钩子=存在、完整流程=UNVERIFIED |
+
+README 也同步到 6/6 与六个探针。
+
+## R1.3 复跑结果（干净目录，不依赖任何既有 profile）
+
+```
+node scripts/setup-profiles.mjs --home <空目录>/dsh-home
+  → profile.created ×2, lock.verified ×2, plugin.installed ×2
+
+CC_DSH_HOME=<空目录>/dsh-home node run-all.mjs
+  PASS  CC-0-cli         6,426ms
+  PASS  CC-1-reply       8,426ms
+  PASS  CC-2-tools      10,021ms
+  PASS  CC-3-resume     20,035ms
+  PASS  CC-4-concurrent  6,907ms
+  PASS  CC-5-capability  5,310ms
+  PASS 6/6   exit 0   （总计 57s）
+
+node scrub-evidence.mjs --check
+  → scanned=152  no absolute paths remain  exit 0
+```
+
+## R1.3 之后仍未解决
+
+| 项 | 状态 |
+|---|---|
+| 崩溃恢复（强杀 → resume） | `UNKNOWN` |
+| 中断中的最后一轮恢复 | `UNKNOWN` |
+| 审批回调完整流程与 UI 映射 | `UNKNOWN / NOT_OBSERVED` |
+| 多跳 `request/header`（工具调用后再请求） | `UNKNOWN`（本轮每轮只观测到 1 个） |
+| 多 Runtime 并发上限与资源成本 | `UNKNOWN` |
+| Electron 打包后完整链路 | `UNKNOWN` |
+| 0.2.2 能力 | `UNKNOWN` |
+| 0.1.5 legacy 套件本机稳定复现 | `BLOCKED`（环境安全垫） |

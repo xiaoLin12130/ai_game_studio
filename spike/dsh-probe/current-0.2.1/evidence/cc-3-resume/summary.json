@@ -1,14 +1,14 @@
 {
   "probe": "CC-3-resume",
-  "startedAt": "2026-11-10T11:27:39.430Z",
+  "startedAt": "2026-11-10T11:49:01.354Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
-  "token": "recall-733e2c",
+  "token": "recall-2dcfe4",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/tmp-clean-r11/dsh-home/profiles/node_modules.lock",
+    "path": "<abs-path>",
     "error": null
   },
   "serverInfo": {
@@ -42,7 +42,7 @@
   "resumeUnknownError": "session \"definitely-not-a-real-session-id\" not found",
   "resumeError": null,
   "turn2": {
-    "text": "recall-733e2c",
+    "text": "recall-2dcfe4",
     "events": 9,
     "statuses": [
       "running",
@@ -74,6 +74,6 @@
     "allRequestsOnExpectedRoute": true
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:27:58.691Z",
+  "finishedAt": "2026-11-10T11:49:21.312Z",
   "conclusion": "RESUME_RESTORES_HISTORY"
 }

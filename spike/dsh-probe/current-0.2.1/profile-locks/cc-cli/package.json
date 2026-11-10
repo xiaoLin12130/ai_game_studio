@@ -1,0 +1,7 @@
+{
+  "name": "cc-profile-lock-cc-cli",
+  "private": true,
+  "dependencies": {
+    "@mars-sea/dsh-commandcode-provider": "0.15.4"
+  }
+}

@@ -1,25 +1,25 @@
 [
   {
-    "ts": "2026-11-10T11:27:31.258Z",
+    "ts": "2026-11-10T11:48:53.930Z",
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
     "auditLog": "<repo>/spike/dsh-probe/current-0.2.1<abs-path>"
   },
   {
-    "ts": "2026-11-10T11:27:31.261Z",
+    "ts": "2026-11-10T11:48:53.934Z",
     "kind": "unsupported.method",
     "method": "server/discover"
   },
   {
-    "ts": "2026-11-10T11:27:31.343Z",
+    "ts": "2026-11-10T11:48:54.014Z",
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
     "auditLog": "<repo>/spike/dsh-probe/current-0.2.1<abs-path>"
   },
   {
-    "ts": "2026-11-10T11:27:31.347Z",
+    "ts": "2026-11-10T11:48:54.017Z",
     "kind": "initialize",
     "clientProtocolVersion": "2025-11-25",
     "clientInfo": {
@@ -28,23 +28,23 @@
     }
   },
   {
-    "ts": "2026-11-10T11:27:31.350Z",
+    "ts": "2026-11-10T11:48:54.021Z",
     "kind": "notification",
     "method": "notifications/initialized"
   },
   {
-    "ts": "2026-11-10T11:27:31.351Z",
+    "ts": "2026-11-10T11:48:54.022Z",
     "kind": "tools/list",
     "count": 1
   },
   {
-    "ts": "2026-11-10T11:27:35.179Z",
+    "ts": "2026-11-10T11:48:56.945Z",
     "kind": "tools/call",
     "name": "get_studio_health",
     "arguments": {}
   },
   {
-    "ts": "2026-11-10T11:27:35.181Z",
+    "ts": "2026-11-10T11:48:56.947Z",
     "kind": "tools/call.served",
     "name": "get_studio_health",
     "status": "ok"

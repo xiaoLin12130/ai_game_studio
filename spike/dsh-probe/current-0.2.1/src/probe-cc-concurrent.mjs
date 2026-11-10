@@ -65,15 +65,23 @@ try {
   step('both settled', { totalMs: summary.totalMs, a: runA.finalResponse.slice(0, 40), b: runB.finalResponse.slice(0, 40) })
 
   summary.modelBlocker = detectModelBlocker(runA.events)?.blocked ? detectModelBlocker(runA.events) : detectModelBlocker(runB.events)
+
+  // An empty id list would satisfy `every()` and read as "no cross-talk". Requiring at
+  // least one notification per session keeps "nothing arrived" from passing as isolation.
+  const onlyOwnSession = (ids, own) => ids.length > 0 && ids.every((id) => id === own)
   summary.assertions = {
     distinctSessionIds: a.id !== b.id,
-    eventsOnlyForOwnSessionA: summary.runA.eventSessions.every((id) => id === runA.sessionId),
-    eventsOnlyForOwnSessionB: summary.runB.eventSessions.every((id) => id === runB.sessionId),
+    notificationsPresentA: summary.runA.eventSessions.length > 0,
+    notificationsPresentB: summary.runB.eventSessions.length > 0,
+    eventsOnlyForOwnSessionA: onlyOwnSession(summary.runA.eventSessions, runA.sessionId),
+    eventsOnlyForOwnSessionB: onlyOwnSession(summary.runB.eventSessions, runB.sessionId),
     bothProducedText: runA.finalResponse.trim().length > 0 && runB.finalResponse.trim().length > 0,
     answersNotSwapped: /APPLE/i.test(runA.finalResponse) && /BANANA/i.test(runB.finalResponse),
-    routeBothRunsCommandcode://n      routeMatches(summary.runA.route, { provider: PROVIDER, model: MODEL }) &&
+    routeBothRunsCommandcode:
+      routeMatches(summary.runA.route, { provider: PROVIDER, model: MODEL }) &&
       routeMatches(summary.runB.route, { provider: PROVIDER, model: MODEL }),
-    allRequestsOnExpectedRoute://n      allRoutesMatch(runA.events, { provider: PROVIDER, model: MODEL }) &&
+    allRequestsOnExpectedRoute:
+      allRoutesMatch(runA.events, { provider: PROVIDER, model: MODEL }) &&
       allRoutesMatch(runB.events, { provider: PROVIDER, model: MODEL }),
     noLeftoversAfterClose: false,
   }

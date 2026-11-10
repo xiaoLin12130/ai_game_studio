@@ -1,17 +1,18 @@
 /**
  * Probe CC-0 — CLI baseline on the user's real provider.
  *
- * The previous version stored the raw stdout of the CLI run, which included the
- * model's intermediate reasoning. Nothing in a public evidence folder needs that, and
- * publishing chain-of-thought is both a privacy and a noise problem.
+ * The first version stored the raw stdout of the CLI run, which included the model's
+ * intermediate reasoning. The second version still stored a 300-character `stderrTail`,
+ * which turned out to carry the same reasoning: the model writes its thinking to the
+ * diagnostic stream, not only to stdout.
  *
- * This probe therefore keeps only auditable facts:
+ * Nothing in a public evidence folder needs any of that, so this probe stores no free
+ * text at all beyond the answer line:
  *   - exit code and duration
+ *   - the classified failure kind (never the message)
  *   - whether the random token came back verbatim
  *   - whether the model named itself
  *   - the final answer line, redacted, length-capped
- *
- * The raw stream is discarded, not stored.
  */
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -25,13 +26,28 @@ const PROFILE = process.env.CC_PROFILE_CLI ?? 'cc-cli'
 const TOKEN = `CC-cli-${crypto.randomBytes(3).toString('hex')}`
 const CLI_ENTRY = path.resolve(process.cwd(), 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js')
 
+/**
+ * Failure signatures, tested against both streams.
+ *
+ * A provider error can land on either stream depending on which code path raises it,
+ * so inspecting only stderr classifies some failures as a plain FAIL. Only the matched
+ * kind is recorded; the surrounding text is discarded.
+ */
+const ERROR_SIGNATURES = [
+  { kind: 'QUOTA', re: /QUOTA|Insufficient Balance/i },
+  { kind: 'AUTH', re: /\b401\b|unauthori[sz]ed|invalid api key/i },
+  { kind: 'PLUGIN_INCOMPATIBLE', re: /is incompatible with dsh/i },
+  { kind: 'PROFILE_BOOT', re: /JSON-RPC input closed|writer lock/i },
+  { kind: 'TIMEOUT', re: /timed out|ETIMEDOUT/i },
+]
+
 const ev = createEvidence('cc-0-cli-baseline')
 const summary = {
   probe: 'CC-0-cli-baseline',
   startedAt: new Date().toISOString(),
   profile: PROFILE,
   token: TOKEN,
-  note: 'Raw model stream is intentionally not stored; only auditable facts are kept.',
+  note: 'No model text is stored: only the answer line, the exit code and a failure class.',
 }
 
 const dshHome = dshHomePath()
@@ -69,29 +85,40 @@ function answerLine(raw) {
   return hit.length > 200 ? `${hit.slice(0, 200)}…` : hit
 }
 
+/** Classify a run from both streams without copying either of them. */
+function classifyRun(run) {
+  const corpus = `${run.out}\n${run.err}`
+  const hit = ERROR_SIGNATURES.find((signature) => signature.re.test(corpus))
+  return {
+    kind: hit?.kind ?? null,
+    stdoutBytes: run.out.length,
+    stderrBytes: run.err.length,
+  }
+}
+
 try {
-  if (!fs.existsSync(cliPatch)) throw new Error(`missing CLI patch: ${cliPatch}`)
+  if (!fs.existsSync(cliPatch)) throw new Error(`missing CLI patch: ${path.basename(cliPatch)}`)
   const run = await runCli(Number(process.env.PROBE_CLI_TIMEOUT_MS ?? 300000))
 
   const answer = answerLine(run.out)
   summary.exitCode = run.exitCode
   summary.durationMs = run.ms
   summary.answer = answer
-  summary.stderrTail = run.err.trim().slice(-300)
+  summary.diagnostics = classifyRun(run)
   ev.append('cli.run', {
     exitCode: run.exitCode,
     durationMs: run.ms,
     answer,
-    stderrTail: summary.stderrTail,
-    rawBytesDiscarded: run.out.length,
+    diagnostics: summary.diagnostics,
   })
-  step('cli finished', { exitCode: run.exitCode, ms: run.ms, answered: Boolean(answer) })
+  step('cli finished', { exitCode: run.exitCode, ms: run.ms, answered: Boolean(answer), errorKind: summary.diagnostics.kind })
 
   summary.assertions = {
     exitCodeZero: run.exitCode === 0,
     tokenEchoed: Boolean(answer),
     modelNamed: Boolean(answer && /deepseek\/deepseek-v4\.1-flash/i.test(answer)),
-    noProviderQuotaError: !/QUOTA|Insufficient Balance/i.test(run.err),
+    noProviderQuotaError: summary.diagnostics.kind !== 'QUOTA',
+    noPluginIncompatibility: summary.diagnostics.kind !== 'PLUGIN_INCOMPATIBLE',
   }
 } catch (error) {
   summary.error = { name: error?.constructor?.name, message: String(error?.message ?? error).slice(0, 800) }
@@ -99,8 +126,8 @@ try {
   step('ERROR', summary.error.message)
 } finally {
   const allPass = summary.assertions && Object.values(summary.assertions).every(Boolean)
-  const quota = /QUOTA|Insufficient Balance/i.test(summary.stderrTail ?? '')
-  summary.verdict = allPass ? 'PASS' : summary.error ? 'FAIL' : quota ? 'BLOCKED' : 'FAIL'
+  const blocked = ['QUOTA', 'AUTH'].includes(summary.diagnostics?.kind)
+  summary.verdict = allPass ? 'PASS' : summary.error ? 'FAIL' : blocked ? 'BLOCKED' : 'FAIL'
   summary.finishedAt = new Date().toISOString()
   ev.append('verdict', { verdict: summary.verdict, assertions: summary.assertions ?? null })
   ev.writeJson('summary.json', summary)

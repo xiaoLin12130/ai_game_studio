@@ -1,25 +1,25 @@
 {
   "probe": "CC-4-concurrent",
-  "startedAt": "2026-11-10T11:27:58.770Z",
+  "startedAt": "2026-11-10T11:49:21.389Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/tmp-clean-r11/dsh-home/profiles/node_modules.lock",
+    "path": "<abs-path>",
     "error": null
   },
   "sessions": [
-    "session-58999d32297d423696f89d048599eb7b",
-    "session-f3e21cbc96cc4e94b80d9cc2838a869d"
+    "session-f2b0800c032848aab894debb6686d1ff",
+    "session-fc846c818b1d4c47b58925fc70af88c6"
   ],
-  "totalMs": 2884,
+  "totalMs": 2558,
   "runA": {
-    "sessionId": "session-58999d32297d423696f89d048599eb7b",
+    "sessionId": "session-f2b0800c032848aab894debb6686d1ff",
     "text": "APPLE",
     "eventSessions": [
-      "session-58999d32297d423696f89d048599eb7b"
+      "session-f2b0800c032848aab894debb6686d1ff"
     ],
     "route": {
       "provider": "commandcode",
@@ -34,10 +34,10 @@
     ]
   },
   "runB": {
-    "sessionId": "session-f3e21cbc96cc4e94b80d9cc2838a869d",
-    "text": "BANANA",
+    "sessionId": "session-fc846c818b1d4c47b58925fc70af88c6",
+    "text": "BANANA\n",
     "eventSessions": [
-      "session-f3e21cbc96cc4e94b80d9cc2838a869d"
+      "session-fc846c818b1d4c47b58925fc70af88c6"
     ],
     "route": {
       "provider": "commandcode",
@@ -56,6 +56,8 @@
   },
   "assertions": {
     "distinctSessionIds": true,
+    "notificationsPresentA": true,
+    "notificationsPresentB": true,
     "eventsOnlyForOwnSessionA": true,
     "eventsOnlyForOwnSessionB": true,
     "bothProducedText": true,
@@ -66,10 +68,10 @@
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1033,
+    "waitedMs": 1043,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:28:06.194Z"
+  "finishedAt": "2026-11-10T11:49:28.220Z"
 }

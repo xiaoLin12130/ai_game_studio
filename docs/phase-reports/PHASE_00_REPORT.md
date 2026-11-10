@@ -63,7 +63,7 @@
 | 并发会话隔离 | 是 | 单 Runtime 内两 session 并行，通知按 sessionId 不串台 |
 | 运行中取消 | **不存在** | `session/cancel` → `unknown ... method` |
 | 会话恢复 | **不存在** | `session/resume` 不存在；复用 sessionId 报 `already exists` |
-| 工具审批回调 | **不存在** | 协议无 server→client 请求 |
+| 工具审批回调 | **未观察到**（`UNKNOWN`） | 0.1.5 无 server→client 请求；0.2.1 补测同样未见，但"未见"不等于"不存在" |
 
 ## 4. 关键技术发现（会直接改变实现方式）
 

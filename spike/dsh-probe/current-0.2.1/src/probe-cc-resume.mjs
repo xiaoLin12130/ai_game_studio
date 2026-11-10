@@ -163,9 +163,11 @@ try {
     resumeCallSucceeded: resumeError === null,
     historyRecalled: String(summary.turn2.text).includes(TOKEN),
     processReapedBothRuns: summary.turn1Reaped && summary.turn2Reaped,
-    routeBothTurnsCommandcode://n      routeMatches(summary.turn1Route, { provider: PROVIDER, model: MODEL }) &&
+    routeBothTurnsCommandcode:
+      routeMatches(summary.turn1Route, { provider: PROVIDER, model: MODEL }) &&
       routeMatches(summary.turn2Route, { provider: PROVIDER, model: MODEL }),
-    allRequestsOnExpectedRoute://n      allRoutesMatch(turn1.events, { provider: PROVIDER, model: MODEL }) &&
+    allRequestsOnExpectedRoute:
+      allRoutesMatch(turn1.events, { provider: PROVIDER, model: MODEL }) &&
       allRoutesMatch(turn2.events, { provider: PROVIDER, model: MODEL }),
   }
 } catch (error) {

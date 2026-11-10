@@ -33,7 +33,7 @@ const WINDOWS_ABS_FWD = /(?<![A-Za-z0-9])[A-Za-z]:\/[^\s"',;)]*/g
  * Needed because a value sometimes stores an escaped newline literally, so the
  * character before the drive letter is the letter `n` of `\n` and every boundary-based
  * pattern above fails on it. Requiring a second separator excludes the false positive
- * `note:\n` while still catching `F:\workbuddy\resources\...`.
+ * `note:\n` while still catching `<drive>:\app\resources\...`.
  */
 const WINDOWS_ABS_NESTED = /[A-Za-z]:\\[^\s"',;)]*\\[^\s"',;)]*/g
 const POSIX_HOME_ABS = /(?:\/(?:Users|home|mnt|opt|private|var|tmp))\/[^\s"',;)]*/g

@@ -30,7 +30,8 @@ Studio 用官方 TypeScript SDK（`@deepseek-ai/dsh-sdk-client@0.2.1-rc.3`）驱
 | MCP 工具注册 | PASS（注册成功） | **PASS** | 必须 | `cc-2-tools` stage1/2 |
 | MCP 工具**实际调用** | BLOCKED（无模型可用） | **PASS**（模型调用 + Server 执行 + 回复用工具数据） | 必须 | `cc-2-tools` stage3 |
 | Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **部分 PASS**：正常关闭后重启可恢复历史；**崩溃恢复未验证** | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY`（正常关闭路径） |
-| 工具审批回调 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（无 server→client 请求） | 需要（但可绕过，见 §3C） | `cc-5-capability` |
+| 工具审批回调（DSH 原生、可依赖） | `UNKNOWN / NOT_OBSERVED` | **仍 `UNKNOWN / NOT_OBSERVED`**（协议无审批消息类型；运行时未发起过 server→client 请求。「未观察到」≠「不存在」） | 需要（但可绕过，见 §3C） | `cc-5-capability` + 传输层类型声明 |
+| `session/approve` 协议方法 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`unknown method`） | 需要 | `cc-5-capability` |
 | Runtime 级取消 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/cancel` → unknown method） | 不假设存在 | `cc-5-capability` |
 | Session 关闭 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/close` → unknown method） | — | `cc-5-capability` |
 | 工作目录查询/设置 | 无 | **SUPPORTED**（`session/working-directory/get|set`） | 有用 | `cc-5-capability` |

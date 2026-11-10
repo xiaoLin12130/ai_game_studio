@@ -336,7 +336,7 @@ patch 文件（实测必须用 `insert:` 包裹）：
 | 模型真实回复 | `BLOCKED` | 账号 402 Insufficient Balance | 充值或换可用密钥 |
 | 模型主动调用 Studio 工具 | `BLOCKED` | 同上；注册链路已 PASS | 同上，然后重跑探针 E |
 | 长任务下「仍在工作」 | `BLOCKED` | 同上，无法制造长 turn | 同上，然后重跑探针 D |
-| 工具审批回调 | `NOT_SUPPORTED` | 当前协议无 server→client 请求 | 无（等上游实现） |
+| 工具审批回调 | `UNKNOWN / NOT_OBSERVED` | 协议无审批消息类型；实测未出现 server→client 请求（0.2.1 补测） | 无（等上游实现） |
 | 运行中取消 | `NOT_SUPPORTED` | 无 `session/cancel` | 设计上以「关进程」替代 |
 | 会话恢复 | `NOT_SUPPORTED` | 无 `session/resume`，sessionId 复用被拒 | Studio 自建再水化 |
 | Python SDK 路线 | `UNKNOWN` | 未安装未验证 | 若需非 Node 宿主再评估 |

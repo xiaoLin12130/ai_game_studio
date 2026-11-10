@@ -51,7 +51,7 @@
 | D-013 | DSH 官方 SDK 采用 TypeScript 版 `@deepseek-ai/dsh-sdk-client`，不需要引入 Python 运行时 | CONFIRMED（本机验证） |
 | D-014 | 当前 DSH 版本**没有**运行中取消能力，停止只能关闭 Runtime 进程 | CONFIRMED（`session/cancel` 不存在） |
 | D-015 | 当前 DSH 版本**没有**会话恢复能力，且复用已存在的 sessionId 会被拒绝 | CONFIRMED（`session/resume` 不存在 + `already exists`） |
-| D-016 | 当前 DSH 版本**没有**工具审批回调（协议无 server→client 请求） | CONFIRMED（协议文档 + 实测无该通知） |
+| D-016 | 当前 DSH 版本**没有可依赖的工具审批回调**：协议里没有审批类消息，实测运行期间服务端也没有发起过 server→client 请求 | `UNKNOWN / NOT_OBSERVED`（"未观察到"≠"不存在"；`session/approve` 方法本身确为 `NOT_SUPPORTED`） |
 | D-017 | Studio 工具桥接的唯一 sanctioned 通道是 MCP（`dsh-mcp-client`），工具名形如 `mcp__<server>__<tool>` | CONFIRMED（握手指纹 `dsh-mcp-client@0.0.1`，MCP `2025-11-25`） |
 | D-018 | `@deepseek-ai/*` 依赖必须整族精确钉版本并提交 lockfile | CONFIRMED（caret 范围会 `ERESOLVE`） |
 | D-019 | 技术栈建议 Electron + React + TypeScript（ADR-0001） | PROPOSED，待复审 |

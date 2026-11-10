@@ -99,7 +99,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T11:31:10.783Z",
+  "updated_at": "2026-11-10T11:50:08.502Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -145,10 +145,13 @@
     },
     "verified_capability_deltas": {
       "session_resume": "SUPPORTED in 0.2.1 (restores history); NOT_SUPPORTED in 0.1.5",
-      "tool_approval_callback": "NOT_SUPPORTED in both tested versions",
+      "tool_approval_callback": "UNKNOWN / NOT_OBSERVED in both tested versions: no approval message type in the protocol, and no server->client request was observed during a run. Absence of observation is not proof of absence.",
       "runtime_cancel": "NOT_SUPPORTED in both tested versions",
       "session_close": "NOT_SUPPORTED in both tested versions",
-      "working_directory_get_set": "SUPPORTED in 0.2.1"
+      "working_directory_get_set": "SUPPORTED in 0.2.1",
+      "session_approve_method": "NOT_SUPPORTED in both tested versions (unknown SDK runtime method)",
+      "sdk_onrequest_hook": "PRESENT in the transport type surface (generic onRequest handler); never exercised by the runtime",
+      "approval_flow_end_to_end": "UNVERIFIED (no sample to test)"
     },
     "open_items": [
       "crash recovery via forced kill",
@@ -232,6 +235,46 @@
         "multi-runtime concurrency limits and cost",
         "electron packaged chain",
         "0.2.2 capabilities"
+      ]
+    },
+    "r13": {
+      "authored_at": "2026-11-10T11:50:08.501Z",
+      "review_round": 4,
+      "fixes": {
+        "p1a_cli_stderr": "FIXED - CC-0 stores no free text: exit code, duration, token echo, model name, answer line, and a failure class (QUOTA/AUTH/...). stderrTail removed.",
+        "p1a_scrub_scope": "FIXED - scrubber scans every git-tracked file (152 files) instead of 4 directories; git ls-files --cached --others --exclude-standard",
+        "p1a_scrub_regex": "FIXED - the old pattern required two backslashes after decoding, so a real path could never match. Now JSON is parsed first and a path needs a second separator, with a lookbehind that excludes URLs. Positive control: a planted file containing <drive>:\\Users\\<name>\\file.txt was detected and the gate exited 1.",
+        "p1a_console": "FIXED - run-all forwards child output line by line through redact(); setup prints repo-relative paths and redacts --json",
+        "p1b_drift_gate": "FIXED - real npm lockfile per profile (profile-locks/<profile>/package-lock.json, committed); npm ci reproduces the tree; version mismatch against the lock throws DependencyDriftError and aborts the run (verified by tampering the lock: exit 1)",
+        "p1b_readme": "FIXED - 6/6, six probes, Windows env-var syntax, lockfile explanation",
+        "p1c_scope_wording": "FIXED - CC-0 is CLI and has no request/header; report and README state that SDK route assertions cover SDK probes only",
+        "p2b_consistency": "FIXED - approval split applied to report section 5, the unresolved table, ADR-0002 matrix, and verified_capability_deltas",
+        "cc4_empty_array": "FIXED - notificationsPresentA/B require a non-empty id list before the every() check",
+        "cc0_stream_classification": "FIXED - failure class is derived from stdout AND stderr; no text stored",
+        "commented_out_assertions": "FIXED - a literal //n left by an earlier scripted edit had commented out the first half of routeBothRunsCommandcode and allRequestsOnExpectedRoute in CC-3 and CC-4, so only the second run/turn was checked. Both files rewritten and re-verified."
+      },
+      "suite": {
+        "command": "CC_DSH_HOME=<clean>/dsh-home node run-all.mjs",
+        "pass": 6,
+        "total": 6,
+        "exit": 0,
+        "duration_ms": 57000
+      },
+      "scrub": {
+        "command": "cd spike/dsh-probe && node scrub-evidence.mjs --check",
+        "scanned": 152,
+        "residual": 0,
+        "positive_control": "planted leak detected, exit 1"
+      },
+      "environment_notes": "fs.cpSync and bulk fs.rmSync abort this node process with exit 127 under the host safe-delete shim; setup uses a manual recursive copy and never deletes a tree. npm ci itself is unaffected.",
+      "still_unverified": [
+        "crash recovery via forced kill",
+        "interrupted turn resume",
+        "approval callback flow and UI mapping",
+        "multi-runtime concurrency limits and cost",
+        "electron packaged chain",
+        "0.2.2 capabilities",
+        "multi-hop request/header coverage (only one request observed per run so far)"
       ]
     }
   }

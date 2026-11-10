@@ -91,7 +91,7 @@ try {
     ? {
         kind: 'SAFE_DELETE_SHIM',
         detail:
-          'The host injects F:\\workbuddy\\...\\node-safe-delete-shim.cjs into child node processes; it aborts bulk deletes during profile maintenance.',
+          'The host injects a safe-delete shim into child node processes through NODE_OPTIONS; it aborts bulk deletes during profile maintenance.',
         cleanStderrSample: clean.stderr.slice(0, 400),
       }
     : null

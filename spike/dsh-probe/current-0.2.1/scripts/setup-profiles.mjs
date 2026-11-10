@@ -7,32 +7,45 @@
  * the repository. A reader who cloned the repo and ran `node run-all.mjs` could not
  * reproduce the run.
  *
- * This script makes the environment a build artefact:
+ * R1.3 review finding: the previous version recorded a version-list fingerprint, which
+ * is not a lockfile — it could not reproduce an install, and a drift only produced a
+ * log line instead of failing the run. This version uses a real npm lockfile:
  *
- *   isolated DSH_HOME
+ *   profile-locks/<profile>/package.json        the plugin, pinned
+ *   profile-locks/<profile>/package-lock.json   resolved tree + integrity (committed)
+ *
+ * Installation runs `npm ci` from that lockfile in a staging directory and copies the
+ * resolved package into the profile, so the tree is whatever the lock says — not
+ * whatever the registry happens to serve today. Any mismatch between the lock, the
+ * resolved install and the profile's installed version is a hard failure, not a log
+ * line.
+ *
+ * Layout it produces:
+ *
+ *   <DSH_HOME>
  *     ├── profiles/cc-sdk   dsh-base + dsh-sdk-app        + commandcode plugin
  *     └── profiles/cc-cli   dsh-base + dsh-headless       + commandcode plugin
- *   patches/               the two ordered patch files the probes pass to the runtime
+ *   tmp/                    the two ordered patch files the probes pass to the runtime
  *
- * It is idempotent: existing profiles are kept, a missing plugin is reinstalled.
- * It never writes to the user's own `~/.dsh`, never upgrades the global `dsh`, and
- * never reads or stores a credential value — only the environment variable NAME is
- * referenced by the generated patch.
+ * It is idempotent. It never writes to the user's own `~/.dsh`, never upgrades the
+ * global `dsh`, and never reads or stores a credential value — only the environment
+ * variable NAME is referenced by the generated patch.
  *
  * Usage:
  *   node scripts/setup-profiles.mjs [--home <dir>] [--json]
  */
-import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { probeRoot } from '../src/lib/paths.mjs'
+import { redact } from '../src/lib/evidence.mjs'
 
 const PLUGIN = '@mars-sea/dsh-commandcode-provider'
 const PLUGIN_VERSION = process.env.CC_PLUGIN_VERSION ?? '0.15.4'
 const CREDENTIAL_ENV = 'COMMANDCODE_API_KEY'
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
+const LOCK_ROOT = path.join(probeRoot, 'profile-locks')
 
 /** Profile definitions mirror the user's real desktop profile, minus its UI plugins. */
 const PROFILES = [
@@ -48,6 +61,15 @@ const PROFILES = [
   },
 ]
 
+/** Raised when the committed lock and the installed tree disagree. Fatal by design. */
+class DependencyDriftError extends Error {
+  constructor(message, detail) {
+    super(message)
+    this.name = 'DependencyDriftError'
+    this.detail = detail
+  }
+}
+
 function parseArgs(argv) {
   const args = { home: process.env.CC_DSH_HOME ?? path.join(probeRoot, 'dsh-home'), json: false }
   for (let i = 0; i < argv.length; i += 1) {
@@ -55,6 +77,15 @@ function parseArgs(argv) {
     else if (argv[i] === '--json') args.json = true
   }
   return args
+}
+
+/** Repo-relative display form, so console output never carries an absolute path. */
+function displayPath(target) {
+  const rel = path.relative(probeRoot, target)
+  if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) {
+    return `<probe>/${rel.split(path.sep).join('/')}`
+  }
+  return `<external>/${path.basename(target)}`
 }
 
 function profilePackageJson(name, bundles) {
@@ -71,102 +102,142 @@ function writeJson(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`)
 }
 
-/**
- * Install the plugin into a profile's own node_modules (no global side effects).
- *
- * An existing install is only accepted when the version matches exactly — a profile
- * left over from an older run must not silently satisfy the requirement.
- */
-function ensurePlugin(profileDir, log) {
-  const installed = path.join(profileDir, 'node_modules', ...PLUGIN.split('/'), 'package.json')
-  const expected = PLUGIN_VERSION
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8'))
+}
 
-  if (fs.existsSync(installed)) {
-    const version = JSON.parse(fs.readFileSync(installed, 'utf8')).version
-    if (version === expected) {
-      log({ step: 'plugin.verified', profile: path.basename(profileDir), version })
-      return { installed: true, version, reinstalled: false, versionVerified: true }
-    }
-    log({ step: 'plugin.version_mismatch', profile: path.basename(profileDir), found: version, expected })
-  } else {
-    log({ step: 'plugin.install', profile: path.basename(profileDir), spec: `${PLUGIN}@${expected}` })
+/**
+ * Ensure `profile-locks/<name>/` holds a real npm lockfile for this plugin.
+ *
+ * The plugin declares no `dependencies` — only peer ranges that the profile bundles
+ * already satisfy — so its installable tree really is a single package. That is why
+ * the lockfile is one entry; it is still a genuine `npm ci` input, which the old
+ * hand-rolled fingerprint never was.
+ */
+function ensureLock(name, log) {
+  const dir = path.join(LOCK_ROOT, name)
+  const manifestPath = path.join(dir, 'package.json')
+  const lockPath = path.join(dir, 'package-lock.json')
+  const manifest = {
+    name: `cc-profile-lock-${name}`,
+    private: true,
+    dependencies: { [PLUGIN]: PLUGIN_VERSION },
   }
 
-  // Windows cannot exec a .cmd shim without a shell; `shell: true` also keeps the
-  // command portable to POSIX where npm is a plain executable.
-  execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', '--legacy-peer-deps', '--ignore-scripts', `${PLUGIN}@${expected}`], {
-    cwd: profileDir,
+  const manifestStale =
+    !fs.existsSync(manifestPath) || readJson(manifestPath)?.dependencies?.[PLUGIN] !== PLUGIN_VERSION
+  if (manifestStale) {
+    writeJson(manifestPath, manifest)
+  }
+
+  if (!fs.existsSync(lockPath) || manifestStale) {
+    execFileSync(
+      'npm',
+      ['install', '--package-lock-only', '--no-audit', '--no-fund', '--legacy-peer-deps', '--ignore-scripts'],
+      { cwd: dir, stdio: 'pipe', encoding: 'utf8', shell: true },
+    )
+    log({ step: 'lock.created', profile: name, file: `profile-locks/${name}/package-lock.json` })
+  }
+
+  const lock = readJson(lockPath)
+  const entry = lock?.packages?.[`node_modules/${PLUGIN}`]
+  if (!entry?.version) {
+    throw new DependencyDriftError(`lockfile for ${name} has no entry for ${PLUGIN}`, { name })
+  }
+  if (entry.version !== PLUGIN_VERSION) {
+    throw new DependencyDriftError(
+      `lockfile pins ${PLUGIN}@${entry.version} but ${PLUGIN_VERSION} is required`,
+      { profile: name, locked: entry.version, expected: PLUGIN_VERSION },
+    )
+  }
+  log({ step: 'lock.verified', profile: name, version: entry.version, integrity: entry.integrity ? 'present' : 'absent' })
+  return { dir, manifestPath, lockPath, version: entry.version, integrity: entry.integrity ?? null }
+}
+
+/**
+ * Recursive copy, by hand.
+ *
+ * `fs.cpSync` terminates this process on the authoring host (exit 127, no message) —
+ * the injected safe-delete shim intercepts it. A plain readdir/copyFile walk is fine,
+ * and being explicit also makes symlink handling visible instead of implicit.
+ */
+function copyTree(from, to) {
+  fs.mkdirSync(to, { recursive: true })
+  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    const src = path.join(from, entry.name)
+    const dst = path.join(to, entry.name)
+    if (entry.isDirectory()) copyTree(src, dst)
+    else if (entry.isSymbolicLink()) {
+      fs.rmSync(dst, { force: true })
+      fs.symlinkSync(fs.readlinkSync(src), dst)
+    } else fs.copyFileSync(src, dst)
+  }
+}
+
+/**
+ * Install the plugin from the lockfile into a profile's own node_modules.
+ *
+ * `npm ci` runs in a staging directory (it insists on owning the tree), then the one
+ * resolved package is copied into the profile. Copying rather than installing keeps the
+ * profile's own package.json — which dsh writes and owns — untouched.
+ *
+ * The staging directory is reused rather than deleted: `npm ci` clears its own
+ * node_modules, and a recursive delete from this process would be another bulk delete.
+ */
+function installFromLock(profileDir, lockInfo, name, log) {
+  const staging = path.join(probeRoot, 'tmp', `.stage-${name}`)
+  fs.mkdirSync(staging, { recursive: true })
+  fs.copyFileSync(lockInfo.manifestPath, path.join(staging, 'package.json'))
+  fs.copyFileSync(lockInfo.lockPath, path.join(staging, 'package-lock.json'))
+
+  execFileSync('npm', ['ci', '--no-audit', '--no-fund', '--legacy-peer-deps', '--ignore-scripts'], {
+    cwd: staging,
     stdio: 'pipe',
     encoding: 'utf8',
     shell: true,
   })
-  const version = JSON.parse(fs.readFileSync(installed, 'utf8')).version
-  if (version !== expected) {
-    throw new Error(`installed ${PLUGIN}@${version}, expected ${expected}`)
+
+  const source = path.join(staging, 'node_modules', ...PLUGIN.split('/'))
+  if (!fs.existsSync(source)) {
+    throw new DependencyDriftError(`npm ci produced no ${PLUGIN} in the staging tree`, { profile: name })
   }
-  log({ step: 'plugin.installed', profile: path.basename(profileDir), version })
-  return { installed: true, version, reinstalled: true, versionVerified: true }
+
+  const target = path.join(profileDir, 'node_modules', ...PLUGIN.split('/'))
+  copyTree(source, target)
+  log({ step: 'plugin.installed_from_lock', profile: name, version: PLUGIN_VERSION })
 }
 
 /**
- * Fingerprint the plugin's resolved dependency tree.
+ * Ensure the profile carries exactly the locked plugin version.
  *
- * `npm install` without a committed lockfile can resolve transitive dependencies
- * differently over time. The plugin's own version being pinned does not pin its tree,
- * so the resolved set is recorded to a lock snapshot under profile-locks/ and compared
- * on later runs; a drift is reported instead of passing silently.
+ * An existing install is accepted only when the version matches the lock. Anything
+ * else is reinstalled from the lock and re-checked; a mismatch after reinstall is
+ * fatal, because it would mean the suite ran on an unverified dependency.
  */
-function dependencySnapshot(profileDir, lockDirectory, profileName, log) {
-  let listed = null
-  try {
-    const raw = execFileSync('npm', ['ls', '--all', '--json', '--depth=8'], {
-      cwd: profileDir,
-      stdio: ['ignore', 'pipe', 'ignore'],
-      encoding: 'utf8',
-      shell: true,
-    })
-    listed = JSON.parse(raw)
-  } catch (error) {
-    // `npm ls` exits non-zero on peer problems while still printing the tree.
-    const partial = String(error?.stdout ?? '')
-    try {
-      listed = JSON.parse(partial)
-    } catch {
-      log({ step: 'deps.snapshot_failed', profile: profileName })
-      return { fingerprint: null, packages: [], drift: null, error: String(error?.message ?? error).slice(0, 200) }
+function ensurePlugin(profileDir, lockInfo, name, log) {
+  const installedManifest = path.join(profileDir, 'node_modules', ...PLUGIN.split('/'), 'package.json')
+  if (fs.existsSync(installedManifest)) {
+    const version = readJson(installedManifest).version
+    if (version === lockInfo.version) {
+      log({ step: 'plugin.verified', profile: name, version })
+      return { installed: true, version, reinstalled: false, versionVerified: true }
     }
-  }
-
-  const packages = []
-  const walk = (node) => {
-    for (const [name, dep] of Object.entries(node?.dependencies ?? {})) {
-      if (dep && dep.version) packages.push(`${name}@${dep.version}`)
-      walk(dep)
-    }
-  }
-  walk(listed)
-  packages.sort()
-  const fingerprint = packages.length
-    ? `sha256:${crypto.createHash('sha256').update(packages.join('\n')).digest('hex').slice(0, 16)}`
-    : null
-
-  fs.mkdirSync(lockDirectory, { recursive: true })
-  const lockPath = path.join(lockDirectory, `${profileName}.deps.json`)
-  const recorded = fs.existsSync(lockPath) ? JSON.parse(fs.readFileSync(lockPath, 'utf8')) : null
-  const drift = recorded && recorded.fingerprint && fingerprint && recorded.fingerprint !== fingerprint
-    ? { previous: recorded.fingerprint, current: fingerprint }
-    : null
-
-  if (!recorded) {
-    fs.writeFileSync(lockPath, `${JSON.stringify({ plugin: `${PLUGIN}@${PLUGIN_VERSION}`, fingerprint, packages }, null, 2)}\n`)
-    log({ step: 'deps.lock_created', profile: profileName, fingerprint, count: packages.length })
-  } else if (drift) {
-    log({ step: 'deps.drift_detected', profile: profileName, ...drift })
+    log({ step: 'plugin.version_mismatch', profile: name, found: version, expected: lockInfo.version })
   } else {
-    log({ step: 'deps.lock_matches', profile: profileName, fingerprint })
+    log({ step: 'plugin.install', profile: name, spec: `${PLUGIN}@${lockInfo.version}` })
   }
 
-  return { fingerprint, packages, drift, lockPath }
+  installFromLock(profileDir, lockInfo, name, log)
+
+  const version = readJson(installedManifest).version
+  if (version !== lockInfo.version) {
+    throw new DependencyDriftError(
+      `installed ${PLUGIN}@${version} does not match lockfile ${lockInfo.version}`,
+      { profile: name, installed: version, locked: lockInfo.version },
+    )
+  }
+  log({ step: 'plugin.installed', profile: name, version })
+  return { installed: true, version, reinstalled: true, versionVerified: true }
 }
 
 /**
@@ -225,7 +296,7 @@ export function setupProfiles({ home = path.join(probeRoot, 'dsh-home'), patchDi
       writeJson(path.join(dir, 'package.json'), profilePackageJson(spec.name, spec.bundles))
       log({ step: 'profile.created', profile: spec.name, bundles: spec.bundles })
     } else {
-      const current = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+      const current = readJson(path.join(dir, 'package.json'))
       const defined = current?.dsh?.profile?.bundles ?? []
       const sameBundles = defined.length === spec.bundles.length && spec.bundles.every((b) => defined.includes(b))
       if (!sameBundles) {
@@ -235,9 +306,9 @@ export function setupProfiles({ home = path.join(probeRoot, 'dsh-home'), patchDi
         log({ step: 'profile.verified', profile: spec.name })
       }
     }
-    const plugin = ensurePlugin(dir, log)
-    const deps = dependencySnapshot(dir, path.join(probeRoot, 'profile-locks'), spec.name, log)
-    profiles.push({ name: spec.name, label: spec.label, dir, bundles: spec.bundles, plugin, deps })
+    const lock = ensureLock(spec.name, log)
+    const plugin = ensurePlugin(dir, lock, spec.name, log)
+    profiles.push({ name: spec.name, label: spec.label, dir, bundles: spec.bundles, plugin, lock: { file: `profile-locks/${spec.name}/package-lock.json`, version: lock.version, integrity: lock.integrity } })
   }
 
   const patches = writePatches(patchDirectory)
@@ -257,12 +328,23 @@ export function setupProfiles({ home = path.join(probeRoot, 'dsh-home'), patchDi
 
 if (process.argv[1] && process.argv[1].endsWith('setup-profiles.mjs')) {
   const args = parseArgs(process.argv.slice(2))
-  const log = args.json ? () => {} : (event) => process.stdout.write(`[setup] ${JSON.stringify(event)}\n`)
-  const summary = setupProfiles({ home: args.home, patchDirectory: path.join(probeRoot, 'tmp'), log })
-  if (args.json) process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`)
-  else {
-    process.stdout.write(`\n[setup] DSH home  : ${summary.home}\n`)
-    for (const p of summary.profiles) process.stdout.write(`[setup] profile   : ${p.name} (plugin ${p.plugin.version})\n`)
+  const log = args.json ? () => {} : (event) => process.stdout.write(`[setup] ${JSON.stringify(redact(event))}\n`)
+  let summary
+  try {
+    summary = setupProfiles({ home: args.home, patchDirectory: path.join(probeRoot, 'tmp'), log })
+  } catch (error) {
+    // A drift is a gate failure, not a warning: say so with a non-zero exit.
+    process.stderr.write(`[setup] FAILED ${error.name}: ${redact(String(error.message))}\n`)
+    if (error.detail) process.stderr.write(`[setup] detail ${JSON.stringify(redact(error.detail))}\n`)
+    process.exit(1)
+  }
+  if (args.json) {
+    process.stdout.write(`${JSON.stringify(redact(summary), null, 2)}\n`)
+  } else {
+    process.stdout.write(`\n[setup] DSH home  : ${displayPath(summary.home)}\n`)
+    for (const p of summary.profiles) {
+      process.stdout.write(`[setup] profile   : ${p.name} (plugin ${p.plugin.version}, lock ${p.lock.file})\n`)
+    }
     process.stdout.write(`[setup] provider  : ${summary.provider} / ${summary.model}\n`)
     process.stdout.write(`[setup] credential: ${summary.credential.envName} present=${summary.credential.present}\n`)
     if (!summary.credential.present) {
