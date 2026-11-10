@@ -12,7 +12,7 @@ import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, detectModelBlocker, requestRoute, routeMatches } from './lib/outcome.mjs'
+import { EXIT, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -59,8 +59,8 @@ try {
   summary.totalMs = Date.now() - t0
 
   const idsFor = (run) => [...new Set(run.notifications.map((n) => n?.params?.sessionId).filter(Boolean))]
-  summary.runA = { sessionId: runA.sessionId, text: runA.finalResponse, eventSessions: idsFor(runA), route: requestRoute(runA.events) }
-  summary.runB = { sessionId: runB.sessionId, text: runB.finalResponse, eventSessions: idsFor(runB), route: requestRoute(runB.events) }
+  summary.runA = { sessionId: runA.sessionId, text: runA.finalResponse, eventSessions: idsFor(runA), route: requestRoute(runA.events), routes: requestRoutes(runA.events) }
+  summary.runB = { sessionId: runB.sessionId, text: runB.finalResponse, eventSessions: idsFor(runB), route: requestRoute(runB.events), routes: requestRoutes(runB.events) }
   ev.append('runs', { totalMs: summary.totalMs, runA: summary.runA, runB: summary.runB })
   step('both settled', { totalMs: summary.totalMs, a: runA.finalResponse.slice(0, 40), b: runB.finalResponse.slice(0, 40) })
 
@@ -73,6 +73,8 @@ try {
     answersNotSwapped: /APPLE/i.test(runA.finalResponse) && /BANANA/i.test(runB.finalResponse),
     routeBothRunsCommandcode://n      routeMatches(summary.runA.route, { provider: PROVIDER, model: MODEL }) &&
       routeMatches(summary.runB.route, { provider: PROVIDER, model: MODEL }),
+    allRequestsOnExpectedRoute://n      allRoutesMatch(runA.events, { provider: PROVIDER, model: MODEL }) &&
+      allRoutesMatch(runB.events, { provider: PROVIDER, model: MODEL }),
     noLeftoversAfterClose: false,
   }
 } catch (error) {

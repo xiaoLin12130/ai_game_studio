@@ -27,13 +27,13 @@
 | DSH 全局安装路径 | `<user-home>\AppData\Roaming\npm\node_modules\@deepseek-ai\dsh` | `cat .../npm/dsh`（shim 指向 `lib/bin.js`） |
 | `DSH_HOME` 环境变量 | **未设置**，默认 `<user-home>\.dsh` | `echo $DSH_HOME` → 空 |
 | 已有 DSH Profile | `desktop`、`githubtest`、`headless`、`web`、`web_backup` | `ls ~/.dsh/profiles` |
-| Cocos Creator | **3.8.6** 已安装 | `C:\ProgramData\cocos\editors\Creator\3.8.6\CocosCreator.exe` 存在；目录名即版本 |
-| 微信开发者工具 | **2.02.2608080** 已安装 | `H:\微信web开发者工具\resources\app.asar.unpacked\package.json`；`cli.bat` 存在 |
+| Cocos Creator | **3.8.6** 已安装 | `<abs-path> 存在；目录名即版本 |
+| 微信开发者工具 | **2.02.2608080** 已安装 | `<abs-path> 存在 |
 
 补充事实：
 
 - Cocos 安装目录下的 `version` 文件内容为 `31.3.1`，那是内置 Electron 运行时版本，**不是** Creator 版本；Creator 版本以编辑器官方的版本目录名 `3.8.6` 为准。
-- 微信开发者工具不在 `Program Files`，而在 `H:\微信web开发者工具`；`cli.bat` 可执行（`-h/--help` 正常返回用法），但不提供 `--version`，版本取自应用包元数据。
+- 微信开发者工具不在 `Program Files`，而在 `<abs-path> 可执行（`-h/--help` 正常返回用法），但不提供 `--version`，版本取自应用包元数据。
 - npm 上 `@deepseek-ai/dsh` 的 `latest` 已是 **0.2.2-rc.1**，本机全局安装落后一个大版本（0.1.5-rc.1）。本阶段所有结论绑定 **0.1.5 线**，升级必须重跑探针。
 
 ### 1.1 本阶段锁定的依赖（写在 `spike/dsh-probe/package.json`）
@@ -246,7 +246,7 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 | 第一轮后进程被回收 | PASS | `dshChildGoneAfterClose = true` |
 | 会话日志落盘 | PASS | `sessions/--H-AI...workspace--/probe-resume-<ts>/session.v3.jsonl.zstd`，压缩后 **18,059 B** |
 | 新进程复用同一 sessionId | **被拒绝** | `session "probe-resume-<ts>" already exists` |
-| 日志可再次解压读取 | PASS | 首个 zstd 帧解出会话头：`{"type":"session","version":3,"id":"probe-resume-...","cwd":"H:\\AI与开发\\...","isSeeded":false,...}`（210 B） |
+| 日志可再次解压读取 | PASS | 首个 zstd 帧解出会话头：`{"type":"session","version":3,"id":"probe-resume-...","cwd":"<abs-path>","isSeeded":false,...}`（210 B） |
 
 **结论 `NO_RESUME_AT_SDK_LEVEL`**：当前版本既不提供 `session/resume`，也不允许复用已存在的 sessionId。会话文件是**只增的压缩帧流**（首帧为会话头，后续帧为追加事件，探针未逐帧解码）。
 
@@ -350,7 +350,7 @@ patch 文件（实测必须用 `insert:` 包裹）：
 | 检查 | 结果 |
 |---|---|
 | 仓库内是否出现真实密钥 | 否。`spike/dsh-probe/package.json` 仅含包名与版本；无 token |
-| 是否复制用户 `~/.dsh` 凭据 | 否。全程使用隔离 `DSH_HOME = spike/dsh-probe/tmp/dsh-home`，该目录被 `.gitignore` 的 `tmp/` 覆盖 |
+| 是否复制用户 `~/.dsh` 凭据 | 否。全程使用隔离 `DSH_HOME = spike/dsh-probe<abs-path> `.gitignore` 的 `tmp/` 覆盖 |
 | 探针是否读取凭据内容 | 仅读取 `~/.dsh/.credentials.yaml` 的**键路径与长度**用于判断「环境变量密钥是否同一把」，未输出任何密钥值；对比结果为否（`env key substring present = false`） |
 | 事件/日志是否含敏感信息 | 事件含 Prompt 文本与系统提示，属本阶段自造内容；审计日志仅含工具名与时间戳 |
 | `node_modules`（291 MB）是否入库 | 否，被 `node_modules/` 忽略 |

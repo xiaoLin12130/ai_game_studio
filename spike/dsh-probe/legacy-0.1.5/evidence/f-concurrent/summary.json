@@ -5,7 +5,7 @@
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "path": "<repo>/spike/dsh-probe<abs-path>"
   },
   "sessions": [
     "session-84cfdee638e64bd0a04e6f4a2ac58811",

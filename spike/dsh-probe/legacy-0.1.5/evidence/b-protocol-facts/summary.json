@@ -7,7 +7,7 @@
     "node": "v22.22.2",
     "arch": "x64",
     "pid": 23928,
-    "execPath": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe"
+    "execPath": "<abs-path>"
   },
   "serverInfo": {
     "name": "deepseek-harness-sdk-runtime",

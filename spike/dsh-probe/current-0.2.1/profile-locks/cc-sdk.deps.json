@@ -1,0 +1,7 @@
+{
+  "plugin": "@mars-sea/dsh-commandcode-provider@0.15.4",
+  "fingerprint": "sha256:3487883614623622",
+  "packages": [
+    "@mars-sea/dsh-commandcode-provider@0.15.4"
+  ]
+}

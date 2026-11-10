@@ -87,3 +87,28 @@ export function requestRoute(events = []) {
 export function routeMatches(route, expected) {
   return Boolean(route) && route.provider === expected.provider && route.model === expected.model
 }
+
+/**
+ * Every provider/model route used in one event window.
+ *
+ * A turn can issue more than one model request (tool call → result → second request).
+ * Checking only the first `request/header` would miss a fallback that happens after
+ * the first hop, so callers must assert over the whole list.
+ *
+ * @param {Array} events session events for the interval
+ * @returns {Array<{provider: string|null, model: string|null}>}
+ */
+export function requestRoutes(events = []) {
+  return events
+    .filter((event) => event?.type === 'request/header')
+    .map((event) => ({
+      provider: event?.data?.header?.config?.provider ?? null,
+      model: event?.data?.header?.config?.model ?? null,
+    }))
+}
+
+/** True when there is at least one request and every one used the expected route. */
+export function allRoutesMatch(events, expected) {
+  const routes = requestRoutes(events)
+  return routes.length > 0 && routes.every((r) => r.provider === expected.provider && r.model === expected.model)
+}

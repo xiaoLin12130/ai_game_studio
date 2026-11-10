@@ -17,7 +17,7 @@ import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { findRuntimeProcesses, waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, STUDIO_TOOL_NAME, advertisedTools, detectModelBlocker, requestRoute, routeMatches } from './lib/outcome.mjs'
+import { EXIT, STUDIO_TOOL_NAME, advertisedTools, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -108,6 +108,7 @@ try {
   summary.modelBlocker = detectModelBlocker(result.events)
 
   summary.requestRoute = requestRoute(result.events)
+  summary.requestRoutes = requestRoutes(result.events)
   const tools = advertisedTools(result.events)
   summary.advertisedToolCount = tools?.length ?? null
   summary.studioToolAdvertised = Array.isArray(tools) && tools.includes(STUDIO_TOOL_NAME)
@@ -137,6 +138,7 @@ try {
     routeIsCommandcode: summary.requestRoute?.provider === PROVIDER,
     modelAsRequested: summary.requestRoute?.model === MODEL,
     routeMatchesExpected: routeMatches(summary.requestRoute, { provider: PROVIDER, model: MODEL }),
+    allRequestsOnExpectedRoute: allRoutesMatch(result.events, { provider: PROVIDER, model: MODEL }),
   }
   ev.append('assertions', summary.assertions)
   step('tool chain', summary.assertions)

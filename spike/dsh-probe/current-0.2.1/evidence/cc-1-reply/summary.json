@@ -1,10 +1,10 @@
 {
   "probe": "CC-1-reply",
-  "startedAt": "2026-11-10T11:11:23.459Z",
+  "startedAt": "2026-11-10T11:27:18.933Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "profile": "cc-sdk",
-  "token": "studio-75a5214b",
+  "token": "studio-15260d53",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
@@ -13,13 +13,13 @@
     "error": null
   },
   "patchPath": "<repo>\\spike\\dsh-probe\\current-0.2.1\\tmp\\cc-provider.cordis.yml",
-  "startMs": 3004,
+  "startMs": 3128,
   "processStatusWhileRunning": "PROCESS_PRESENT",
   "processCountWhileRunning": 1,
-  "sessionId": "session-2a3ced8c1a1d47c88dbccb7f1b986d4d",
-  "prompt": "请严格按照以下要求回答：\n生成一个随机标识并在回复中原样返回：验证标识：studio-75a5214b\n\n除此之外，用一句话说明你当前使用的是什么模型。",
-  "runMs": 3240,
-  "finalResponse": "验证标识：studio-75a5214b\n\n我当前使用的模型是 deepseek/deepseek-v4.1-flash。",
+  "sessionId": "session-48da3de990e04b949c446d7eff900e1a",
+  "prompt": "请严格按照以下要求回答：\n生成一个随机标识并在回复中原样返回：验证标识：studio-15260d53\n\n除此之外，用一句话说明你当前使用的是什么模型。",
+  "runMs": 4311,
+  "finalResponse": "验证标识：studio-15260d53\n\n当前会话由 DSH Harness 承载，运行在 deepseek/deepseek-v4.1-flash 模型上。",
   "eventCount": 15,
   "notificationMethods": [
     "session.event",
@@ -33,6 +33,12 @@
     "model": "deepseek/deepseek-v4.1-flash",
     "maxTokens": 512
   },
+  "requestRoutes": [
+    {
+      "provider": "commandcode",
+      "model": "deepseek/deepseek-v4.1-flash"
+    }
+  ],
   "requestContext": {
     "provider": "commandcode",
     "model": "deepseek/deepseek-v4.1-flash",
@@ -42,17 +48,18 @@
     "echoToken": true,
     "nonEmptyResponse": true,
     "routeIsCommandcode": true,
+    "allRequestsOnExpectedRoute": true,
     "modelAsRequested": true,
     "noProviderFallback": true,
     "processTreeGone": true
   },
-  "closeMs": 73,
+  "closeMs": 76,
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 993,
+    "waitedMs": 1037,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:11:31.777Z"
+  "finishedAt": "2026-11-10T11:27:28.567Z"
 }

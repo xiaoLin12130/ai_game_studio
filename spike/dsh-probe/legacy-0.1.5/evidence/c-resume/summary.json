@@ -7,7 +7,7 @@
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "path": "<repo>/spike/dsh-probe<abs-path>"
   },
   "turn1": {
     "sessionId": "probe-resume-1794302985613",
@@ -22,27 +22,27 @@
     }
   },
   "turn1ProcessReaped": true,
-  "sessionLogAfterTurn1": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\sessions\\--H-AI~4E0E~5F00~53D1-ai_game_studio_starter-spike-dsh-probe-tmp-workspace--\\probe-resume-1794302985613\\session.v3.jsonl.zstd",
+  "sessionLogAfterTurn1": "<abs-path>",
   "turnCountAfterTurn1": {
     "compressedBytes": 18073,
     "decompressedBytes": 210,
     "lines": 1,
     "turnStartMarkers": 0,
     "userMessageMarkers": 0,
-    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""
+    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"<abs-path>",\"isSeeded\":false,\"delegationDepth\""
   },
   "turn2": {
     "error": "session \"probe-resume-1794302985613\" already exists"
   },
   "sessionReuseRejected": true,
-  "sessionLogAfterTurn2": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home\\sessions\\--H-AI~4E0E~5F00~53D1-ai_game_studio_starter-spike-dsh-probe-tmp-workspace--\\probe-resume-1794302985613\\session.v3.jsonl.zstd",
+  "sessionLogAfterTurn2": "<abs-path>",
   "turnCountAfterTurn2": {
     "compressedBytes": 18073,
     "decompressedBytes": 210,
     "lines": 1,
     "turnStartMarkers": 0,
     "userMessageMarkers": 0,
-    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""
+    "schemaSample": "{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"<abs-path>",\"isSeeded\":false,\"delegationDepth\""
   },
   "sameLogFile": true,
   "logGrew": false,

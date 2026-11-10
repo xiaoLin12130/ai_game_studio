@@ -5,7 +5,7 @@
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-10
-> - 提交 SHA：`852d234cec16ed75de2a40809be0fc1bd42bb47b`（R1 实施提交；其后仅回填本行）
+> - 提交 SHA：R1.2 复审基线 `<R12_SHA>`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
 
 ---
 
@@ -336,7 +336,7 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 **验证**：
 
 ```
-grep -rI -E "H://AI|H:/AI|C://Users|C:/Users" spike/dsh-probe/current-0.2.1/evidence
+grep -rI -E "<abs-path>" spike/dsh-probe/current-0.2.1/evidence
 → 无输出
 grep -rI "<hostname>" .
 → 无输出
@@ -441,3 +441,112 @@ PASS 5/5   exit 0
 | 多 Runtime 并发上限与资源成本 | `UNKNOWN` |
 | Electron 打包后完整链路 | `UNKNOWN`，PHASE 01 |
 | 0.1.5 legacy 套件本机稳定复现 | `BLOCKED`（环境安全垫），以冻结快照为记录 |
+
+---
+
+# R1.2 修正（回应第三次外部复审，2026-11-10）
+
+复审用固定 commit 实际读取文件后指出：四项里有三项只能算 `PARTIALLY_VERIFIED`。
+这次不再自我认证，逐条对齐可核实的证据。
+
+## R1.2-1｜证据脱敏（P1a）：真因不是「忘了调」，而是路径形态没被覆盖
+
+**复审发现的实际泄露**：
+
+- `cc-1-reply/records.jsonl` 的 `commandline` 字段仍含 `H:/...` 绝对路径；
+- `legacy-0.1.5/evidence/a-basic-run/summary.json` 仍含 `C:/Users/...`；
+- 我上一轮写的验证命令本身是错的（grep 的是斜杠形式，实际是反斜杠；`<hostname>` 也不是真实主机名）。
+
+**真因（两个，都不是「漏调用」）**：
+
+1. **编码**：进程命令行由操作系统按控制台代码页返回，含中文的路径到达时已是乱码，
+   与正确的 Unicode 仓库根做字符串替换自然匹配不上。
+2. **转义**：JSON 原文里路径前的换行是 `\n` 两个字符，驱动盘字母前一个字符是字母 `n`，
+   任何基于词边界的正则都会失效。
+
+**修复**：
+
+1. `redact()` 增加按形态匹配：`X:/...`、`X:/...`、以及「至少两级」的 `X:/a/b`
+   （后者专门覆盖被转义前缀破坏边界的情况）；POSIX 家目录路径同样处理。
+2. 证据写入三条路径（JSONL / summary.json / 聚合）统一走 `redact()`。
+3. 新增 `spike/dsh-probe/scrub-evidence.mjs`：**先解析 JSON/JSONL 再脱敏**（解码后的值才有真实分隔符），
+   纯文本按形态脱敏；`--check` 模式只校验，有残留即非零退出。
+4. 移除 `cc-0-cli-baseline/stdout.txt`（含模型中间推理原文）。CLI 改为结构化探针
+   `probe-cli-baseline.mjs`，只保留：退出码、耗时、随机标识是否回显、是否自述模型名、
+   截断后的答案行；**原始流不落盘**。
+
+**验证（可复现，不是自述）**：
+
+```
+cd spike/dsh-probe
+node scrub-evidence.mjs --check
+→ [scrub] scanned=79 rewritten=0 (check only)
+→ [scrub] no absolute paths remain
+```
+
+`--check` 会先解码 JSON 再匹配，所以转义形态也能识别；返回码非 0 即表示仍有残留。
+
+## R1.2-2｜干净环境复现（P1b）：补三个缺口
+
+| 缺口 | 修复 |
+|---|---|
+| A 插件传递依赖未固定 | `setup-profiles.mjs` 安装后执行 `npm ls --all --json`，把解析结果写成 `profile-locks/<profile>.deps.json`（含 `sha256` 指纹与完整 `name@version` 列表，随仓库提交）；后续运行比对指纹，漂移时输出 `deps.drift_detected` 而不是静默通过 |
+| B 既有 Profile 未核验版本 | 安装前比对实际版本与期望 `0.15.4`，不一致即重装并输出 `plugin.version_mismatch`；profile 的 `dsh.profile.bundles` 也做一致性校验，不一致则重写 |
+| C CLI 基准未进自动化 | 新增 `CC-0-cli` 探针并纳入 `run-all.mjs`，现在是 **6 项**；CLI 与 SDK 两条链在同一次运行中一起验证 |
+
+干净目录实测（本轮全部证据来源）：
+
+```
+CC_DSH_HOME=<空目录>/dsh-home node run-all.mjs
+PASS  CC-0-cli  CC-1-reply  CC-2-tools  CC-3-resume  CC-4-concurrent  CC-5-capability
+PASS 6/6   exit 0
+```
+
+## R1.2-3｜路由断言（P1c）：改为检查全部请求
+
+复审判定正确：`requestRoute()` 只取第一个 `request/header`。一次带工具调用的轮次会有多个模型请求
+（请求 → 工具 → 再请求），只看第一个会漏掉后续 hop 的回退。
+
+**修复**：新增 `requestRoutes()` 与 `allRoutesMatch()`（`lib/outcome.mjs`），断言改为
+「至少一个请求，且**每一个**都是 commandcode + 目标模型」。各探针新增
+`allRequestsOnExpectedRoute`，并把完整 `routes` 数组写入 summary 便于复核。
+
+| 探针 | 断言 |
+|---|---|
+| CC-0 | CLI 无 `request/header`，改为断言退出码、标识回显、模型名、无 QUOTA |
+| CC-1 | `routeIsCommandcode` + `allRequestsOnExpectedRoute` |
+| CC-2 | 同上 + `routeMatchesExpected` + `allRequestsOnExpectedRoute` |
+| CC-3 | 两轮各自 `allRoutesMatch` |
+| CC-4 | 两个并发会话各自 `allRoutesMatch` |
+| CC-5 | 不做模型调用（已标注） |
+
+## R1.2-4｜审批回调的状态分类（P2b）
+
+复审指出状态表把「未观察到」写成 `NOT_SUPPORTED` 不准确。已拆开：
+
+| 能力 | 状态 | 依据 |
+|---|---|---|
+| `session/approve` 协议方法 | `NOT_SUPPORTED` | `unknown ... method`（CC-5） |
+| 0.2.1 中可依赖的 DSH 审批回调 | `UNKNOWN / NOT_OBSERVED` | 协议无审批消息类型；实测未出现 server→client 请求；但「未观察到」≠「不存在」 |
+| SDK 通用 `onRequest(handler)` | 存在 | 传输层类型声明 |
+| 完整审批请求/响应流程 | `UNVERIFIED` | 无样本可测 |
+| Studio 业务审批 | 由 Studio 实现 | 不依赖 DSH 回调 |
+
+策略不变：危险工具不暴露给模型，模型只提案，Studio 审批后由自己的适配器执行。
+
+## R1.2-5｜状态文件与提交基线
+
+- `state/project_state.json` 增加 `r12` 段，并在 `github` 下记录 R1.1 与 R1.2 的 commit。
+- 本报告头部同时标注 R1 实施提交与**最新复审提交**，避免新会话误审旧版本。
+- 单一事实源仍是 `state/project_state.json`，报告只引用不另立统计。
+
+## R1.2 之后的状态
+
+| 项 | 状态 |
+|---|---|
+| 公开证据含本机路径 | `FIXED`（`scrub --check` 零残留） |
+| 公开证据含模型推理原文 | `FIXED`（原文已删，结构化替代） |
+| 干净环境复现 | `CONFIRMED`（6/6，依赖指纹已入库） |
+| 全部请求的路由断言 | `FIXED`（`allRequestsOnExpectedRoute` 全 true） |
+| 审批回调分类 | `FIXED`（拆为 NOT_SUPPORTED / NOT_OBSERVED / UNVERIFIED） |
+| 崩溃恢复、中断轮次、多 Runtime 成本、Electron 打包 | 仍为 `UNKNOWN`，按 ADR 放到 PHASE 01 |

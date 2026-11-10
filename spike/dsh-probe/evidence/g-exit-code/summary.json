@@ -1,10 +1,10 @@
 {
   "probe": "G-exit-code",
   "startedAt": "2026-11-10T10:49:11.531Z",
-  "dshHome": "H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\dsh-home",
+  "dshHome": "<abs-path>",
   "error": {
     "name": "Error",
-    "message": "[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\dsh-home\\\\profiles\\\\node_modules.lock\"],\"targetCount\":1}"
+    "message": "[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {\"count\":50,\"threshold\":50,\"scope\":\"turn\",\"targets\":[\"<abs-path>"],\"targetCount\":1}"
   },
   "verdict": "FAIL",
   "finishedAt": "2026-11-10T10:49:11.617Z"

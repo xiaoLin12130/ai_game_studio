@@ -17,6 +17,36 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const HOME_DIR = os.homedir()
 const HOSTNAME = os.hostname()
 
+/**
+ * Absolute path patterns.
+ *
+ * Prefix substitution alone is not enough: a process command line comes back from the
+ * OS in the console code page, so a path containing non-ASCII characters arrives
+ * mojibake'd and no longer matches the Unicode repository root. Matching on the
+ * drive-letter shape instead catches it regardless of encoding.
+ */
+const WINDOWS_ABS = /(?<![A-Za-z0-9])[A-Za-z]:\\[^\s"',;)]*/g
+const WINDOWS_ABS_FWD = /(?<![A-Za-z0-9])[A-Za-z]:\/[^\s"',;)]*/g
+/**
+ * A drive path with at least one nested separator.
+ *
+ * Needed because a value sometimes stores an escaped newline literally, so the
+ * character before the drive letter is the letter `n` of `\n` and every boundary-based
+ * pattern above fails on it. Requiring a second separator excludes the false positive
+ * `note:\n` while still catching `F:\workbuddy\resources\...`.
+ */
+const WINDOWS_ABS_NESTED = /[A-Za-z]:\\[^\s"',;)]*\\[^\s"',;)]*/g
+const POSIX_HOME_ABS = /(?:\/(?:Users|home|mnt|opt|private|var|tmp))\/[^\s"',;)]*/g
+
+/** Collapse any absolute path to one placeholder. */
+export function scrubPaths(text) {
+  return text
+    .replace(WINDOWS_ABS, '<abs-path>')
+    .replace(WINDOWS_ABS_FWD, '<abs-path>')
+    .replace(WINDOWS_ABS_NESTED, '<abs-path>')
+    .replace(POSIX_HOME_ABS, '<abs-path>')
+}
+
 /** Replace machine-specific prefixes with stable placeholders. */
 export function redact(value) {
   if (typeof value === 'string') {
@@ -28,7 +58,7 @@ export function redact(value) {
       out = out.split(variant).join('<user-home>')
     }
     if (HOSTNAME) out = out.split(HOSTNAME).join('<host>')
-    return out
+    return scrubPaths(out)
   }
   if (Array.isArray(value)) return value.map(redact)
   if (value && typeof value === 'object') {

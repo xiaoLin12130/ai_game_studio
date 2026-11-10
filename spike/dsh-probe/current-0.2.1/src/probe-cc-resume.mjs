@@ -22,7 +22,7 @@ import { HarnessClient } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, detectModelBlocker, requestRoute, routeMatches } from './lib/outcome.mjs'
+import { EXIT, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -103,6 +103,7 @@ try {
   const turn1 = await runTurn(first, sessionId, `记住这个口令：${TOKEN}。只回复一个词：STORED`)
   summary.turn1 = { text: turn1.text, events: turn1.events.length, statuses: turn1.statuses }
   summary.turn1Route = requestRoute(turn1.events)
+  summary.turn1Routes = requestRoutes(turn1.events)
   summary.turn1Blocker = detectModelBlocker(turn1.events)
   ev.append('turn1', summary.turn1)
   step('turn1 taught', { textLength: turn1.text.length, blocker: summary.turn1Blocker.kind ?? null })
@@ -147,6 +148,7 @@ try {
   const turn2 = await runTurn(second, sessionId, '我刚才让你记住的口令是什么？只回答口令本身，不要解释。')
   summary.turn2 = { text: turn2.text, events: turn2.events.length, statuses: turn2.statuses }
   summary.turn2Route = requestRoute(turn2.events)
+  summary.turn2Routes = requestRoutes(turn2.events)
   summary.turn2Blocker = detectModelBlocker(turn2.events)
   ev.append('turn2', summary.turn2)
   step('turn2 recall', JSON.stringify(turn2.text.slice(0, 160)))
@@ -163,6 +165,8 @@ try {
     processReapedBothRuns: summary.turn1Reaped && summary.turn2Reaped,
     routeBothTurnsCommandcode://n      routeMatches(summary.turn1Route, { provider: PROVIDER, model: MODEL }) &&
       routeMatches(summary.turn2Route, { provider: PROVIDER, model: MODEL }),
+    allRequestsOnExpectedRoute://n      allRoutesMatch(turn1.events, { provider: PROVIDER, model: MODEL }) &&
+      allRoutesMatch(turn2.events, { provider: PROVIDER, model: MODEL }),
   }
 } catch (error) {
   summary.error = { name: error?.constructor?.name, message: String(error?.message ?? error).slice(0, 1200) }

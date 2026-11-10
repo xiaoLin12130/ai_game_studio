@@ -1,0 +1,19 @@
+{
+  "probe": "CC-0-cli-baseline",
+  "startedAt": "2026-11-10T11:27:12.378Z",
+  "profile": "cc-cli",
+  "token": "CC-cli-fcd344",
+  "note": "Raw model stream is intentionally not stored; only auditable facts are kept.",
+  "exitCode": 0,
+  "durationMs": 6472,
+  "answer": "验证标识 CC-cli-fcd344；模型 deepseek/deepseek-v4.1-flash",
+  "stderrTail": "er wants only one line output. Simple verification string. No explanation. Just output the verification identifier line.\n\nThey said only output one line, no explanation, no thinking process. So I should respond with just: 验证标识 CC-cli-fcd344；模型 deepseek/deepseek-v4.1-flash\n\nProbably exactly as given.",
+  "assertions": {
+    "exitCodeZero": true,
+    "tokenEchoed": true,
+    "modelNamed": true,
+    "noProviderQuotaError": true
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-10T11:27:18.854Z"
+}

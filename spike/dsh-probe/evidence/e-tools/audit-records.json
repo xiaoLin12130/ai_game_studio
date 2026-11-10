@@ -4,7 +4,7 @@
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
-    "auditLog": "<repo>/spike/dsh-probe/tmp/audit/studio-mcp-audit.jsonl"
+    "auditLog": "<repo>/spike/dsh-probe<abs-path>"
   },
   {
     "ts": "2026-11-10T10:42:07.304Z",

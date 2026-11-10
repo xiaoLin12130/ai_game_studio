@@ -7,20 +7,20 @@
     "node": "v22.22.2",
     "arch": "x64",
     "pid": 26460,
-    "execPath": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe"
+    "execPath": "<abs-path>"
   },
   "lockRecovery": {
     "checked": true,
     "cleared": true,
     "stalePid": 27200,
-    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "path": "<repo>/spike/dsh-probe<abs-path>"
   },
   "startMs": 114990,
   "childrenWhileRunning": [
     {
       "pid": 23148,
       "name": "node.exe",
-      "commandline": "C:\\Users\\LIN\\.workbuddy\\binaries\\node\\versions\\22.22.2-6\\node.exe H:\\AI�뿪��\\ai_game_studio_starter\\spike\\dsh-probe\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js --profile sdk"
+      "commandline": "<abs-path> <abs-path> --profile sdk"
     },
     {
       "pid": 21892,

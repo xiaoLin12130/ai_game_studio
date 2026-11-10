@@ -1,6 +1,6 @@
 {
   "probe": "CC-5-capability",
-  "startedAt": "2026-11-10T11:12:07.441Z",
+  "startedAt": "2026-11-10T11:28:06.272Z",
   "profile": "cc-sdk",
   "lockRecovery": {
     "checked": false,
@@ -48,8 +48,8 @@
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1024
+    "waitedMs": 1050
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:12:11.684Z"
+  "finishedAt": "2026-11-10T11:28:10.609Z"
 }

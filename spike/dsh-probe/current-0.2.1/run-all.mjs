@@ -16,6 +16,7 @@ import { redact } from './src/lib/evidence.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 const probes = [
+  ['CC-0-cli', 'src/probe-cli-baseline.mjs'],
   ['CC-1-reply', 'src/probe-commandcode.mjs'],
   ['CC-2-tools', 'src/probe-cc-tools.mjs'],
   ['CC-3-resume', 'src/probe-cc-resume.mjs'],

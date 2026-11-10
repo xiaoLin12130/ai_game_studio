@@ -39,7 +39,8 @@
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-10T10:51:08.280Z"
+    "last_pushed_at": "2026-11-10T10:51:08.280Z",
+    "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3"
   },
   "phase_00": {
     "gate_results": {
@@ -97,7 +98,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T11:13:42.291Z",
+  "updated_at": "2026-11-10T11:30:53.977Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -187,6 +188,46 @@
         "crash recovery via forced kill",
         "interrupted turn resume",
         "approval callback UI mapping",
+        "multi-runtime concurrency limits and cost",
+        "electron packaged chain",
+        "0.2.2 capabilities"
+      ]
+    },
+    "r12": {
+      "authored_at": "2026-11-10T11:30:53.976Z",
+      "review_round": 3,
+      "fixes": {
+        "p1a_redaction": "FIXED - shape-based redaction (drive letter + nested separator) + JSON-aware scrub script; scrub --check reports zero residual",
+        "p1a_reasoning_log": "FIXED - raw CLI stdout deleted; probe keeps only exit code, duration, token echo, model name, trimmed answer",
+        "p1b_dep_lock": "FIXED - profile-locks/<profile>.deps.json with sha256 fingerprint, drift reported",
+        "p1b_version_check": "FIXED - plugin version and profile bundles verified, mismatch triggers reinstall",
+        "p1b_cli_automation": "FIXED - CC-0-cli is the 6th automated probe",
+        "p1c_all_routes": "FIXED - requestRoutes/allRoutesMatch assert every request, not just the first",
+        "p2b_approval_classification": "FIXED - session/approve=NOT_SUPPORTED, dependable callback=UNKNOWN/NOT_OBSERVED, flow=UNVERIFIED"
+      },
+      "suite": {
+        "command": "CC_DSH_HOME=<empty>/dsh-home node run-all.mjs",
+        "pass": 6,
+        "total": 6,
+        "exit": 0,
+        "probes": [
+          "CC-0-cli",
+          "CC-1-reply",
+          "CC-2-tools",
+          "CC-3-resume",
+          "CC-4-concurrent",
+          "CC-5-capability"
+        ]
+      },
+      "scrub_check": {
+        "command": "cd spike/dsh-probe && node scrub-evidence.mjs --check",
+        "scanned": 79,
+        "residual": 0
+      },
+      "still_unverified": [
+        "crash recovery via forced kill",
+        "interrupted turn resume",
+        "approval callback flow and UI mapping",
         "multi-runtime concurrency limits and cost",
         "electron packaged chain",
         "0.2.2 capabilities"

@@ -22,6 +22,7 @@
  * Usage:
  *   node scripts/setup-profiles.mjs [--home <dir>] [--json]
  */
+import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -70,26 +71,102 @@ function writeJson(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`)
 }
 
-/** Install the plugin into a profile's own node_modules (no global side effects). */
+/**
+ * Install the plugin into a profile's own node_modules (no global side effects).
+ *
+ * An existing install is only accepted when the version matches exactly — a profile
+ * left over from an older run must not silently satisfy the requirement.
+ */
 function ensurePlugin(profileDir, log) {
   const installed = path.join(profileDir, 'node_modules', ...PLUGIN.split('/'), 'package.json')
+  const expected = PLUGIN_VERSION
+
   if (fs.existsSync(installed)) {
     const version = JSON.parse(fs.readFileSync(installed, 'utf8')).version
-    log({ step: 'plugin.present', profile: path.basename(profileDir), version })
-    return { installed: true, version, reinstalled: false }
+    if (version === expected) {
+      log({ step: 'plugin.verified', profile: path.basename(profileDir), version })
+      return { installed: true, version, reinstalled: false, versionVerified: true }
+    }
+    log({ step: 'plugin.version_mismatch', profile: path.basename(profileDir), found: version, expected })
+  } else {
+    log({ step: 'plugin.install', profile: path.basename(profileDir), spec: `${PLUGIN}@${expected}` })
   }
-  log({ step: 'plugin.install', profile: path.basename(profileDir), spec: `${PLUGIN}@${PLUGIN_VERSION}` })
+
   // Windows cannot exec a .cmd shim without a shell; `shell: true` also keeps the
   // command portable to POSIX where npm is a plain executable.
-  execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', '--legacy-peer-deps', '--ignore-scripts', `${PLUGIN}@${PLUGIN_VERSION}`], {
+  execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', '--legacy-peer-deps', '--ignore-scripts', `${PLUGIN}@${expected}`], {
     cwd: profileDir,
     stdio: 'pipe',
     encoding: 'utf8',
     shell: true,
   })
   const version = JSON.parse(fs.readFileSync(installed, 'utf8')).version
+  if (version !== expected) {
+    throw new Error(`installed ${PLUGIN}@${version}, expected ${expected}`)
+  }
   log({ step: 'plugin.installed', profile: path.basename(profileDir), version })
-  return { installed: true, version, reinstalled: true }
+  return { installed: true, version, reinstalled: true, versionVerified: true }
+}
+
+/**
+ * Fingerprint the plugin's resolved dependency tree.
+ *
+ * `npm install` without a committed lockfile can resolve transitive dependencies
+ * differently over time. The plugin's own version being pinned does not pin its tree,
+ * so the resolved set is recorded to a lock snapshot under profile-locks/ and compared
+ * on later runs; a drift is reported instead of passing silently.
+ */
+function dependencySnapshot(profileDir, lockDirectory, profileName, log) {
+  let listed = null
+  try {
+    const raw = execFileSync('npm', ['ls', '--all', '--json', '--depth=8'], {
+      cwd: profileDir,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+      shell: true,
+    })
+    listed = JSON.parse(raw)
+  } catch (error) {
+    // `npm ls` exits non-zero on peer problems while still printing the tree.
+    const partial = String(error?.stdout ?? '')
+    try {
+      listed = JSON.parse(partial)
+    } catch {
+      log({ step: 'deps.snapshot_failed', profile: profileName })
+      return { fingerprint: null, packages: [], drift: null, error: String(error?.message ?? error).slice(0, 200) }
+    }
+  }
+
+  const packages = []
+  const walk = (node) => {
+    for (const [name, dep] of Object.entries(node?.dependencies ?? {})) {
+      if (dep && dep.version) packages.push(`${name}@${dep.version}`)
+      walk(dep)
+    }
+  }
+  walk(listed)
+  packages.sort()
+  const fingerprint = packages.length
+    ? `sha256:${crypto.createHash('sha256').update(packages.join('\n')).digest('hex').slice(0, 16)}`
+    : null
+
+  fs.mkdirSync(lockDirectory, { recursive: true })
+  const lockPath = path.join(lockDirectory, `${profileName}.deps.json`)
+  const recorded = fs.existsSync(lockPath) ? JSON.parse(fs.readFileSync(lockPath, 'utf8')) : null
+  const drift = recorded && recorded.fingerprint && fingerprint && recorded.fingerprint !== fingerprint
+    ? { previous: recorded.fingerprint, current: fingerprint }
+    : null
+
+  if (!recorded) {
+    fs.writeFileSync(lockPath, `${JSON.stringify({ plugin: `${PLUGIN}@${PLUGIN_VERSION}`, fingerprint, packages }, null, 2)}\n`)
+    log({ step: 'deps.lock_created', profile: profileName, fingerprint, count: packages.length })
+  } else if (drift) {
+    log({ step: 'deps.drift_detected', profile: profileName, ...drift })
+  } else {
+    log({ step: 'deps.lock_matches', profile: profileName, fingerprint })
+  }
+
+  return { fingerprint, packages, drift, lockPath }
 }
 
 /**
@@ -148,10 +225,19 @@ export function setupProfiles({ home = path.join(probeRoot, 'dsh-home'), patchDi
       writeJson(path.join(dir, 'package.json'), profilePackageJson(spec.name, spec.bundles))
       log({ step: 'profile.created', profile: spec.name, bundles: spec.bundles })
     } else {
-      log({ step: 'profile.present', profile: spec.name })
+      const current = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+      const defined = current?.dsh?.profile?.bundles ?? []
+      const sameBundles = defined.length === spec.bundles.length && spec.bundles.every((b) => defined.includes(b))
+      if (!sameBundles) {
+        log({ step: 'profile.redefined', profile: spec.name, was: defined, now: spec.bundles })
+        writeJson(path.join(dir, 'package.json'), profilePackageJson(spec.name, spec.bundles))
+      } else {
+        log({ step: 'profile.verified', profile: spec.name })
+      }
     }
     const plugin = ensurePlugin(dir, log)
-    profiles.push({ name: spec.name, label: spec.label, dir, bundles: spec.bundles, plugin })
+    const deps = dependencySnapshot(dir, path.join(probeRoot, 'profile-locks'), spec.name, log)
+    profiles.push({ name: spec.name, label: spec.label, dir, bundles: spec.bundles, plugin, deps })
   }
 
   const patches = writePatches(patchDirectory)

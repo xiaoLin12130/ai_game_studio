@@ -6,7 +6,7 @@
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/tmp/dsh-home/profiles/node_modules.lock"
+    "path": "<repo>/spike/dsh-probe<abs-path>"
   },
   "serverInfo": {
     "name": "deepseek-harness-sdk-runtime",

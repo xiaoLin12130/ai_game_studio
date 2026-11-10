@@ -1,6 +1,6 @@
 {
   "probe": "CC-4-concurrent",
-  "startedAt": "2026-11-10T11:11:59.834Z",
+  "startedAt": "2026-11-10T11:27:58.770Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "lockRecovery": {
@@ -11,33 +11,45 @@
     "error": null
   },
   "sessions": [
-    "session-2ccb276d3fa54222b96b5da0b9e0a184",
-    "session-2f3915025a9b4962a97cb6d83d81af5f"
+    "session-58999d32297d423696f89d048599eb7b",
+    "session-f3e21cbc96cc4e94b80d9cc2838a869d"
   ],
-  "totalMs": 2959,
+  "totalMs": 2884,
   "runA": {
-    "sessionId": "session-2ccb276d3fa54222b96b5da0b9e0a184",
+    "sessionId": "session-58999d32297d423696f89d048599eb7b",
     "text": "APPLE",
     "eventSessions": [
-      "session-2ccb276d3fa54222b96b5da0b9e0a184"
+      "session-58999d32297d423696f89d048599eb7b"
     ],
     "route": {
       "provider": "commandcode",
       "model": "deepseek/deepseek-v4.1-flash",
       "maxTokens": 256
-    }
+    },
+    "routes": [
+      {
+        "provider": "commandcode",
+        "model": "deepseek/deepseek-v4.1-flash"
+      }
+    ]
   },
   "runB": {
-    "sessionId": "session-2f3915025a9b4962a97cb6d83d81af5f",
+    "sessionId": "session-f3e21cbc96cc4e94b80d9cc2838a869d",
     "text": "BANANA",
     "eventSessions": [
-      "session-2f3915025a9b4962a97cb6d83d81af5f"
+      "session-f3e21cbc96cc4e94b80d9cc2838a869d"
     ],
     "route": {
       "provider": "commandcode",
       "model": "deepseek/deepseek-v4.1-flash",
       "maxTokens": 256
-    }
+    },
+    "routes": [
+      {
+        "provider": "commandcode",
+        "model": "deepseek/deepseek-v4.1-flash"
+      }
+    ]
   },
   "modelBlocker": {
     "blocked": false
@@ -49,14 +61,15 @@
     "bothProducedText": true,
     "answersNotSwapped": true,
     "routeBothRunsCommandcode": true,
+    "allRequestsOnExpectedRoute": true,
     "noLeftoversAfterClose": true
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 998,
+    "waitedMs": 1033,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:12:07.367Z"
+  "finishedAt": "2026-11-10T11:28:06.194Z"
 }

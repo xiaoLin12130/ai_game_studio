@@ -22,7 +22,7 @@
 
 ===== C-resume =====
 [probe] turn1 settled {"events":15,"blocker":"MODEL_QUOTA"}
-[probe] session log after turn1 {"compressedBytes":18073,"decompressedBytes":210,"lines":1,"turnStartMarkers":0,"userMessageMarkers":0,"schemaSample":"{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"H:\\\\AI与开发\\\\ai_game_studio_starter\\\\spike\\\\dsh-probe\\\\tmp\\\\workspace\",\"isSeeded\":false,\"delegationDepth\""}
+[probe] session log after turn1 {"compressedBytes":18073,"decompressedBytes":210,"lines":1,"turnStartMarkers":0,"userMessageMarkers":0,"schemaSample":"{\"type\":\"session\",\"version\":3,\"id\":\"probe-resume-1794302985613\",\"createdAt\":1794302987175,\"cwd\":\"<abs-path>",\"isSeeded\":false,\"delegationDepth\""}
 [probe] turn2 rejected on session reuse session "probe-resume-1794302985613" already exists
 [probe] PROBE_C_RESULT=PASS {"conclusion":"NO_RESUME_AT_SDK_LEVEL","assertions":{"firstProcessReaped":true,"sessionLogPersisted":true,"sessionLogCompressedBytes":18073,"sessionIdReuseRejected":true,"sessionLogStillReadable":true,"modelRecalledCodeword":false}}
 

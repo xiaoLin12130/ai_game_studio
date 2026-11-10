@@ -26,7 +26,7 @@
       "exitCode": 3,
       "timedOut": false,
       "ms": 118998,
-      "stdoutTail": "[probe] cleared stale profile lock {\"stalePid\":27200}\n[probe] starting runtime via official SDK {\"provider\":\"deepseek-official\",\"model\":\"deepseek-v4-flash\"}\n[probe] runtime handshake complete 114990ms\n[probe] live dsh child process observed 23148,21892\n[probe] session opened session-f317768074e848989d8ad618b7aecfcd\n[probe] prompt completed {\"runMs\":766,\"events\":15}\n[probe] final response \"\"\n[probe] closing runtime\n[probe] post-close child check {\"gone\":true,\"waitedMs\":963}\n[probe] summary written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\evidence\\a-basic-run\\summary.json\n[probe] PROBE_A_RESULT=BLOCKED {\"infraOk\":true,\"modelResponded\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "stdoutTail": "[probe] cleared stale profile lock {\"stalePid\":27200}\n[probe] starting runtime via official SDK {\"provider\":\"deepseek-official\",\"model\":\"deepseek-v4-flash\"}\n[probe] runtime handshake complete 114990ms\n[probe] live dsh child process observed 23148,21892\n[probe] session opened session-f317768074e848989d8ad618b7aecfcd\n[probe] prompt completed {\"runMs\":766,\"events\":15}\n[probe] final response \"\"\n[probe] closing runtime\n[probe] post-close child check {\"gone\":true,\"waitedMs\":963}\n[probe] summary written <abs-path> PROBE_A_RESULT=BLOCKED {\"infraOk\":true,\"modelResponded\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
       "stderrTail": "",
       "outcome": "BLOCKED"
     },
@@ -46,7 +46,7 @@
       "exitCode": 0,
       "timedOut": false,
       "ms": 5910,
-      "stdoutTail": "[probe] turn1 settled {\"events\":15,\"blocker\":\"MODEL_QUOTA\"}\n[probe] session log after turn1 {\"compressedBytes\":18073,\"decompressedBytes\":210,\"lines\":1,\"turnStartMarkers\":0,\"userMessageMarkers\":0,\"schemaSample\":\"{\\\"type\\\":\\\"session\\\",\\\"version\\\":3,\\\"id\\\":\\\"probe-resume-1794302985613\\\",\\\"createdAt\\\":1794302987175,\\\"cwd\\\":\\\"H:\\\\\\\\AI与开发\\\\\\\\ai_game_studio_starter\\\\\\\\spike\\\\\\\\dsh-probe\\\\\\\\tmp\\\\\\\\workspace\\\",\\\"isSeeded\\\":false,\\\"delegationDepth\\\"\"}\n[probe] turn2 rejected on session reuse session \"probe-resume-1794302985613\" already exists\n[probe] PROBE_C_RESULT=PASS {\"conclusion\":\"NO_RESUME_AT_SDK_LEVEL\",\"assertions\":{\"firstProcessReaped\":true,\"sessionLogPersisted\":true,\"sessionLogCompressedBytes\":18073,\"sessionIdReuseRejected\":true,\"sessionLogStillReadable\":true,\"modelRecalledCodeword\":false}}\n",
+      "stdoutTail": "[probe] turn1 settled {\"events\":15,\"blocker\":\"MODEL_QUOTA\"}\n[probe] session log after turn1 {\"compressedBytes\":18073,\"decompressedBytes\":210,\"lines\":1,\"turnStartMarkers\":0,\"userMessageMarkers\":0,\"schemaSample\":\"{\\\"type\\\":\\\"session\\\",\\\"version\\\":3,\\\"id\\\":\\\"probe-resume-1794302985613\\\",\\\"createdAt\\\":1794302987175,\\\"cwd\\\":\\\"<abs-path>",\\\"isSeeded\\\":false,\\\"delegationDepth\\\"\"}\n[probe] turn2 rejected on session reuse session \"probe-resume-1794302985613\" already exists\n[probe] PROBE_C_RESULT=PASS {\"conclusion\":\"NO_RESUME_AT_SDK_LEVEL\",\"assertions\":{\"firstProcessReaped\":true,\"sessionLogPersisted\":true,\"sessionLogCompressedBytes\":18073,\"sessionIdReuseRejected\":true,\"sessionLogStillReadable\":true,\"modelRecalledCodeword\":false}}\n",
       "stderrTail": "",
       "outcome": "PASS"
     },
@@ -66,7 +66,7 @@
       "exitCode": 3,
       "timedOut": false,
       "ms": 3639,
-      "stdoutTail": "[probe] profile patch written H:\\AI与开发\\ai_game_studio_starter\\spike\\dsh-probe\\tmp\\patches\\studio-mcp.cordis.yml\n[probe] runtime started with MCP patch\n[probe] model answered \"\"\n[probe] studio audit {\"totalRecords\":4,\"kinds\":[\"server.started\",\"initialize\",\"notification\",\"tools/list\"],\"toolCalls\":[],\"servedCount\":0,\"initializedWith\":{\"ts\":\"2026-11-10T09:30:01.843Z\",\"kind\":\"initialize\",\"clientProtocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"dsh-mcp-client\",\"version\":\"0.0.1\"}}}\n[probe] PROBE_E_RESULT=BLOCKED {\"registrationVerified\":true,\"invocationVerified\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
+      "stdoutTail": "[probe] profile patch written <abs-path> runtime started with MCP patch\n[probe] model answered \"\"\n[probe] studio audit {\"totalRecords\":4,\"kinds\":[\"server.started\",\"initialize\",\"notification\",\"tools/list\"],\"toolCalls\":[],\"servedCount\":0,\"initializedWith\":{\"ts\":\"2026-11-10T09:30:01.843Z\",\"kind\":\"initialize\",\"clientProtocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"dsh-mcp-client\",\"version\":\"0.0.1\"}}}\n[probe] PROBE_E_RESULT=BLOCKED {\"registrationVerified\":true,\"invocationVerified\":false,\"blocker\":\"MODEL_QUOTA\"}\n",
       "stderrTail": "",
       "outcome": "BLOCKED"
     },

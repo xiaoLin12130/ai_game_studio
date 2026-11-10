@@ -17,7 +17,7 @@ import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { findRuntimeProcesses, waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
+import { EXIT, detectModelBlocker, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -107,6 +107,7 @@ try {
   // the provider call, so it is valid evidence even when the call then fails.
   const header = result.events.find((e) => e?.type === 'request/header')
   summary.requestRoute = header?.data?.header?.config ?? null
+  summary.requestRoutes = requestRoutes(result.events)
   const context = result.events.find((e) => e?.type === 'request/context')
   summary.requestContext = context?.data ?? null
 
@@ -124,6 +125,7 @@ try {
     echoToken: text.includes(TOKEN),
     nonEmptyResponse: text.trim().length > 0,
     routeIsCommandcode: summary.requestRoute?.provider === PROVIDER,
+    allRequestsOnExpectedRoute: allRoutesMatch(result.events, { provider: PROVIDER, model: MODEL }),
     modelAsRequested: summary.requestRoute?.model === MODEL,
     noProviderFallback: !summary.modelBlocker?.blocked,
   }
