@@ -31,7 +31,8 @@
     "current_branch": "phase/00-feasibility",
     "last_reviewed_commit": null,
     "last_review_result": null,
-    "push_status": "NOT_PUSHED_NO_REMOTE_CONFIGURED"
+    "push_status": "NOT_PUSHED_NO_REMOTE_CONFIGURED",
+    "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73"
   },
   "phase_00": {
     "gate_results": {
@@ -58,9 +59,20 @@
       "bundled_runtime_version": "0.1.5-rc.2",
       "server_info": "deepseek-harness-sdk-runtime 0.0.1",
       "provider_route": "deepseek-official",
-      "warm_start_ms": [2252, 2582],
-      "cold_or_healing_start_ms": [73129, 116466, 118998, 128688],
-      "close_ms": [53, 67],
+      "warm_start_ms": [
+        2252,
+        2582
+      ],
+      "cold_or_healing_start_ms": [
+        73129,
+        116466,
+        118998,
+        128688
+      ],
+      "close_ms": [
+        53,
+        67
+      ],
       "clean_exit_code": 0,
       "failed_boot_exit_code": 1,
       "cancel_supported": false,
@@ -78,5 +90,5 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00. Do NOT start PHASE 01 until an explicit approval arrives. If the DeepSeek account is funded, re-run the probe suite first so gates 3 and 5 can move from BLOCKED to PASS.",
-  "updated_at": "2026-11-10T09:40:00Z"
+  "updated_at": "2026-11-10T09:35:41.972Z"
 }

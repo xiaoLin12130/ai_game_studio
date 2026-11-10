@@ -143,9 +143,13 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 ## 提交信息（提交后回填）
 
-- Commit SHA（本地）：`<见 git log>` 
+- 阶段实施提交（implementation commit）：`91a44d861585c58dcb033265e84acfa5ebe11c73`
+- 分支：`phase/00-feasibility`
+- 工作区状态：干净（`git status --porcelain` 为空）
 - 远端状态：`NOT_PUSHED_NO_REMOTE`
-- 推送命令（用户建仓后）：
+- 复审应以该分支最新 HEAD 为准；本文件随附的 SHA 提交只回填此段说明，不含功能改动。
+
+推送命令（用户建仓后）：
 
 ```bash
 cd H:\AI与开发\ai_game_studio_starter
