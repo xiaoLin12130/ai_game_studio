@@ -453,8 +453,8 @@ PASS 5/5   exit 0
 
 **复审发现的实际泄露**：
 
-- `cc-1-reply/records.jsonl` 的 `commandline` 字段仍含 `H:/...` 绝对路径；
-- `legacy-0.1.5/evidence/a-basic-run/summary.json` 仍含 `C:/Users/...`；
+- `cc-1-reply/records.jsonl` 的 `commandline` 字段仍含 `<drive>:\...` 形式的绝对路径；
+- `legacy-0.1.5/evidence/a-basic-run/summary.json` 仍含 `<user-profile>\...` 形式的路径；
 - 我上一轮写的验证命令本身是错的（grep 的是斜杠形式，实际是反斜杠；`<hostname>` 也不是真实主机名）。
 
 **真因（两个，都不是「漏调用」）**：
