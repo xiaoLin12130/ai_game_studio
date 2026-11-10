@@ -27,12 +27,14 @@
     "content_hash": null
   },
   "github": {
-    "remote_url": null,
+    "remote_url": "https://github.com/xiaoLin12130/ai_game_studio.git",
     "current_branch": "phase/00-feasibility",
     "last_reviewed_commit": null,
     "last_review_result": null,
-    "push_status": "NOT_PUSHED_NO_REMOTE_CONFIGURED",
-    "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73"
+    "push_status": "BLOCKED_NETWORK_PROXY_502_ON_GITHUB_CONNECT",
+    "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73",
+    "visibility": "public (docs/10 recommends private — pending user decision)",
+    "pushed_commit": null
   },
   "phase_00": {
     "gate_results": {
@@ -90,5 +92,5 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00. Do NOT start PHASE 01 until an explicit approval arrives. If the DeepSeek account is funded, re-run the probe suite first so gates 3 and 5 can move from BLOCKED to PASS.",
-  "updated_at": "2026-11-10T09:35:41.972Z"
+  "updated_at": "2026-11-10T10:04:06.199Z"
 }
