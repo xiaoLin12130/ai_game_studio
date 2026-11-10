@@ -13,6 +13,7 @@ import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
+import { notificationsIsolated, summariseRoutes } from './lib/assertions.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -61,20 +62,20 @@ try {
   const idsFor = (run) => [...new Set(run.notifications.map((n) => n?.params?.sessionId).filter(Boolean))]
   summary.runA = { sessionId: runA.sessionId, text: runA.finalResponse, eventSessions: idsFor(runA), route: requestRoute(runA.events), routes: requestRoutes(runA.events) }
   summary.runB = { sessionId: runB.sessionId, text: runB.finalResponse, eventSessions: idsFor(runB), route: requestRoute(runB.events), routes: requestRoutes(runB.events) }
-  ev.append('runs', { totalMs: summary.totalMs, runA: summary.runA, runB: summary.runB })
+  summary.routeShape = { a: summariseRoutes(summary.runA.routes), b: summariseRoutes(summary.runB.routes) }
+  ev.append('runs', { totalMs: summary.totalMs, runA: summary.runA, runB: summary.runB, routeShape: summary.routeShape })
   step('both settled', { totalMs: summary.totalMs, a: runA.finalResponse.slice(0, 40), b: runB.finalResponse.slice(0, 40) })
 
   summary.modelBlocker = detectModelBlocker(runA.events)?.blocked ? detectModelBlocker(runA.events) : detectModelBlocker(runB.events)
 
   // An empty id list would satisfy `every()` and read as "no cross-talk". Requiring at
   // least one notification per session keeps "nothing arrived" from passing as isolation.
-  const onlyOwnSession = (ids, own) => ids.length > 0 && ids.every((id) => id === own)
   summary.assertions = {
     distinctSessionIds: a.id !== b.id,
     notificationsPresentA: summary.runA.eventSessions.length > 0,
     notificationsPresentB: summary.runB.eventSessions.length > 0,
-    eventsOnlyForOwnSessionA: onlyOwnSession(summary.runA.eventSessions, runA.sessionId),
-    eventsOnlyForOwnSessionB: onlyOwnSession(summary.runB.eventSessions, runB.sessionId),
+    eventsOnlyForOwnSessionA: notificationsIsolated(summary.runA.eventSessions, runA.sessionId),
+    eventsOnlyForOwnSessionB: notificationsIsolated(summary.runB.eventSessions, runB.sessionId),
     bothProducedText: runA.finalResponse.trim().length > 0 && runB.finalResponse.trim().length > 0,
     answersNotSwapped: /APPLE/i.test(runA.finalResponse) && /BANANA/i.test(runB.finalResponse),
     routeBothRunsCommandcode:

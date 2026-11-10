@@ -1,0 +1,33 @@
+{
+  "purpose": "Negative proof: the leak gate fails the suite even when all six probes pass.",
+  "how": "A file containing a drive-letter path was planted under docs/, then the full suite ran with CC_EVIDENCE_OUT pointing at a throwaway directory so the real evidence was untouched.",
+  "plantedAt": "docs/_leak_probe/fixture.md",
+  "exitCode": 1,
+  "expected": {
+    "overall": "FAIL",
+    "probes": "6/6 PASS",
+    "dependency": "PASS",
+    "leak": "FAIL"
+  },
+  "observed": {
+    "overall": "FAIL",
+    "probes": {
+      "passed": 6,
+      "total": 6,
+      "blocked": 0,
+      "failed": 0
+    },
+    "dependency": "PASS",
+    "leak": "FAIL",
+    "scanned": 168,
+    "leaks": [
+      {
+        "file": "docs/_leak_probe/fixture.md",
+        "rule": "windows-nested",
+        "match": "<abs-path>",
+        "line": 3
+      }
+    ]
+  },
+  "generatedAt": "2026-11-10T12:39:40.713Z"
+}

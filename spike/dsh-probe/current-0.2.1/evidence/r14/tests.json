@@ -1,0 +1,350 @@
+{
+  "generatedAt": "2026-11-10T12:42:40.092Z",
+  "node": "v22.22.2",
+  "total": 68,
+  "passed": 68,
+  "failed": 0,
+  "exitCode": 0,
+  "results": [
+    {
+      "name": "detect: windows drive",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows spaces",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows deep drive",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows non-ascii",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows forward",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: unc",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix mnt",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix tmp",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix opt",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix root",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix workspace",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: repository root",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: user home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder repo",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder host",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder abs",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: relative path",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: url",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: url with port",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: escape sequence",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: time",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: bare drive",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: api path",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: regex source",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "scan: planted leak is found",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "scan: clean tree passes",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "scan: empty scope is an error, not a pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "scan: unreadable file is an error, not a pass",
+      "ok": true,
+      "ms": 127
+    },
+    {
+      "name": "scan: json is inspected after decoding",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "cli: leak exits 1",
+      "ok": true,
+      "ms": 70
+    },
+    {
+      "name": "cli: clean exits 0",
+      "ok": true,
+      "ms": 69
+    },
+    {
+      "name": "cli: empty root exits 1",
+      "ok": true,
+      "ms": 66
+    },
+    {
+      "name": "classify: quota on stderr",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "classify: quota on stdout",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: both streams",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: plugin incompatibility outranks quota",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: healthy run has no kind",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: unknown text stays unclassified",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: empty list is not a pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: single correct request passes",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: fallback on the second hop fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: wrong model fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: shape records that only one hop was seen",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: empty notification list fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: foreign session id fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: mixed list fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: own session passes",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: leak failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: dependency failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: six passing probes cannot outvote a gate",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: blocked only is BLOCKED, not FAIL",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "gate: all clear is PASS",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: required dsh line is accepted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: older runtime is rejected",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: newer runtime is rejected",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: unsupported syntax is UNKNOWN, not pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: prerelease ordering",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "deps: fresh home builds both profiles",
+      "ok": true,
+      "ms": 108
+    },
+    {
+      "name": "deps: second run is stable and repairs nothing",
+      "ok": true,
+      "ms": 26
+    },
+    {
+      "name": "deps: tampered install is repaired, not accepted",
+      "ok": true,
+      "ms": 89
+    },
+    {
+      "name": "deps: tampered profile manifest is repaired",
+      "ok": true,
+      "ms": 30
+    },
+    {
+      "name": "deps: missing lockfile fails",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "deps: lockfile version drift fails",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "deps: lockfile manifest drift fails",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "deps: corrupted lockfile fails with a code",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "suite: dependency gate failure exits 1",
+      "ok": true,
+      "ms": 244
+    }
+  ]
+}

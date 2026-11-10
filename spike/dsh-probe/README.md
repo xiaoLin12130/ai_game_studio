@@ -22,7 +22,7 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install                                  # 探针依赖，精确钉版本
 $env:COMMANDCODE_API_KEY = "..."             # 只从环境变量读，绝不写进仓库
-node run-all.mjs                             # 期望：PASS 6/6，退出码 0
+npm test                                     # 68 项回归测试 + 六探针 + 两个门禁
 ```
 
 Windows `cmd.exe`：
@@ -31,20 +31,32 @@ Windows `cmd.exe`：
 cd spike\dsh-probe\current-0.2.1
 npm install
 set COMMANDCODE_API_KEY=...
-node run-all.mjs
+npm test
 ```
 
-`run-all.mjs` 会**先自动构建隔离环境**，再跑探针：创建 `dsh-home/`、生成 `cc-sdk` 与
-`cc-cli` 两个 profile、按 **lockfile** 安装钉死版本的 commandcode 插件、写出 patch 文件。
+只跑套件（跳过回归测试）：`node run-all.mjs`，期望 `PASS 6/6  GATES PASS/PASS  exit 0`。
+只跑回归测试：`node tests/run-tests.mjs`，期望 `68/68 tests passed  exit 0`。
+
+`run-all.mjs` 会**先校验依赖**，再跑探针，最后跑脱敏门禁：
+
+1. 依赖门禁：profile 与 `profile-locks/` 比对（版本 + integrity + 安装树指纹 + bundle + 运行时兼容范围）；
+2. 六个探针；
+3. 脱敏门禁：扫描整个仓库的发布文件；
+4. 写 aggregate —— 只有门禁跑完才写，避免「结论先于检查」。
+
+任一门禁失败 → `OVERALL FAIL`、退出码 1，**六项探针全 PASS 也不能覆盖**。
 **不需要机器上预先存在任何 profile**，也不读写用户的 `~/.dsh`。
 
-初始化不成功（缺插件、版本不符、lockfile 解析不出来）会**直接终止整轮**并把原因写进
-`evidence/_aggregate/run-all.json`，不会出现「环境有问题但 6/6 全绿」。
+依赖锁的维护（普通运行只校验、不生成）：
+
+```powershell
+npm run lock:update   # 有意的依赖升级；随后必须重跑 npm test
+```
 
 单独初始化（排查用）：
 
 ```powershell
-node scripts/setup-profiles.mjs --home .\dsh-home --json   # 幂等
+node scripts/setup-profiles.mjs --home .\dsh-home --json   # 幂等；缺锁会失败
 ```
 
 想验证「干净环境可复现」，指定一个全新目录：
@@ -81,11 +93,14 @@ node run-all.mjs
 - `package.json` 的 `dependencies` 是**探针进程**自己的依赖（SDK 客户端等）。
 - `@mars-sea/dsh-commandcode-provider` 不是探针的依赖，它必须装在**DSH profile 的 node_modules** 里，
   由运行时加载。版本钉在 `package.json` 的 `profilePlugins` 字段。
-- 真正决定安装结果的不是版本号，而是 `profile-locks/<profile>/package-lock.json`：
+- 真正决定安装结果的是 `profile-locks/<profile>/package-lock.json`：
   `setup-profiles.mjs` 用它跑 `npm ci`，再把结果复制进 profile。所以「今天装到什么」是确定的。
   该插件没有 `dependencies`，只有由 profile bundles 满足的 peer，因此 lockfile 里只有一个条目——
   这是完整的树，不是漏记。
-- lockfile 与要求版本不一致 → `DependencyDriftError` → 整轮失败（不是警告）。
+- `profile-locks/<profile>/tree.json` 记录安装树的**文件数与 sha256**。版本号相等但文件被改，
+  会被判为 `install-tree` 并触发确定性修复；修不好则整轮失败。
+- lockfile 缺失 → `lock-missing`（普通运行**不会**自动补锁）；版本漂移 → `lock-version-mismatch`；
+  声明漂移 → `lock-manifest-mismatch`；JSON 损坏 → `lock-invalid`。全部是硬失败。
 - patch 文件有两种写法，混用会失败：
   - `insert:` 用于**新增**行；
   - 裸 `id:` 用于**覆盖**已有行。
@@ -98,25 +113,40 @@ node run-all.mjs
 
 - 证据写在 `current-0.2.1/evidence/<probe>/`，`summary.json` 是判定，`records.jsonl` 是时间序列。
 - **所有证据写入都经 `redact()`**：仓库根 → `<repo>`、用户目录 → `<user-home>`、主机名 → `<host>`、
-  任意绝对路径 → `<abs-path>`。
+  任意绝对路径（盘符/UNC/POSIX 系统根）→ `<abs-path>`。
 - **不保存模型原文**：CLI 探针只保留退出码、耗时、随机标识是否回显、是否自述模型名、截断后的答案行；
   失败只记录**类别**（QUOTA / AUTH / PLUGIN_INCOMPATIBLE / …），不记录错误文本。
-  之前的版本保存过 `stderrTail`，里面带着模型的推理过程，已移除。
-- 控制台输出同样脱敏：`run-all.mjs` 按**行**转发子进程输出，逐行过 `redact()`。
+- 控制台输出同样脱敏：所有写出口都在 `src/lib/safe-output.mjs`，子进程输出按**行**转发后逐行脱敏。
 
 ### 脱敏门禁
 
 ```powershell
 cd spike\dsh-probe
-node scrub-evidence.mjs --check    # 有残留即退出 1
+node scrub-evidence.mjs --check    # 有残留、扫描失败、或扫不到文件 → 退出 1
 ```
 
-扫描范围是**整个仓库的 git 跟踪文件**（加上未跟踪但未被忽略的新文件），不是几个目录。
+扫描范围是**整个仓库的发布文件**（git 跟踪 + 未跟踪未忽略），不是几个目录。
 数据与文档文件会被就地清洗；源码只报告、不改写。
+套件本身也执行同一份扫描（`src/lib/scrub.mjs`），失败即 `OVERALL FAIL`。
 
 ---
 
-## 4. 历史与边界
+## 4. 回归测试
+
+```powershell
+node tests/run-tests.mjs     # 68 项，全部在临时目录里运行
+```
+
+覆盖：路径检测 14 阳性 / 12 阴性、扫描器边界（空目录、读失败、JSON 解码）、
+CLI 退出码、错误分类 6 例、路由断言 4 例、并发隔离 4 例、门禁判定 5 例、
+版本范围 5 例、依赖五场景、以及「依赖门禁失败 → 套件退出 1」的端到端用例。
+
+测试通过 `CC_LOCK_ROOT` / `CC_DSH_HOME` / `CC_EVIDENCE_OUT` 指向临时目录，
+不会改动真实的锁、profile 或证据。
+
+---
+
+## 5. 历史与边界
 
 - 0.1.5 的原始探针与证据冻结在 `legacy-0.1.5/`，不再覆盖。
 - 本机若注入了 `safe-delete` 之类的安全垫，会中止 DSH 自身的 profile 维护删除，导致 legacy 套件

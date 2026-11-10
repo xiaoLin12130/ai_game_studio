@@ -1,6 +1,6 @@
-{"ts":"2026-11-10T11:49:07.326Z","type":"turn1","text":"STORED","events":18,"statuses":["running","idle"]}
-{"ts":"2026-11-10T11:49:08.428Z","type":"turn1.reaped","status":"PROCESS_ABSENT","waitedMs":1036}
-{"ts":"2026-11-10T11:49:11.770Z","type":"resume.control","rejected":true,"message":"session \"definitely-not-a-real-session-id\" not found"}
-{"ts":"2026-11-10T11:49:16.184Z","type":"resume.attempt","sessionId":"cc-resume-1794311341357","error":null}
-{"ts":"2026-11-10T11:49:20.216Z","type":"turn2","text":"recall-2dcfe4","events":9,"statuses":["running","idle"]}
-{"ts":"2026-11-10T11:49:21.312Z","type":"verdict","verdict":"PASS","conclusion":"RESUME_RESTORES_HISTORY","assertions":{"apiExists":true,"unknownSessionRejected":true,"resumeCallSucceeded":true,"historyRecalled":true,"processReapedBothRuns":true,"routeBothTurnsCommandcode":true,"allRequestsOnExpectedRoute":true}}
+{"ts":"2026-11-10T12:43:18.275Z","type":"turn1","text":"STORED","events":18,"statuses":["running","idle"]}
+{"ts":"2026-11-10T12:43:19.414Z","type":"turn1.reaped","status":"PROCESS_ABSENT","waitedMs":1067}
+{"ts":"2026-11-10T12:43:22.729Z","type":"resume.control","rejected":true,"message":"session \"definitely-not-a-real-session-id\" not found"}
+{"ts":"2026-11-10T12:43:27.603Z","type":"resume.attempt","sessionId":"cc-resume-1794314592291","error":null}
+{"ts":"2026-11-10T12:43:30.382Z","type":"turn2","text":"recall-287e57","events":9,"statuses":["running","idle"]}
+{"ts":"2026-11-10T12:43:31.518Z","type":"verdict","verdict":"PASS","conclusion":"RESUME_RESTORES_HISTORY","assertions":{"apiExists":true,"unknownSessionRejected":true,"resumeCallSucceeded":true,"historyRecalled":true,"processReapedBothRuns":true,"routeBothTurnsCommandcode":true,"allRequestsOnExpectedRoute":true}}

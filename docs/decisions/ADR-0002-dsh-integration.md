@@ -120,9 +120,18 @@ Runtime 结束（正常关闭已实测；崩溃未实测）
 
 - 工具只经 MCP 暴露，命名固定 `mcp__studio__<tool>`；先只读，再提案，最后受控写入。
 - 危险能力（任意路径写、无限制 shell）**不经 MCP 暴露**，由 Studio 适配器执行并受写锁约束。
-- **DSH 工具许可审批在 0.2.1 仍没有可用 UI 映射**。证据边界要说清：
-  - 协议方法层面：`session/approve` 不存在（`unknown method`）；协议只有 7 个 client→server 请求和 4 个 server→client 通知，**没有任何审批类消息类型**。
-  - 传输层面：SDK 暴露通用的 `onRequest(handler)`，理论上能接服务端发起的请求；但实测运行期间**服务端一次都没有发起过 server→client 请求**。
+- **DSH 工具许可审批在 0.2.1 仍没有可用 UI 映射**。证据边界要说清（R1.4 统一口径）：
+
+  | 能力 | 状态 | 依据 |
+  |---|---|---|
+  | `session/approve` 协议方法 | `NOT_SUPPORTED` | `unknown ... method`（CC-5） |
+  | 通用 `onRequest(handler)` 钩子 | **存在** | SDK 传输层类型声明；未被执行路径触及 |
+  | DSH 原生、可依赖的审批回调 | `UNKNOWN / NOT_OBSERVED` | 协议无审批类消息；实测未出现 server→client 请求。「未观察到」≠「不存在」 |
+  | 完整审批请求/响应流程 | `UNVERIFIED` | 无样本可测 |
+  | Studio 自身业务审批 | 由 Studio 实现 | 不依赖 DSH 回调 |
+
+  - 协议只有 7 个 client→server 请求和 4 个 server→client 通知，**没有任何审批类消息类型**。
+  - 传输层暴露通用的 `onRequest(handler)`，理论上能接服务端发起的请求；但实测运行期间**服务端一次都没有发起过 server→client 请求**。
   - 因此结论是「**没有可依赖的审批回调**」，而不是「传输层完全没有这个钩子」——后者不准确。
   - Studio 的业务审批（冻结基线、批准变更、批准构建/发布、危险文件操作）是**自建 UI + 状态机**，与 DSH 无关。
   - 危险工具不直接暴露给模型：模型只能提出操作方案，Studio 审批通过后由**自己的适配器**执行。
@@ -132,7 +141,8 @@ Runtime 结束（正常关闭已实测；崩溃未实测）
 
 - 依赖整族精确钉版本（cordis 4.0.5 / group 1.0.5 / include 1.0.10 / loader 1.0.6 / sdk-client 0.2.1-rc.3）。
 - **不要升级用户全局 DSH**。`dsh` on PATH 是 0.1.5-rc.1，用户日常用的是桌面端 0.2.1-rc.3；Studio 应自带/锁定自己的运行时，不依赖 PATH。
-- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/run-all.mjs`（5/5 PASS 是当前基线）与 `legacy-0.1.5` 套件；协议随时可能变。
+- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/npm test`（R1.4 基线：68 项回归测试 + 六探针 6/6 + 两个门禁 PASS）与 `legacy-0.1.5` 套件；协议随时可能变。
+- 依赖锁由 `profile-locks/<profile>/package-lock.json` + `tree.json` 共同定义；普通运行不生成锁，只校验，漂移即失败。升级流程是 `npm run lock:update` → 重跑 `npm test`。
 
 ## 4. 已实测的缺陷与防御
 

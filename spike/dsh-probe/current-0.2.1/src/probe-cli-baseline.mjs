@@ -21,25 +21,11 @@ import { spawn } from 'node:child_process'
 import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath, patchDir } from './lib/paths.mjs'
 import { EXIT } from './lib/outcome.mjs'
+import { classifyRun, BLOCKING_KINDS } from './lib/diagnostics.mjs'
 
 const PROFILE = process.env.CC_PROFILE_CLI ?? 'cc-cli'
 const TOKEN = `CC-cli-${crypto.randomBytes(3).toString('hex')}`
 const CLI_ENTRY = path.resolve(process.cwd(), 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js')
-
-/**
- * Failure signatures, tested against both streams.
- *
- * A provider error can land on either stream depending on which code path raises it,
- * so inspecting only stderr classifies some failures as a plain FAIL. Only the matched
- * kind is recorded; the surrounding text is discarded.
- */
-const ERROR_SIGNATURES = [
-  { kind: 'QUOTA', re: /QUOTA|Insufficient Balance/i },
-  { kind: 'AUTH', re: /\b401\b|unauthori[sz]ed|invalid api key/i },
-  { kind: 'PLUGIN_INCOMPATIBLE', re: /is incompatible with dsh/i },
-  { kind: 'PROFILE_BOOT', re: /JSON-RPC input closed|writer lock/i },
-  { kind: 'TIMEOUT', re: /timed out|ETIMEDOUT/i },
-]
 
 const ev = createEvidence('cc-0-cli-baseline')
 const summary = {
@@ -86,15 +72,6 @@ function answerLine(raw) {
 }
 
 /** Classify a run from both streams without copying either of them. */
-function classifyRun(run) {
-  const corpus = `${run.out}\n${run.err}`
-  const hit = ERROR_SIGNATURES.find((signature) => signature.re.test(corpus))
-  return {
-    kind: hit?.kind ?? null,
-    stdoutBytes: run.out.length,
-    stderrBytes: run.err.length,
-  }
-}
 
 try {
   if (!fs.existsSync(cliPatch)) throw new Error(`missing CLI patch: ${path.basename(cliPatch)}`)
@@ -104,7 +81,7 @@ try {
   summary.exitCode = run.exitCode
   summary.durationMs = run.ms
   summary.answer = answer
-  summary.diagnostics = classifyRun(run)
+  summary.diagnostics = classifyRun({ stdout: run.out, stderr: run.err })
   ev.append('cli.run', {
     exitCode: run.exitCode,
     durationMs: run.ms,
@@ -126,7 +103,7 @@ try {
   step('ERROR', summary.error.message)
 } finally {
   const allPass = summary.assertions && Object.values(summary.assertions).every(Boolean)
-  const blocked = ['QUOTA', 'AUTH'].includes(summary.diagnostics?.kind)
+  const blocked = BLOCKING_KINDS.includes(summary.diagnostics?.kind)
   summary.verdict = allPass ? 'PASS' : summary.error ? 'FAIL' : blocked ? 'BLOCKED' : 'FAIL'
   summary.finishedAt = new Date().toISOString()
   ev.append('verdict', { verdict: summary.verdict, assertions: summary.assertions ?? null })

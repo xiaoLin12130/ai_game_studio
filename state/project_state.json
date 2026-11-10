@@ -1,8 +1,8 @@
 {
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
-  "product_status": "PHASE_00_R1_COMPLETED_PENDING_REVIEW",
-  "current_phase": "PHASE_00-R1",
+  "product_status": "PHASE_00_R1_4_COMPLETED_PENDING_REVIEW",
+  "current_phase": "PHASE_00-R1.4",
   "phase_status": {
     "PHASE_00": "SUPERSEDED_BY_R1",
     "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
@@ -12,7 +12,8 @@
     "PHASE_05": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_00-R1": "PARTIALLY_VERIFIED_PENDING_REVIEW"
+    "PHASE_00-R1": "SUPERSEDED_BY_R1_4",
+    "PHASE_00-R1.4": "PARTIALLY_VERIFIED_PENDING_REVIEW"
   },
   "product_scope": {
     "target_os": "Windows local single-user first",
@@ -99,8 +100,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T11:50:08.502Z",
+  "next_action": "Await external review of PHASE 00-R1.4. Do NOT start PHASE 01 without explicit approval.",
+  "updated_at": "2026-11-10T12:36:37.073Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -288,6 +289,116 @@
         "commented_out_assertions_restored": "PASS - CC-3/CC-4 route assertions now evaluate both sides",
         "clean_room_suite": "PASS - 6/6, exit 0, 57s"
       }
+    },
+    "r14": {
+      "authored_at": "2026-11-10T12:36:37.072Z",
+      "tested_at": "2026-11-10T12:33:20.949Z",
+      "review_round": 5,
+      "baseline_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
+      "start_commit": "e3176bfe850fc0aa7902eff41390d43f2baafdff",
+      "delivery_commit": null,
+      "result": "READY_FOR_EXTERNAL_REVIEW",
+      "stage_status": "PARTIALLY_VERIFIED",
+      "suite": {
+        "command": "node run-all.mjs (cwd spike/dsh-probe/current-0.2.1)",
+        "probes": 6,
+        "passed": 6,
+        "blocked": 0,
+        "failed": 0,
+        "overall": "PASS",
+        "exit_code": 0,
+        "duration_ms": null
+      },
+      "gates": {
+        "dependency": "PASS",
+        "leak": "PASS",
+        "scanned_files": 163,
+        "leaks_found": 0
+      },
+      "regression_tests": {
+        "command": "node tests/run-tests.mjs",
+        "total": 68,
+        "passed": 68,
+        "failed": 0,
+        "exit_code": 0
+      },
+      "acceptance": {
+        "outputs_redacted_single_layer": {
+          "status": "CONFIRMED",
+          "evidence": "safe-output.mjs is the only writer; 12 negative redaction cases pass"
+        },
+        "scan_scope_and_fixtures": {
+          "status": "CONFIRMED",
+          "evidence": "163 publish files scanned; 14 positive / 12 negative cases"
+        },
+        "leak_failure_fails_suite": {
+          "status": "CONFIRMED",
+          "evidence": "negative-leak-gate.json: 6/6 probes PASS but OVERALL FAIL, exit 1"
+        },
+        "profile_deps_verifiable_new_and_existing": {
+          "status": "CONFIRMED",
+          "evidence": "five dependency scenarios pass"
+        },
+        "lockfile_missing_drift_corrupt": {
+          "status": "CONFIRMED",
+          "evidence": "lock-missing / lock-version-mismatch / lock-manifest-mismatch / lock-invalid"
+        },
+        "dependency_failure_affects_exit_code": {
+          "status": "CONFIRMED",
+          "evidence": "suite exits 1 with gates.dependency=FAIL"
+        },
+        "cli_error_classification": {
+          "status": "CONFIRMED",
+          "evidence": "6 classification cases incl. stdout-only and stderr-only"
+        },
+        "all_observed_requests_checked": {
+          "status": "CONFIRMED",
+          "evidence": "4 route cases; routeShape records hop count"
+        },
+        "concurrency_isolation": {
+          "status": "CONFIRMED",
+          "evidence": "empty list and foreign id both fail"
+        },
+        "negative_tests_exist": {
+          "status": "CONFIRMED",
+          "evidence": "20 of 68 cases are reverse assertions"
+        },
+        "docs_consistent": {
+          "status": "CONFIRMED",
+          "evidence": "README, ADR-0002, report header, probe README aligned"
+        },
+        "state_consistent": {
+          "status": "CONFIRMED",
+          "evidence": "this block is the single source; top-level fields synced"
+        }
+      },
+      "negative_proofs": {
+        "leak_gate": "evidence/r14/negative-leak-gate.json - planted path, six probes PASS, OVERALL FAIL, exit 1",
+        "dependency_gate": "tests/run-tests.mjs suite: dependency gate failure exits 1",
+        "cli_gate": "tests/run-tests.mjs cli: leak exits 1 / empty root exits 1"
+      },
+      "new_infrastructure": [
+        "src/lib/redact.mjs (single rule source for redaction and detection)",
+        "src/lib/safe-output.mjs (single stdout/stderr/json writer)",
+        "src/lib/scrub.mjs (single scanner used by CLI, suite gate and tests)",
+        "src/lib/diagnostics.mjs (stream classification)",
+        "src/lib/assertions.mjs (route and isolation predicates)",
+        "src/lib/gates.mjs (overall verdict and exit code)",
+        "tests/run-tests.mjs (68 cases)",
+        "profile-locks/<profile>/tree.json (installed tree fingerprint)"
+      ],
+      "blockers": [],
+      "unverified": [
+        "crash recovery via forced kill",
+        "interrupted turn resume",
+        "approval callback end-to-end flow",
+        "multi-hop request/header behaviour (only one hop observed)",
+        "multi-runtime concurrency limits and cost",
+        "electron packaged chain",
+        "dsh 0.2.2 capabilities"
+      ],
+      "report": "docs/review-handoff/PHASE_00_R1_WORK_REPORT.md",
+      "evidence_dir": "spike/dsh-probe/current-0.2.1/evidence/r14/"
     }
   }
 }

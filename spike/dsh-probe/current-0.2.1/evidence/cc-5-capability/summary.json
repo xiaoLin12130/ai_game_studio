@@ -1,12 +1,12 @@
 {
   "probe": "CC-5-capability",
-  "startedAt": "2026-11-10T11:49:28.298Z",
+  "startedAt": "2026-11-10T12:43:39.357Z",
   "profile": "cc-sdk",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<abs-path>",
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "serverInfo": {
@@ -15,14 +15,12 @@
   },
   "methods": {
     "session/resume": {
-      "status": "EXISTS_REJECTED_ARGS",
-      "code": -32603,
-      "message": "session \"capability-probe\" not found"
+      "status": "SUPPORTED",
+      "detail": "answered without error"
     },
     "session/wait": {
-      "status": "EXISTS_REJECTED_ARGS",
-      "code": -32603,
-      "message": "unknown SDK session: capability-probe"
+      "status": "SUPPORTED",
+      "detail": "answered without error"
     },
     "session/working-directory/get": {
       "status": "SUPPORTED",
@@ -50,8 +48,8 @@
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1030
+    "waitedMs": 1041
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:49:33.530Z"
+  "finishedAt": "2026-11-10T12:43:44.844Z"
 }

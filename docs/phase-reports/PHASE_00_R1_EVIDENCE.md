@@ -1,5 +1,9 @@
 # PHASE 00-R1｜补充证据（0.2.1-rc.3 + commandcode）
 
+> **历史记录（R1 时代）**：本文件记录的是 R1 那一轮的证据，当时套件是 **5 个探针**，
+> 因此下文出现的「5/5」属于当时规模。当前基线是 **六探针 6/6 + 两个门禁 + 68 项回归测试**，
+> 以 `spike/dsh-probe/current-0.2.1/evidence/r14/` 与 `state/project_state.json` 的 `r14` 段为准。
+
 本文件补充并修正 `PHASE_00_EVIDENCE.md`。**0.1.5 的历史证据已冻结**在
 `spike/dsh-probe/legacy-0.1.5/`（探针源码 + 证据快照），后续不再覆盖。
 

@@ -23,6 +23,7 @@ import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
+import { summariseRoutes } from './lib/assertions.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -149,6 +150,7 @@ try {
   summary.turn2 = { text: turn2.text, events: turn2.events.length, statuses: turn2.statuses }
   summary.turn2Route = requestRoute(turn2.events)
   summary.turn2Routes = requestRoutes(turn2.events)
+  summary.routeShape = { turn1: summariseRoutes(summary.turn1Routes), turn2: summariseRoutes(summary.turn2Routes) }
   summary.turn2Blocker = detectModelBlocker(turn2.events)
   ev.append('turn2', summary.turn2)
   step('turn2 recall', JSON.stringify(turn2.text.slice(0, 160)))

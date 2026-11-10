@@ -18,6 +18,7 @@ import { createEvidence, p, step } from './lib/evidence.mjs'
 import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { findRuntimeProcesses, waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, STUDIO_TOOL_NAME, advertisedTools, detectModelBlocker, requestRoute, routeMatches, requestRoutes, allRoutesMatch } from './lib/outcome.mjs'
+import { summariseRoutes } from './lib/assertions.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -109,6 +110,7 @@ try {
 
   summary.requestRoute = requestRoute(result.events)
   summary.requestRoutes = requestRoutes(result.events)
+  summary.routeShape = summariseRoutes(summary.requestRoutes)
   const tools = advertisedTools(result.events)
   summary.advertisedToolCount = tools?.length ?? null
   summary.studioToolAdvertised = Array.isArray(tools) && tools.includes(STUDIO_TOOL_NAME)

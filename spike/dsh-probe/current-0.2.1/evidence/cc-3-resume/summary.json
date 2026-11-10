@@ -1,14 +1,14 @@
 {
   "probe": "CC-3-resume",
-  "startedAt": "2026-11-10T11:49:01.354Z",
+  "startedAt": "2026-11-10T12:43:12.288Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
-  "token": "recall-2dcfe4",
+  "token": "recall-287e57",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<abs-path>",
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "serverInfo": {
@@ -42,7 +42,7 @@
   "resumeUnknownError": "session \"definitely-not-a-real-session-id\" not found",
   "resumeError": null,
   "turn2": {
-    "text": "recall-2dcfe4",
+    "text": "recall-287e57",
     "events": 9,
     "statuses": [
       "running",
@@ -60,6 +60,22 @@
       "model": "deepseek/deepseek-v4.1-flash"
     }
   ],
+  "routeShape": {
+    "turn1": {
+      "count": 1,
+      "distinct": [
+        "commandcode|deepseek/deepseek-v4.1-flash"
+      ],
+      "multiHopObserved": false
+    },
+    "turn2": {
+      "count": 1,
+      "distinct": [
+        "commandcode|deepseek/deepseek-v4.1-flash"
+      ],
+      "multiHopObserved": false
+    }
+  },
   "turn2Blocker": {
     "blocked": false
   },
@@ -74,6 +90,6 @@
     "allRequestsOnExpectedRoute": true
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:49:21.312Z",
+  "finishedAt": "2026-11-10T12:43:31.518Z",
   "conclusion": "RESUME_RESTORES_HISTORY"
 }

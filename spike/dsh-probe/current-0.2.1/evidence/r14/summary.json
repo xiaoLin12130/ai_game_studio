@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-11-10T12:43:44.987Z",
+  "startedAt": "2026-11-10T12:42:40.167Z",
+  "runtime": "0.2.1-rc.3",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "node": "v22.22.2",
+  "gates": {
+    "dependency": {
+      "status": "PASS",
+      "profiles": [
+        {
+          "name": "cc-sdk",
+          "version": "0.15.4",
+          "files": 16,
+          "lock": "profile-locks/cc-sdk/package-lock.json",
+          "repaired": false
+        },
+        {
+          "name": "cc-cli",
+          "version": "0.15.4",
+          "files": 16,
+          "lock": "profile-locks/cc-cli/package-lock.json",
+          "repaired": false
+        }
+      ],
+      "runtime": {
+        "status": "COMPATIBLE",
+        "dsh": "0.2.1-rc.3",
+        "range": ">=0.2.1-rc.2 <0.2.2-0"
+      },
+      "steps": [
+        {
+          "step": "profile.verified",
+          "profile": "cc-sdk"
+        },
+        {
+          "step": "lock.verified",
+          "profile": "cc-sdk",
+          "version": "0.15.4",
+          "integrity": "present"
+        },
+        {
+          "step": "profile.verified",
+          "profile": "cc-cli"
+        },
+        {
+          "step": "lock.verified",
+          "profile": "cc-cli",
+          "version": "0.15.4",
+          "integrity": "present"
+        }
+      ]
+    },
+    "leak": {
+      "status": "PASS",
+      "scanned": 167,
+      "files": 169,
+      "leaks": [],
+      "errors": []
+    }
+  },
+  "setup": {
+    "home": "<repo>\\spike\\dsh-probe\\current-0.2.1\\dsh-home",
+    "profiles": [
+      "cc-sdk",
+      "cc-cli"
+    ],
+    "plugin": {
+      "name": "@mars-sea/dsh-commandcode-provider",
+      "version": "0.15.4"
+    },
+    "lock": [
+      {
+        "file": "profile-locks/cc-sdk/package-lock.json",
+        "version": "0.15.4",
+        "integrity": "sha512-j6ibijPAQAWHey9eDZb+yl+FOkAsImGVfspkvKUKbLcMoZOK7OWe9uGlbUjFG58xd0rj8ZVQT6RJkSrTeffkpQ==",
+        "resolved": "https://registry.npmjs.org/@mars-sea/dsh-commandcode-provider/-/dsh-commandcode-provider-0.15.4.tgz"
+      },
+      {
+        "file": "profile-locks/cc-cli/package-lock.json",
+        "version": "0.15.4",
+        "integrity": "sha512-j6ibijPAQAWHey9eDZb+yl+FOkAsImGVfspkvKUKbLcMoZOK7OWe9uGlbUjFG58xd0rj8ZVQT6RJkSrTeffkpQ==",
+        "resolved": "https://registry.npmjs.org/@mars-sea/dsh-commandcode-provider/-/dsh-commandcode-provider-0.15.4.tgz"
+      }
+    ],
+    "provider": "commandcode",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "runtime": {
+      "status": "COMPATIBLE",
+      "dsh": "0.2.1-rc.3",
+      "range": ">=0.2.1-rc.2 <0.2.2-0"
+    },
+    "credentialEnvName": "COMMANDCODE_API_KEY",
+    "credentialPresent": true
+  },
+  "total": 6,
+  "passed": 6,
+  "blocked": 0,
+  "failed": 0,
+  "buckets": {
+    "PASS": [
+      "CC-0-cli",
+      "CC-1-reply",
+      "CC-2-tools",
+      "CC-3-resume",
+      "CC-4-concurrent",
+      "CC-5-capability"
+    ],
+    "BLOCKED": [],
+    "FAIL": []
+  },
+  "results": [
+    {
+      "name": "CC-0-cli",
+      "script": "src/probe-cli-baseline.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 6845,
+      "stdoutTail": "[probe] cli finished {\"exitCode\":0,\"ms\":6763,\"answered\":true,\"errorKind\":null}\n[probe] CC0_RESULT=PASS {\"exitCodeZero\":true,\"tokenEchoed\":true,\"modelNamed\":true,\"noProviderQuotaError\":true,\"noPluginIncompatibility\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-1-reply",
+      "script": "src/probe-commandcode.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 14922,
+      "stdoutTail": "[probe] runtime started with commandcode patch {\"startMs\":3407}\n[probe] model answered \"验证标识：studio-53f38f73\\n\\n我当前使用的是 deepseek/deepseek-v4.1-flash 模型。\"\n[probe] CC1_RESULT=PASS {\"echoToken\":true,\"nonEmptyResponse\":true,\"routeIsCommandcode\":true,\"allRequestsOnExpectedRoute\":true,\"modelAsRequested\":true,\"noProviderFallback\":true,\"processTreeGone\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-2-tools",
+      "script": "src/probe-cc-tools.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 10245,
+      "stdoutTail": "[probe] runtime started with commandcode + studio MCP\n[probe] model answered \"status=ok\\nphase=PHASE_00\"\n[probe] tool chain {\"stage1_serverStarted\":true,\"stage1_handshaken\":true,\"stage2_toolAdvertised\":true,\"stage3_modelCalledTool\":true,\"stage3_serverExecuted\":true,\"stage3_responseUsesToolData\":true,\"routeIsCommandcode\":true,\"modelAsRequested\":true,\"routeMatchesExpected\":true,\"allRequestsOnExpectedRoute\":true}\n[probe] CC2_RESULT=PASS {\"called\":true,\"executed\":true,\"reaped\":\"PROCESS_ABSENT\"}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-3-resume",
+      "script": "src/probe-cc-resume.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 19315,
+      "stdoutTail": "[probe] turn1 taught {\"textLength\":6,\"blocker\":null}\n[probe] turn2 recall \"recall-287e57\"\n[probe] CC3_RESULT=PASS {\"conclusion\":\"RESUME_RESTORES_HISTORY\",\"assertions\":{\"apiExists\":true,\"unknownSessionRejected\":true,\"resumeCallSucceeded\":true,\"historyRecalled\":true,\"processReapedBothRuns\":true,\"routeBothTurnsCommandcode\":true,\"allRequestsOnExpectedRoute\":true}}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-4-concurrent",
+      "script": "src/probe-cc-concurrent.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 7757,
+      "stdoutTail": "[probe] both settled {\"totalMs\":3363,\"a\":\"APPLE\",\"b\":\"BANANA\"}\n[probe] CC4_RESULT=PASS {\"distinctSessionIds\":true,\"notificationsPresentA\":true,\"notificationsPresentB\":true,\"eventsOnlyForOwnSessionA\":true,\"eventsOnlyForOwnSessionB\":true,\"bothProducedText\":true,\"answersNotSwapped\":true,\"routeBothRunsCommandcode\":true,\"allRequestsOnExpectedRoute\":true,\"noLeftoversAfterClose\":true}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    },
+    {
+      "name": "CC-5-capability",
+      "script": "src/probe-capability.mjs",
+      "exitCode": 0,
+      "timedOut": false,
+      "ms": 5568,
+      "stdoutTail": "[probe] method scan {\"session/resume\":\"SUPPORTED\",\"session/wait\":\"SUPPORTED\",\"session/working-directory/get\":\"SUPPORTED\",\"session/working-directory/set\":\"SUPPORTED\",\"session/cancel\":\"NOT_SUPPORTED\",\"session/approve\":\"NOT_SUPPORTED\",\"session/close\":\"NOT_SUPPORTED\"}\n[probe] CC5_RESULT=PASS {\"definite\":true,\"reap\":\"PROCESS_ABSENT\"}\n",
+      "stderrTail": "",
+      "outcome": "PASS"
+    }
+  ],
+  "overall": "PASS",
+  "exitCode": 0
+}

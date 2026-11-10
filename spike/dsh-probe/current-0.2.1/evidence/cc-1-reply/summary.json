@@ -1,25 +1,25 @@
 {
   "probe": "CC-1-reply",
-  "startedAt": "2026-11-10T11:48:42.908Z",
+  "startedAt": "2026-11-10T12:42:47.117Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "profile": "cc-sdk",
-  "token": "studio-b5c8bfe8",
+  "token": "studio-53f38f73",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<abs-path>",
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "patchPath": "<repo>\\spike\\dsh-probe\\current-0.2.1\\tmp\\cc-provider.cordis.yml",
-  "startMs": 3142,
+  "startMs": 3407,
   "processStatusWhileRunning": "PROCESS_PRESENT",
   "processCountWhileRunning": 1,
-  "sessionId": "session-92547ab56dba45b39d96943fd05121d8",
-  "prompt": "请严格按照以下要求回答：\n生成一个随机标识并在回复中原样返回：验证标识：studio-b5c8bfe8\n\n除此之外，用一句话说明你当前使用的是什么模型。",
-  "runMs": 2915,
-  "finalResponse": "验证标识：studio-b5c8bfe8\n\n我当前使用的是 deepseek/deepseek-v4.1-flash 模型。",
+  "sessionId": "session-309d66d8134549f387c857cf552e314e",
+  "prompt": "请严格按照以下要求回答：\n生成一个随机标识并在回复中原样返回：验证标识：studio-53f38f73\n\n除此之外，用一句话说明你当前使用的是什么模型。",
+  "runMs": 9241,
+  "finalResponse": "验证标识：studio-53f38f73\n\n我当前使用的是 deepseek/deepseek-v4.1-flash 模型。",
   "eventCount": 15,
   "notificationMethods": [
     "session.event",
@@ -53,13 +53,13 @@
     "noProviderFallback": true,
     "processTreeGone": true
   },
-  "closeMs": 75,
+  "closeMs": 68,
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1078,
+    "waitedMs": 1053,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:48:51.256Z"
+  "finishedAt": "2026-11-10T12:43:01.958Z"
 }

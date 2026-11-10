@@ -6,7 +6,11 @@
   "description": "PHASE 00-R1: drive DSH 0.2.1-rc.3 (the version the user actually runs) with the user's real commandcode provider",
   "scripts": {
     "setup": "node scripts/setup-profiles.mjs",
-    "test": "node run-all.mjs",
+    "lock:update": "node scripts/setup-profiles.mjs --update-lock",
+    "test:unit": "node tests/run-tests.mjs",
+    "test:suite": "node run-all.mjs",
+    "test": "node tests/run-tests.mjs && node run-all.mjs",
+    "scrub": "node ../scrub-evidence.mjs --check",
     "probe:commandcode": "node src/probe-commandcode.mjs",
     "probe:tools": "node src/probe-cc-tools.mjs",
     "probe:capability": "node src/probe-capability.mjs"

@@ -1,2 +1,2 @@
-{"ts":"2026-11-10T11:48:42.828Z","type":"cli.run","exitCode":0,"durationMs":6351,"answer":"验证标识 CC-cli-a20181；模型 deepseek/deepseek-v4.1-flash","diagnostics":{"kind":null,"stdoutBytes":51,"stderrBytes":0}}
-{"ts":"2026-11-10T11:48:42.830Z","type":"verdict","verdict":"PASS","assertions":{"exitCodeZero":true,"tokenEchoed":true,"modelNamed":true,"noProviderQuotaError":true,"noPluginIncompatibility":true}}
+{"ts":"2026-11-10T12:42:47.033Z","type":"cli.run","exitCode":0,"durationMs":6763,"answer":"CC-cli-3f3ba3 | deepseek/deepseek-v4.1-flash","diagnostics":{"kind":null,"matchedIn":[],"stdoutBytes":45,"stderrBytes":0}}
+{"ts":"2026-11-10T12:42:47.035Z","type":"verdict","verdict":"PASS","assertions":{"exitCodeZero":true,"tokenEchoed":true,"modelNamed":true,"noProviderQuotaError":true,"noPluginIncompatibility":true}}

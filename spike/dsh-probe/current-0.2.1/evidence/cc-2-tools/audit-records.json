@@ -1,25 +1,25 @@
 [
   {
-    "ts": "2026-11-10T11:48:53.930Z",
+    "ts": "2026-11-10T12:43:04.701Z",
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
-    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1<abs-path>"
+    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1/tmp/studio-mcp-audit-cc.jsonl"
   },
   {
-    "ts": "2026-11-10T11:48:53.934Z",
+    "ts": "2026-11-10T12:43:04.705Z",
     "kind": "unsupported.method",
     "method": "server/discover"
   },
   {
-    "ts": "2026-11-10T11:48:54.014Z",
+    "ts": "2026-11-10T12:43:04.787Z",
     "kind": "server.started",
     "serverName": "ai-game-studio-tools",
     "version": "0.0.1-phase00",
-    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1<abs-path>"
+    "auditLog": "<repo>/spike/dsh-probe/current-0.2.1/tmp/studio-mcp-audit-cc.jsonl"
   },
   {
-    "ts": "2026-11-10T11:48:54.017Z",
+    "ts": "2026-11-10T12:43:04.791Z",
     "kind": "initialize",
     "clientProtocolVersion": "2025-11-25",
     "clientInfo": {
@@ -28,23 +28,23 @@
     }
   },
   {
-    "ts": "2026-11-10T11:48:54.021Z",
+    "ts": "2026-11-10T12:43:04.794Z",
     "kind": "notification",
     "method": "notifications/initialized"
   },
   {
-    "ts": "2026-11-10T11:48:54.022Z",
+    "ts": "2026-11-10T12:43:04.796Z",
     "kind": "tools/list",
     "count": 1
   },
   {
-    "ts": "2026-11-10T11:48:56.945Z",
+    "ts": "2026-11-10T12:43:08.262Z",
     "kind": "tools/call",
     "name": "get_studio_health",
     "arguments": {}
   },
   {
-    "ts": "2026-11-10T11:48:56.947Z",
+    "ts": "2026-11-10T12:43:08.264Z",
     "kind": "tools/call.served",
     "name": "get_studio_health",
     "status": "ok"

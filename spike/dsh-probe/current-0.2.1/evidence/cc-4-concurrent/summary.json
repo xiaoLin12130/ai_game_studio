@@ -1,25 +1,25 @@
 {
   "probe": "CC-4-concurrent",
-  "startedAt": "2026-11-10T11:49:21.389Z",
+  "startedAt": "2026-11-10T12:43:31.601Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<abs-path>",
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "sessions": [
-    "session-f2b0800c032848aab894debb6686d1ff",
-    "session-fc846c818b1d4c47b58925fc70af88c6"
+    "session-3f0e6b90026c49edb2d85fdf1957c5b8",
+    "session-90cd000b4e954c36846ecc053c9f368f"
   ],
-  "totalMs": 2558,
+  "totalMs": 3363,
   "runA": {
-    "sessionId": "session-f2b0800c032848aab894debb6686d1ff",
+    "sessionId": "session-3f0e6b90026c49edb2d85fdf1957c5b8",
     "text": "APPLE",
     "eventSessions": [
-      "session-f2b0800c032848aab894debb6686d1ff"
+      "session-3f0e6b90026c49edb2d85fdf1957c5b8"
     ],
     "route": {
       "provider": "commandcode",
@@ -34,10 +34,10 @@
     ]
   },
   "runB": {
-    "sessionId": "session-fc846c818b1d4c47b58925fc70af88c6",
-    "text": "BANANA\n",
+    "sessionId": "session-90cd000b4e954c36846ecc053c9f368f",
+    "text": "BANANA",
     "eventSessions": [
-      "session-fc846c818b1d4c47b58925fc70af88c6"
+      "session-90cd000b4e954c36846ecc053c9f368f"
     ],
     "route": {
       "provider": "commandcode",
@@ -50,6 +50,22 @@
         "model": "deepseek/deepseek-v4.1-flash"
       }
     ]
+  },
+  "routeShape": {
+    "a": {
+      "count": 1,
+      "distinct": [
+        "commandcode|deepseek/deepseek-v4.1-flash"
+      ],
+      "multiHopObserved": false
+    },
+    "b": {
+      "count": 1,
+      "distinct": [
+        "commandcode|deepseek/deepseek-v4.1-flash"
+      ],
+      "multiHopObserved": false
+    }
   },
   "modelBlocker": {
     "blocked": false
@@ -68,10 +84,10 @@
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1043,
+    "waitedMs": 1050,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T11:49:28.220Z"
+  "finishedAt": "2026-11-10T12:43:39.277Z"
 }

@@ -53,12 +53,12 @@
 
 ---
 
-## 当前状态（PHASE 00-R1 之后）
+## 当前状态（PHASE 00-R1.4 之后）
 
 | 项 | 值 |
 |---|---|
-| 阶段 | **PHASE 00-R1**（复审整改） |
-| 结果 | 模型链路已用用户真实 provider 跑通（5/5 PASS）；待外部复审 |
+| 阶段 | **PHASE 00-R1.4**（集中收尾：证据安全、依赖门禁、探针质量） |
+| 结果 | 六项探针 6/6 PASS，两个门禁（依赖 / 脱敏）PASS，退出码 0；待外部复审 |
 | 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |
 | 分支 | `phase/00-feasibility` |
 | 仓库 | public（按用户要求保持公开） |
@@ -66,8 +66,8 @@
 
 > 注意：PATH 上的 `dsh` 是 0.1.5-rc.1，**不是**用户日常运行的版本。本项目的验证目标是 0.2.1-rc.3。
 
-权威事实源：`state/project_state.json` 的 `phase_00_r1.gate_results`。
-整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`。
+权威事实源：`state/project_state.json` 的 `phase_00_r1.r14`。
+整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`（R1.4 章节在最前，R1 / R1.1 / R1.2 / R1.3 为历史记录）。
 
 ## 如何验证（真实命令）
 
@@ -75,19 +75,34 @@
 
 ### 生产目标组合（0.2.1-rc.3 + commandcode）
 
-```bash
-cd spike/dsh-probe/current-0.2.1
-npm install       # 依赖精确钉版本
-node run-all.mjs  # 期望：PASS 5/5，退出码 0
+Windows PowerShell：
+
+```powershell
+cd spike\dsh-probe\current-0.2.1
+npm install
+$env:COMMANDCODE_API_KEY = "..."
+npm test          # 68 项回归测试 + 六探针 + 两个门禁；期望 exit 0
 ```
 
-CLI 基准（同一 profile）：
+Windows `cmd.exe`：
 
-```bash
-DSH_HOME=$(pwd)/dsh-home \
-  node ./node_modules/@deepseek-ai/dsh/lib/bin.js \
-  --profile cc-cli --patch tmp/cc-cli.patch.yml \
-  "回复一行，包含：验证标识 <随机值>，并说明你使用的模型名"
+```bat
+cd spike\dsh-probe\current-0.2.1
+npm install
+set COMMANDCODE_API_KEY=...
+npm test
+```
+
+只想跑套件（跳过回归测试）：
+
+```powershell
+node run-all.mjs  # 期望：PASS 6/6，GATES PASS/PASS，exit 0
+```
+
+依赖锁的维护（普通运行**不会**自动生成锁）：
+
+```powershell
+npm run lock:update   # 只在有意升级依赖时执行，随后必须重跑 npm test
 ```
 
 ### 0.1.5 legacy 基线（仅作历史对照）

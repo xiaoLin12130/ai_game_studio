@@ -1,11 +1,27 @@
-# PHASE 00-R1 工作报告（外部复审整改）
+# PHASE 00-R1 工作报告（外部复审整改，含 R1.4 收尾）
 
-> 本报告对应外部复审对 PHASE 00 的整改要求。**结论先行**：PHASE 00 中「模型不可用」的判断是错的——那不是用户模型的问题，而是探针用错了 Provider 且发生静默回退。整改后，用户真实的 **commandcode + deepseek/deepseek-v4.1-flash** 在 **DSH 0.2.1-rc.3** 上完整跑通，包括**模型真实调用 Studio MCP 工具并由 Server 执行**，以及 **session/resume 真正恢复历史**。
+> 本报告覆盖 PHASE 00 的五轮整改。**当前状态以本节为准；从 §1 起各章为历史记录**，其中的「5/5」指当时的五探针套件，不代表当前规模（R1.3 起为六探针）。
 >
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-10
-> - 提交 SHA：R1.3 复审基线 `1985fb010684de4abd2bb6b9ea54cf06360ffc1e`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
+> - 提交 SHA：R1.4 复审基线 `<R14_SHA>`；R1.3 `1985fb010684de4abd2bb6b9ea54cf06360ffc1e`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
+
+## R1.4 当前状态（唯一权威）
+
+| 项 | 值 |
+|---|---|
+| 阶段 | PHASE 00-R1.4（集中收尾，不新增技术探索） |
+| 基线 | 代码基线 `1985fb0`（上轮评审固定），本轮实际起点 `e3176bf` |
+| 探针 | **6/6 PASS**（CC-0 CLI、CC-1 Reply、CC-2 Tools、CC-3 Resume、CC-4 Concurrent、CC-5 Capability） |
+| 门禁 | 依赖门禁 **PASS**；脱敏门禁 **PASS**（扫描 163 个文件，泄漏 0） |
+| 回归测试 | **68/68 PASS**（含阳性/阴性/反向用例） |
+| 套件退出码 | **0**（`OVERALL PASS`） |
+| 阶段判定 | `PARTIALLY_VERIFIED` — 本轮要求的工程门禁已建立，冻结范围外能力仍为 `UNKNOWN` |
+| 阻塞项 | 无（本轮范围内） |
+| 下一步 | 交外部复审；未获明确批准前不进入 PHASE 01 |
+
+权威事实源：`state/project_state.json` → `phase_00_r1.r14`。证据：`spike/dsh-probe/current-0.2.1/evidence/r14/`。
 
 ---
 
@@ -21,9 +37,9 @@ DSH CLI 版本：          0.1.5-rc.1（PATH 上的旧版）
                         0.2.1-rc.3（DSH Desktop 自带，用户实际运行）
 SDK 版本：              @deepseek-ai/dsh-sdk-client@0.2.1-rc.3
 CLI 基准测试结果：      PASS（真实推理 + 回显随机标识 + 自述模型名）
-SDK 集成测试结果：      PASS（5/5 探针）
+SDK 集成测试结果：      PASS（六探针 6/6 + 两个门禁，见 §R1.4）
 是否使用真实模型：      是（随机标识回显，无法用桩伪造）
-是否发生 Provider 回退：否（每次运行都断言 request/header.config.provider === commandcode）
+是否发生 Provider 回退：否（SDK 探针断言每一个 request/header 的 provider 与 model）
 ```
 
 **关于「是否发生 Provider 回退」的说明**：PHASE 00 的探针没有断言路由，导致 DeepSeek 官方 provider 的 402 被误当成「用户模型不可用」。整改后**所有会发模型请求的 SDK 探针**（CC-1…CC-4）都读取 `request/header.config` 并断言 provider 与 model，回退会被判成 FAIL 而不是静默通过。**CC-0 是 CLI 探针，没有 `request/header` 事件**，它只断言退出码、随机标识回显、模型自述与失败类别——CLI 链路的 provider 归属靠「自述模型名 + 无回退类错误」间接佐证，不构成路由证明。
@@ -705,3 +721,172 @@ node scrub-evidence.mjs --check
 | Electron 打包后完整链路 | `UNKNOWN` |
 | 0.2.2 能力 | `UNKNOWN` |
 | 0.1.5 legacy 套件本机稳定复现 | `BLOCKED`（环境安全垫） |
+
+---
+
+# R1.4 集中收尾（2026-11-10）
+
+前四轮的共同病灶不是「某个 bug 没修」，而是**修完没有门禁、门禁本身也没被证明能失败**。
+本轮按「一次性检查完整链路 → 集中整改 → 反向证明 → 统一口径」执行，不再逐条打补丁。
+
+## R1.4-0｜基线
+
+| 项 | 值 |
+|---|---|
+| 上轮评审固定基线 | `1985fb010684de4abd2bb6b9ea54cf06360ffc1e` |
+| 本轮实际起点 | `e3176bfe850fc0aa7902eff41390d43f2baafdff`（包含上述基线，仅多一个文档回填提交） |
+| 本轮交付提交 | `<R14_SHA>` |
+| 工作区 | 干净 |
+
+## R1.4-1｜输出脱敏：从「每个出口各自处理」改为「唯一输出层」
+
+**根因**：脱敏写在调用点，而不是写在出口。于是每轮都能找出一个漏掉的出口
+（stdout → stderr → `--json` → 子进程转发 → aggregate）。
+
+**修改**：
+
+| 新文件 | 职责 |
+|---|---|
+| `src/lib/redact.mjs` | 唯一规则源：`redactText` / `redact` / `findLeaks` / `PATH_RULES` |
+| `src/lib/safe-output.mjs` | 唯一写出口：`out` / `err` / `jsonOut` / `createForwarder` |
+| `src/lib/scrub.mjs` | 唯一扫描实现：CLI、套件门禁、测试三方共用 |
+
+- 探针的 `step()`、`setup` 的普通输出与 `--json`、`run-all` 的子进程转发与 aggregate，全部经由 `safe-output`。
+- `evidence.mjs` 只保留「写文件」，且 JSON 与 JSONL 走同一条 `redact`。
+- **规则与检测共用一份定义**：以前「写的人」和「查的人」各有一套正则，这就是两次「扫描通过但仍在泄漏」的机制性原因。
+
+**证据**：`evidence/r14/scrub.json`；`npm run scrub` 退出 0。
+
+## R1.4-2｜扫描器：范围、形状、可证伪
+
+| 缺陷 | 修正 |
+|---|---|
+| 只扫 4 个目录 | 改为 `git ls-files --cached --others --exclude-standard`，扫「会被发布的那批文件」（本轮 163） |
+| 正则要求两个反斜杠，解码后是一个 → 永远匹配不上 | 改为先解析 JSON 再匹配字符串值；同时覆盖盘符/正斜杠/UNC |
+| 只认已知前缀（仓库根、家目录） | 改为形状识别：盘符 + 两级分隔、系统根、UNC、`/Users /home /root /mnt /tmp /opt /var /private /workspace /srv` |
+| JSON 转义 `\n` 被当成路径 | 要求至少两级分隔，纯转义片段不可能构成 |
+| URL 被误判 | 后行断言：`https://host/home/x` 里斜杠前是主机名字符，不匹配 |
+| 整文件出现 `scrub:allow` 就全豁免 | 只豁免该行；这个 bug 是本轮写测试时自己撞出来的 |
+
+**排除规则（明确列出，而非悄悄跳过）**：`.git`（对象库）、`node_modules`（第三方）、`dist/build/out/coverage`（构建产物）。
+在 git 模式下这些本来就被 `.gitignore` 排除，跳过清单只影响无 git 时的退化路径。
+
+**阳性 / 阴性夹具**（`tests/run-tests.mjs`，夹具字符串在运行时拼接，仓库里不含真实路径）：
+
+- 阳性 14 例：盘符、带空格、非 ASCII、正斜杠、UNC、`/mnt`、`/tmp`、`/opt`、`/home`、`/root`、`/workspace`、仓库根、家目录。
+- 阴性 12 例：`<repo>` / `<user-home>` / `<host>` / `<abs-path>`、相对路径、两种 URL、`note:` + 反斜杠 n、`10:30`、裸 `C:`、`/api/v1/users`、正则源码。
+
+**边界行为**：空目录 → 报 `scope` 错误并退出 1；文件读失败 → 报 `read` 错误并退出 1；两者都不会被当成「干净」。
+
+## R1.4-3｜脱敏门禁接入主流程
+
+`run-all.mjs` 在探针跑完后**自己**执行扫描（同一份 `scrub.mjs`），并写入 aggregate：
+
+```text
+PASS  gate:dependency
+PASS  CC-0-cli … CC-5-capability
+FAIL  gate:leak  (scanned 167, leaks 2)
+PASS 6/6  BLOCKED 0  FAIL 0  GATES PASS/FAIL
+OVERALL FAIL      exit 1
+```
+
+这就是 R1.4 的反向证明：**六项探针全 PASS，仅因脱敏失败，整体仍判 FAIL、退出码 1**。
+记录见 `evidence/r14/negative-leak-gate.json`（植入文件已删除，真实证据未被覆盖——那次运行把 `CC_EVIDENCE_OUT` 指到了临时目录）。
+
+## R1.4-4｜依赖锁定：从「版本号相等」到「字节相等」
+
+**根因**：只比较 `package.json` 里的版本字符串，无法发现 `node_modules` 被改、`integrity` 缺失、或 bundle 配置漂移。
+
+**现在的校验链**（任一不满足即 `DependencyError`，整轮中止）：
+
+1. `profile-locks/<profile>/package.json` 声明的插件版本 == 期望；
+2. `package-lock.json` 的 `version` / `integrity` / `resolved` 齐全且版本一致；
+3. `tree.json` 的文件数与 sha256 == 实际安装树；
+4. 实际安装插件版本 == 锁版本；
+5. profile 的 `package.json` 字段级一致（`dependencies` + `dsh.profile.bundles`），不一致则确定性修复；
+6. 插件的 `engines.dsh` 范围与实际运行时版本比对（`COMPATIBLE / INCOMPATIBLE / UNKNOWN`）。
+
+**lockfile 缺失策略**：普通运行**直接失败**（`lock-missing`），只有 `npm run lock:update` 才生成。
+本轮把「自动补锁后继续跑」这个行为删掉了——那会让「复现成功」变成自我实现。
+
+**五个场景实测**（`tests/run-tests.mjs`，全部在临时目录 + 临时 lock 根上做）：
+
+| 场景 | 期望 | 实际 |
+|---|---|---|
+| 全新空 `DSH_HOME` | 建两个 profile 并通过 | PASS |
+| 已有正确 profile | 不重装、不修复、校验通过 | PASS |
+| 已有错误 profile（改 bundle） | 检测并确定性修复 | PASS |
+| 已安装文件被改（追加字节） | 检测并修复；再次运行干净 | PASS |
+| lockfile 缺失 / 版本漂移 / manifest 漂移 / JSON 损坏 | 分别以 `lock-missing` / `lock-version-mismatch` / `lock-manifest-mismatch` / `lock-invalid` 失败 | PASS |
+
+## R1.4-5｜探针质量
+
+| 问题 | 修正 | 测试 |
+|---|---|---|
+| CC-0 只按 stderr 归类 | `classifyRun({stdout, stderr})` 抽到 `src/lib/diagnostics.mjs`，两路都看，只留类别 | 6 例：仅 stdout、仅 stderr、两者、插件不兼容优先、健康、无法归类 |
+| CC-4 空数组误通过 | `notificationsIsolated()` 先判非空再逐个比对 | 4 例：空、外来 id、混合、正确 |
+| 路由只查第一个请求 | `routesAllMatch()` 要求「至少一个，且每一个都对」 | 4 例：空、单条正确、第二跳回退、模型不符 |
+| `//n` 注释掉断言（R1.3 自查发现） | CC-3/CC-4 重写；本轮再次核对两处都真实求值 | 复跑后 `routeBothTurnsCommandcode` / `routeBothRunsCommandcode` / `allRequestsOnExpectedRoute` 均 true，summary 内有 `routeShape` |
+
+**诚实边界**：每次运行只观测到 **1 个** `request/header`（含带工具调用的 CC-2），
+所以「覆盖全部请求」目前是「覆盖 SDK 暴露的全部请求」；**多跳场景未观测到**，记为 `UNKNOWN`。
+`routeShape.multiHopObserved` 会把这件事显式写进证据，而不是靠报告口头声明。
+
+## R1.4-6｜文档与状态统一
+
+| 文件 | 变更 |
+|---|---|
+| 本报告 | 头部新增「R1.4 当前状态」，历史章节明确标注 |
+| `README.md` | 6/6 + 双门禁 + `npm test` + `npm run lock:update` + PowerShell/cmd 两种写法 |
+| `spike/dsh-probe/README.md` | 六探针、门禁、lockfile 维护、安全垫三坑 |
+| `ADR-0002` | 审批五档分类表；D6 基线改为 `npm test`；锁由 `package-lock + tree.json` 共同定义 |
+| `state/project_state.json` | 新增 `phase_00_r1.r14`，顶层 `product_status` / `current_phase` / `phase_status` 同步 |
+| `memory-bank/handoff.md` | 重写为 R1.4 状态 + 三坑 |
+| `state/memory.json` | 追加本轮技术事实与禁令 |
+
+## R1.4-7｜本轮修改文件
+
+**新增**
+`src/lib/redact.mjs`、`src/lib/safe-output.mjs`、`src/lib/scrub.mjs`、`src/lib/diagnostics.mjs`、
+`src/lib/assertions.mjs`、`src/lib/gates.mjs`、`tests/run-tests.mjs`、
+`profile-locks/<profile>/tree.json`、`evidence/r14/*`
+
+**重写/修改**
+`src/lib/evidence.mjs`、`scripts/setup-profiles.mjs`、`run-all.mjs`、`scrub-evidence.mjs`、
+`src/probe-cli-baseline.mjs`、`src/probe-cc-concurrent.mjs`、`src/probe-cc-resume.mjs`、`src/probe-cc-tools.mjs`、
+`package.json`
+
+## R1.4-8｜验收对照
+
+| # | 验收项 | 状态 | 证据 |
+|---|---|---|---|
+| 1 | 所有输出出口统一脱敏 | CONFIRMED | `safe-output.mjs` 为唯一出口；`tests.json` 阴性 12 例 |
+| 2 | 扫描范围明确、阳性/阴性通过 | CONFIRMED | `scrub.json`（163 文件 / 0 泄漏）+ 14 阳性 / 12 阴性 |
+| 3 | 泄漏时整体失败 | CONFIRMED | `negative-leak-gate.json`：6/6 PASS 仍 OVERALL FAIL / exit 1 |
+| 4 | Profile 依赖可校验（新旧环境） | CONFIRMED | 五场景测试 |
+| 5 | Lockfile 缺失/漂移/损坏有明确策略 | CONFIRMED | 四个错误码测试 |
+| 6 | 依赖异常影响最终退出码 | CONFIRMED | `gate: dependency failure exits 1` |
+| 7 | CLI 错误分类兼容 stdout/stderr | CONFIRMED | 6 例分类测试 |
+| 8 | 全部已观测 SDK 请求被检查 | CONFIRMED | 4 例路由测试 + `routeShape` |
+| 9 | 并发隔离空/串线不误通过 | CONFIRMED | 4 例隔离测试 |
+| 10 | 关键门禁有反向测试 | CONFIRMED | 68 项中 20 项为反向用例 |
+| 11 | README/ADR/报告口径一致 | CONFIRMED | 本轮同步 |
+| 12 | project_state 与实际一致 | CONFIRMED | `r14` 段 |
+
+## R1.4-9｜仍未解决（冻结，不再本轮扩大）
+
+| 项 | 状态 |
+|---|---|
+| 强制杀进程后的 session 恢复 | `UNKNOWN` |
+| 中断中的最后一轮恢复 | `UNKNOWN` |
+| DSH 原生审批回调端到端 | `UNKNOWN / NOT_OBSERVED` |
+| 多跳 `request/header` 实际行为 | `UNKNOWN`（未观测到） |
+| 多 Runtime 最大并发与成本 | `UNKNOWN` |
+| Electron 打包链路 | `UNKNOWN` |
+| DSH 0.2.2 及以后能力 | `UNKNOWN` |
+| 0.1.5 legacy 套件在本机稳定复现 | `BLOCKED`（环境安全垫） |
+
+## R1.4-10｜是否具备提交外部评审条件
+
+具备。本轮范围内 12 项验收全部 `CONFIRMED`，六探针与两个门禁可一键复跑（`npm test`）。
+PHASE 00 是否正式通过由外部评审决定，本报告不代替该结论。
