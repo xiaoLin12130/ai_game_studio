@@ -62,7 +62,7 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 两个值得注意的环境事实：
 
 - npm 上 `@deepseek-ai/dsh` 的 `latest` 已是 **0.2.2-rc.1**，本机全局安装落后一个大版本。本阶段所有结论**只对 0.1.5 线成立**。
-- DSH 的 `DSH_HOME` 未设置，默认 `C:\Users\LIN\.dsh`。本阶段所有实验都跑在**隔离的 `DSH_HOME`** 下，没有读写用户日常的 DSH 配置与会话。
+- DSH 的 `DSH_HOME` 未设置，默认 `<user-home>\.dsh`。本阶段所有实验都跑在**隔离的 `DSH_HOME`** 下，没有读写用户日常的 DSH 配置与会话。
 
 ---
 

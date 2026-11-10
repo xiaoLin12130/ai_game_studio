@@ -97,7 +97,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00-R1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T10:48:46.580Z",
+  "updated_at": "2026-11-10T11:13:42.291Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -149,19 +149,48 @@
       "working_directory_get_set": "SUPPORTED in 0.2.1"
     },
     "open_items": [
-      "U1 electron packaged smoke",
-      "U2 DSH_HOME policy for production",
-      "U3 multi-runtime resource cost",
-      "U4 external process behaviour on crash",
-      "U5 official MCP SDK compatibility",
-      "U6 0.2.2 capability untested",
-      "U7 interrupted-turn resume untested",
-      "U8 legacy suite stability"
+      "crash recovery via forced kill",
+      "interrupted turn resume",
+      "approval callback UI mapping",
+      "multi-runtime concurrency limits and cost",
+      "electron packaged chain",
+      "0.2.2 capabilities"
     ],
     "report": "docs/review-handoff/PHASE_00_R1_WORK_REPORT.md",
     "adrs": {
       "ADR-0001": "PROPOSED / CONDITIONAL",
       "ADR-0002": "PROPOSED / CONDITIONAL"
+    },
+    "r11": {
+      "authored_at": "2026-11-10T11:13:42.290Z",
+      "review_outcome": "CORE_CHAIN_ACCEPTED_PARTIALLY_VERIFIED_PHASE01_CONDITIONAL",
+      "fixes": {
+        "p1a_evidence_redaction": "FIXED - writeJson and run-all aggregate now pass through redact(); repo-wide scan clean",
+        "p1b_clean_room_repro": "FIXED - scripts/setup-profiles.mjs builds isolated profiles; verified from an empty directory",
+        "p1c_route_assertions": "FIXED - CC-2/CC-3/CC-4 now assert provider AND model; CC-5 is protocol-only by design",
+        "p2a_crash_recovery_wording": "FIXED - CC-3 documented as normal-close restart, not crash; ADR-0002 marks crash recovery UNVERIFIED",
+        "p2b_approval_and_multi_runtime": "FIXED - approval wording narrowed to 'no dependable callback'; runtime topology changed to dynamic scheduler"
+      },
+      "clean_room_run": {
+        "command": "CC_DSH_HOME=<empty-dir>/dsh-home node run-all.mjs",
+        "pass": 5,
+        "total": 5,
+        "exit": 0,
+        "note": "all published evidence regenerated this way"
+      },
+      "new_infrastructure": {
+        "setup_script": "spike/dsh-probe/current-0.2.1/scripts/setup-profiles.mjs",
+        "paths_helper": "spike/dsh-probe/current-0.2.1/src/lib/paths.mjs",
+        "route_helper": "src/lib/outcome.mjs requestRoute/routeMatches"
+      },
+      "still_unverified": [
+        "crash recovery via forced kill",
+        "interrupted turn resume",
+        "approval callback UI mapping",
+        "multi-runtime concurrency limits and cost",
+        "electron packaged chain",
+        "0.2.2 capabilities"
+      ]
     }
   }
 }

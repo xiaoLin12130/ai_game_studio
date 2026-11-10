@@ -61,3 +61,29 @@ export function advertisedTools(events = []) {
   if (!Array.isArray(tools)) return null
   return tools.map((t) => t?.name).filter((n) => typeof n === 'string')
 }
+
+/**
+ * The provider/model route the runtime actually used for a turn.
+ *
+ * `request/header` is emitted before the provider is contacted, so it survives a
+ * failed model call — which is exactly when a silent provider fallback would
+ * otherwise be mistaken for "the user's model is broken".
+ *
+ * @param {Array} events session events for the interval
+ * @returns {{provider: string|null, model: string|null, maxTokens: number|null}|null}
+ */
+export function requestRoute(events = []) {
+  const header = events.find((event) => event?.type === 'request/header')
+  const config = header?.data?.header?.config
+  if (!config) return null
+  return {
+    provider: config.provider ?? null,
+    model: config.model ?? null,
+    maxTokens: config.maxTokens ?? null,
+  }
+}
+
+/** True only when the turn really ran on the expected provider and model. */
+export function routeMatches(route, expected) {
+  return Boolean(route) && route.provider === expected.provider && route.model === expected.model
+}

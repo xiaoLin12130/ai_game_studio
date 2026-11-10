@@ -1,33 +1,43 @@
 {
   "probe": "CC-4-concurrent",
-  "startedAt": "2026-11-10T10:41:03.808Z",
+  "startedAt": "2026-11-10T11:11:59.834Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "path": "<repo>/tmp-clean-r11/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "sessions": [
-    "session-77d0a620110b459bb31350e5dfa39a79",
-    "session-84dd41957a7742118a1d27e143bece93"
+    "session-2ccb276d3fa54222b96b5da0b9e0a184",
+    "session-2f3915025a9b4962a97cb6d83d81af5f"
   ],
-  "totalMs": 2573,
+  "totalMs": 2959,
   "runA": {
-    "sessionId": "session-77d0a620110b459bb31350e5dfa39a79",
+    "sessionId": "session-2ccb276d3fa54222b96b5da0b9e0a184",
     "text": "APPLE",
     "eventSessions": [
-      "session-77d0a620110b459bb31350e5dfa39a79"
-    ]
+      "session-2ccb276d3fa54222b96b5da0b9e0a184"
+    ],
+    "route": {
+      "provider": "commandcode",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "maxTokens": 256
+    }
   },
   "runB": {
-    "sessionId": "session-84dd41957a7742118a1d27e143bece93",
+    "sessionId": "session-2f3915025a9b4962a97cb6d83d81af5f",
     "text": "BANANA",
     "eventSessions": [
-      "session-84dd41957a7742118a1d27e143bece93"
-    ]
+      "session-2f3915025a9b4962a97cb6d83d81af5f"
+    ],
+    "route": {
+      "provider": "commandcode",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "maxTokens": 256
+    }
   },
   "modelBlocker": {
     "blocked": false
@@ -38,14 +48,15 @@
     "eventsOnlyForOwnSessionB": true,
     "bothProducedText": true,
     "answersNotSwapped": true,
+    "routeBothRunsCommandcode": true,
     "noLeftoversAfterClose": true
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 1004,
+    "waitedMs": 998,
     "remaining": [],
     "error": null
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T10:41:12.092Z"
+  "finishedAt": "2026-11-10T11:12:07.367Z"
 }

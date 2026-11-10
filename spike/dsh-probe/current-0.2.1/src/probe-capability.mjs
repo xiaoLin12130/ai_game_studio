@@ -16,6 +16,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { HarnessClient, JsonRpcResponseError } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
+import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT } from './lib/outcome.mjs'
 
@@ -23,8 +24,8 @@ const PROFILE = process.env.CC_PROFILE ?? 'cc-sdk'
 const ev = createEvidence('cc-5-capability')
 const summary = { probe: 'CC-5-capability', startedAt: new Date().toISOString(), profile: PROFILE }
 
-const dshHome = p('dsh-home')
-const workspace = p('workspace')
+const dshHome = dshHomePath()
+const workspace = workspacePath()
 fs.mkdirSync(workspace, { recursive: true })
 summary.lockRecovery = clearStaleProfileLock(dshHome)
 

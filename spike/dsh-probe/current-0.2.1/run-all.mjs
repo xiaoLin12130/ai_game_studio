@@ -11,6 +11,8 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { setupProfiles } from './scripts/setup-profiles.mjs'
+import { redact } from './src/lib/evidence.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 const probes = [
@@ -23,6 +25,24 @@ const probes = [
 const PROBE_TIMEOUT_MS = Number(process.env.PROBE_TIMEOUT_MS ?? 600000)
 
 const results = []
+
+// Build the isolated profiles first: a fresh clone must not depend on state that
+// only exists on the author's machine.
+const setupLog = []
+const setup = setupProfiles({
+  home: process.env.CC_DSH_HOME ?? path.join(root, 'dsh-home'),
+  patchDirectory: path.join(root, 'tmp'),
+  log: (event) => setupLog.push(event),
+})
+process.stdout.write(
+  '[setup] profiles=' +
+    setup.profiles.map((p) => p.name).join(',') +
+    ' plugin=' +
+    setup.plugin.version +
+    ' credentialPresent=' +
+    setup.credential.present +
+    '\n',
+)
 
 function runProbe(name, script) {
   return new Promise((resolve) => {
@@ -79,6 +99,7 @@ const outDir = path.join(root, 'evidence', '_aggregate')
 fs.mkdirSync(outDir, { recursive: true })
 const summary = {
   generatedAt: new Date().toISOString(),
+  setup: { home: setup.home, profiles: setup.profiles.map((p) => p.name), plugin: setup.plugin, provider: setup.provider, model: setup.model, credentialEnvName: setup.credential.envName, credentialPresent: setup.credential.present, steps: setupLog },
   runtime: '0.2.1-rc.3',
   provider: 'commandcode',
   model: 'deepseek/deepseek-v4.1-flash',
@@ -90,7 +111,7 @@ const summary = {
   buckets,
   results,
 }
-fs.writeFileSync(path.join(outDir, 'run-all.json'), `${JSON.stringify(summary, null, 2)}\n`)
+fs.writeFileSync(path.join(outDir, 'run-all.json'), `${JSON.stringify(redact(summary), null, 2)}\n`)
 
 process.stdout.write('\n===== SUMMARY (0.2.1-rc.3 + commandcode) =====\n')
 for (const r of results) process.stdout.write(`${r.outcome.padEnd(8)}${r.name}  (exit ${r.exitCode}, ${r.ms}ms)\n`)

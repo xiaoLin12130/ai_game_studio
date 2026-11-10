@@ -313,3 +313,131 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 1. **gate 7 是否算真正关闭**？判据是「模型发起调用」+「Studio Server 审计到执行」，而不是模型口头声明。如果要求更强的证据（如工具返回值带不可预测随机数），可以再加一轮。
 2. **多 Runtime 拓扑（ADR-0002 §3B）是否接受**？它把「无取消」转化为「隔离」，代价是进程数与内存增加。
 3. **生产 DSH_HOME 策略（U2）** 需要产品决定：隔离更干净但用户要重配 provider；复用则要处理「Studio 改动用户日常配置」的风险。
+
+---
+
+# R1.1 修正（回应第二次外部复审，2026-11-10）
+
+复审结论：核心链路认可、保留 `PARTIALLY_VERIFIED`、PHASE 01 有条件放行，但要求先修 5 个问题。
+本节逐条说明修了什么、怎么验证。
+
+## R1.1-P1a｜证据脱敏只覆盖了一半
+
+**问题**：`evidence.mjs` 里 `records.jsonl` 走了 `redact()`，但 `writeJson()`（写 `summary.json`）没有，
+所以 CC-1/CC-2 的汇总文件仍有本机绝对路径；旧 `PHASE_00_EVIDENCE.md` 也残留主机名。
+
+**修复**：
+
+1. `writeJson()` 改为 `JSON.stringify(redact(value))`，与 JSONL 同一条脱敏路径。
+2. `run-all.mjs` 写 `_aggregate/run-all.json` 时同样调用 `redact()`（复审没点出，但同样漏了）。
+3. 新增 `src/lib/paths.mjs` 统一解析 DSH home / workspace，便于干净目录复现。
+4. 全仓扫描并清洗：仓库根 → `<repo>`、用户目录 → `<user-home>`、主机名 → `<host>`。
+
+**验证**：
+
+```
+grep -rI -E "H://AI|H:/AI|C://Users|C:/Users" spike/dsh-probe/current-0.2.1/evidence
+→ 无输出
+grep -rI "<hostname>" .
+→ 无输出
+```
+
+仍含绝对路径的两个文件都在 `tmp/` 下（patch 生成物），已被 `.gitignore` 的 `tmp/` 规则排除，未入库。
+
+## R1.1-P1b｜干净环境不可复现
+
+**问题**：`cc-sdk` / `cc-cli` 只存在于作者机器；`package.json` 没声明 commandcode 插件；
+`run-all.mjs` 不负责建 profile；旧 README 还在讲 `deepseek-official` + `DEEPSEEK_API_KEY`。
+
+**修复**：
+
+1. 新增 `current-0.2.1/scripts/setup-profiles.mjs`：创建隔离 `DSH_HOME`、生成两个 profile、
+   把**钉死版本**的 `@mars-sea/dsh-commandcode-provider@0.15.4` 装进各自 `node_modules`、
+   写出两个 patch 文件。幂等，不碰用户 `~/.dsh`。
+2. `package.json` 增加 `profilePlugins` 字段声明版本；`npm test` 先跑 setup 再跑探针。
+3. `run-all.mjs` 启动时自动调用 setup，并在汇总里记录 profiles / 插件版本 / 凭据是否存在。
+4. 探针支持 `CC_DSH_HOME` 覆盖，可在任意干净目录运行。
+5. 重写 `spike/dsh-probe/README.md`：区分 0.2.1（生产依据）与 0.1.5（legacy），
+   明确 `COMMANDCODE_API_KEY` 只从环境变量读、patch 里只写变量名。
+
+**验证（干净目录，不依赖任何既有 profile）**：
+
+```
+node scripts/setup-profiles.mjs --home <空目录>/dsh-home
+→ profile.created cc-sdk / cc-cli，plugin.installed 0.15.4 ×2，credential present=true
+
+CC_DSH_HOME=<空目录>/dsh-home node run-all.mjs
+→ PASS 5/5，exit 0
+```
+
+本次最终证据全部来自这条干净路径。
+
+## R1.1-P1c｜路由断言只覆盖了 CC-1
+
+**问题**：报告称「每个探针都断言 provider/model」，实际 CC-2 只断言 provider、CC-3/CC-4 完全没提。
+
+**修复**：新增 `requestRoute()` / `routeMatches()`（`lib/outcome.mjs`），在**所有会调用模型的探针**中统一使用：
+
+| 探针 | 断言 |
+|---|---|
+| CC-1 | `routeIsCommandcode` + `modelAsRequested` |
+| CC-2 | `routeIsCommandcode` + `modelAsRequested` + `routeMatchesExpected` |
+| CC-3 | `routeBothTurnsCommandcode`（两轮都查） |
+| CC-4 | `routeBothRunsCommandcode`（两个并发会话都查） |
+| CC-5 | **不做模型调用**，只做协议方法探测，报告中已如此标注 |
+
+**验证**：干净环境复跑，四项断言均为 `true`；`summary.json` 中可见
+`requestRoute = {provider:"commandcode", model:"deepseek/deepseek-v4.1-flash"}`。
+
+## R1.1-P2a｜Resume 通过，但不是崩溃恢复
+
+**问题**：CC-3 注释写 "kill the runtime"，实际调用的是 `close()`——正常关闭，不是强杀。
+
+**修复（表述，不改成果）**：
+
+1. CC-3 源码注释改为「正常关闭 Runtime 后由新进程 resume」，不再暗示强杀。
+2. ADR-0002 能力矩阵该行改为「**部分 PASS**：正常关闭后可恢复；**崩溃恢复未验证**」。
+3. ADR-0002 D4 恢复流程首行标注「正常关闭已实测 / 崩溃未实测」。
+4. ADR-0002 §6 新增第 7 条：强杀后的 resume、中断中的最后一轮，列为 PHASE 01 早期可靠性验证项。
+
+**结论不变**：`session/resume` 确实能恢复历史；但「崩溃恢复」仍是 `UNKNOWN`。
+
+## R1.1-P2b｜审批与多 Runtime 的表述收紧
+
+**审批**：复审指出「`session/approve` 不存在」不等于「SDK 没有审批回调」。已核对 0.2.1 的类型声明：
+
+- 协议只有 7 个 client→server 请求 + 4 个 server→client 通知，**没有任何审批类消息类型**；
+- 传输层确实暴露通用 `onRequest(handler)`，理论上能接服务端请求；
+- 但实测运行期间**服务端一次都没有发起过 server→client 请求**。
+
+因此 ADR-0002 D5 的措辞改为「**没有可依赖的审批回调**」，并保留保守策略：危险工具不暴露给模型、
+模型只提案、Studio 审批后由自己的适配器执行。
+
+**多 Runtime**：D3 从「一角色一 Runtime 固定拓扑」改为**动态调度器**——按任务类型申请/归还、
+顾问会话可在受限条件下共享、执行任务独立停止边界、按资源预算决定并发上限、用户不参与管理。
+ADR 只固定「必须有隔离与停止边界」「用户不参与调度」，并发数量与配额留给 PHASE 01 实测。
+
+## R1.1 复跑结果
+
+```
+cd spike/dsh-probe/current-0.2.1
+CC_DSH_HOME=<clean>/dsh-home node run-all.mjs
+
+PASS  CC-1-reply       8,395ms
+PASS  CC-2-tools       9,393ms
+PASS  CC-3-resume     18,591ms
+PASS  CC-4-concurrent  7,605ms
+PASS  CC-5-capability  4,316ms
+PASS 5/5   exit 0
+```
+
+## R1.1 之后仍未解决
+
+| 项 | 状态 |
+|---|---|
+| 崩溃恢复（强杀 → resume） | `UNKNOWN`，PHASE 01 早期验证 |
+| 中断中的最后一轮恢复 | `UNKNOWN` |
+| 工具审批回调的 UI 映射 | `NOT_SUPPORTED`（协议无消息类型，服务端未发起请求） |
+| 多 Runtime 并发上限与资源成本 | `UNKNOWN` |
+| Electron 打包后完整链路 | `UNKNOWN`，PHASE 01 |
+| 0.1.5 legacy 套件本机稳定复现 | `BLOCKED`（环境安全垫），以冻结快照为记录 |

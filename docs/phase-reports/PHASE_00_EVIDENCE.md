@@ -24,8 +24,8 @@
 | Python | 3.13.14 / 3.14.7（`py`） | `python --version`、`py --version` |
 | GitHub CLI | **未安装** | `gh --version` → command not found |
 | DSH CLI（全局） | **0.1.5-rc.1**，包名 `@deepseek-ai/dsh` | `dsh --version` |
-| DSH 全局安装路径 | `C:\Users\LIN\AppData\Roaming\npm\node_modules\@deepseek-ai\dsh` | `cat .../npm/dsh`（shim 指向 `lib/bin.js`） |
-| `DSH_HOME` 环境变量 | **未设置**，默认 `C:\Users\LIN\.dsh` | `echo $DSH_HOME` → 空 |
+| DSH 全局安装路径 | `<user-home>\AppData\Roaming\npm\node_modules\@deepseek-ai\dsh` | `cat .../npm/dsh`（shim 指向 `lib/bin.js`） |
+| `DSH_HOME` 环境变量 | **未设置**，默认 `<user-home>\.dsh` | `echo $DSH_HOME` → 空 |
 | 已有 DSH Profile | `desktop`、`githubtest`、`headless`、`web`、`web_backup` | `ls ~/.dsh/profiles` |
 | Cocos Creator | **3.8.6** 已安装 | `C:\ProgramData\cocos\editors\Creator\3.8.6\CocosCreator.exe` 存在；目录名即版本 |
 | 微信开发者工具 | **2.02.2608080** 已安装 | `H:\微信web开发者工具\resources\app.asar.unpacked\package.json`；`cli.bat` 存在 |

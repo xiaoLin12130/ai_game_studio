@@ -5,7 +5,9 @@
  * review correctly objected to stating it as a permanent DSH limit: 0.2.1-rc.3
  * exposes `session/resume`. This probe measures what it really restores:
  *
- *   turn 1  — teach a random token on session S, then kill the runtime
+ *   turn 1  — teach a random token on session S, then CLOSE the runtime normally
+ *             (this is a restart test, deliberately NOT a crash test: a forced kill
+ *              and an interrupted turn remain unverified — see ADR-0002 §6)
  *   turn 2  — new process, resumeSession(S), ask for the token back
  *   control — resuming an unknown session id must be rejected, otherwise "resume"
  *             would be an unverifiable no-op
@@ -18,8 +20,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { HarnessClient } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
+import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
+import { EXIT, detectModelBlocker, requestRoute, routeMatches } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -30,8 +33,8 @@ const IDLE_TIMEOUT_MS = 240000
 const ev = createEvidence('cc-3-resume')
 const summary = { probe: 'CC-3-resume', startedAt: new Date().toISOString(), provider: PROVIDER, model: MODEL, token: TOKEN }
 
-const dshHome = p('dsh-home')
-const workspace = p('workspace')
+const dshHome = dshHomePath()
+const workspace = workspacePath()
 fs.mkdirSync(workspace, { recursive: true })
 summary.lockRecovery = clearStaleProfileLock(dshHome)
 
@@ -93,12 +96,13 @@ const launch = { profile: PROFILE, dshHome, initializeTimeoutMs: 300000, patches
 const sessionId = `cc-resume-${Date.now()}`
 
 try {
-  // ---- Turn 1: teach the token, then kill the process.
+  // ---- Turn 1: teach the token, then close normally (not a crash).
   const first = new HarnessClient(launch)
   first.start()
   summary.serverInfo = (await first.initialize({ cwd: workspace, provider: PROVIDER, model: MODEL, maxTokens: 512 })).serverInfo
   const turn1 = await runTurn(first, sessionId, `记住这个口令：${TOKEN}。只回复一个词：STORED`)
   summary.turn1 = { text: turn1.text, events: turn1.events.length, statuses: turn1.statuses }
+  summary.turn1Route = requestRoute(turn1.events)
   summary.turn1Blocker = detectModelBlocker(turn1.events)
   ev.append('turn1', summary.turn1)
   step('turn1 taught', { textLength: turn1.text.length, blocker: summary.turn1Blocker.kind ?? null })
@@ -142,6 +146,7 @@ try {
 
   const turn2 = await runTurn(second, sessionId, '我刚才让你记住的口令是什么？只回答口令本身，不要解释。')
   summary.turn2 = { text: turn2.text, events: turn2.events.length, statuses: turn2.statuses }
+  summary.turn2Route = requestRoute(turn2.events)
   summary.turn2Blocker = detectModelBlocker(turn2.events)
   ev.append('turn2', summary.turn2)
   step('turn2 recall', JSON.stringify(turn2.text.slice(0, 160)))
@@ -156,6 +161,8 @@ try {
     resumeCallSucceeded: resumeError === null,
     historyRecalled: String(summary.turn2.text).includes(TOKEN),
     processReapedBothRuns: summary.turn1Reaped && summary.turn2Reaped,
+    routeBothTurnsCommandcode://n      routeMatches(summary.turn1Route, { provider: PROVIDER, model: MODEL }) &&
+      routeMatches(summary.turn2Route, { provider: PROVIDER, model: MODEL }),
   }
 } catch (error) {
   summary.error = { name: error?.constructor?.name, message: String(error?.message ?? error).slice(0, 1200) }

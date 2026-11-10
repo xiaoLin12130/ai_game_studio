@@ -1,12 +1,12 @@
 {
   "probe": "CC-5-capability",
-  "startedAt": "2026-11-10T10:41:12.161Z",
+  "startedAt": "2026-11-10T11:12:07.441Z",
   "profile": "cc-sdk",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "path": "<repo>/tmp-clean-r11/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "serverInfo": {
@@ -48,8 +48,8 @@
   },
   "reap": {
     "status": "PROCESS_ABSENT",
-    "waitedMs": 995
+    "waitedMs": 1024
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T10:41:16.344Z"
+  "finishedAt": "2026-11-10T11:12:11.684Z"
 }

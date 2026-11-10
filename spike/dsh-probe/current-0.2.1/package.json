@@ -5,10 +5,11 @@
   "type": "module",
   "description": "PHASE 00-R1: drive DSH 0.2.1-rc.3 (the version the user actually runs) with the user's real commandcode provider",
   "scripts": {
+    "setup": "node scripts/setup-profiles.mjs",
+    "test": "node run-all.mjs",
     "probe:commandcode": "node src/probe-commandcode.mjs",
     "probe:tools": "node src/probe-cc-tools.mjs",
-    "probe:capability": "node src/probe-capability.mjs",
-    "test": "node run-all.mjs"
+    "probe:capability": "node src/probe-capability.mjs"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.5",
@@ -17,5 +18,9 @@
     "@deepseek-ai/cordis-plugin-loader": "1.0.6",
     "@deepseek-ai/dsh-sdk-client": "0.2.1-rc.3",
     "@deepseek-ai/dsh-sdk-protocol": "0.2.1-rc.3"
-  }
+  },
+  "profilePlugins": {
+    "@mars-sea/dsh-commandcode-provider": "0.15.4"
+  },
+  "//": "profilePlugins are installed INTO each isolated DSH profile by scripts/setup-profiles.mjs, not into this package. The runtime loads them from the profile node_modules, so they are declared here only to pin the exact version used by the evidence."
 }

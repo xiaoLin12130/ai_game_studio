@@ -1,14 +1,14 @@
 {
   "probe": "CC-3-resume",
-  "startedAt": "2026-11-10T10:40:46.203Z",
+  "startedAt": "2026-11-10T11:11:41.246Z",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4.1-flash",
-  "token": "recall-cf3228",
+  "token": "recall-cdc645",
   "lockRecovery": {
     "checked": false,
     "cleared": false,
     "stalePid": null,
-    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "path": "<repo>/tmp-clean-r11/dsh-home/profiles/node_modules.lock",
     "error": null
   },
   "serverInfo": {
@@ -23,6 +23,11 @@
       "idle"
     ]
   },
+  "turn1Route": {
+    "provider": "commandcode",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "maxTokens": 512
+  },
   "turn1Blocker": {
     "blocked": false
   },
@@ -31,12 +36,17 @@
   "resumeUnknownError": "session \"definitely-not-a-real-session-id\" not found",
   "resumeError": null,
   "turn2": {
-    "text": "recall-cf3228",
+    "text": "recall-cdc645",
     "events": 9,
     "statuses": [
       "running",
       "idle"
     ]
+  },
+  "turn2Route": {
+    "provider": "commandcode",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "maxTokens": 512
   },
   "turn2Blocker": {
     "blocked": false
@@ -47,9 +57,10 @@
     "unknownSessionRejected": true,
     "resumeCallSucceeded": true,
     "historyRecalled": true,
-    "processReapedBothRuns": true
+    "processReapedBothRuns": true,
+    "routeBothTurnsCommandcode": true
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-10T10:41:03.738Z",
+  "finishedAt": "2026-11-10T11:11:59.761Z",
   "conclusion": "RESUME_RESTORES_HISTORY"
 }

@@ -10,8 +10,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
+import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
-import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
+import { EXIT, detectModelBlocker, requestRoute, routeMatches } from './lib/outcome.mjs'
 
 const PROVIDER = process.env.CC_PROVIDER ?? 'commandcode'
 const MODEL = process.env.CC_MODEL ?? 'deepseek/deepseek-v4.1-flash'
@@ -20,8 +21,8 @@ const PROFILE = process.env.CC_PROFILE ?? 'cc-sdk'
 const ev = createEvidence('cc-4-concurrent')
 const summary = { probe: 'CC-4-concurrent', startedAt: new Date().toISOString(), provider: PROVIDER, model: MODEL }
 
-const dshHome = p('dsh-home')
-const workspace = p('workspace')
+const dshHome = dshHomePath()
+const workspace = workspacePath()
 fs.mkdirSync(workspace, { recursive: true })
 summary.lockRecovery = clearStaleProfileLock(dshHome)
 
@@ -58,8 +59,8 @@ try {
   summary.totalMs = Date.now() - t0
 
   const idsFor = (run) => [...new Set(run.notifications.map((n) => n?.params?.sessionId).filter(Boolean))]
-  summary.runA = { sessionId: runA.sessionId, text: runA.finalResponse, eventSessions: idsFor(runA) }
-  summary.runB = { sessionId: runB.sessionId, text: runB.finalResponse, eventSessions: idsFor(runB) }
+  summary.runA = { sessionId: runA.sessionId, text: runA.finalResponse, eventSessions: idsFor(runA), route: requestRoute(runA.events) }
+  summary.runB = { sessionId: runB.sessionId, text: runB.finalResponse, eventSessions: idsFor(runB), route: requestRoute(runB.events) }
   ev.append('runs', { totalMs: summary.totalMs, runA: summary.runA, runB: summary.runB })
   step('both settled', { totalMs: summary.totalMs, a: runA.finalResponse.slice(0, 40), b: runB.finalResponse.slice(0, 40) })
 
@@ -70,6 +71,8 @@ try {
     eventsOnlyForOwnSessionB: summary.runB.eventSessions.every((id) => id === runB.sessionId),
     bothProducedText: runA.finalResponse.trim().length > 0 && runB.finalResponse.trim().length > 0,
     answersNotSwapped: /APPLE/i.test(runA.finalResponse) && /BANANA/i.test(runB.finalResponse),
+    routeBothRunsCommandcode://n      routeMatches(summary.runA.route, { provider: PROVIDER, model: MODEL }) &&
+      routeMatches(summary.runB.route, { provider: PROVIDER, model: MODEL }),
     noLeftoversAfterClose: false,
   }
 } catch (error) {

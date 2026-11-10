@@ -50,3 +50,6 @@ temp/
 *.zip
 *.7z
 *.rar
+
+# Clean-room reproduction directories (throwaway)
+tmp-clean-*/

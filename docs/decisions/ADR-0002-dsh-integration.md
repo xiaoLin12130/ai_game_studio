@@ -29,7 +29,7 @@ Studio 用官方 TypeScript SDK（`@deepseek-ai/dsh-sdk-client@0.2.1-rc.3`）驱
 | 真实模型对话（commandcode） | 不适用（插件 0.15.4 要求 0.2.1 线；0.1.5 上被跳过） | **PASS**（回显随机口令 + 自述模型） | 必须 | `cc-1-reply` |
 | MCP 工具注册 | PASS（注册成功） | **PASS** | 必须 | `cc-2-tools` stage1/2 |
 | MCP 工具**实际调用** | BLOCKED（无模型可用） | **PASS**（模型调用 + Server 执行 + 回复用工具数据） | 必须 | `cc-2-tools` stage3 |
-| Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **PASS**（重启进程后经 `session/resume` 答出随机口令） | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY` |
+| Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **部分 PASS**：正常关闭后重启可恢复历史；**崩溃恢复未验证** | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY`（正常关闭路径） |
 | 工具审批回调 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（无 server→client 请求） | 需要（但可绕过，见 §3C） | `cc-5-capability` |
 | Runtime 级取消 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/cancel` → unknown method） | 不假设存在 | `cc-5-capability` |
 | Session 关闭 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/close` → unknown method） | — | `cc-5-capability` |
@@ -55,18 +55,22 @@ MCP Server 侧：PHASE 00 为免依赖手写了协议。**生产必须换 `@mode
 - 孤儿检测不能只走父子链：Windows 上父进程死后子进程会被重挂，必须同时用命令行标记（隔离的 `DSH_HOME` 路径、MCP server 脚本路径）匹配。
 - 两档超时：常规启动 ≤ 30 s；需要重建 profile 模块回退时 ≤ 300 s，并向用户显示阶段。
 
-### D3｜Runtime 隔离粒度：Manager + 多 Runtime（不再固化单例）
+### D3｜Runtime 隔离：按任务动态调度，不固定「一角色一 Runtime」
 
-0.2.1 **仍无 Runtime 级取消**。若一个 Runtime 承载多个项目/任务，停止任一任务只能杀掉整个 Runtime，会连带中止其他任务。因此拓扑改为：
+0.2.1 **仍无 Runtime 级取消**。若一个 Runtime 承载多个项目/任务，停止任一任务只能杀掉整个 Runtime，
+会连带中止其他任务。这一点决定了必须有隔离边界，但**不等于**要为每个角色/项目永久固定一个 Runtime。
+
+`RuntimeSupervisorManager` 定位为**动态调度器**：
 
 ```
 Studio
 │
 ├── RuntimeSupervisorManager
-│     ├── Advisor Runtime        项目 A/B 的顾问会话（可共享，只读场景）
-│     ├── Project A Execution Runtime   当前开发任务（写权限）
-│     ├── Project B Execution Runtime   当前开发任务（写权限）
-│     └── QA Runtime             独立复审会话
+│     ├── 按任务类型申请/归还 Runtime
+│     ├── 顾问类会话：可在受限条件下共享一个 Runtime（只读、不挂写工具）
+│     ├── 执行类任务：独立 Runtime（有写权限，独立停止边界）
+│     ├── 复审类会话：独立 Runtime（不与被审对象共享进程）
+│     └── 资源预算：并发上限、内存/进程配额，超限先拒绝新任务再回收
 ```
 
 必须满足的约束：
@@ -77,16 +81,21 @@ Studio
 4. Agent 不得绕开写锁：写工具只在持锁的 Runtime 上注册。
 5. 关闭一个 Runtime 不得影响其他：每个 supervisor 只跟踪自己的进程树。
 6. Runtime 崩溃后能定位到具体任务：`DSHSessionLink{runtimeId, sessionId, projectId, taskId}` 持久化。
-7. 资源上限：每个 Runtime 都有独立内存/进程预算，超限先降级（拒绝新任务）再回收。
+7. **用户不管理 Runtime**：分配、回收、限流全部由 Manager 决定，UI 只展示状态。
 
-具体实例数量按资源实测调整，但**拓扑不得退回单例**。
+**不冻结的部分**（避免把未验证的编排写死）：并发 Runtime 数量、共享粒度、资源配额阈值。
+这些由 PHASE 01 实测决定；ADR 只固定「必须有隔离与停止边界」和「用户不参与调度」两条。
 
 ### D4｜会话恢复：优先官方 Resume，Studio 状态永远是真源
 
-0.2.1 实测 `session/resume` 能把历史恢复（重启进程后仍答出随机口令），因此恢复流程改为：
+0.2.1 实测 `session/resume` 能把历史恢复。**但必须说清证据边界**：探针 CC-3 走的是
+「正常 `close()` → 新进程 → `resumeSession()` → 仍能答出随机口令」，**不是崩溃恢复**。
+强制杀进程、任务执行到一半崩溃、外部 Shell/MCP 残留等情形**均未验证**（见 §6 第 3 条）。
+
+因此恢复流程按「先能做什么」排序，未验证的环节在实现时必须先加探针：
 
 ```
-Runtime 崩溃
+Runtime 结束（正常关闭已实测；崩溃未实测）
    ↓
 ① 恢复 Studio 侧状态（项目/任务/契约/基线/Commit/审批/事件游标）
    ↓
@@ -96,7 +105,7 @@ Runtime 崩溃
    ↓
 ④ 校验上下文：用一条探针 prompt 确认关键事实仍在（如当前任务 id）
    ↓
-⑤ 校验副作用：Shell/PTY/MCP 等外部进程是否已随崩溃消失，重新建立
+⑤ 校验副作用：Shell/PTY/MCP 等外部进程是否还在，重新建立
    ↓
 ⑥ 由任务状态机决定继续 / 重试 / 请求用户
 ```
@@ -110,10 +119,13 @@ Runtime 崩溃
 
 - 工具只经 MCP 暴露，命名固定 `mcp__studio__<tool>`；先只读，再提案，最后受控写入。
 - 危险能力（任意路径写、无限制 shell）**不经 MCP 暴露**，由 Studio 适配器执行并受写锁约束。
-- **DSH 工具许可审批在 0.2.1 仍不存在**（无 server→client 请求、无审批通知）。因此：
-  - Studio 业务审批（冻结基线、批准变更、批准构建/发布、危险文件操作）是**自建 UI + 状态机**，与 DSH 无关。
-  - 若未来版本提供 SDK Approval Callback，必须先实测其 UI 映射（请求 id、超时、拒绝后的工具语义），再接入；接入后**仍然不能**用「某次工具被批准」替代业务审批。
-  - 在此之前，"需要人工确认的工具"只能通过**不给工具**或**要求模型先提案、Studio 再执行**来实现，不能假装有审批弹窗。
+- **DSH 工具许可审批在 0.2.1 仍没有可用 UI 映射**。证据边界要说清：
+  - 协议方法层面：`session/approve` 不存在（`unknown method`）；协议只有 7 个 client→server 请求和 4 个 server→client 通知，**没有任何审批类消息类型**。
+  - 传输层面：SDK 暴露通用的 `onRequest(handler)`，理论上能接服务端发起的请求；但实测运行期间**服务端一次都没有发起过 server→client 请求**。
+  - 因此结论是「**没有可依赖的审批回调**」，而不是「传输层完全没有这个钩子」——后者不准确。
+  - Studio 的业务审批（冻结基线、批准变更、批准构建/发布、危险文件操作）是**自建 UI + 状态机**，与 DSH 无关。
+  - 危险工具不直接暴露给模型：模型只能提出操作方案，Studio 审批通过后由**自己的适配器**执行。
+  - 若未来版本提供成型的审批回调，必须先实测其请求 id、超时、拒绝后的工具语义，再接入；接入后**仍然不能**用「某次工具被批准」替代业务审批。
 
 ### D6｜版本钉死 + 探针即回归
 
@@ -149,6 +161,7 @@ F6 是 PHASE 00-R1 最重要的教训：**不看路由证据就会把 A Provider
 4. MCP Server 换成官方 SDK 后的兼容性。
 5. 多 Runtime 拓扑的资源占用与启动成本。
 6. 0.2.2 线是否补上取消/审批（本次未测 0.2.2，只用 0.2.1-rc.3，因为它与用户插件声明兼容）。
+7. **崩溃恢复**：强杀 Runtime 后 `session/resume` 能否恢复、中断中的最后一轮如何处理——CC-3 只覆盖了正常关闭路径，此项为 PHASE 01 早期可靠性验证项。
 
 ## 7. 复审关注点
 

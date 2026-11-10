@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
 import { createEvidence, p, step } from './lib/evidence.mjs'
+import { dshHomePath, workspacePath } from './lib/paths.mjs'
 import { findRuntimeProcesses, waitForRuntimeGone, clearStaleProfileLock, PROC } from './lib/proc.mjs'
 import { EXIT, detectModelBlocker } from './lib/outcome.mjs'
 
@@ -33,8 +34,8 @@ const summary = {
   token: TOKEN,
 }
 
-const dshHome = p('dsh-home')
-const workspace = p('workspace')
+const dshHome = dshHomePath()
+const workspace = workspacePath()
 fs.mkdirSync(workspace, { recursive: true })
 summary.lockRecovery = clearStaleProfileLock(dshHome)
 

@@ -59,7 +59,9 @@ export function createEvidence(name) {
   }
   const writeJson = (filename, value) => {
     const target = path.join(dir, filename)
-    fs.writeFileSync(target, `${JSON.stringify(value, null, 2)}\n`)
+    // Same redaction as the JSONL path: published evidence must never carry local
+    // absolute paths, a user home directory or the hostname.
+    fs.writeFileSync(target, `${JSON.stringify(redact(value), null, 2)}\n`)
     return target
   }
   return { dir, file, append, writeJson }
