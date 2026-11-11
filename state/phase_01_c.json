@@ -1,0 +1,72 @@
+{
+  "phase": "PHASE_01_C",
+  "title": "DSH Session 生命周期与 Studio Task 状态管理",
+  "status": "IN_PROGRESS",
+  "verdict": null,
+  "branch": "phase/01-c-session-task-lifecycle",
+  "base_commit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
+  "work_commit": "aa0c54b78887283621e621648f72d96b8acbb8fa",
+  "note": "未完成。不宣告任何结论；本文件只记录已验证事实与未完成项，供续开发使用。",
+  "implemented": [
+    "Task 状态机（表驱动，非法转换抛错）",
+    "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
+    "RuntimeSupervisorManager（只读共享 / 写入独占）",
+    "TaskRunner（执行、中断、恢复、重试、运行时死亡、重启恢复）",
+    "Studio 侧验收（run 到 idle 只是证据，不是成功）",
+    "IPC + preload 白名单 + 任务面板 UI"
+  ],
+  "verified_this_round": {
+    "tsc": {
+      "exitCode": 0
+    },
+    "taskIntegrationIsolated": {
+      "runs": 3,
+      "passed": 3,
+      "exitCodes": [
+        0,
+        0,
+        0
+      ],
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.log",
+      "note": "满套件下不稳定，隔离连续 3 次均通过；根因未定位完成"
+    }
+  },
+  "verified_previous_round": {
+    "unitTests": {
+      "task_machine": "13/13",
+      "task_store": "全部通过",
+      "task_runner": "8/8"
+    },
+    "realDshEndToEnd": "建任务→真实模型回合→验收 SUCCEEDED；中断→INTERRUPTED→resumeSession 复用原 session→新 attempt",
+    "ui": "真实 Chromium + 假 preload，41/41 断言",
+    "fullSuite": {
+      "tests": 84,
+      "pass": 83,
+      "fail": 1,
+      "note": "失败项为真实模型集成测试，满套件并行负载下不稳定"
+    }
+  },
+  "not_run": [
+    "满套件连续 2 次（撰写时仍在运行）",
+    "PHASE 00 套件 166 项与三道门禁",
+    "PHASE 01-A 桌面冒烟（ready / failure / quit-during-probe）",
+    "PHASE 01-B 打包与安装后 MCP 链路",
+    "Windows 安装版任务链路（场景 A/B/C）",
+    "泄漏门禁与敏感信息扫描"
+  ],
+  "unknown": [
+    {
+      "id": "U-01C-1",
+      "item": "满套件并行负载下真实模型测试不稳定的根因",
+      "condition_to_verify": "定位共享资源/限流/竞争后复跑"
+    },
+    {
+      "id": "U-01C-2",
+      "item": "安装版中 Task/Session 链路是否成立",
+      "condition_to_verify": "打包 + 安装后跑场景 A/B/C"
+    }
+  ],
+  "deferred": [],
+  "blocked": [],
+  "updated_at": "2026-11-11T10:57:07.505Z"
+}
