@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-11-11T07:44:25.247Z",
+  "mode": "handshake-only",
+  "installDir": "<abs-path>",
+  "endpoints": {
+    "exe": "<abs-path>",
+    "asar": "<abs-path>",
+    "server": "<abs-path>"
+  },
+  "runnerExit": 0,
+  "result": {
+    "prompt": false,
+    "events": [],
+    "provisioning": "installed",
+    "serverInfo": {
+      "name": "deepseek-harness-sdk-runtime",
+      "version": "0.0.1"
+    },
+    "endpoints": {
+      "exe": "<abs-path>",
+      "asar": "<abs-path>",
+      "patch": "<abs-path>"
+    }
+  },
+  "auditKinds": [
+    "server.start",
+    "transport.connected",
+    "server.start",
+    "transport.connected",
+    "initialize.completed",
+    "server.stop"
+  ],
+  "initialized": true,
+  "toolCalled": false,
+  "toolServed": false,
+  "stderrTail": "",
+  "ok": true
+}

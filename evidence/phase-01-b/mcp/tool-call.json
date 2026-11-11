@@ -1,0 +1,116 @@
+{
+  "generatedAt": "2026-11-11T07:23:10.886Z",
+  "mode": "prompt",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4-flash",
+  "credentialPresent": true,
+  "serverScript": "apps\\studio\\mcp\\studio-mcp-server.mjs",
+  "sdkVersion": "1.32.2",
+  "events": [
+    {
+      "type": "request/header",
+      "summary": "{\"header\":{\"config\":{\"provider\":\"commandcode\",\"model\":\"deepseek/deepseek-v4-flash\",\"maxTokens\":131072},\"adapterDefaults\":{\"maxTokens\":true},\"tools\":[{\"name\":\"create_goal\",\"description\":\"Create a persisted goal that keeps this session working across automatic continuation rounds. Use it when the direct human request is a long-running objective, even if the user did not say \\\"goal\\\"; not for single-"
+    },
+    {
+      "type": "assistant/message",
+      "summary": "{\"turn\":1,\"step\":1,\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll call the health tool to get the real data.\"},{\"type\":\"tool-call\",\"id\":\"call_00_npk8d9uqiay798mgda3bppmj\",\"name\":\"mcp__studio__get_studio_health\",\"arguments\":\"{}\"}],\"source\":{\"kind\":\"model\",\"provider\":\"commandcode\",\"model\":\"deepseek/deepseek-v4-flash\",\"replayState\":{\"response\":{\"protocol\":\"openai\",\"headers\":{\"x-"
+    },
+    {
+      "type": "tool/call",
+      "summary": "{\"turn\":1,\"step\":1,\"callId\":\"call_00_npk8d9uqiay798mgda3bppmj\",\"name\":\"mcp__studio__get_studio_health\",\"arguments\":\"{}\"}"
+    },
+    {
+      "type": "tool/result",
+      "summary": "{\"turn\":1,\"step\":1,\"message\":{\"role\":\"tool\",\"source\":{\"kind\":\"tool\",\"callId\":\"call_00_npk8d9uqiay798mgda3bppmj\"},\"toolCallId\":\"call_00_npk8d9uqiay798mgda3bppmj\",\"content\":[{\"type\":\"text\",\"text\":\"{\\\"status\\\":\\\"ok\\\",\\\"studio\\\":{\\\"name\\\":\\\"AI Game Studio\\\",\\\"component\\\":\\\"studio-mcp-tools\\\",\\\"version\\\":\\\"0.1.0-phase01b\\\",\\\"phase\\\":\\\"PHASE_01-B\\\",\\\"serverPid\\\":17532},\\\"runtime\\\":{\\\"node\\\":\\\"v24.19.0\\\""
+    },
+    {
+      "type": "assistant/message",
+      "summary": "{\"turn\":1,\"step\":2,\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"reasoning\",\"text\":\"Output one line.\"},{\"type\":\"text\",\"text\":\"TOOL_STATUS=ok SERVER_PHASE=PHASE_01-B\"}],\"source\":{\"kind\":\"model\",\"provider\":\"commandcode\",\"model\":\"deepseek/deepseek-v4-flash\",\"replayState\":{\"response\":{\"protocol\":\"openai\",\"headers\":{\"x-trace-id\":\"d764435e90717c727d19a40f847a759e\"},\"responseId\":\"0208f8c456717c73e88f"
+    }
+  ],
+  "profileProvisioning": {
+    "bootstrapped": true,
+    "provisioned": true,
+    "exitCode": 0,
+    "reason": "installed into the generated profile"
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "toolDiscovery": {
+    "expected": "mcp__studio__get_studio_health"
+  },
+  "runtimeExitCode": 0,
+  "audit": [
+    {
+      "ts": "2026-11-11T07:23:16.361Z",
+      "pid": 29584,
+      "kind": "server.start",
+      "server": "ai-game-studio-tools",
+      "version": "0.1.0-phase01b",
+      "node": "v24.19.0"
+    },
+    {
+      "ts": "2026-11-11T07:23:16.364Z",
+      "pid": 29584,
+      "kind": "transport.connected"
+    },
+    {
+      "ts": "2026-11-11T07:23:16.574Z",
+      "pid": 17532,
+      "kind": "server.start",
+      "server": "ai-game-studio-tools",
+      "version": "0.1.0-phase01b",
+      "node": "v24.19.0"
+    },
+    {
+      "ts": "2026-11-11T07:23:16.575Z",
+      "pid": 17532,
+      "kind": "transport.connected"
+    },
+    {
+      "ts": "2026-11-11T07:23:16.586Z",
+      "pid": 17532,
+      "kind": "initialize.completed",
+      "client": {
+        "name": "dsh-mcp-client",
+        "version": "0.0.1"
+      },
+      "capabilities": {}
+    },
+    {
+      "ts": "2026-11-11T07:23:18.848Z",
+      "pid": 17532,
+      "kind": "tools/call",
+      "name": "get_studio_health"
+    },
+    {
+      "ts": "2026-11-11T07:23:18.849Z",
+      "pid": 17532,
+      "kind": "tools/call.served",
+      "name": "get_studio_health",
+      "status": "ok"
+    },
+    {
+      "ts": "2026-11-11T07:23:21.204Z",
+      "pid": 17532,
+      "kind": "server.stop",
+      "reason": "stdin-eof"
+    }
+  ],
+  "auditKinds": [
+    "server.start",
+    "transport.connected",
+    "server.start",
+    "transport.connected",
+    "initialize.completed",
+    "tools/call",
+    "tools/call.served",
+    "server.stop"
+  ],
+  "initialized": true,
+  "toolCalled": true,
+  "toolServed": true,
+  "ok": true
+}

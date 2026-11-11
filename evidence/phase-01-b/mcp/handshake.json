@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-11-11T07:22:58.029Z",
+  "mode": "handshake-only",
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4-flash",
+  "credentialPresent": true,
+  "serverScript": "apps\\studio\\mcp\\studio-mcp-server.mjs",
+  "sdkVersion": "1.32.2",
+  "events": [],
+  "profileProvisioning": {
+    "bootstrapped": true,
+    "provisioned": true,
+    "exitCode": 0,
+    "reason": "installed into the generated profile"
+  },
+  "serverInfo": {
+    "name": "deepseek-harness-sdk-runtime",
+    "version": "0.0.1"
+  },
+  "toolDiscovery": {
+    "expected": "mcp__studio__get_studio_health"
+  },
+  "runtimeExitCode": 0,
+  "audit": [
+    {
+      "ts": "2026-11-11T07:23:03.759Z",
+      "pid": 3716,
+      "kind": "server.start",
+      "server": "ai-game-studio-tools",
+      "version": "0.1.0-phase01b",
+      "node": "v24.19.0"
+    },
+    {
+      "ts": "2026-11-11T07:23:03.771Z",
+      "pid": 3716,
+      "kind": "transport.connected"
+    },
+    {
+      "ts": "2026-11-11T07:23:04.028Z",
+      "pid": 23472,
+      "kind": "server.start",
+      "server": "ai-game-studio-tools",
+      "version": "0.1.0-phase01b",
+      "node": "v24.19.0"
+    },
+    {
+      "ts": "2026-11-11T07:23:04.031Z",
+      "pid": 23472,
+      "kind": "transport.connected"
+    },
+    {
+      "ts": "2026-11-11T07:23:04.043Z",
+      "pid": 23472,
+      "kind": "initialize.completed",
+      "client": {
+        "name": "dsh-mcp-client",
+        "version": "0.0.1"
+      },
+      "capabilities": {}
+    },
+    {
+      "ts": "2026-11-11T07:23:04.255Z",
+      "pid": 23472,
+      "kind": "server.stop",
+      "reason": "stdin-eof"
+    }
+  ],
+  "auditKinds": [
+    "server.start",
+    "transport.connected",
+    "server.start",
+    "transport.connected",
+    "initialize.completed",
+    "server.stop"
+  ],
+  "initialized": true,
+  "toolCalled": false,
+  "toolServed": false,
+  "ok": true
+}

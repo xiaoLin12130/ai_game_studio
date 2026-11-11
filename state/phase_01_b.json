@@ -1,0 +1,152 @@
+{
+  "phase": "PHASE_01_B",
+  "title": "官方 MCP SDK 接入与 Windows 正式打包",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "branch": "phase/01-b-mcp-packaging",
+  "base_commit": "45c897630ef2f6ca801cf40b0f2cae488a1b0126",
+  "scope": {
+    "in_scope": [
+      "官方 MCP SDK 替换",
+      "真实工具调用验证",
+      "Windows 正式打包",
+      "安装后运行验证",
+      "生命周期验证"
+    ],
+    "out_of_scope_deferred_to_later": [
+      "Session 生命周期管理与 Resume",
+      "RuntimeSupervisorManager",
+      "Task 状态机",
+      "项目管理与需求工作流",
+      "Decision Center",
+      "素材库",
+      "游戏构建流水线",
+      "微信小游戏发布",
+      "业务审批",
+      "React UI 重构"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "B1",
+      "item": "官方 MCP SDK 替换生产手写实现",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/mcp/handshake.json"
+    },
+    {
+      "id": "B2",
+      "item": "DSH 0.2.1-rc.3 能连接 MCP Server",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/mcp/handshake.json"
+    },
+    {
+      "id": "B3",
+      "item": "get_studio_health 端到端真实调用",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/mcp/tool-call.json"
+    },
+    {
+      "id": "B4",
+      "item": "生成 Windows 安装包",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/packaging/installer.json"
+    },
+    {
+      "id": "B5",
+      "item": "安装后能启动 DSH Runtime",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/smoke/ready.json"
+    },
+    {
+      "id": "B6",
+      "item": "commandcode 正常加载，无静默回退",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/mcp/tool-call.json"
+    },
+    {
+      "id": "B7",
+      "item": "安装后 MCP Server 能被调用",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/mcp/packaged-tool-call.json"
+    },
+    {
+      "id": "B8",
+      "item": "关闭后进程有明确退出确认",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/smoke/summary.json"
+    },
+    {
+      "id": "B9",
+      "item": "不改用户 ~/.dsh、不泄漏凭据",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/regression/phase00-gates.json"
+    },
+    {
+      "id": "B10",
+      "item": "不依赖开发环境 Node PATH",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/smoke/ready.json"
+    },
+    {
+      "id": "B11",
+      "item": "PHASE 01-A / PHASE 00 回归通过",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/regression/phase00-suite.txt"
+    },
+    {
+      "id": "B12",
+      "item": "证据可追溯",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-b/verification.json"
+    }
+  ],
+  "mcp": {
+    "server_entry": "apps/studio/mcp/studio-mcp-server.mjs",
+    "sdk_package": "@modelcontextprotocol/sdk",
+    "sdk_version": "1.32.2",
+    "tool": "get_studio_health",
+    "tool_name_in_dsh": "mcp__studio__get_studio_health",
+    "protocol_note": "DSH 0.2.1-rc.3 的 MCP client 基于 @modelcontextprotocol/client@2.2.0（支持 2025-11-25 起）。SDK 1.32.2 的 LATEST 为 DRAFT-2026-v1，支持列表内含 2025-06-18，实测协商成功并由 DSH 接受。"
+  },
+  "packaging": {
+    "tool": "electron-builder 26.18.0",
+    "target": "nsis x64",
+    "installer": "AI-Game-Studio-0.1.0-x64.exe",
+    "bytes": 237521179,
+    "sha256": "2C0491B413EAC17EE3B3AB9CA52B5A0C6247F49AA7F5DAA875BA332F05BAD5E4",
+    "electron": "44.7.0",
+    "dsh_runtime": "0.2.1-rc.3",
+    "asar": true,
+    "installed_smoke": "PASS"
+  },
+  "unknown": [
+    {
+      "id": "U-01B-1",
+      "item": "MCP Server 的远程/HTTP transport 未验证（本阶段仅 stdio）",
+      "condition_to_verify": "引入远程 MCP 时"
+    },
+    {
+      "id": "U-01B-2",
+      "item": "安装包未做代码签名，SmartScreen 会告警",
+      "condition_to_verify": "有签名证书时"
+    },
+    {
+      "id": "U-01B-3",
+      "item": "GUI 内暂无“手动触发 MCP 工具调用”的按钮；B3/B7 的调用由验证脚本驱动真实运行时完成",
+      "condition_to_verify": "PHASE 01-C 接入工具面板时"
+    }
+  ],
+  "deferred": [
+    {
+      "id": "D-01B-1",
+      "item": "代码签名（winCodeSign）",
+      "phase": "发布准备阶段"
+    },
+    {
+      "id": "D-01B-2",
+      "item": "安装包体积优化（226.5 MB）",
+      "phase": "发布准备阶段"
+    }
+  ],
+  "blocked": [],
+  "updated_at": "2026-11-11T07:55:07.000Z"
+}

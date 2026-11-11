@@ -1,0 +1,37 @@
+{
+  "scenario": "quit-during-probe",
+  "exe": "<abs-path>",
+  "wallMs": 3169,
+  "exitCode": 0,
+  "producedSmokeJson": true,
+  "state": null,
+  "dom": null,
+  "probe": {
+    "status": "UNKNOWN",
+    "code": "STOPPED",
+    "durationMs": 2738
+  },
+  "teardown": {
+    "attempted": true,
+    "reason": "stopped",
+    "closed": true,
+    "closeError": null,
+    "exitCode": 0,
+    "processCheckStatus": "ABSENT",
+    "firstCheckStatus": "ABSENT",
+    "processAbsent": true,
+    "runtimePid": 10916,
+    "identitySource": "parent-and-bin",
+    "remainingPids": [],
+    "forcedTerminationAttempted": false,
+    "forcedTerminationSucceeded": false,
+    "error": null,
+    "durationMs": 2334,
+    "completed": true
+  },
+  "shutdown": {
+    "completed": true,
+    "confirmedGone": true
+  },
+  "lingeringAppPids": []
+}

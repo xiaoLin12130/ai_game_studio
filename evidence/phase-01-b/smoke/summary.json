@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-11-11T07:44:01.511Z",
+  "exe": "<abs-path>",
+  "checks": {
+    "readyExitZero": true,
+    "readyProducedJson": true,
+    "readyStatus": true,
+    "readyHandshake": true,
+    "readyTeardownCompleted": true,
+    "readyProcessAbsent": true,
+    "readyNoLingeringApp": true,
+    "quitExitZero": true,
+    "quitProducedJson": true,
+    "quitRuntimeGone": true,
+    "quitNoLingeringApp": true
+  },
+  "ok": true,
+  "ready": {
+    "scenario": "ready",
+    "exe": "<abs-path>",
+    "wallMs": 7670,
+    "exitCode": 0,
+    "producedSmokeJson": true,
+    "state": {
+      "status": "READY",
+      "detail": {
+        "code": "HANDSHAKE_OK",
+        "message": "DSH 运行时已启动并完成 SDK 握手。"
+      },
+      "lastCheckedAt": "2026-11-11T07:43:55.629Z",
+      "lastDurationMs": 2862,
+      "serverInfo": {
+        "name": "deepseek-harness-sdk-runtime",
+        "version": "0.0.1"
+      },
+      "dshVersion": "0.2.1-rc.3",
+      "entryKind": "bundled",
+      "entryPath": "<abs-path>",
+      "runtimeExitCode": 0,
+      "configRecovered": false,
+      "configRecoveryNote": null
+    },
+    "dom": {
+      "pill": "已就绪",
+      "headline": "DSH 运行时已启动并完成 SDK 握手。",
+      "recheckDisabled": false,
+      "factServer": "deepseek-harness-sdk-runtime 0.0.1",
+      "factExit": "0"
+    },
+    "probe": {
+      "status": "READY",
+      "code": "HANDSHAKE_OK",
+      "durationMs": 2862
+    },
+    "teardown": {
+      "attempted": true,
+      "reason": "completed",
+      "closed": true,
+      "closeError": null,
+      "exitCode": 0,
+      "processCheckStatus": "ABSENT",
+      "firstCheckStatus": "ABSENT",
+      "processAbsent": true,
+      "runtimePid": 28200,
+      "identitySource": "parent-and-bin",
+      "remainingPids": [],
+      "forcedTerminationAttempted": false,
+      "forcedTerminationSucceeded": false,
+      "error": null,
+      "durationMs": 1043,
+      "completed": true
+    },
+    "shutdown": null,
+    "lingeringAppPids": []
+  },
+  "quitting": {
+    "scenario": "quit-during-probe",
+    "exe": "<abs-path>",
+    "wallMs": 3169,
+    "exitCode": 0,
+    "producedSmokeJson": true,
+    "state": null,
+    "dom": null,
+    "probe": {
+      "status": "UNKNOWN",
+      "code": "STOPPED",
+      "durationMs": 2738
+    },
+    "teardown": {
+      "attempted": true,
+      "reason": "stopped",
+      "closed": true,
+      "closeError": null,
+      "exitCode": 0,
+      "processCheckStatus": "ABSENT",
+      "firstCheckStatus": "ABSENT",
+      "processAbsent": true,
+      "runtimePid": 10916,
+      "identitySource": "parent-and-bin",
+      "remainingPids": [],
+      "forcedTerminationAttempted": false,
+      "forcedTerminationSucceeded": false,
+      "error": null,
+      "durationMs": 2334,
+      "completed": true
+    },
+    "shutdown": {
+      "completed": true,
+      "confirmedGone": true
+    },
+    "lingeringAppPids": []
+  }
+}

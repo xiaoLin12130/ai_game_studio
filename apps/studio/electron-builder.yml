@@ -1,0 +1,75 @@
+appId: com.aigamestudio.studio
+productName: AI Game Studio
+copyright: AI Game Studio
+
+directories:
+  output: release
+  buildResources: build
+
+# asar stays on: the runtime can read from the archive (Electron's node is asar-aware),
+# and only the pieces that must exist as real files are unpacked below.
+asar: true
+
+# What must live on the real filesystem:
+#   * native addons (*.node) and anything that ships a binary,
+#   * node-pty and its conpty helpers, ripgrep (DSH rewrites .asar to .asar.unpacked for
+#     it, so it must actually be there), libreoffice-kit,
+# The MCP server entry stays *inside* the archive: it is spawned as a JavaScript file
+# (never an .exe) and its imports must resolve against the packed node_modules, which only
+# works through Electron's asar-aware loader. Unpacking it would put it outside the tree
+# its dependencies live in.
+# A spawned .exe inside app.asar is ENOENT even in node mode, so binaries must be unpacked.
+asarUnpack:
+  - '**/*.{node,dll,exe}'
+  - '**/node_modules/node-pty/**'
+  - '**/node_modules/@koromix/**'
+  - '**/node_modules/@img/**'
+  - '**/node_modules/sherpa-onnx-*/**'
+  - '**/node_modules/node-addon-*-win32-*/**'
+  - '**/node_modules/@vscode/ripgrep-*/**'
+  - '**/node_modules/@deepseek-ai/libreoffice-kit-*/**'
+
+# node-pty ships prebuilds via node-gyp-build; rebuilding it wants Spectre-mitigated MSVC
+# libraries this machine does not have, and the prebuilt binary is what runs anyway.
+npmRebuild: false
+
+# electron-builder's default file selection silently prunes peerDependencies, which drops
+# 23 @deepseek-ai runtime packages and makes the app fail at the first probe with
+# "Cannot find package '@deepseek-ai/dsh-sdk-protocol'". Mapping node_modules explicitly
+# keeps the dependency tree intact.
+files:
+  - dist/**/*
+  - mcp/**/*
+  - package.json
+  - from: node_modules
+    to: node_modules
+    filter:
+      - '**/*'
+      - '!electron{,/**/*}'
+      - '!typescript{,/**/*}'
+      - '!@types{,/**/*}'
+      - '!electron-builder{,/**/*}'
+      - '!app-builder-lib{,/**/*}'
+      - '!dmg-builder{,/**/*}'
+      - '!electron-builder-squirrel-windows{,/**/*}'
+      - '!electron-publish{,/**/*}'
+      - '!builder-util{,/**/*}'
+      - '!builder-util-runtime{,/**/*}'
+      - '!.bin{,/**/*}'
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: AI-Game-Studio-${version}-${arch}.exe
+  # No code signing certificate in this environment; SmartScreen will warn on first run.
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI Game Studio
+  deleteAppDataOnUninstall: false

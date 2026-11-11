@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-11-11T07:45:26.181Z",
+  "installer": {
+    "file": "apps/studio/release/AI-Game-Studio-0.1.0-x64.exe",
+    "bytes": 237521179,
+    "megabytes": 226.5,
+    "sha256": "2C0491B413EAC17EE3B3AB9CA52B5A0C6247F49AA7F5DAA875BA332F05BAD5E4"
+  },
+  "electron": "44.7.0",
+  "app": {
+    "name": "ai-game-studio",
+    "version": "0.1.0",
+    "productName": "AI Game Studio"
+  },
+  "dshRuntime": {
+    "package": "@deepseek-ai/dsh",
+    "version": "0.2.1-rc.3"
+  },
+  "dshSdkClient": {
+    "version": "0.2.1-rc.3"
+  },
+  "mcpSdk": {
+    "package": "@modelcontextprotocol/sdk",
+    "version": "1.32.2"
+  },
+  "mcpProtocol": {
+    "proposalFromDshClient": "2025-11-25",
+    "sdkLatestProtocolVersion": "2025-11-25 (1.24.1–1.31.x 线) / DRAFT-2026-v1 (1.32.2 线，支持列表含 2025-06-18)",
+    "negotiatedInThisBuild": "见 evidence/phase-01-b/mcp/*.json 的 audit"
+  },
+  "builder": {
+    "tool": "electron-builder",
+    "version": "26.18.0",
+    "target": "nsis",
+    "arch": "x64",
+    "asar": true,
+    "npmRebuild": false
+  },
+  "install": {
+    "silent": true,
+    "command": "AI-Game-Studio-0.1.0-x64.exe /S /D=<dir>",
+    "exitCode": 0,
+    "installedTo": "<abs-path>"
+  },
+  "userData": "%APPDATA%\\AI Game Studio (productName)"
+}

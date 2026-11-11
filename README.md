@@ -4,6 +4,23 @@
 
 > 版本：0.1.0｜用途：交给 DSH Agent 作为项目总控规则、产品目标、分阶段开发计划和 GitHub 复审约定。
 
+## 安装与启动（Windows，安装包方式）
+
+1. 运行 `apps/studio/release/AI-Game-Studio-0.1.0-x64.exe`（由 `npm run dist:win` 生成）。
+2. 选择安装目录（不需要管理员权限），完成后从开始菜单或桌面启动 “AI Game Studio”。
+3. 首次启动会在 `%APPDATA%\AI Game Studio` 建立自己的 DSH home（`dsh-home`），**不会修改**你原有的 `~/.dsh`。
+
+静默安装（用于验证）：`AI-Game-Studio-0.1.0-x64.exe /S /D=<安装目录>`
+
+安装包未做代码签名，Windows SmartScreen 可能提示；这是已知项（见 PHASE 01-B 报告的 UNKNOWN U-01B-2）。
+
+### 开发方式
+
+`npm install` → `npm run build` → `npm start`。打包：`npm run dist:win`（先自动构建）。
+
+> 注意：从 DSH 自身的终端启动打包后的 GUI 应用前，要先清掉 `ELECTRON_RUN_AS_NODE` 环境变量，
+> 否则 Electron 会以 Node 模式运行、0.3 秒退出且不写任何日志——看起来像崩溃。
+
 ## 这是什么
 
 这不是已经写好的 AI Game Studio 应用程序，而是一套可执行的**项目启动与开发约束包**。它把我们讨论确认的产品方向转成 Agent 能读取、执行、更新和验收的项目资料，避免 Agent 只凭一段长提示词自由发挥。

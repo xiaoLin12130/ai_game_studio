@@ -1,0 +1,137 @@
+{
+  "generatedAt": "2026-11-11T07:54:45.615Z",
+  "branch": "phase/01-b-mcp-packaging",
+  "baseCommit": "45c897630ef2f6ca801cf40b0f2cae488a1b0126",
+  "node": "v24.21.0",
+  "electron": "44.7.0",
+  "matrix": [
+    {
+      "name": "build-typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0
+    },
+    {
+      "name": "unit-and-integration-tests",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 61,
+        "pass": 61,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "mcp-handshake-dev",
+      "command": "node scripts/mcp-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/mcp/handshake.json",
+      "note": "DSH 连上官方 SDK 写的 MCP Server"
+    },
+    {
+      "name": "mcp-tool-call-dev",
+      "command": "node scripts/mcp-probe.mjs --prompt",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/mcp/tool-call.json",
+      "note": "真实模型回合调用工具"
+    },
+    {
+      "name": "desktop-smoke-ready (dev)",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "note": "PHASE 01-A 回归重跑：命令真实执行且退出码 0；证据不覆盖 PHASE 01-A 目录，结果仅记录本表"
+    },
+    {
+      "name": "desktop-smoke-failure (dev)",
+      "command": "node scripts/smoke.mjs failure",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "note": "PHASE 01-A 回归重跑：命令真实执行且退出码 0；证据不覆盖 PHASE 01-A 目录，结果仅记录本表"
+    },
+    {
+      "name": "desktop-smoke-quit-during-probe (dev)",
+      "command": "node scripts/smoke.mjs quit-during-probe",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "note": "PHASE 01-A 回归重跑：命令真实执行且退出码 0；证据不覆盖 PHASE 01-A 目录，结果仅记录本表"
+    },
+    {
+      "name": "build-installer",
+      "command": "npx electron-builder --win",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "apps/studio/release/AI-Game-Studio-0.1.0-x64.exe",
+      "counts": {
+        "bytes": 237521179,
+        "sha256": "2C0491B413EAC17EE3B3AB9CA52B5A0C6247F49AA7F5DAA875BA332F05BAD5E4"
+      }
+    },
+    {
+      "name": "install-silent",
+      "command": "AI-Game-Studio-0.1.0-x64.exe /S /D=<dir>",
+      "exitCode": 0
+    },
+    {
+      "name": "packaged-smoke",
+      "command": "node scripts/smoke-packaged.mjs <installed exe>",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/smoke/summary.json",
+      "counts": {
+        "checks": 11,
+        "passed": 11
+      }
+    },
+    {
+      "name": "mcp-handshake-installed",
+      "command": "node scripts/mcp-packaged.mjs <install dir>",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/mcp/packaged-handshake.json"
+    },
+    {
+      "name": "mcp-tool-call-installed",
+      "command": "node scripts/mcp-packaged.mjs <install dir> --prompt",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/mcp/packaged-tool-call.json"
+    },
+    {
+      "name": "phase00-regression-suite",
+      "command": "node tests/run-tests.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "counts": {
+        "pass": 166,
+        "total": 166
+      },
+      "artifact": "evidence/phase-01-b/regression/phase00-suite.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-b/regression/phase00-gates.json",
+      "counts": {
+        "overall": "PASS",
+        "leaks": 0
+      }
+    }
+  ],
+  "mcp": {
+    "sdk": {
+      "package": "@modelcontextprotocol/sdk",
+      "version": "1.32.2"
+    },
+    "toolCalledDev": true,
+    "toolServedDev": true,
+    "toolCalledInstalled": true
+  },
+  "allPassed": true
+}

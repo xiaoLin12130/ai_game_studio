@@ -1,3 +1,12 @@
+## PHASE 01-B（READY_FOR_EXTERNAL_REVIEW）
+
+- 分支 `phase/01-b-mcp-packaging`，基线 `45c8976`。
+- Studio MCP Server 换成官方 `@modelcontextprotocol/sdk@1.32.2`，工具 `get_studio_health` 完成真实端到端调用（开发环境 + 安装后各一次）。
+- Windows 安装包 `AI-Game-Studio-0.1.0-x64.exe`（226.5 MB，SHA-256 `2C0491B4…`），静默安装后探测 READY、进程回收确认。
+- 回归：应用测试 61/61、PHASE 00 套件 166/166、三门禁 PASS。
+- 报告：`docs/review-handoff/PHASE_01_B_WORK_REPORT.md`；证据：`evidence/phase-01-b/`。
+- 未做（后续阶段）：Session/Task/项目管理/Decision Center/素材库/构建流水线/React 重构。
+
 # 当前交接
 
 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
