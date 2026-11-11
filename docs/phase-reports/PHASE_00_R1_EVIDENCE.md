@@ -1,8 +1,13 @@
 # PHASE 00-R1｜补充证据（0.2.1-rc.3 + commandcode）
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
 > **历史记录（R1 时代）**：本文件记录的是 R1 那一轮的证据，当时套件是 **5 个探针**，
-> 因此下文出现的「5/5」属于当时规模。当前基线是 **六探针 6/6 + 两个门禁 + 68 项回归测试**，
-> 以 `spike/dsh-probe/current-0.2.1/evidence/r14/` 与 `state/project_state.json` 的 `r14` 段为准。
+> 因此下文出现的「5/5」属于当时规模，保留原样。**当前基线不是本文的数字，也不以 `r14` 段为准**：
+> 唯一权威记录是 `state/project_state.json` → `phase_00_final`。当前规模：六探针 **6/6 PASS**
+> （最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，`evidence/r14/summary.json`，本轮未重跑）、
+> **三道门禁**（dependency / state / leak，结果见 `evidence/r15/final-gates.json`）、回归测试 **135/135 PASS**
+> （`evidence/r15/tests.json`），另有不消耗模型额度的 CC-6 退出码探针。
 
 本文件补充并修正 `PHASE_00_EVIDENCE.md`。**0.1.5 的历史证据已冻结**在
 `spike/dsh-probe/legacy-0.1.5/`（探针源码 + 证据快照），后续不再覆盖。
@@ -26,7 +31,7 @@
 | CC-0 CLI 基准 | PASS | `evidence/cc-0-cli-baseline/summary.json`（`tokenEchoed` + `modelNamed`；原始输出已按 R1.2 要求移除，改由结构化字段承载） |
 | CC-1 真实对话 | PASS | `evidence/cc-1-reply/summary.json`（`requestRoute.provider = commandcode`） |
 | CC-2 MCP 工具 | PASS | `evidence/cc-2-tools/audit-records.json`（`tools/call` + `tools/call.served`） |
-| CC-3 会话恢复 | PASS | `evidence/cc-3-resume/summary.json`（`RESUME_RESTORES_HISTORY`） |
+| CC-3 会话恢复（正常关闭） | **CONFIRMED** | `evidence/cc-3-resume/summary.json`（`RESUME_RESTORES_HISTORY`：新进程 resume 后答出随机口令）；中断中的最后一轮恢复为 `UNKNOWN`（U7） |
 | CC-4 并发 | PASS | `evidence/cc-4-concurrent/summary.json`（答案未互换） |
 | CC-5 能力矩阵 | PASS | `evidence/cc-5-capability/summary.json`（方法存在性） |
 
@@ -74,12 +79,17 @@ Error: [safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {...,"targets":["...node
 证据写入统一经 `redact()`：仓库根 → `<repo>`、用户目录 → `<user-home>`、主机名 → `<host>`。
 历史证据已批量清洗；报告中不出现真实用户名与目录结构。
 
-## A7. SDK 退出码的可得性（对应门禁 6 的措辞修正）
+## A7. SDK 退出码的可得性（2026-11-11 修订：门禁 6 按原始措辞判定）
+
+**结论：0.2.1-rc.3 没有结构化的退出码访问器，但存在一条已文档化的 message 通道，实测可取得退出码。**
 
 | 问题 | 结论 |
 |---|---|
-| SDK 是否返回被管理进程的退出码 | **否**。`HarnessClient` 的 `exitCode` 是私有字段；正常 `close()` 只保证回收完成 |
-| 能取得的证据 | `close()` 耗时、OS 进程表三态结果、（异常时）`TransportClosedError` 携带的退出码 |
-| 启动器级退出码 | 单独测量：干净 EOF → `0`；profile 启动失败 → `1`（探针 G，**不代表 SDK 管理进程**） |
+| 有没有结构化访问器 | **没有**。`HarnessClient#exitCode` 是私有字段，`close()` 返回 `Promise<void>`，`HarnessClientOptions` 没有 onExit 钩子 |
+| 能不能拿到退出码 | **能**。SDK 公开导出的 `TransportClosedError` message 携带 `exit code: <n>`（`lib/types/client.d.ts` 明文声明 "The message carries the exit code"）；该值来自 `child.once('exit')`，对应 SDK 自己 spawn 的 runtime 子进程 |
+| 实测值 | 正常 `close()` → `exitCode = 0`；外部 `taskkill /F` 强杀 → `exitCode = 1`；两次均 `PROCESS_ABSENT`（`evidence/cc-6-exitcode/summary.json`，`npm run probe:exit`，`modelCallsMade = 0`） |
+| 限制 | 退出码只能从 **message 文本**解析；上游若改写文本则解析失败返回 `null`（不猜），需随 SDK 升级重跑 CC-6 |
+| 启动器级退出码 | 干净 EOF → `0`；profile 启动失败 → `1`（探针 G，0.1.5，**不代表 SDK 管理进程**） |
 
-因此门禁 6 改为「关闭后进程树为空 + close 耗时」，不再声称 SDK 会返回退出码。
+**门禁 6 结论**：按阶段文件原始措辞「Runtime 关闭后进程确实退出，记录退出码」判定，**已满足**；
+上一轮「改为进程树为空 + close 耗时」的规避措辞**作废**，不再使用。

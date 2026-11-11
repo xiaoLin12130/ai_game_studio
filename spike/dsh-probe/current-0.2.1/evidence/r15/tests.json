@@ -1,0 +1,685 @@
+{
+  "generatedAt": "2026-11-11T03:57:51.664Z",
+  "node": "v24.19.0",
+  "total": 135,
+  "passed": 135,
+  "failed": 0,
+  "exitCode": 0,
+  "results": [
+    {
+      "name": "detect: windows drive",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "detect: windows spaces (general)",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows spaces (deep)",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows program files",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows deep drive",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows non-ascii",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows forward",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: unc",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix mnt",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix tmp",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix opt",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix root",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: posix workspace",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: repository root",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "detect: user home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder repo",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder home",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder host",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder abs",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder credential",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: relative path",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: url",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: url with port",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: escape sequence",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: time",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: bare drive",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: api path",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: regex source",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: credential env name only",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: credential env indirection",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: short sk prefix",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: npm integrity hash",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: openai-style key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: github token is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: aws key is detected and redacted",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "credential: bearer token is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: assigned api key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: jwt is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: private key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "scan: planted leak is found",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "scan: clean tree passes",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "scan: empty scope is an error, not a pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "scan: unreadable file is an error, not a pass",
+      "ok": true,
+      "ms": 97
+    },
+    {
+      "name": "scan: json is inspected after decoding",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "scan: extensionless and .orig files are in scope",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "scan: binary content is skipped by NUL detection, not by suffix",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "scan: credential in a file is reported with its rule id",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "cli: leak exits 1",
+      "ok": true,
+      "ms": 67
+    },
+    {
+      "name": "cli: clean exits 0",
+      "ok": true,
+      "ms": 68
+    },
+    {
+      "name": "cli: empty root exits 1",
+      "ok": true,
+      "ms": 65
+    },
+    {
+      "name": "classify: quota on stderr",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: quota on stdout",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: both streams",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: plugin incompatibility outranks quota",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: healthy run has no kind",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "classify: unknown text stays unclassified",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: empty list is not a pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: single correct request passes",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: fallback on the second hop fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: wrong model fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "routes: shape records that only one hop was seen",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: empty notification list fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: foreign session id fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: mixed list fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "isolation: own session passes",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: leak failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: dependency failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: six passing probes cannot outvote a gate",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: blocked only is BLOCKED, not FAIL",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: all clear is PASS",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "gate: state failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "state: the real repository has one complete current record",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "state: missing authoritative pointer fails",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "state: deleting the current record fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "state: a scope gate downgraded to BLOCKED fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: a gate pointing at a missing evidence file fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: a deferred item without a target phase fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a deferred item claimed as CONFIRMED fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: an UNKNOWN without a verification condition fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: HY4 direct claimed as CONFIRMED fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: HY4 direct marked as blocking fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: deleting a historical round record fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: a document declaring a stale gate_results as current fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: a document with no pointer to the current record fails",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: an incomplete document set cannot pass by omission",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "gates: exactly the ten PHASE 00 scope ids are required",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: swapping a real gate for an invented one keeps the count at ten and still fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a PASS verdict with a non-passing gate is rejected",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a PASS verdict with non-empty blocking items is rejected",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: a verdict with no reason is rejected",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: an extra invented gate on top of the real ten fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: four wrong-named documents that all say phase_00_final fail",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: dropping any one required pointer document fails and names it",
+      "ok": true,
+      "ms": 24
+    },
+    {
+      "name": "state: an empty pointer document fails",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "evidence: a missing file fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "evidence: an empty file fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "evidence: a directory is not a file",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "evidence: corrupt JSON fails",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "evidence: corrupt JSONL fails on the offending line",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "evidence: a valid JSONL file passes",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "evidence: markdown is not parsed as JSON",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "evidence: a path traversal is rejected",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "evidence: staysInside resolves before comparing",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "state: a gate whose evidence is empty fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a gate whose evidence path escapes the repository fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: every declared evidence path really resolves",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "evidence: gate 6 must actually carry the exit code it claims",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "evidence: the old cc-3 evidence cannot satisfy gate 6 any more",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "evidence: a gate without a content rule is unaffected by content rules",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: the phase definition output files must exist",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "name": "state: a missing state file is an error, not an empty pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "exit code: the documented phrase is parsed",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "exit code: a message without one yields null, never a guess",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "output: no direct stream writes outside safe-output.mjs",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: required dsh line is accepted",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "range: older runtime is rejected",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: newer runtime is rejected",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: unsupported syntax is UNKNOWN, not pass",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "range: prerelease ordering",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "deps: fresh home builds both profiles",
+      "ok": true,
+      "ms": 38
+    },
+    {
+      "name": "deps: second run is stable and repairs nothing",
+      "ok": true,
+      "ms": 11
+    },
+    {
+      "name": "deps: tampered install is repaired, not accepted",
+      "ok": true,
+      "ms": 38
+    },
+    {
+      "name": "deps: tampered profile manifest is repaired",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "deps: missing lockfile fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "deps: lockfile version drift fails",
+      "ok": true,
+      "ms": 6
+    },
+    {
+      "name": "deps: lockfile manifest drift fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "deps: corrupted lockfile fails with a code",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "deps: tree integrity drift fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "deps: tree resolved drift fails",
+      "ok": true,
+      "ms": 7
+    },
+    {
+      "name": "deps: lockfile integrity drift fails even with a cached staging tree",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "deps: lockfile resolved drift fails",
+      "ok": true,
+      "ms": 6
+    },
+    {
+      "name": "suite: dependency gate failure exits 1",
+      "ok": true,
+      "ms": 215
+    },
+    {
+      "name": "suite: broken project state aborts before any probe (real exit code)",
+      "ok": true,
+      "ms": 203
+    },
+    {
+      "name": "evidence: a failing test run cannot overwrite the published result",
+      "ok": true,
+      "ms": 136
+    }
+  ]
+}

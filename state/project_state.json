@@ -90,10 +90,11 @@
       "clean_exit_code": 0,
       "failed_boot_exit_code": 1,
       "cancel_supported": false,
-      "session_resume_supported": false,
-      "tool_approval_callback_supported": false,
       "tool_bridge": "MCP only (dsh-mcp-client), tools named mcp__<server>__<tool>",
-      "session_log_path": "$DSH_HOME/sessions/<escaped-workspace>/<sessionId>/session.v3.jsonl.zstd"
+      "session_log_path": "$DSH_HOME/sessions/<escaped-workspace>/<sessionId>/session.v3.jsonl.zstd",
+      "session_resume": "NOT_SUPPORTED (0.1.5-rc.2 only); 0.2.1-rc.3 = CONFIRMED after normal close (CC-3); interrupted turn = UNKNOWN (U7)",
+      "tool_approval_callback": "UNKNOWN / NOT_OBSERVED in both 0.1.5 and 0.2.1 (not observed is not absent); only session/approve is NOT_SUPPORTED",
+      "runtime_cancel": "NOT_SUPPORTED in both tested versions (session/cancel -> -32603 unknown method)"
     },
     "adrs": {
       "tech_stack": "docs/decisions/ADR-0001-tech-stack.md (PROPOSED: Electron + React + TS)",
@@ -104,7 +105,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T03:10:58.224Z",
+  "updated_at": "2026-11-11T03:56:10.024Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -149,7 +150,7 @@
       }
     },
     "verified_capability_deltas": {
-      "session_resume": "SUPPORTED in 0.2.1 (restores history); NOT_SUPPORTED in 0.1.5",
+      "session_resume": "CONFIRMED in 0.2.1-rc.3 after normal close (CC-3 restores history); interrupted last turn UNKNOWN (U7, deferred); NOT_SUPPORTED in 0.1.5-rc.2",
       "tool_approval_callback": "UNKNOWN / NOT_OBSERVED in both tested versions: no approval message type in the protocol, and no server->client request was observed during a run. Absence of observation is not proof of absence.",
       "runtime_cancel": "NOT_SUPPORTED in both tested versions",
       "session_close": "NOT_SUPPORTED in both tested versions",
@@ -527,19 +528,19 @@
     "rule": "历史对象只读保留，不再作为当前状态；所有文档与脚本只引用 phase_00_final。此前存在三个互相竞争的权威指针，其中 phase_00.gate_results 仍把两条核心门禁标成 BLOCKED。"
   },
   "phase_00_final": {
-    "record": "PHASE_00_FINAL_CURRENT",
-    "authored_at": "2026-11-11T03:00:39.884Z",
+    "record": "phase_00_final",
+    "authored_at": "2026-11-11T04:10:00.000Z",
     "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
     "scope_definition": "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md",
     "verdict": "PARTIALLY_VERIFIED",
-    "verdict_reason": "冻结范围内 10 条门禁均有证据且为 PASS；但最近一次外部独立评审结论为 PARTIALLY_VERIFIED，R1.4.1 收尾尚未获得正式复审通过；本轮未重跑真实模型探针，六探针结论沿用已提交证据。按阶段定义「只有门禁全部满足才 PASS」，正式 PASS 留待外部评审，不自行宣布。",
+    "verdict_reason": "10 条 PHASE 00 原始验收门禁现在全部有可机器校验的直接证据（见 gates 与 evidence）：门禁 6 不再靠改写措辞，而是由 CC-6 取得被 SDK 托管 Runtime 的真实退出码——正常 close = 0、外部强杀 = 1，两次均 PROCESS_ABSENT，消耗模型调用 0 次；门禁 1 换成交付环境（0.2.1-rc.3 / SDK 0.2.1-rc.3 / 插件 0.15.4）的真实盘点；门禁 4 补了当前切片可复跑的诊断 CLI（live 展示连接/会话/回收与退出码，replay 展开真实录制的事件与状态时间线）；门禁 7 的五类能力（Resume / 中断轮次 / 审批回调 / session-approve / session-cancel）在文档与状态里已分开，不再合并。仍不自行宣布 PASS，原因有三且都已记录：（1）退出码通道是已文档化的 message 文本（TransportClosedError），0.2.1-rc.3 没有结构化访问器，属能力限制；（2）门禁 4 的实时事件流需要一次真实模型轮次，本轮没有权限/额度重跑，因此用真实录制运行做 CLI 展示；（3）本轮结论尚未经外部独立评审复核。按阶段定义，正式 PASS 需外部评审确认后给出；在确认之前不进入 PHASE 01。",
     "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
     "model_probes_rerun_this_round": false,
     "gates": {
       "01_environment_inventory": {
         "status": "PASS",
-        "evidence": "docs/phase-reports/PHASE_00_EVIDENCE.md",
-        "note": "OS/Node/DSH/SDK 版本与命令输出"
+        "evidence": "docs/phase-reports/PHASE_00_ENV_INVENTORY_DELIVERY.md",
+        "note": "交付环境（DSH 0.2.1-rc.3 / SDK 0.2.1-rc.3 / commandcode 0.15.4）的真实盘点，逐条附命令与输出；2026-11-11 实测。0.1.5 清单保留为历史快照，不再作为本门禁依据。"
       },
       "02_sdk_version_compatibility": {
         "status": "PASS",
@@ -553,8 +554,8 @@
       },
       "04_events_visible": {
         "status": "PASS",
-        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-1-reply/records.jsonl",
-        "note": "事件时间序列 + CLI 输出"
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/summary.json",
+        "note": "当前切片新增可复跑诊断 CLI（src/studio-diag.mjs，npm run diag）：live 模式展示版本/连接/会话/回收；replay 模式把真实录制运行的事件与状态时间线（running → idle → running → idle）在 CLI 展开。transcript 见同目录 cli-output.txt，未消耗模型调用。"
       },
       "05_studio_readonly_tool_invoked": {
         "status": "PASS",
@@ -563,13 +564,13 @@
       },
       "06_runtime_exit_code_recorded": {
         "status": "PASS",
-        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-3-resume/summary.json",
-        "note": "正常 close 后进程回收与退出码；强杀场景另列 DEFERRED U4"
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-6-exitcode/summary.json",
+        "note": "CC-6 实测被管理 Runtime 的真实退出码：正常 close = 0，外部强杀 = 1；两次均 PROCESS_ABSENT。取得通道为 SDK 公开导出类型 TransportClosedError 的 message（\"exit code: <n>\"，lib/types/client.d.ts 明文声明），值来自 child.once(\"exit\") 对 SDK 亲自 spawn 的那个子进程；0.2.1-rc.3 无结构化访问器（exitCode 为私有字段、close() 返回 void、无 onExit 选项）。未使用 CLI 启动器退出码，未读取私有字段。消耗模型调用 0 次。"
       },
       "07_session_resume_approval_classified": {
         "status": "PASS",
         "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-5-capability/summary.json",
-        "note": "resume 已验证；审批按门禁 7 明确标记未测/UNKNOWN"
+        "note": "正常关闭后 Session Resume = CONFIRMED（CC-3 口令回显）；中断中的最后一轮 = UNKNOWN（U7，DEFERRED）；DSH 原生审批回调 = UNKNOWN（未观察到 ≠ 不存在）；session/approve 与 session/cancel = NOT_SUPPORTED（-32603 unknown method）。五种能力分别归类，不合并。"
       },
       "08_tech_selection_adr": {
         "status": "PASS",
@@ -593,87 +594,114 @@
         "at": "2026-11-10T12:43:44.987Z",
         "note": "最后一次完整六探针真实模型运行；本轮未重跑、未覆盖、未伪造。"
       },
+      "runtime_exit_code": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/cc-6-exitcode/summary.json",
+        "at": "2026-11-11T03:41:22.098Z",
+        "graceful_close_exit_code": 0,
+        "forced_kill_exit_code": 1,
+        "model_calls_made": 0,
+        "channel": "TransportClosedError.message (\"exit code: <n>\") — public exported type documented to carry the exit code; value originates from child.once(\"exit\") on the SDK-spawned runtime",
+        "limitation": "0.2.1-rc.3 has no structured exit-code accessor: HarnessClient#exitCode is private, close() resolves void, HarnessClientOptions has no exit hook"
+      },
+      "cli_display": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/summary.json",
+        "transcript": "spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/cli-output.txt",
+        "at": "2026-11-11T03:53:30.000Z",
+        "model_calls_made": 0
+      },
       "final_gate_regression": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r14/final-gates.json",
-        "at": "2026-11-11T03:10:09.681Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r15/final-gates.json",
+        "at": "2026-11-11T03:48:54.095Z",
         "dependency": "PASS",
         "state": "PASS",
         "leak": "PASS",
-        "scanned_files": 173,
-        "files_in_publish_set": 173,
+        "scanned_files": 178,
+        "files_in_publish_set": 178,
         "leaks": 0,
         "overall": "PASS",
         "model_probes_run": false
       },
       "regression_tests": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r14/tests.json",
-        "total": 107,
-        "passed": 107,
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r15/tests.json",
+        "at": "2026-11-11T03:48:00.000Z",
+        "total": 135,
+        "passed": 135,
         "failed": 0,
         "exit_code": 0
       },
       "negative_proofs": [
         "evidence/r14/negative-leak-gate.json：六探针全 PASS 仍因泄漏判 OVERALL FAIL / exit 1",
-        "tests/run-tests.mjs：20+ 条反向断言（锁缺失/漂移/损坏、串线、空通知、凭据、状态门禁）"
+        "tests/run-tests.mjs：35+ 条反向断言（门禁 ID 换名、文档集合、空/目录/损坏/路径穿越证据、门禁 6 内容级断言、锁缺失、串线、状态门禁）"
       ]
     },
-    "blocking_items": [],
+    "blocking_items": [
+      "门禁 6 的退出码来自 SDK 公开错误类型的 message 文本，不是结构化字段；SDK 升级后需重跑 CC-6 确认格式未变",
+      "门禁 4 的 CLI 展示中，事件/状态时间线来自真实录制运行的回放；实时事件流需要一次真实模型轮次，本轮未重跑"
+    ],
     "deferred": {
       "U1": {
         "item": "Electron 打包后完整链路",
         "status": "DEFERRED",
         "phase": "PHASE 01（ADR-0001 §5 打包冒烟）",
         "risk": "技术栈仍为 PROPOSED / CONDITIONAL；若打包失败需按 ADR 切到 Tauri，不影响当前 SDK 调用链",
-        "verify_when": "有可安装包并逐条执行 ADR-0001 §5 清单"
+        "verify_when": "有可安装包并逐条执行 ADR-0001 §5 清单",
+        "blocking": false
       },
       "U2": {
         "item": "生产形态 DSH_HOME 策略",
         "status": "DEFERRED",
         "phase": "PHASE 01 前期产品决策",
         "risk": "隔离更干净但要重配 provider；复用会改动用户日常 DSH 配置。属于产品决策，本轮不擅自定型",
-        "verify_when": "用户明确选择隔离 vs 复用后，实测隔离 home 加载 commandcode 的前置条件并更新 ADR-0002"
+        "verify_when": "用户明确选择隔离 vs 复用后，实测隔离 home 加载 commandcode 的前置条件并更新 ADR-0002",
+        "blocking": false
       },
       "U3": {
         "item": "多 Runtime 资源占用",
         "status": "DEFERRED",
         "phase": "PHASE 05（开发编排）；PHASE 01 可先取基线",
         "risk": "未知并发数下的内存/进程上限，影响调度器设计；CC-4 已证明 2 个会话隔离可用",
-        "verify_when": "有 N 个并发 Runtime 的资源曲线与上限数据"
+        "verify_when": "有 N 个并发 Runtime 的资源曲线与上限数据",
+        "blocking": false
       },
       "U4": {
         "item": "崩溃瞬间外部进程（Shell/MCP）回收",
         "status": "DEFERRED",
         "phase": "PHASE 01 早期可靠性（ADR-0002 §6#7）",
         "risk": "强杀后可能残留孤儿子进程；正常关闭回收已验证，不影响当前阶段",
-        "verify_when": "人为 kill Runtime 后观测进程树并确认无残留"
+        "verify_when": "人为 kill Runtime 后观测进程树并确认无残留",
+        "blocking": false
       },
       "U5": {
         "item": "MCP Server 换官方 SDK 的兼容性",
         "status": "DEFERRED",
         "phase": "PHASE 01 首任务（ADR-0002 §3D）",
         "risk": "手写 stdio JSON-RPC 原型会随 MCP 协议版本漂移；生产网关必须替换。当前工具调用链已通过 DSH 认可的 MCP bridge 验证",
-        "verify_when": "官方 @modelcontextprotocol/sdk server 起得来、工具进清单、能被 DSH 调用"
+        "verify_when": "官方 @modelcontextprotocol/sdk server 起得来、工具进清单、能被 DSH 调用",
+        "blocking": false
       },
       "U6": {
         "item": "DSH 0.2.2 取消/审批能力",
         "status": "DEFERRED",
         "phase": "版本升级时（需用户决定是否升级）",
         "risk": "当前无取消能力，只能靠「每任务一 Runtime + 关闭进程」隔离（ADR-0002 §3B）；不升级不影响本阶段",
-        "verify_when": "存在兼容的官方 0.2.2 与插件后做取消/审批冒烟"
+        "verify_when": "存在兼容的官方 0.2.2 与插件后做取消/审批冒烟",
+        "blocking": false
       },
       "U7": {
         "item": "中断中的最后一轮能否 resume",
         "status": "DEFERRED",
         "phase": "PHASE 01 早期可靠性",
         "risk": "任务执行中被强杀可能丢失当前轮；CC-3 只覆盖完整轮次后的正常关闭恢复",
-        "verify_when": "在轮次执行中强杀 → resume → 检查最后一轮内容"
+        "verify_when": "在轮次执行中强杀 → resume → 检查最后一轮内容",
+        "blocking": false
       },
       "U8": {
         "item": "0.1.5 legacy 套件本机稳定复现",
         "status": "BLOCKED",
         "phase": "不解除（legacy 已冻结；冻结快照为权威记录）",
         "risk": "仅影响历史对照；生产目标是 0.2.1-rc.3，无产品风险",
-        "verify_when": "换一台无 NODE_OPTIONS safe-delete 安全垫的机器；当前保留 spike/dsh-probe/legacy-0.1.5/evidence/ 冻结快照"
+        "verify_when": "换一台无 NODE_OPTIONS safe-delete 安全垫的机器；当前保留 spike/dsh-probe/legacy-0.1.5/evidence/ 冻结快照",
+        "blocking": false
       }
     },
     "unknown": {
@@ -759,6 +787,9 @@
         "real model execution of the six DSH probes (retained evidence only)",
         "real Session resume and tool-call runtime behaviour (retained evidence only)"
       ]
-    }
+    },
+    "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
+    "convergence_round": "r15",
+    "updated_at": "2026-11-11T03:56:10.024Z"
   }
 }

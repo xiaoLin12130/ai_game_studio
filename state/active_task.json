@@ -1,8 +1,8 @@
 {
-  "task_id": null,
+  "task_id": "phase-00-convergence-r15",
   "phase": "PHASE_00",
-  "status": "READY",
-  "title": "Verify DSH integration and technical feasibility",
+  "status": "AWAITING_EXTERNAL_REVIEW",
+  "title": "PHASE 00 convergence: exit-code evidence, gate hardening, state/doc unification",
   "dsh_session_id": null,
   "workspace": null,
   "allowed_write_roots": ["./"],
@@ -14,5 +14,9 @@
     "Do not force-push or delete user data"
   ],
   "checkpoint": null,
-  "next_action": "Inspect environment and verify official DSH SDK integration."
+  "next_action": "Await external PHASE 00 review. Do not start PHASE 01 business features before it confirms.",
+  "authoritative_source": {
+    "current_record": "phase_00_final",
+    "file": "state/project_state.json"
+  }
 }

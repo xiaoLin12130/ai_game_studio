@@ -66,7 +66,7 @@
     "Local database choice is still deferred to PHASE 01.",
     "Never upgrade the user global DSH or change ~/.dsh profiles; verify against an isolated DSH_HOME.",
     "Repository visibility is public by explicit user instruction; do not change it.",
-    "Do not claim tool-approval callbacks exist; they do not in 0.1.5 or 0.2.1.",
+    "Do not claim a dependable tool-approval callback exists in 0.1.5 or 0.2.1: it is UNKNOWN / NOT_OBSERVED. Only the session/approve method is NOT_SUPPORTED.",
     "Do not cite CC-0 as provider-route evidence; it has no request/header.",
     "Do not treat \"no approval callback observed\" as \"no approval callback exists\" — it is UNKNOWN/NOT_OBSERVED.",
     "Do not run fs.cpSync or bulk fs.rmSync against dsh-home or node_modules on this host; the shim kills the process.",

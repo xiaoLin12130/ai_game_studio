@@ -10,12 +10,76 @@
  *
  * The gate only reads files that are already published. It cannot repair anything,
  * and it deliberately refuses an incomplete document set rather than quietly passing.
+ *
+ * PHASE 00 convergence hardened the gate against three ways of passing without being
+ * right, which the first version accepted:
+ *
+ *   1. `Object.keys(gates).length === 10` — delete a real scope gate, add a made-up one,
+ *      keep the count at ten, and the check passed. The required ids are now named.
+ *   2. `docs` counted instead of matched — four unrelated documents with the right
+ *      phrase in them stood in for the four documents that must point at the record.
+ *   3. `fs.existsSync` — an empty file, a directory, a truncated JSON blob and a path
+ *      that escapes the repository all "existed". Each is now rejected on its own.
  */
-
 import fs from 'node:fs'
 import path from 'node:path'
 
 export const EXIT = { PASS: 0, BLOCKED: 2, FAIL: 1 }
+
+/**
+ * The ten PHASE 00 scope gates, verbatim from
+ * `phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md` ("验收门禁", in order).
+ *
+ * The ids are part of the contract, not a naming convenience: a gate that can be
+ * swapped for another gate of the same count is not a gate.
+ */
+export const REQUIRED_GATE_IDS = [
+  '01_environment_inventory',
+  '02_sdk_version_compatibility',
+  '03_real_prompt_trackable_result',
+  '04_events_visible',
+  '05_studio_readonly_tool_invoked',
+  '06_runtime_exit_code_recorded',
+  '07_session_resume_approval_classified',
+  '08_tech_selection_adr',
+  '09_no_secrets_in_git_or_logs',
+  '10_github_push_and_review_handoff',
+]
+
+/** Documents that must point at the single current record. */
+export const STATE_DOC_POINTERS = [
+  'docs/phase-reports/PHASE_00_REPORT.md',
+  'docs/phase-reports/PHASE_00_EVIDENCE.md',
+  'docs/phase-reports/PHASE_00_R1_EVIDENCE.md',
+  'docs/review-handoff/PHASE_00_R1_WORK_REPORT.md',
+  'docs/review-handoff/PHASE_00_REVIEW_HANDOFF.md',
+  'docs/review-handoff/PHASE_00_WORK_REPORT.md',
+  'README.md',
+  'memory-bank/handoff.md',
+]
+
+/**
+ * Files the phase definition itself requires as this phase's output
+ * (`phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md` → "本阶段输出").
+ *
+ * Checked in addition to the pointer documents, never instead of them.
+ */
+export const REQUIRED_OUTPUT_FILES = [
+  'docs/phase-reports/PHASE_00_REPORT.md',
+  'docs/phase-reports/PHASE_00_EVIDENCE.md',
+  'docs/decisions/ADR-0001-tech-stack.md',
+  'docs/decisions/ADR-0002-dsh-integration.md',
+  'docs/review-handoff/PHASE_00_REVIEW_HANDOFF.md',
+]
+
+/** A phrase that declares one of the historical gate sets to be current. */
+const STALE_POINTER = /phase_00(?:_r1)?\.gate_results[^\n]{0,60}(?:为准|唯一权威|唯一当前|当前权威)/
+
+/** Historical round records that must survive; deleting them would erase evidence. */
+const HISTORICAL_RECORDS = ['r11', 'r12', 'r13', 'r14', 'r141']
+
+/** Verdict values the schema allows. */
+const ALLOWED_VERDICTS = ['PASS', 'PARTIALLY_VERIFIED', 'BLOCKED', 'FAIL']
 
 /**
  * @param {object} input
@@ -31,30 +95,181 @@ export function decideOverall({ failed = 0, blocked = 0, dependency = 'PASS', le
   return { overall, exitCode: EXIT[overall], gateFailures }
 }
 
-/** Documents that must point at the single current record. */
-export const STATE_DOC_POINTERS = [
-  'docs/phase-reports/PHASE_00_REPORT.md',
-  'docs/review-handoff/PHASE_00_R1_WORK_REPORT.md',
-  'README.md',
-  'memory-bank/handoff.md',
-]
+/**
+ * Is `rel` a path that stays inside `root`?
+ *
+ * `path.resolve` collapses `..`, so the comparison happens after resolution — a
+ * string prefix test on the raw input would let `docs/../../secrets.json` through.
+ *
+ * @param {string} root absolute repository root
+ * @param {string} rel repository-relative path from the state file
+ * @returns {boolean}
+ */
+export function staysInside(root, rel) {
+  if (typeof rel !== 'string' || rel.length === 0) return false
+  const resolved = path.resolve(root, rel)
+  const normalRoot = path.resolve(root)
+  if (resolved === normalRoot) return false
+  return resolved.startsWith(normalRoot + path.sep)
+}
 
-/** A phrase that declares one of the historical gate sets to be current. */
-const STALE_POINTER = /phase_00(?:_r1)?\.gate_results[^\n]{0,60}(?:为准|唯一权威|唯一当前|当前权威)/
+/**
+ * Facts an evidence file must actually contain, per gate.
+ *
+ * "The file exists and parses" was still not enough for gate 6: `cc-3-resume/summary.json`
+ * is valid JSON and did not contain any exit code, yet the state claimed gate 6 was met on
+ * it. A gate whose whole point is a specific measured value has to assert that value.
+ *
+ * A rule returns an array of human-readable problems; empty means satisfied.
+ */
+export const EVIDENCE_CONTENT_RULES = {
+  '06_runtime_exit_code_recorded': (value) => {
+    const problems = []
+    const codes = []
+    const walk = (node) => {
+      if (node === null || typeof node !== 'object') return
+      for (const [key, child] of Object.entries(node)) {
+        if (key === 'exitCode' && Number.isInteger(child)) codes.push(child)
+        else if (key === 'noExitCodeReason' && typeof child === 'string' && child.trim().length > 0) codes.push(child)
+        walk(child)
+      }
+    }
+    walk(value)
+    if (codes.length === 0) {
+      problems.push(
+        'gate 6 requires the managed runtime exit code in its evidence: no integer "exitCode" and no "noExitCodeReason" was found',
+      )
+    }
+    return problems
+  },
+}
 
-/** Historical round records that must survive; deleting them would erase evidence. */
-const HISTORICAL_RECORDS = ['r11', 'r12', 'r13', 'r14', 'r141']
+/**
+ * Verify one evidence path: it exists, it is a regular file, it is not empty, and its
+ * content parses for the type its extension promises.
+ *
+ * Markdown and other text evidence is not parsed as JSON; it only has to be a non-empty
+ * regular file. Parsing is applied where the file claims to be machine-readable, which
+ * is exactly where a truncated record would otherwise pass as "the file exists".
+ *
+ * @param {string} root absolute repository root
+ * @param {string} rel path as written in the state file
+ * @param {((value: unknown) => string[]) | null} [contentRule] per-gate assertion about the parsed value
+ * @returns {{ok: boolean, errors: Array<{code: string, message: string}>, kind: string|null}}
+ */
+export function checkEvidencePath(root, rel, contentRule = null) {
+  const errors = []
+  const fail = (code, message) => errors.push({ code, message })
+
+  if (typeof rel !== 'string' || rel.trim().length === 0) {
+    return { ok: false, errors: [{ code: 'gate-no-evidence', message: 'evidence path is empty' }], kind: null }
+  }
+  if (!staysInside(root, rel)) {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-escape', message: `evidence path escapes the repository root: ${rel}` }],
+      kind: null,
+    }
+  }
+
+  const absolute = path.resolve(root, rel)
+  const extension = path.extname(absolute).toLowerCase()
+
+  let stat
+  try {
+    stat = fs.statSync(absolute)
+  } catch {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-missing', message: `evidence does not exist: ${rel}` }],
+      kind: extension || null,
+    }
+  }
+  if (!stat.isFile()) {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-not-file', message: `evidence is not a regular file: ${rel}` }],
+      kind: extension || null,
+    }
+  }
+  if (stat.size === 0) {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-empty', message: `evidence is empty: ${rel}` }],
+      kind: extension || null,
+    }
+  }
+
+  let text
+  try {
+    text = fs.readFileSync(absolute, 'utf8')
+  } catch (error) {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-unreadable', message: `evidence cannot be read: ${rel} (${error?.code ?? 'error'})` }],
+      kind: extension || null,
+    }
+  }
+  if (text.trim().length === 0) {
+    return {
+      ok: false,
+      errors: [{ code: 'gate-evidence-empty', message: `evidence has no content: ${rel}` }],
+      kind: extension || null,
+    }
+  }
+
+  if (extension === '.json') {
+    try {
+      const value = JSON.parse(text)
+      if (typeof contentRule === 'function') {
+        for (const problem of contentRule(value) ?? []) fail('gate-evidence-content', `${rel}: ${problem}`)
+      }
+    } catch (error) {
+      fail('gate-evidence-unparsable', `evidence is not valid JSON: ${rel} (${String(error?.message ?? error).slice(0, 120)})`)
+    }
+  } else if (extension === '.jsonl') {
+    const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0)
+    if (lines.length === 0) {
+      fail('gate-evidence-empty', `evidence has no records: ${rel}`)
+    }
+    const records = []
+    for (const [index, line] of lines.entries()) {
+      try {
+        records.push(JSON.parse(line))
+      } catch (error) {
+        fail(
+          'gate-evidence-unparsable',
+          `evidence line ${index + 1} is not valid JSON: ${rel} (${String(error?.message ?? error).slice(0, 120)})`,
+        )
+        break
+      }
+    }
+    if (typeof contentRule === 'function' && records.length === lines.length) {
+      for (const problem of contentRule(records) ?? []) fail('gate-evidence-content', `${rel}: ${problem}`)
+    }
+  }
+
+  return { ok: errors.length === 0, errors, kind: extension || null }
+}
 
 /**
  * Read the state file and the pointer documents from a repository root.
  * Separate from the check so tests can inject a mutated state object.
+ *
+ * A missing or unreadable pointer document is left out of `docs` on purpose: the
+ * caller then reports `doc-set-incomplete` naming the file, instead of the whole gate
+ * dying on an ENOENT with no useful message.
  */
 export function loadStateCheck(root, stateFile = null) {
   const file = stateFile ? path.resolve(stateFile) : path.join(root, 'state', 'project_state.json')
   const state = JSON.parse(fs.readFileSync(file, 'utf8'))
   const docs = {}
   for (const rel of STATE_DOC_POINTERS) {
-    docs[rel] = fs.readFileSync(path.join(root, rel), 'utf8')
+    try {
+      docs[rel] = fs.readFileSync(path.join(root, rel), 'utf8')
+    } catch {
+      /* left out so checkProjectState can name the missing document */
+    }
   }
   return { state, docs, root }
 }
@@ -68,7 +283,7 @@ export function loadStateCheck(root, stateFile = null) {
 export function checkProjectState({ state, docs = {}, root = null }) {
   const errors = []
   const fail = (code, message) => errors.push({ code, message })
-  const checked = { gates: 0, deferred: 0, unknown: 0, docs: 0 }
+  const checked = { gates: 0, deferred: 0, unknown: 0, docs: 0, evidence: 0 }
 
   if (!state || typeof state !== 'object') {
     return { ok: false, errors: [{ code: 'state-unreadable', message: 'project_state.json is not an object' }], checked }
@@ -85,22 +300,43 @@ export function checkProjectState({ state, docs = {}, root = null }) {
   }
 
   // 2. Top-level fields must agree with the current record.
-  const allowedVerdicts = ['PASS', 'PARTIALLY_VERIFIED', 'BLOCKED', 'FAIL']
-  if (!allowedVerdicts.includes(final.verdict)) fail('verdict-invalid', `unsupported verdict ${final.verdict}`)
+  if (!ALLOWED_VERDICTS.includes(final.verdict)) fail('verdict-invalid', `unsupported verdict ${final.verdict}`)
   if (state.current_phase !== 'PHASE_00') fail('top-level-phase', 'current_phase must be PHASE_00')
   if (state.product_status !== final.product_status) fail('top-level-status', 'product_status disagrees with phase_00_final.product_status')
   if (state.phase_status?.PHASE_00 !== final.verdict) fail('top-level-verdict', 'phase_status.PHASE_00 disagrees with phase_00_final.verdict')
 
-  // 3. The ten PHASE 00 scope gates: all PASS, each with a real evidence file.
+  // 3. The ten PHASE 00 scope gates, by id: all PASS, each with a valid evidence file.
   const gates = final.gates ?? {}
-  checked.gates = Object.keys(gates).length
-  if (checked.gates !== 10) fail('gate-count', `expected 10 PHASE 00 scope gates, found ${checked.gates}`)
+  const gateIds = Object.keys(gates)
+  checked.gates = gateIds.length
+  for (const id of REQUIRED_GATE_IDS) {
+    if (!Object.prototype.hasOwnProperty.call(gates, id)) fail('gate-id-missing', `required PHASE 00 gate is missing: ${id}`)
+  }
+  for (const id of gateIds) {
+    if (!REQUIRED_GATE_IDS.includes(id)) fail('gate-id-unknown', `gate id is not in the PHASE 00 scope: ${id}`)
+  }
   for (const [id, gate] of Object.entries(gates)) {
     if (gate?.status !== 'PASS') fail('gate-not-pass', `${id} status is ${gate?.status ?? 'missing'}`)
     if (!gate?.evidence) {
       fail('gate-no-evidence', `${id} has no evidence path`)
-    } else if (root && !fs.existsSync(path.join(root, gate.evidence))) {
-      fail('gate-evidence-missing', `${id} evidence does not exist: ${gate.evidence}`)
+    } else if (root) {
+      const evidence = checkEvidencePath(root, gate.evidence, EVIDENCE_CONTENT_RULES[id] ?? null)
+      checked.evidence += 1
+      for (const problem of evidence.errors) fail(problem.code, `${id} ${problem.message}`)
+    }
+  }
+
+  // 3b. A PASS verdict has to be earned: the label may not outrun the gates.
+  if (typeof final.verdict_reason !== 'string' || final.verdict_reason.trim().length === 0) {
+    fail('verdict-no-reason', 'phase_00_final.verdict_reason must explain the verdict')
+  }
+  if (final.verdict === 'PASS') {
+    const notPassing = REQUIRED_GATE_IDS.filter((id) => final.gates?.[id]?.status !== 'PASS')
+    if (notPassing.length > 0) {
+      fail('verdict-overclaimed', `verdict is PASS but these gates are not: ${notPassing.join(', ')}`)
+    }
+    if (Array.isArray(final.blocking_items) && final.blocking_items.length > 0) {
+      fail('verdict-overclaimed', 'verdict is PASS but blocking_items is not empty')
     }
   }
 
@@ -144,15 +380,34 @@ export function checkProjectState({ state, docs = {}, root = null }) {
     if (!state.phase_00_r1?.[key]) fail('history-lost', `phase_00_r1.${key} is missing`)
   }
 
-  // 8. All pointer documents must name the current record and none may name a stale one.
+  // 8. The document set is the named set, not a set of the right size.
   const docEntries = Object.entries(docs)
   checked.docs = docEntries.length
-  if (docEntries.length < STATE_DOC_POINTERS.length) {
-    fail('doc-set-incomplete', `expected ${STATE_DOC_POINTERS.length} pointer documents, got ${docEntries.length}`)
+  for (const rel of STATE_DOC_POINTERS) {
+    if (!Object.prototype.hasOwnProperty.call(docs, rel)) {
+      fail('doc-set-incomplete', `required pointer document is missing: ${rel}`)
+    }
   }
   for (const [rel, text] of docEntries) {
     if (!String(text).includes('phase_00_final')) fail('doc-pointer-missing', `${rel} does not point at phase_00_final`)
     if (STALE_POINTER.test(String(text))) fail('doc-stale-pointer', `${rel} declares a historical gate_results as current`)
+    if (String(text).trim().length === 0) fail('doc-empty', `${rel} is empty`)
+  }
+
+  // 9. The phase definition's own output files must exist, in addition to the pointers.
+  if (root) {
+    for (const rel of REQUIRED_OUTPUT_FILES) {
+      const absolute = path.resolve(root, rel)
+      let stat = null
+      try {
+        stat = fs.statSync(absolute)
+      } catch {
+        fail('phase-output-missing', `required phase output is missing: ${rel}`)
+        continue
+      }
+      if (!stat.isFile()) fail('phase-output-missing', `required phase output is not a file: ${rel}`)
+      else if (stat.size === 0) fail('phase-output-missing', `required phase output is empty: ${rel}`)
+    }
   }
 
   return { ok: errors.length === 0, errors, checked }

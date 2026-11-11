@@ -1,5 +1,7 @@
 # PHASE 00｜技术可行性与 DSH 最小垂直切片 — 阶段报告
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
 > ## ⚠️ 本报告已被 PHASE 00-R1 部分取代（2026-11-10）
 >
 > 本文件保留为 **0.1.5 运行时的历史记录**，不再作为当前事实来源。三处结论已修正：
@@ -65,7 +67,7 @@
 | 会话持久化 | 是 | `sessions/<workspace>/<sessionId>/session.v3.jsonl.zstd`，压缩 18,059 B |
 | 并发会话隔离 | 是 | 单 Runtime 内两 session 并行，通知按 sessionId 不串台 |
 | 运行中取消 | **不存在** | `session/cancel` → `unknown ... method` |
-| 会话恢复 | **不存在** | `session/resume` 不存在；复用 sessionId 报 `already exists` |
+| 会话恢复（0.1.5） | **不存在** | `session/resume` 不存在；复用 sessionId 报 `already exists`。**0.2.1-rc.3**：正常关闭后 **CONFIRMED**（CC-3），中断轮次 `UNKNOWN`（U7） |
 | 工具审批回调 | **未观察到**（`UNKNOWN`） | 0.1.5 无 server→client 请求；0.2.1 补测同样未见，但"未见"不等于"不存在" |
 
 ## 4. 关键技术发现（会直接改变实现方式）
@@ -118,11 +120,15 @@ stderr: Error: atomic-write: timed out waiting for the writer lock at ...\profil
 | 3 | 至少一条真实 Prompt 成功并收到可追踪结果 | **BLOCKED** | Prompt 成功入队并产生 15 条可追踪事件，但模型返回 402 `Insufficient Balance`；DSH 自身 `--profile headless` 同样 402，排除集成问题 |
 | 4 | 事件/状态能记录并在 UI 或 CLI 展示 | **PASS** | 探针 CLI 实时输出 `running/idle`、事件计数；证据落盘 `evidence/*/summary.json` |
 | 5 | Studio 只读工具被 DSH 调用成功 | **BLOCKED** | 注册链路 PASS（握手 + `tools/list` + 进入模型工具清单）；模型未运行故无 `tools/call` |
-| 6 | Runtime 关闭后进程确实退出，记录退出码 | **PASS** | 关闭后进程消失（探针 A/D）；启动器 stdin EOF 退出码 **0**，profile 启动失败退出码 **1**（探针 G） |
-| 7 | Session 恢复/审批能力已验证或明确标记不支持 | **PASS** | 两者均标记 `NOT_SUPPORTED` 并有 `-32603 + unknown method` 证据；另验证 sessionId 复用被拒 |
+| 6 | Runtime 关闭后进程确实退出，记录退出码 | **PASS**（0.1.5 启动器级；0.2.1 见下方门禁 6 注） | 关闭后进程消失（探针 A/D）；启动器 stdin EOF 退出码 **0**，profile 启动失败退出码 **1**（探针 G） |
+| 7 | Session 恢复/审批能力已验证或明确标记不支持 | **PASS**（0.1.5） | 0.1.5 上两者均标记 `NOT_SUPPORTED` 并有 `-32603 + unknown method` 证据；另验证 sessionId 复用被拒（0.1.5）。**0.2.1-rc.3**：正常关闭 Resume=`CONFIRMED`（CC-3）、审批=`UNKNOWN / NOT_OBSERVED`、`session/approve`=`NOT_SUPPORTED` |
 | 8 | 技术选型 ADR 写明取舍和风险 | **PASS** | ADR-0001、ADR-0002 |
 | 9 | 无密钥进入日志或 Git | **PASS** | EVIDENCE §11；`.gitignore` 覆盖 `.dsh/`、`dsh-home/`、`tmp/`、`.env` |
 | 10 | GitHub 推送与复审交接完成 | **BLOCKED** | 仓库无 remote，本机无 `gh`；已在本地提交并生成复审包，推送需用户提供仓库 URL |
+
+> **门禁 6 注（0.2.1-rc.3，2026-11-11）**：按原始措辞「Runtime 关闭后进程确实退出，记录退出码」判定，已满足。
+> `evidence/cc-6-exitcode/summary.json`（`npm run probe:exit`）：正常 close → `exitCode = 0`；外部强杀 → `exitCode = 1`；两次均 `PROCESS_ABSENT`；`modelCallsMade = 0`。
+> 退出码经 SDK 公开导出的 `TransportClosedError` message（`exit code: <n>`）取得；0.2.1-rc.3 没有结构化访问器（`HarnessClient#exitCode` 私有、`close()` 返回 `Promise<void>`、无 onExit 钩子），解析失败返回 `null`。
 
 **综合判定：`PARTIALLY_VERIFIED`**。门禁 1/2/4/6/7/8/9 满足；3/5 被外部账号余额阻断；10 被远端缺失阻断。
 
@@ -148,7 +154,7 @@ node run-all.mjs      # 期望：A/B/C/D/E/F/G 全部 PASS，退出码 0
 
 ## 7. 状态文件更新
 
-- `state/project_state.json`：`current_phase = PHASE_00`，`phase_status.PHASE_00 = PARTIALLY_VERIFIED_DSH_BLOCKED_ON_MODEL_QUOTA`，后续阶段维持 `BLOCKED_BY_PREVIOUS_REVIEW`。
+- `state/project_state.json`：`current_phase = PHASE_00`，`phase_status.PHASE_00 = PARTIALLY_VERIFIED_DSH_BLOCKED_ON_MODEL_QUOTA`（**当时值**；当前以 `phase_00_final` 为准，不使用该后缀），后续阶段维持 `BLOCKED_BY_PREVIOUS_REVIEW`。
 - `state/memory.json`：追加本阶段确认的技术事实（版本线、无取消/无恢复、MCP 唯一工具通道、依赖钉版本）。
 - `memory-bank/handoff.md`：写入下一会话可直接接手的索引。
 
@@ -158,8 +164,8 @@ node run-all.mjs      # 期望：A/B/C/D/E/F/G 全部 PASS，退出码 0
 |---|---|---|---|
 | SDK 语言 | 「TypeScript SDK 或经验证的官方等价 SDK」 | TypeScript SDK 存在且可用 | 采用 TS SDK，偏离为零 |
 | 未知方法错误码 | 协议 README 称 `-32601` | 实测 `-32603` | 记入 `docs/11`，ADR-0002 F2 |
-| 会话恢复 | 「若当前 SDK 支持则验证」 | 不支持，且 sessionId 复用被拒 | 记入 ADR-0002 D4 |
-| 工具审批 | 「若支持则验证映射」 | 协议层不存在 | 标记 `NOT_SUPPORTED` |
+| 会话恢复（0.1.5） | 「若当前 SDK 支持则验证」 | 0.1.5 不支持，且 sessionId 复用被拒；0.2.1-rc.3 正常关闭后 **CONFIRMED**（CC-3），中断轮次 `UNKNOWN`（U7） | 记入 ADR-0002 D4 |
+| 工具审批 | 「若支持则验证映射」 | 0.1.5 协议层无审批消息、未观察到 server→client 请求；`session/approve` 方法本身不存在 | 审批回调记 `UNKNOWN / NOT_OBSERVED`；`session/approve` 记 `NOT_SUPPORTED` |
 | 技术栈 | 未定 | 建议 Electron（ADR-0001） | 待复审批准 |
 
 ## 9. 明确没有做的事

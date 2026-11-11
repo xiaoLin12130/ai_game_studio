@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-11-11T03:58:01.736Z",
+  "modelCallsMade": 0,
+  "replay": {
+    "mode": "replay",
+    "source": "evidence\\cc-3-resume",
+    "probe": "CC-3-resume",
+    "statuses": [
+      "running",
+      "idle",
+      "running",
+      "idle"
+    ],
+    "eventCount": 0,
+    "records": 6
+  },
+  "live": {
+    "mode": "live",
+    "node": "v24.19.0",
+    "dsh": "0.2.1-rc.3",
+    "sdkClient": "0.2.1-rc.3",
+    "serverInfo": {
+      "name": "deepseek-harness-sdk-runtime",
+      "version": "0.0.1"
+    },
+    "connectionMs": 2918,
+    "sessionCreated": false,
+    "statuses": [],
+    "eventCount": 0,
+    "exitCode": 0,
+    "exitCodeRawMessage": "dsh profile \"cc-sdk\": DeepSeek Harness runtime exited\nexit code: 0",
+    "processAfterClose": "PROCESS_ABSENT",
+    "processAbsent": true
+  },
+  "transcript": "cli-output.txt",
+  "transcriptLines": 38
+}

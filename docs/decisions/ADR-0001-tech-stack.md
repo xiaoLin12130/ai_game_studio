@@ -25,7 +25,7 @@
 |---|---|---|
 | C1 | DSH Runtime 是 Node 程序；官方 SDK 是 TypeScript/Node 库，通过 spawn 子进程 + stdio JSON-RPC 驱动 | `@deepseek-ai/dsh-sdk-client@0.2.1-rc.3` 依赖同版本 `@deepseek-ai/dsh` 并自行解析可执行文件 |
 | C2 | 用户实际 Provider 是第三方插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，要求 DSH `>=0.2.1-rc.2 <0.2.2` | 插件 `package.json` 的 `dsh.compatibility`；桌面端 0.2.1-rc.3 |
-| C3 | 0.2.1-rc.3 有 `session/resume`，但**仍无** Runtime 级取消；工具审批回调**未观察到**（`UNKNOWN`，不是"已证明不存在"） | `spike/dsh-probe/current-0.2.1/evidence/cc-5-capability/summary.json` |
+| C3 | 0.2.1-rc.3 的 `session/resume` 在**正常关闭后**恢复历史（**CONFIRMED**，CC-3）；中断中的最后一轮恢复为 `UNKNOWN`（U7）；**仍无** Runtime 级取消（`session/cancel` = `NOT_SUPPORTED`）；DSH 原生审批回调**未观察到**（`UNKNOWN / NOT_OBSERVED`，不是"已证明不存在"） | `spike/dsh-probe/current-0.2.1/evidence/cc-3-resume/summary.json`、`cc-5-capability/summary.json` |
 
 C1+C2 的直接结论：**本机必须有一个能加载第三方 bundle 的 Node 运行时来承载 DSH**，且该运行时的版本必须与插件兼容（0.2.1 线）。
 

@@ -26,7 +26,17 @@ import { scanTree } from '../src/lib/scrub.mjs'
 import { out } from '../src/lib/safe-output.mjs'
 import { classifyRun } from '../src/lib/diagnostics.mjs'
 import { notificationsIsolated, routesAllMatch, summariseRoutes } from '../src/lib/assertions.mjs'
-import { decideOverall, checkProjectState, loadStateCheck, STATE_DOC_POINTERS } from '../src/lib/gates.mjs'
+import {
+  decideOverall,
+  checkProjectState,
+  checkEvidencePath,
+  staysInside,
+  loadStateCheck,
+  REQUIRED_GATE_IDS,
+  REQUIRED_OUTPUT_FILES,
+  STATE_DOC_POINTERS,
+} from '../src/lib/gates.mjs'
+import { parseExitCode, EXIT_CODE_PATTERN } from '../src/lib/exitcode.mjs'
 import { setupProfiles, compareVersions, satisfiesRange } from '../scripts/setup-profiles.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
@@ -407,11 +417,11 @@ await test('gate: state failure alone fails the suite', () => {
 const stateData = () => loadStateCheck(REPO_ROOT)
 
 /** Check a deep-cloned state with one deliberate defect, leaving the real file alone. */
-function withBrokenState(mutate, docs = null) {
+function withBrokenState(mutate, docs = null, root = REPO_ROOT) {
   const data = stateData()
   const state = structuredClone(data.state)
   mutate(state)
-  return checkProjectState({ state, docs: docs ?? data.docs, root: REPO_ROOT })
+  return checkProjectState({ state, docs: docs ?? data.docs, root })
 }
 
 const expectCode = (result, code) => {
@@ -489,6 +499,256 @@ await test('state: an incomplete document set cannot pass by omission', () => {
 })
 
 // ---------------------------------------------------------------------------
+// PHASE 00 convergence: the state gate must fail for the reasons it claims
+// ---------------------------------------------------------------------------
+// The first version of the gate checked `length === 10` for gates and a count for
+// documents, so a swapped gate and four unrelated documents both passed. Every case
+// below is the exploit that used to work, asserted on the returned code.
+
+/** Assert that the result failed AND carries every one of these codes. */
+const expectCodes = (result, codes) => {
+  assert.equal(result.ok, false, `expected a failure, got PASS: ${JSON.stringify(result.checked)}`)
+  for (const code of codes) {
+    assert.ok(result.errors.some((e) => e.code === code), `expected ${code}, got ${JSON.stringify(result.errors)}`)
+  }
+}
+
+/** A scratch root used only as an evidence-path anchor; docs are injected in memory. */
+const evidenceRoot = made('evidence-fixtures')
+
+await test('gates: exactly the ten PHASE 00 scope ids are required', () => {
+  assert.equal(REQUIRED_GATE_IDS.length, 10)
+  assert.equal(new Set(REQUIRED_GATE_IDS).size, 10)
+  const gates = stateData().state.phase_00_final.gates
+  assert.deepEqual(Object.keys(gates).sort(), [...REQUIRED_GATE_IDS].sort())
+})
+
+await test('state: swapping a real gate for an invented one keeps the count at ten and still fails', () => {
+  const result = withBrokenState((s) => {
+    const gates = s.phase_00_final.gates
+    const borrowed = structuredClone(gates['03_real_prompt_trackable_result'])
+    delete gates['06_runtime_exit_code_recorded']
+    gates['06_runtime_exit_code_recorded_INVENTED'] = borrowed
+    assert.equal(Object.keys(gates).length, 10, 'the exploit depends on the count staying 10')
+  })
+  expectCodes(result, ['gate-id-missing', 'gate-id-unknown'])
+})
+
+await test('state: a PASS verdict with a non-passing gate is rejected', () => {
+  const result = withBrokenState((s) => {
+    s.phase_00_final.verdict = 'PASS'
+    s.phase_status.PHASE_00 = 'PASS'
+    s.phase_00_final.gates['06_runtime_exit_code_recorded'].status = 'BLOCKED'
+  })
+  expectCodes(result, ['verdict-overclaimed'])
+})
+
+await test('state: a PASS verdict with non-empty blocking items is rejected', () => {
+  const result = withBrokenState((s) => {
+    s.phase_00_final.verdict = 'PASS'
+    s.phase_status.PHASE_00 = 'PASS'
+    s.phase_00_final.blocking_items = ['still blocked']
+  })
+  expectCode(result, 'verdict-overclaimed')
+})
+
+await test('state: a verdict with no reason is rejected', () => {
+  expectCode(withBrokenState((s) => { delete s.phase_00_final.verdict_reason }), 'verdict-no-reason')
+})
+
+await test('state: an extra invented gate on top of the real ten fails', () => {
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['11_made_up'] = structuredClone(s.phase_00_final.gates['08_tech_selection_adr'])
+  })
+  expectCode(result, 'gate-id-unknown')
+})
+
+await test('state: four wrong-named documents that all say phase_00_final fail', () => {
+  const docs = {
+    'docs/notes/A.md': 'phase_00_final',
+    'notes/B.md': 'phase_00_final',
+    'docs/C.md': 'phase_00_final',
+    'README.old.md': 'phase_00_final',
+  }
+  const data = stateData()
+  const result = checkProjectState({ state: data.state, docs, root: REPO_ROOT })
+  expectCodes(result, ['doc-set-incomplete'])
+  for (const rel of STATE_DOC_POINTERS) {
+    assert.ok(
+      result.errors.some((e) => e.code === 'doc-set-incomplete' && e.message.includes(rel)),
+      `the missing required document ${rel} must be named`,
+    )
+  }
+})
+
+await test('state: dropping any one required pointer document fails and names it', () => {
+  for (const rel of STATE_DOC_POINTERS) {
+    const docs = { ...stateData().docs }
+    delete docs[rel]
+    const data = stateData()
+    const result = checkProjectState({ state: data.state, docs, root: REPO_ROOT })
+    expectCode(result, 'doc-set-incomplete')
+    assert.ok(result.errors.some((e) => e.message.includes(rel)), `missing document not named: ${rel}`)
+  }
+})
+
+await test('state: an empty pointer document fails', () => {
+  const docs = { ...stateData().docs }
+  docs['README.md'] = '   \n\t  '
+  const data = stateData()
+  expectCodes(checkProjectState({ state: data.state, docs, root: REPO_ROOT }), ['doc-pointer-missing', 'doc-empty'])
+})
+
+await test('evidence: a missing file fails', () => {
+  const result = checkEvidencePath(evidenceRoot, 'does/not/exist.json')
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-missing')
+})
+
+await test('evidence: an empty file fails', () => {
+  fs.mkdirSync(path.join(evidenceRoot, 'empty'), { recursive: true })
+  fs.writeFileSync(path.join(evidenceRoot, 'empty', 'summary.json'), '')
+  const result = checkEvidencePath(evidenceRoot, 'empty/summary.json')
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-empty')
+})
+
+await test('evidence: a directory is not a file', () => {
+  fs.mkdirSync(path.join(evidenceRoot, 'a-directory.json'), { recursive: true })
+  const result = checkEvidencePath(evidenceRoot, 'a-directory.json')
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-not-file')
+})
+
+await test('evidence: corrupt JSON fails', () => {
+  write(path.join(evidenceRoot, 'corrupt', 'summary.json'), '{ "probe": "x", ')
+  const result = checkEvidencePath(evidenceRoot, 'corrupt/summary.json')
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-unparsable')
+})
+
+await test('evidence: corrupt JSONL fails on the offending line', () => {
+  write(path.join(evidenceRoot, 'corrupt', 'records.jsonl'), '{"ts":"1","type":"ok"}\n{ not json }\n')
+  const result = checkEvidencePath(evidenceRoot, 'corrupt/records.jsonl')
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-unparsable')
+  assert.ok(result.errors[0].message.includes('line 2'), result.errors[0].message)
+})
+
+await test('evidence: a valid JSONL file passes', () => {
+  write(path.join(evidenceRoot, 'valid', 'records.jsonl'), '{"a":1}\n{"b":2}\n')
+  assert.equal(checkEvidencePath(evidenceRoot, 'valid/records.jsonl').ok, true)
+})
+
+await test('evidence: markdown is not parsed as JSON', () => {
+  write(path.join(evidenceRoot, 'valid', 'notes.md'), '# heading\n\nnot json at all: {\n')
+  const result = checkEvidencePath(evidenceRoot, 'valid/notes.md')
+  assert.equal(result.ok, true, JSON.stringify(result.errors))
+  assert.equal(result.kind, '.md')
+})
+
+await test('evidence: a path traversal is rejected', () => {
+  for (const rel of ['../outside.json', 'docs/../../outside.json', BS + 'absolute', 'C:' + BS + 'Windows' + BS + 'win.ini']) {
+    const result = checkEvidencePath(evidenceRoot, rel)
+    assert.equal(result.ok, false, `traversal accepted: ${rel}`)
+    assert.ok(
+      ['gate-evidence-escape', 'gate-evidence-missing'].includes(result.errors[0].code),
+      `unexpected code for ${rel}: ${result.errors[0].code}`,
+    )
+  }
+  assert.equal(checkEvidencePath(evidenceRoot, '../outside.json').errors[0].code, 'gate-evidence-escape')
+})
+
+await test('evidence: staysInside resolves before comparing', () => {
+  assert.equal(staysInside(evidenceRoot, 'valid/notes.md'), true)
+  assert.equal(staysInside(evidenceRoot, '../escape.md'), false)
+  assert.equal(staysInside(evidenceRoot, 'valid/../../../escape.md'), false)
+  assert.equal(staysInside(evidenceRoot, ''), false)
+})
+
+await test('state: a gate whose evidence is empty fails', () => {
+  fs.mkdirSync(path.join(evidenceRoot, 'state-empty'), { recursive: true })
+  fs.writeFileSync(path.join(evidenceRoot, 'state-empty', 'summary.json'), '')
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['05_studio_readonly_tool_invoked'].evidence = 'state-empty/summary.json'
+  }, null, evidenceRoot)
+  expectCode(result, 'gate-evidence-empty')
+})
+
+await test('state: a gate whose evidence path escapes the repository fails', () => {
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['05_studio_readonly_tool_invoked'].evidence = '../../secrets.json'
+  }, null, evidenceRoot)
+  expectCode(result, 'gate-evidence-escape')
+})
+
+await test('state: every declared evidence path really resolves', () => {
+  const data = stateData()
+  for (const [id, gate] of Object.entries(data.state.phase_00_final.gates)) {
+    const result = checkEvidencePath(REPO_ROOT, gate.evidence)
+    assert.equal(result.ok, true, `${id} -> ${gate.evidence}: ${JSON.stringify(result.errors)}`)
+    assert.ok(REQUIRED_GATE_IDS.includes(id), `unexpected gate id ${id}`)
+  }
+})
+
+await test('evidence: gate 6 must actually carry the exit code it claims', () => {
+  const data = stateData()
+  const gate = data.state.phase_00_final.gates['06_runtime_exit_code_recorded']
+  const parsed = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, gate.evidence), 'utf8'))
+  const serialised = JSON.stringify(parsed)
+  assert.equal(/"exitCode"\s*:\s*-?\d+/.test(serialised), true, 'gate 6 evidence must record an integer exitCode')
+  assert.equal(/graceful/i.test(serialised) && /forced|kill/i.test(serialised), true, 'both teardown paths must be recorded')
+})
+
+await test('evidence: the old cc-3 evidence cannot satisfy gate 6 any more', () => {
+  // This is the exact defect the external review found: valid JSON, no exit code,
+  // gate declared PASS on it. Pointing gate 6 back at it must fail on content.
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['06_runtime_exit_code_recorded'].evidence =
+      'spike/dsh-probe/current-0.2.1/evidence/cc-3-resume/summary.json'
+  })
+  expectCode(result, 'gate-evidence-content')
+})
+
+await test('evidence: a gate without a content rule is unaffected by content rules', () => {
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['03_real_prompt_trackable_result'].evidence =
+      'spike/dsh-probe/current-0.2.1/evidence/cc-3-resume/summary.json'
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.errors))
+})
+
+await test('state: the phase definition output files must exist', () => {
+  for (const rel of REQUIRED_OUTPUT_FILES) {
+    const result = checkProjectState({ state: stateData().state, docs: stateData().docs, root: REPO_ROOT })
+    assert.equal(result.ok, true, JSON.stringify(result.errors))
+    assert.equal(fs.existsSync(path.join(REPO_ROOT, rel)), true, `missing required output ${rel}`)
+  }
+})
+
+await test('state: a missing state file is an error, not an empty pass', () => {
+  const dir = made('no-state')
+  assert.throws(() => loadStateCheck(dir), (error) => error?.code === 'ENOENT')
+})
+
+await test('exit code: the documented phrase is parsed', () => {
+  assert.equal(parseExitCode('dsh profile "cc-sdk": DeepSeek Harness runtime exited\nexit code: 0'), 0)
+  assert.equal(parseExitCode('dsh profile "cc-sdk": DeepSeek Harness runtime exited\nexit code: 1'), 1)
+  assert.equal(parseExitCode('exit code: -2'), -2)
+})
+
+await test('exit code: a message without one yields null, never a guess', () => {
+  assert.equal(parseExitCode('DeepSeek Harness runtime client is closed'), null)
+  assert.equal(parseExitCode('DeepSeek Harness runtime is not running'), null)
+  assert.equal(parseExitCode(''), null)
+  assert.equal(parseExitCode(undefined), null)
+  assert.equal(parseExitCode(42), null)
+  assert.equal(parseExitCode('exit code: not-a-number'), null)
+  // The phrase must be a whole line: trailing prose after the number is not a code.
+  assert.equal(EXIT_CODE_PATTERN.test('exit code: 0 but not at the end of the line ok'), false)
+})
+
+// ---------------------------------------------------------------------------
 // Output layer: no raw stream writes outside the single writer
 // ---------------------------------------------------------------------------
 
@@ -497,6 +757,7 @@ await test('output: no direct stream writes outside safe-output.mjs', () => {
     'run-all.mjs',
     'src/lib/evidence.mjs',
     'src/lib/gates.mjs',
+    'src/studio-diag.mjs',
     'scripts/setup-profiles.mjs',
     'scripts/run-gates.mjs',
     'tests/run-tests.mjs',
@@ -745,7 +1006,7 @@ await test('suite: broken project state aborts before any probe (real exit code)
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
-  const published = path.join(PROBE_ROOT, 'evidence', 'r14', 'tests.json')
+  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r15', 'tests.json')
   const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
   const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
     cwd: PROBE_ROOT,

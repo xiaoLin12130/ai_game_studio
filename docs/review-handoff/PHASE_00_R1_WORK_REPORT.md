@@ -1,5 +1,7 @@
 # PHASE 00-R1 工作报告（含 PHASE 00 最终结论）
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
 > 本报告覆盖 PHASE 00 的六轮整改与最终收尾。**当前状态只以「PHASE 00 最终结论」一节为准**；
 > 其后各章（含「R1.4.1 当前状态」）均为历史记录，其中的数字（5/5、163、167、68/90 项）
 > 属于当时的运行规模，不代表当前事实。
@@ -24,7 +26,7 @@
 | 六探针 | 6/6 PASS，`2026-11-10T12:43:44Z` 真实模型运行（`evidence/r14/summary.json`）；**本轮未重跑、未覆盖、未伪造** |
 | 本轮验证 | `npm run test:unit` / `npm run gates` / `scrub --check` / 静态检查，见「最终验证」一节；数字以对应证据文件为准 |
 | 本轮阻断项 | 无（PHASE 00 范围内）。已修的是「状态权威源不唯一 + 两条核心门禁仍标 BLOCKED」这一交付缺陷 |
-| 8 项未解决问题 | **全部非阻断**，逐项登记于 `phase_00_final.deferred`（含后续阶段、风险、验证条件）与 `unknown` |
+| 8 项未解决问题 | **均不阻断 PHASE 00**：U1–U7 = `DEFERRED`，U8 = `BLOCKED`（环境安全垫，不解除）；逐项登记于 `phase_00_final.deferred`（含后续阶段、风险、验证条件）与 `unknown` |
 | HY4 | 独立验证事项 `UNKNOWN`：WorkBuddy 免费额度下可用 HY4 开发 ≠ DSH 已能通过官方接口调用 HY4；不阻塞当前阶段、不改架构、不伪造测试 |
 | 下一步 | 等外部评审；通过后按 `phase_00_final.next_phase` 进入 PHASE 01 |
 
@@ -59,7 +61,7 @@ DSH CLI 版本：          0.1.5-rc.1（PATH 上的旧版）
                         0.2.1-rc.3（DSH Desktop 自带，用户实际运行）
 SDK 版本：              @deepseek-ai/dsh-sdk-client@0.2.1-rc.3
 CLI 基准测试结果：      PASS（真实推理 + 回显随机标识 + 自述模型名）
-SDK 集成测试结果：      PASS（六探针 6/6 + 两个门禁，见 §R1.4）
+SDK 集成测试结果：      PASS（六探针 6/6 + 三道门禁；另有不消耗模型额度的 CC-6 退出码探针）
 是否使用真实模型：      是（随机标识回显，无法用桩伪造）
 是否发生 Provider 回退：否（SDK 探针断言每一个 request/header 的 provider 与 model）
 ```
@@ -159,9 +161,9 @@ dsh --profile headless "Reply with exactly one word: PONG"     # 0.2.1 CLI
 
 ---
 
-## 4. SDK 集成测试（gate 5 / 6 / 7）
+## 4. SDK 集成测试（gate 5 / 6 / 7；R1 期 5 探针，历史数字）
 
-`cd spike/dsh-probe/current-0.2.1 && node run-all.mjs` → **5/5 PASS，退出码 0**
+`cd spike/dsh-probe/current-0.2.1 && node run-all.mjs` → **5/5 PASS，退出码 0**（R1 期 5 探针规模；当前为六探针 **6/6 PASS**，最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，见头部最终结论）
 
 | 探针 | 验证内容 | 结果 | 关键证据 |
 |---|---|---|---|
@@ -193,7 +195,7 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 | 真实模型对话（commandcode） | 不可用：插件 0.15.4 要求 0.2.1 线 | **PASS** | 必须 |
 | MCP 工具注册 | PASS | PASS | 必须 |
 | MCP 工具**实际调用** | BLOCKED（无可用模型） | **PASS** | 必须 |
-| Session Resume | **NOT_SUPPORTED**（`already exists`） | **PASS（恢复历史）** | 强烈需要 |
+| Session Resume | **NOT_SUPPORTED**（`already exists`） | **CONFIRMED**（正常关闭；中断中的最后一轮 = `UNKNOWN`，U7） | 强烈需要 |
 | 工具审批回调（DSH 原生、可依赖） | `UNKNOWN / NOT_OBSERVED` | `UNKNOWN / NOT_OBSERVED`（协议无审批消息类型，实测未出现 server→client 请求） | 需要 |
 | `session/approve` 协议方法 | NOT_SUPPORTED | **NOT_SUPPORTED**（`unknown method`） | 需要 |
 | Runtime 级取消 | NOT_SUPPORTED | **NOT_SUPPORTED** | 不假设存在 |
@@ -247,13 +249,15 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 - E 拆成 stage1（server 起）/ stage2（进清单）/ stage3（模型调用 + Server 执行），**只有 stage3 全真才算完成**。0.1.5 只到 stage2（BLOCKED）；0.2.1 到 stage3（PASS）。
 - F 拆成 6 项：session id 不同、通知不串台、各自有事件、双方都有文本、答案未互换、关闭后无残留。0.1.5 前 3 项与第 6 项成立、文本类 BLOCKED；0.2.1 全 6 项 PASS。
 
-### 6.5 门禁 6 的措辞修正（退出码）
+### 6.5 门禁 6 的措辞修正（退出码，2026-11-11 已被 CC-6 推翻）
 
-复审指出「CLI 退出码 ≠ SDK 管理进程的退出码」，正确。事实是：
+复审指出「CLI 退出码 ≠ SDK 管理进程的退出码」，这一点成立。当时的记录是：
 
-- SDK 的 `HarnessClient` 把 `exitCode` 保留为**私有字段**，正常 `close()` 不返回退出码；
-- 能拿到的证据是：`close()` 耗时、OS 进程表三态检测结果、以及（异常时）`TransportClosedError` 携带的退出码；
-- 因此门禁描述已改为「**关闭后进程树为空 + close 耗时**」，并把「exit code 0 / 1」标注为**启动器级别**的观测（探针 G），不再声称是 SDK 返回值。
+- SDK 的 `HarnessClient` 把 `exitCode` 保留为**私有字段**，`close()` 返回 `Promise<void>`，没有结构化访问器；
+- 当时以为能拿到的证据只有 `close()` 耗时与 OS 进程表三态结果（外加异常时的 `TransportClosedError`）；
+- 于是门禁描述被改成「**关闭后进程树为空 + close 耗时**」，把「exit code 0 / 1」降级为**启动器级别**观测（探针 G）。
+
+**该规避措辞已于 2026-11-11 作废**：CC-6（`npm run probe:exit`）实测——正常 `close()` → `exitCode = 0`、外部强杀 → `exitCode = 1`，两次均 `PROCESS_ABSENT`（`evidence/cc-6-exitcode/summary.json`）。退出码来自 SDK 公开导出的 `TransportClosedError` message 中的 `exit code: <n>`（`lib/types/client.d.ts` 已文档化），**正常关闭同样可取得**。门禁 6 按原始措辞「关闭后进程确实退出，记录退出码」判定，见 `PHASE_00_R1_EVIDENCE.md` §A7。
 
 ---
 
@@ -444,7 +448,7 @@ CC_DSH_HOME=<空目录>/dsh-home node run-all.mjs
 **修复（表述，不改成果）**：
 
 1. CC-3 源码注释改为「正常关闭 Runtime 后由新进程 resume」，不再暗示强杀。
-2. ADR-0002 能力矩阵该行改为「**部分 PASS**：正常关闭后可恢复；**崩溃恢复未验证**」。
+2. ADR-0002 能力矩阵该行改为「**部分 PASS**：正常关闭后可恢复；**崩溃恢复未验证**」（**该表述已于 2026-11-11 升级为 CONFIRMED + UNKNOWN（U7）**，见 ADR-0002 §2）。
 3. ADR-0002 D4 恢复流程首行标注「正常关闭已实测 / 崩溃未实测」。
 4. ADR-0002 §6 新增第 7 条：强杀后的 resume、中断中的最后一轮，列为 PHASE 01 早期可靠性验证项。
 
@@ -1043,7 +1047,7 @@ PHASE 00 是否正式通过仍由外部独立评审决定。
 | U1 | Electron 打包链路 | 否（ADR-0001 §5 明列 PHASE 01 冒烟） | 否 | 无，也不影响 SDK 调用 | `DEFERRED` | PHASE 01 | 技术栈仍 `PROPOSED / CONDITIONAL`；打包失败需按 ADR 转 Tauri | 有可安装包并逐条跑完 ADR-0001 §5 |
 | U2 | 生产 DSH_HOME 策略 | 否（产品决策） | 否 | 隔离 home 已在探针里验证可用 | `DEFERRED` + 需用户决策 | PHASE 01 前期 | 隔离要重配 provider；复用会改动用户日常 DSH 配置 | 用户选定后实测隔离 home 加载 commandcode 的前置并更新 ADR-0002 |
 | U3 | 多 Runtime 资源占用 | 否（成本，非能力） | 否 | CC-4 已证 2 个并发 Session 隔离可用 | `DEFERRED` | PHASE 05（PHASE 01 可取基线） | 未知并发下内存/进程上限，影响调度器设计 | N 个并发 Runtime 的资源曲线 |
-| U4 | 崩溃后外部进程回收 | 否；门禁 6 只要求正常关闭后进程退出（已验证） | 部分相关，但已有验证路径 | 正常 `close()` 的进程回收与退出码已实测 | `DEFERRED` | PHASE 01 早期可靠性（ADR-0002 §6#7） | 强杀后可能残留 Shell/MCP 孤儿进程 | 人为 kill Runtime 后观测进程树 |
+| U4 | 崩溃后外部进程回收 | 否；门禁 6 只要求正常关闭后进程退出（已验证） | 部分相关，但已有验证路径 | 进程树回收与退出码均已实测：CC-6 记录正常 close → `exitCode = 0`、强杀 → `exitCode = 1`，两次均 `PROCESS_ABSENT`（`evidence/cc-6-exitcode/summary.json`） | `DEFERRED` | PHASE 01 早期可靠性（ADR-0002 §6#7） | 强杀后可能残留 Shell/MCP 孤儿进程 | 人为 kill Runtime 后观测进程树 |
 | U5 | 官方 MCP SDK 兼容性 | 否（U5 明列 PHASE 01 首任务） | 否 | 工具调用链经 DSH 认可的 MCP bridge 已实测；手写 stdio 原型是显式标注的 PHASE 00 临时实现 | `DEFERRED` | PHASE 01 首任务（ADR-0002 §3D） | 手写帧会随 MCP 协议版本漂移，生产网关必须替换 | 官方 SDK server 起得来、工具进清单、能被 DSH 调用 |
 | U6 | DSH 0.2.2 取消/审批 | 否（未来版本） | 否 | 无取消能力已由「每任务一 Runtime + 关闭进程」隔离替代（ADR-0002 §3B） | `DEFERRED` + 需用户决定 | 版本升级时 | 无取消 → 依赖进程隔离；不升级不影响本阶段 | 有兼容插件后做取消/审批冒烟 |
 | U7 | 中断中最后一轮恢复 | 否；门禁 7 允许「明确标记未测」 | 否 | CC-3 已证完整轮次后正常关闭可 resume | `DEFERRED` | PHASE 01 早期可靠性 | 强杀可能丢失当前轮 | 轮次执行中强杀 → resume → 检查最后一轮 |
@@ -1109,7 +1113,7 @@ PHASE 00 是否正式通过仍由外部独立评审决定。
 - 不要求用户更换模型、不要求付费、不使用 WorkBuddy 私有/逆向接口作为产品依赖、
   不为验证 HY4 改动 DSH Runtime 核心架构。若将来有官方接入方式，另立独立验证，不并入本阶段。
 
-## D. 本轮独立验证（真实执行）
+## D. 本轮独立验证（真实执行；下表为 2026-11-11 上一轮，r15 结果见本节末尾注）
 
 | 命令 | 结果 | 退出码 |
 |---|---|---|
@@ -1124,6 +1128,8 @@ PHASE 00 是否正式通过仍由外部独立评审决定。
 `evidence/cc-*/` 的历史证据。因此六探针结论**明确标注为沿用**
 `evidence/r14/summary.json`（`2026-11-10T12:43:44Z`，6/6 PASS, exit 0），
 **不是本轮测试结果，也没有被覆盖或伪造重跑**。
+
+> **2026-11-11 后续一轮（r15）**：门禁回归与回归测试已重跑并发布到 `spike/dsh-probe/current-0.2.1/evidence/r15/`——回归测试 **135/135 PASS**（`evidence/r15/tests.json`），三道门禁 PASS，扫描文件数见 `evidence/r15/final-gates.json` 的 `scanned`（不在此处写死）。上表数字属于本报告成文时的上一轮，保留原样。
 
 **未覆盖项（不计 PASS）**：DSH 核心调用链的真实模型执行、Session 恢复与工具调用的真实
 运行时行为，本轮未重新执行；其断言逻辑（路由、并发隔离、错误分类、整体判定）由单元测试

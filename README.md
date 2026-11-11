@@ -1,5 +1,7 @@
 # AI Game Studio｜开发启动包
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
 > 版本：0.1.0｜用途：交给 DSH Agent 作为项目总控规则、产品目标、分阶段开发计划和 GitHub 复审约定。
 
 ## 这是什么
@@ -62,7 +64,7 @@
 | 门禁 | 依赖 PASS；脱敏 PASS（全部发布文件、0 泄漏）；项目状态一致性 PASS |
 | 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |
 | 分支 / 仓库 | `phase/00-feasibility`；public（按用户要求保持公开） |
-| 未解决事项 | 8 项全部非阻断，逐项带后续阶段；HY4 DSH 直连为独立 `UNKNOWN`，不阻塞 |
+| 未解决事项 | U1–U7 = `DEFERRED`，**U8 = `BLOCKED`（环境限制，不解除）**；8 项均不阻断 PHASE 00。HY4 DSH 直连为独立 `UNKNOWN`，不阻塞 |
 | 下一阶段 | 未授权。等外部评审通过后再进入 PHASE 01 |
 
 > 注意：PATH 上的 `dsh` 是 0.1.5-rc.1，**不是**用户日常运行的版本。本项目的验证目标是 0.2.1-rc.3。
@@ -85,13 +87,13 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test          # 107 项回归测试 + 六探针 + 三道门禁；期望 exit 0
+npm test          # 135 项回归测试 + 六探针 + 三道门禁；期望 exit 0
 ```
 
 只回归受影响的门禁（**不消耗真实模型调用**）：
 
 ```powershell
-npm run test:unit   # 107 项；只有退出 0 才发布 tests.json
+npm run test:unit   # 135 项；只有退出 0 才发布 tests.json（当前发布到 evidence/r15/tests.json）
 npm run gates       # 依赖 + 状态一致性 + 脱敏三道门禁，写 final-gates.json
 ```
 
@@ -107,7 +109,8 @@ npm test
 只想跑套件（跳过回归测试）：
 
 ```powershell
-node run-all.mjs  # 期望：PASS 6/6，GATES PASS/PASS，exit 0
+node run-all.mjs  # 期望：PASS 6/6，GATES PASS/PASS/PASS，exit 0
+npm run probe:exit  # CC-6：Runtime 退出码（close=0 / 强杀=1），不消耗模型额度
 ```
 
 依赖锁的维护（普通运行**不会**自动生成锁）：

@@ -21,7 +21,16 @@ import { out, err } from '../src/lib/safe-output.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 const probeRoot = path.resolve(root, '..')
-const output = path.join(probeRoot, 'evidence', 'r14', 'final-gates.json')
+/**
+ * PHASE 00 convergence publishes into its own round directory.
+ *
+ * `evidence/r14/` is the record of the last full six-probe model run plus that round's
+ * gate output. Overwriting it with a later gate-only regression would erase which run
+ * produced it — the exact failure mode the r14 README exists to prevent. `CC_GATE_ROUND`
+ * keeps the old behaviour available for a reproduction that really does want r14.
+ */
+const round = process.env.CC_GATE_ROUND ?? 'r15'
+const output = path.join(probeRoot, 'evidence', round, 'final-gates.json')
 
 const steps = []
 let dependency = { status: 'PASS' }

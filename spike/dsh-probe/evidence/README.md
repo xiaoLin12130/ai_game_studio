@@ -7,7 +7,8 @@
 `spike/dsh-probe/current-0.2.1/` 对应 **DSH 0.2.1-rc.3 + 用户实际 commandcode 插件**，这是用户日常真正运行的组合。
 
 ```
-cd spike/dsh-probe/current-0.2.1 && node run-all.mjs      # 期望 PASS 5/5, exit 0
+cd spike/dsh-probe/current-0.2.1 && node run-all.mjs      # 期望 PASS 6/6 + 三道门禁 PASS, exit 0
+# 只跑门禁（不消耗模型调用）：npm run gates → 结果写 evidence/r15/final-gates.json
 ```
 
 | 目录 | 证明什么 |
@@ -18,6 +19,7 @@ cd spike/dsh-probe/current-0.2.1 && node run-all.mjs      # 期望 PASS 5/5, exi
 | `cc-3-resume/` | `session/resume` 重启后恢复历史（`RESUME_RESTORES_HISTORY`） |
 | `cc-4-concurrent/` | 两会话并行、答案不互换、无残留 |
 | `cc-5-capability/` | 方法级能力矩阵 |
+| `cc-6-exitcode/` | Runtime 进程退出码：正常 close → `0`、外部强杀 → `1`，两次均 `PROCESS_ABSENT`；`npm run probe:exit`，不消耗模型额度 |
 
 ## 2. 本目录（`spike/dsh-probe/evidence/`）—— 0.1.5 legacy 基线
 

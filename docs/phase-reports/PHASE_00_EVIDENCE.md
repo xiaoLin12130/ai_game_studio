@@ -1,5 +1,10 @@
 # PHASE 00｜证据文件（Environment & Vertical Slice Evidence）
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
+> **历史范围（2026-11-11 标注）**：本文件主体是 **DSH 0.1.5** 的证据快照（§1–§10、§12），数字与结论保留原样；§11 中带「0.2.1 补测」说明的行来自 0.2.1-rc.3。
+> 当前结论见 `phase_00_final` 与 `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`；当前门禁/测试结果见 `spike/dsh-probe/current-0.2.1/evidence/r15/`。
+
 - 生成时间：2026-11-10
 - 生成环境：本机（非模拟），Windows 10.0.19045.6466
 - 对应报告：`docs/phase-reports/PHASE_00_REPORT.md`
@@ -159,7 +164,7 @@ exit code: 1
 
 ---
 
-## 3. 垂直切片结果总览
+## 3. 垂直切片结果总览（0.1.5 legacy）
 
 单一命令复现：`cd spike/dsh-probe && node run-all.mjs`
 
@@ -223,7 +228,7 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 
 事件种类（`evidence/a-basic-run/events.json`）：`agent/inbox/spliced`、`turn/start`、`step/start`、`system/message`、`user/message`、`request/header`、`request/context`、`session/title`、`assistant/attempt`、`step/end`、`turn/end`。足以驱动一个真实的运行态 UI。
 
-## 5. 探针 B｜协议事实（无取消 / 无恢复）
+## 5. 探针 B｜协议事实（0.1.5：无取消 / 无恢复）
 
 文件：`src/probe-protocol.mjs`，证据：`evidence/b-protocol-facts/`
 
@@ -248,9 +253,11 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 | 新进程复用同一 sessionId | **被拒绝** | `session "probe-resume-<ts>" already exists` |
 | 日志可再次解压读取 | PASS | 首个 zstd 帧解出会话头：`{"type":"session","version":3,"id":"probe-resume-...","cwd":"<abs-path>","isSeeded":false,...}`（210 B） |
 
-**结论 `NO_RESUME_AT_SDK_LEVEL`**：当前版本既不提供 `session/resume`，也不允许复用已存在的 sessionId。会话文件是**只增的压缩帧流**（首帧为会话头，后续帧为追加事件，探针未逐帧解码）。
+**结论 `NO_RESUME_AT_SDK_LEVEL`（0.1.5-rc.2）**：0.1.5 既不提供 `session/resume`，也不允许复用已存在的 sessionId。会话文件是**只增的压缩帧流**（首帧为会话头，后续帧为追加事件，探针未逐帧解码）。
 
-对架构的影响：Studio 不能用「沿用旧 session」实现崩溃恢复，必须自己做上下文再水化（ADR-0002 D4）。
+> **0.2.1-rc.3 已修订**：`session/resume` 存在，正常关闭后由新进程 resume 能答出随机口令 → **CONFIRMED**（CC-3，`evidence/cc-3-resume/summary.json`）；中断中的最后一轮恢复仍为 `UNKNOWN`（U7）。「Studio 无法沿用旧 session」只对 0.1.5 成立。
+
+对架构的影响（0.1.5 当时）：Studio 不能用「沿用旧 session」实现崩溃恢复，必须自己做上下文再水化。当前策略见 ADR-0002 D4：**优先官方 `session/resume`，失败再水化**。
 
 ## 7. 探针 D｜「停止等待」≠「停止工作」
 
@@ -327,23 +334,26 @@ patch 文件（实测必须用 `insert:` 包裹）：
 | 陈旧锁导致启动失败 | PASS（缺陷已复现） | 全新 `DSH_HOME` + 预置 pid=999999 的锁 → `exitCode = 1`，耗时 2,721 ms |
 | 失败信息指向锁 | PASS | stderr 含 `timed out waiting for the writer lock` |
 
-说明：退出码取自启动器进程本身（`spawn` 的 `close` 事件），因为 SDK 的 `HarnessClient` 把 `exitCode` 保留为私有字段。这与门禁 6「记录退出码」的要求对应：**正常关闭 = 0，profile 启动失败 = 1**。
+说明（0.1.5 历史）：这里的退出码取自启动器进程本身（`spawn` 的 `close` 事件），**不代表 SDK 管理的进程**。
 
-## 11. 未验证清单（不得当作已通过）
+0.2.1-rc.3 上的门禁 6 证据单独记录在 `evidence/cc-6-exitcode/summary.json`（`npm run probe:exit`）：通过 SDK 公开导出的 `TransportClosedError` message（`exit code: <n>`）取得退出码——正常 `close()` = **0**、外部 `taskkill /F` 强杀 = **1**，两次均 `PROCESS_ABSENT`，`modelCallsMade = 0`。0.2.1-rc.3 **没有**结构化访问器（`HarnessClient#exitCode` 私有、`close()` 返回 `Promise<void>`、无 onExit 钩子），解析失败返回 `null`。**门禁 6 按原始措辞「Runtime 关闭后进程确实退出，记录退出码」判定。**
+
+## 11. 未验证清单（不得当作已通过；0.1.5 快照，带「0.2.1 补测」说明的行除外）
 
 | 项 | 状态 | 原因 | 解除方式 |
 |---|---|---|---|
 | 模型真实回复 | `BLOCKED` | 账号 402 Insufficient Balance | 充值或换可用密钥 |
 | 模型主动调用 Studio 工具 | `BLOCKED` | 同上；注册链路已 PASS | 同上，然后重跑探针 E |
 | 长任务下「仍在工作」 | `BLOCKED` | 同上，无法制造长 turn | 同上，然后重跑探针 D |
-| 工具审批回调 | `UNKNOWN / NOT_OBSERVED` | 协议无审批消息类型；实测未出现 server→client 请求（0.2.1 补测） | 无（等上游实现） |
+| 工具审批回调 | `UNKNOWN / NOT_OBSERVED` | 协议无审批消息类型；实测未出现 server→client 请求（0.2.1 补测）；`session/approve` 方法本身 = `NOT_SUPPORTED` | 无（等上游实现） |
 | 运行中取消 | `NOT_SUPPORTED` | 无 `session/cancel` | 设计上以「关进程」替代 |
-| 会话恢复 | `NOT_SUPPORTED` | 无 `session/resume`，sessionId 复用被拒 | Studio 自建再水化 |
+| 会话恢复（0.1.5-rc.2） | `NOT_SUPPORTED` | 0.1.5 无 `session/resume`，复用已存在 sessionId 被拒 | 历史结论，已由 0.2.1 实测修订 |
+| 会话恢复（0.2.1-rc.3，正常关闭后） | **CONFIRMED** | CC-3：新进程 resume 后答出随机口令（`evidence/cc-3-resume/summary.json`）；中断中的最后一轮为 `UNKNOWN`（U7） | 见 ADR-0002 D4 |
 | Python SDK 路线 | `UNKNOWN` | 未安装未验证 | 若需非 Node 宿主再评估 |
 | `sdk-minimal` profile | `UNKNOWN` | 未验证能否挂 MCP | PHASE 01 评估（更小攻击面） |
 | Electron 打包后运行 Runtime | `UNKNOWN` | 本阶段未打包 | PHASE 01 冒烟 |
 | Cocos / 微信工具的实际调用 | `NOT_RUN` | 本阶段不涉及引擎与平台链路 | PHASE 06 |
-| GitHub 推送 | `BLOCKED` | 仓库无 remote，且本机无 `gh` | 用户创建私有仓库并提供 URL |
+| GitHub 推送（0.1.5 时） | ~~`BLOCKED`~~ **已解除（2026-11-10 18:13）** | 当时仓库无 remote，本机无 `gh` | 已推送 `phase/00-feasibility`，见 R1 报告 §12 |
 
 ## 12. 安全与合规检查
 

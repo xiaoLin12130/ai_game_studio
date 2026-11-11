@@ -1,16 +1,18 @@
 # 当前交接
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
 - 当前项目：AI Game Studio。
 - 当前阶段：**PHASE 00 最终收尾 — `PARTIALLY_VERIFIED`，等待外部正式复审**。
 - **唯一事实源**：`state/project_state.json` → **`phase_00_final`**（`authoritative_source.current_record` 声明）。
   `phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 全是历史快照，只读保留，勿引用为当前状态。
 - 当前状态：冻结范围内 10 条门禁均有证据；六探针 **6/6 PASS**（最后一次完整真实运行
   `2026-11-10T12:43:44Z`，后续各轮未重复模型调用）；三道门禁（依赖 / 状态 / 脱敏）PASS。
-- 8 项未解决问题全部**非阻断**，逐项登记在 `phase_00_final.deferred`（含阶段、风险、验证条件）；
+- 8 项未解决问题**均不阻断** PHASE 00：U1–U7 = `DEFERRED`，**U8 = `BLOCKED`（环境限制，不解除）**；逐项登记在 `phase_00_final.deferred`（含阶段、风险、验证条件）；
   HY4 的 DSH 直连为独立 `UNKNOWN`，不阻塞、不伪造、不改架构。
 - 运行组合：**DSH 0.2.1-rc.3（桌面端自带）+ commandcode 插件 0.15.4 + `deepseek/deepseek-v4.1-flash`**。PATH 上的 `dsh` 0.1.5-rc.1 不是目标版本。
 - 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio 。
-- 交付提交 SHA：见 `state/project_state.json` → `phase_00_r1.r141.delivery_commit`（由纯元数据提交回填）。
+- 交付提交 SHA：以分支 `phase/00-feasibility` 的 HEAD 为准；审查基准见 `phase_00_final.review_baseline_commit`。`phase_00_r1.r141` 为历史记录，不再作为交付指针。
   **报告不内嵌自身 SHA**，避免评审打开的固定提交与交付版本不一致。
 - 尚无正式需求基线；**不得提前进入业务功能开发**。
 
@@ -32,9 +34,10 @@ DSH + commandcode + MCP 的技术链路早已证明可用；R1.4.1 收掉了最�
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test              # 90 项测试 + 六探针 + 双门禁（消耗真实模型调用）
-npm run test:unit      # 只跑 90 项测试；退出 0 才发布 tests.json
-npm run gates          # 只跑依赖 + 脱敏门禁，写 final-gates.json
+npm test              # 135 项测试 + 六探针 + 三道门禁（消耗真实模型调用）
+npm run test:unit      # 只跑 135 项测试；退出 0 才发布 tests.json（当前发布到 evidence/r15/tests.json）
+npm run gates          # 只跑依赖/状态/脱敏三道门禁，写 evidence/r15/final-gates.json
+npm run probe:exit     # CC-6：Runtime 退出码（close=0 / 强杀=1），不消耗模型额度
 npm run lock:update    # 仅有意升级依赖时；随后必须重跑 npm test
 ```
 

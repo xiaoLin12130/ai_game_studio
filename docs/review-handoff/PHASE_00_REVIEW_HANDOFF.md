@@ -1,5 +1,10 @@
 # External Review Handoff｜PHASE 00 外部复审交接
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
+> **文档范围（2026-11-11 校正）**：本文件正文 §2–§9 是 **DSH 0.1.5（legacy 套件）的历史交接记录**，其中的探针数量、`3/7`、`exit 2`、启动器级退出码、「无 resume」等结论都是 0.1.5 时代的实测结果，保留原样只作追溯。
+> **当前生产目标**是 DSH 0.2.1-rc.3（桌面端自带）+ commandcode 0.15.4；当前结论见 `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md` 头部「PHASE 00 最终结论」与 `phase_00_final`。
+
 - Product：AI Game Studio
 - Phase：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
 - Repository URL：`https://github.com/xiaoLin12130/ai_game_studio`（public）
@@ -11,7 +16,7 @@
   「模型层被账号余额阻断」是 0.1.5 时期的**错误结论，已推翻**：真实模型链路（commandcode +
   deepseek/deepseek-v4.1-flash）在 DSH 0.2.1-rc.3 上 6/6 PASS。
 - 本轮（最终收尾）**未重跑真实模型探针**；六探针结论沿用 `evidence/r14/summary.json`
-  （`2026-11-10T12:43:44Z`）。8 项未解决问题全部非阻断，逐项带后续阶段与验证条件。
+  （`2026-11-10T12:43:44Z`）。8 项未解决问题**均不阻断** PHASE 00：U1–U7 = `DEFERRED`，**U8 = `BLOCKED`（环境限制，不解除）**；逐项带后续阶段与验证条件。
 
 ---
 
@@ -28,7 +33,9 @@
 5. **ADR-0001 / ADR-0002 仍为 `PROPOSED / CONDITIONAL`**：Electron 打包冒烟与 DSH_HOME 产品决策
    留待 PHASE 01，是否认可这个边界；以及下一阶段应先做哪几项。
 
-## 2. 关键代码路径
+## 2. 关键代码路径（0.1.5 legacy）
+
+> 下表是 0.1.5 的探针源码。**当前目标代码**在 `spike/dsh-probe/current-0.2.1/`（CC-0…CC-6；`npm test` / `npm run probe:exit`）。
 
 | 路径 | 作用 |
 |---|---|
@@ -52,9 +59,20 @@
 - 能把 Studio 的只读业务信息（`get_studio_health`）注册进模型的工具清单。
 - 能在崩溃残留锁的情况下识别并自愈启动失败。
 
-**不具备**（当前 DSH 版本本身不支持，非本阶段未做）：运行中取消、会话恢复、工具审批回调。
+**0.1.5 历史结论（已过时，勿作当前口径）**：0.1.5 上运行中取消、会话恢复、工具审批回调均不可用。
 
-## 4. 测试/构建命令与结果
+**当前（DSH 0.2.1-rc.3）五类能力必须分开看**：
+
+- 正常关闭后 Session Resume = **CONFIRMED**（CC-3：新进程 resume 后答出随机口令，`evidence/cc-3-resume/summary.json`）
+- 中断中的最后一轮恢复 = **UNKNOWN**（U7，`DEFERRED` 到 PHASE 01）
+- DSH 原生审批回调 = **UNKNOWN / NOT_OBSERVED**（「未观察到」≠「不存在」）
+- `session/approve` = **NOT_SUPPORTED**（`-32603 unknown ... method`）
+- Runtime 级取消 `session/cancel` = **NOT_SUPPORTED**（同上）
+
+## 4. 测试/构建命令与结果（0.1.5 legacy 快照）
+
+> **当前生产目标的命令**：`cd spike/dsh-probe/current-0.2.1 && npm test`（六探针 6/6 PASS，最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，本轮未重跑；门禁回归与测试结果见 `evidence/r15/final-gates.json`、`evidence/r15/tests.json`）。
+> 以下代码块是 0.1.5 的原始命令与输出，保留原样。
 
 ```bash
 cd spike/dsh-probe
@@ -78,7 +96,7 @@ PASS 3/7  BLOCKED 4  FAIL 0
 
 退出码约定：`0` 全 PASS；`2` 存在 BLOCKED；`1` 存在 FAIL。**当前为 2，不是 0。**
 
-另有独立验证（非探针）：
+另有独立验证（非探针，0.1.5 / PATH 旧版观测）：
 
 ```bash
 dsh --version                                    # 0.1.5-rc.1
@@ -96,7 +114,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 - `spike/dsh-probe/evidence/g-exit-code/summary.json` — 退出码与陈旧锁复现
 - `spike/dsh-probe/evidence/_aggregate/run-all.json`、`run-all-console.txt` — 整轮汇总
 
-## 6. 已验证事实（CONFIRMED）
+## 6. 已验证事实（0.1.5 历史；带「当前」标注的行已在 0.2.1-rc.3 上修订）
 
 | 事实 | 证据 |
 |---|---|
@@ -104,8 +122,8 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 | 启动耗时为双峰：热 2.2–2.6 s / 重建模块回退 73–128 s | 探针 A、G 多次 |
 | 关闭后进程真实退出；干净退出码 0，失败启动退出码 1 | 探针 A/D/G + OS 进程表 |
 | 协议只有 initialize / session/prompt / shutdown | 协议类型定义 + 探针 B |
-| 无 cancel、无 resume、无 session-close | 探针 B：`-32603 unknown ... method` |
-| sessionId 复用被拒 → `NO_RESUME_AT_SDK_LEVEL` | 探针 C |
+| 0.1.5：无 cancel、无 resume、无 session-close | 探针 B：`-32603 unknown ... method`。**当前 0.2.1-rc.3**：`session/cancel` / `session/approve` / `session/close` 仍 `NOT_SUPPORTED`；`session/resume` 存在，正常关闭后 **CONFIRMED**（CC-3） |
+| 0.1.5：sessionId 复用被拒 → `NO_RESUME_AT_SDK_LEVEL` | 探针 C。**当前 0.2.1-rc.3**：用 `session/resume` 恢复历史；「不存在的 session 被拒」是负对照，与 0.1.5「复用已存在 id 被拒」不是同一件事 |
 | 工具桥接只能走 MCP；`insert:` 包裹是 `--patch` 的硬要求 | 探针 E + `patch: entry "studio-mcp" not found` |
 | Studio 工具确实进入模型工具清单（26 个中之一） | 探针 E `request/header` |
 | 单 Runtime 可并行两 session，事件不串台 | 探针 F |
@@ -126,7 +144,9 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 | B-001 | DeepSeek 账号余额不足（HTTP 402 `QUOTA`） | 用户充值或提供有余额的 `DEEPSEEK_API_KEY` | 门禁 3、5 转 PASS；A/D/E/F 从 BLOCKED 转 PASS |
 | ~~B-002~~ | ~~仓库无 remote / 网络不通~~ **已解除** | — | 叠加原因：git 未走本机代理 `127.0.0.1:7890`，且本机凭据属于 `vJackLin2v` 而仓库属主是 `xiaoLin12130`。已按仓库级指定代理与账号（未改全局配置），于 2026-11-10 18:13 推送成功 |
 
-解除 B-001 后执行 `cd spike/dsh-probe && node run-all.mjs`，期望退出码 `0`。
+> **历史状态（2026-11-11 校正）**：B-001 已解除——改用用户真实 provider（commandcode）+ DSH 0.2.1-rc.3 后，六探针 6/6 PASS；0.1.5 的 402 是运行时回退到 `deepseek-official` 的产物（详见 R1 报告 §3 与 ADR-0002 F6）。B-002 已于 2026-11-10 18:13 推送成功。
+
+（0.1.5 历史）解除 B-001 后执行 `cd spike/dsh-probe && node run-all.mjs`，期望退出码 `0`。
 
 ## 9. 已知偏离/风险
 
@@ -143,7 +163,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 1. 是否批准 ADR-0001（Electron）与「数据库延后到 PHASE 01」。
 2. 是否接受 ADR-0002 的四个能力缺口处理方式。
 3. 生产 `DSH_HOME` 隔离粒度：每项目隔离 vs 复用 `~/.dsh`。
-4. 是否先充值解除 B-001，再复审本阶段（推荐顺序：充值 → 复跑 → 复审）。
+4. ~~是否先充值解除 B-001~~（B-001 已解除，见 §8 注）；复审顺序按 §11。
 
 ## 11. 下一阶段是否允许启动
 
@@ -175,7 +195,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
 cd ai_game_studio/spike/dsh-probe/current-0.2.1
 npm install
-npm test          # 107 项回归测试 → 6 探针 → 3 道门禁（消耗真实模型调用）
+npm test          # 135 项回归测试 → 六探针 → 三道门禁（消耗真实模型调用）；门禁回归结果见 evidence/r15/
 npm run gates     # 只跑依赖 / 状态一致性 / 脱敏门禁，不消耗模型调用
 ```
 

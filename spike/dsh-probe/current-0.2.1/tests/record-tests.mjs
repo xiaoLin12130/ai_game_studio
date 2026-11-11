@@ -18,7 +18,10 @@ import { out, err } from '../src/lib/safe-output.mjs'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PROBE_ROOT = path.resolve(HERE, '..')
 const resultFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-tests-')), 'tests.json')
-const published = path.join(PROBE_ROOT, 'evidence', 'r14', 'tests.json')
+// Same rule as `scripts/run-gates.mjs`: a convergence round publishes its own result
+// instead of overwriting the record of the previous round.
+const round = process.env.CC_GATE_ROUND ?? 'r15'
+const published = path.join(PROBE_ROOT, 'evidence', round, 'tests.json')
 
 const run = spawnSync(process.execPath, [path.join(HERE, 'run-tests.mjs')], {
   cwd: PROBE_ROOT,

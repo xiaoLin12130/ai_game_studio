@@ -1,0 +1,38 @@
+
+=== 回放：evidence\cc-3-resume ===
+
+probe               CC-3-resume
+startedAt           2026-11-10T12:43:12.288Z
+finishedAt          2026-11-10T12:43:31.518Z
+route               commandcode / deepseek/deepseek-v4.1-flash
+verdict             PASS
+  [2026-11-10T12:43:18.275Z] turn1
+  [2026-11-10T12:43:19.414Z] turn1.reaped → PROCESS_ABSENT
+  [2026-11-10T12:43:22.729Z] resume.control
+  [2026-11-10T12:43:27.603Z] resume.attempt
+  [2026-11-10T12:43:30.382Z] turn2
+  [2026-11-10T12:43:31.518Z] verdict
+
+status timeline     running → idle → running → idle
+event count         27
+notification methods none recorded
+=== AI Game Studio · DSH 诊断（0.2.1-rc.3 切片）===
+
+mode                live（不发送 prompt，不消耗模型额度）
+node                v24.19.0
+dsh (bundled)       0.2.1-rc.3
+sdk-client          0.2.1-rc.3
+sdk-protocol        0.2.1-rc.3
+profile             cc-sdk
+provider            commandcode
+model               deepseek/deepseek-v4.1-flash
+DSH_HOME            <repo>\spike\dsh-probe\current-0.2.1\dsh-home
+workspace           <repo>\spike\dsh-probe\current-0.2.1\workspace
+stale lock          none
+connected           yes (1806 ms)
+server              deepseek-harness-sdk-runtime 0.0.1
+session             未创建（live 模式不发 prompt，因此没有 session）
+status events       none observed (no turn was run)
+session events      0
+teardown exit code  0
+process after close PROCESS_ABSENT (1054 ms)

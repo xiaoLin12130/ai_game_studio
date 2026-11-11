@@ -1,0 +1,87 @@
+{
+  "probe": "CC-6-runtime-exit-code",
+  "startedAt": "2026-11-11T03:57:51.981Z",
+  "scope_gate": "Runtime 关闭后进程确实退出，记录退出码。",
+  "modelCallsMade": 0,
+  "provider": "commandcode",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "profile": "cc-sdk",
+  "channels": {
+    "structuredAccessor": {
+      "available": false,
+      "detail": "HarnessClientOptions has no exit hook; HarnessClient#exitCode is private; close() resolves Promise<void>"
+    },
+    "transportClosedError": {
+      "available": true,
+      "detail": "TransportClosedError message carries \"exit code: <n>\" (documented in lib/types/client.d.ts); the value originates from child.once(\"exit\") on the SDK-spawned runtime"
+    },
+    "launchProcessTable": {
+      "available": true,
+      "detail": "PROCESS_ABSENT from the OS process table proves the process is gone, and says nothing about the exit code"
+    }
+  },
+  "lockRecovery": {
+    "checked": false,
+    "cleared": false,
+    "stalePid": null,
+    "path": "<repo>/spike/dsh-probe/current-0.2.1/dsh-home/profiles/node_modules.lock",
+    "error": null
+  },
+  "gracefulClose": {
+    "scenario": "graceful-close",
+    "serverInfo": {
+      "name": "deepseek-harness-sdk-runtime",
+      "version": "0.0.1"
+    },
+    "processWhileRunning": {
+      "status": "PROCESS_PRESENT",
+      "count": 1
+    },
+    "pids": [
+      24372
+    ],
+    "exitCode": 0,
+    "exitCodeSource": "exit-handler",
+    "exitCodeRawMessage": "dsh profile \"cc-sdk\": DeepSeek Harness runtime exited\nexit code: 0",
+    "errorName": "TransportClosedError",
+    "afterClose": {
+      "status": "PROCESS_ABSENT",
+      "waitedMs": 1040,
+      "remaining": 0
+    }
+  },
+  "forcedKill": {
+    "scenario": "forced-kill",
+    "processWhileRunning": {
+      "status": "PROCESS_PRESENT",
+      "count": 1
+    },
+    "pids": [
+      24456
+    ],
+    "killedBy": "taskkill /F",
+    "exitCode": 1,
+    "exitCodeSource": "exit-handler",
+    "exitCodeRawMessage": "dsh profile \"cc-sdk\": DeepSeek Harness runtime exited\nexit code: 1",
+    "errorName": "TransportClosedError",
+    "afterKill": {
+      "status": "PROCESS_ABSENT",
+      "waitedMs": 1013,
+      "remaining": 0
+    },
+    "closeAfterKillResolved": true
+  },
+  "assertions": {
+    "exitCodeObservedOnGracefulClose": true,
+    "exitCodeZeroOnGracefulClose": true,
+    "processAbsentAfterGracefulClose": true,
+    "exitCodeObservedForForcedKill": true,
+    "forcedKillExitCodeDiffersFromGraceful": true,
+    "processAbsentAfterForcedKill": true,
+    "rawSdkMessageRecorded": true,
+    "noModelCallMade": true
+  },
+  "verdict": "PASS",
+  "finishedAt": "2026-11-11T03:58:01.664Z",
+  "conclusion": "SDK_REPORTS_MANAGED_PROCESS_EXIT_CODE"
+}

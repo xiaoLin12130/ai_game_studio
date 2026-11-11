@@ -1,7 +1,7 @@
 # ADR-0002｜DSH 集成：Runtime 生命周期、恢复、审批、工具桥接与隔离
 
 - 状态：**PROPOSED / CONDITIONAL**（待外部复审确认）
-- 日期：2026-11-10（初稿）／2026-11-10 修订（PHASE 00-R1）
+- 日期：2026-11-10（初稿）／2026-11-10 修订（PHASE 00-R1）／2026-11-11 口径同步（R1.4.1 / PHASE 00 final）
 - 阶段：PHASE 00-R1
 - 相关：`ADR-0001-tech-stack.md`、`docs/04_DSH_INTEGRATION_SPEC.md`、`docs/phase-reports/PHASE_00_EVIDENCE.md`
 
@@ -14,7 +14,7 @@
 | 1 | 「当前 DSH **没有**取消/恢复/审批」 | 把 0.1.5 的限制写成了 DSH 的永久限制 | 改为**版本化能力矩阵**（§2），0.2.1 实测 `session/resume` 存在且**真正恢复历史** |
 | 2 | 「Studio 自建上下文再水化替代恢复」 | 前提错了 | 改为「**优先官方 Resume，失败再水化**」（§3A） |
 | 3 | 「一个 Studio → 一个 Runtime」 | 固化成最终架构；0.2.1 仍无 Runtime 级取消，一个 Runtime 承载多任务会导致「停一个、停全部」 | 改为 **RuntimeSupervisor Manager + 多 Runtime 拓扑**（§3B） |
-| 4 | 审批只提到「两条通道」 | 未验证新版本是否有 SDK 审批回调 | 明确 0.2.1 **仍无**服务端→客户端请求，重验方法记录在 §3C |
+| 4 | 审批只提到「两条通道」 | 未验证新版本是否有 SDK 审批回调 | 明确 0.2.1 实测仍未观察到服务端→客户端请求（`UNKNOWN / NOT_OBSERVED`，不是「不存在」），重验方法记录在 §3C |
 | 5 | 生产要换官方 MCP SDK，但没验证兼容性 | 空头承诺 | §3D 给出验证结论与 PHASE 01 动作 |
 
 ## 1. 结论摘要
@@ -29,7 +29,7 @@ Studio 用官方 TypeScript SDK（`@deepseek-ai/dsh-sdk-client@0.2.1-rc.3`）驱
 | 真实模型对话（commandcode） | 不适用（插件 0.15.4 要求 0.2.1 线；0.1.5 上被跳过） | **PASS**（回显随机口令 + 自述模型） | 必须 | `cc-1-reply` |
 | MCP 工具注册 | PASS（注册成功） | **PASS** | 必须 | `cc-2-tools` stage1/2 |
 | MCP 工具**实际调用** | BLOCKED（无模型可用） | **PASS**（模型调用 + Server 执行 + 回复用工具数据） | 必须 | `cc-2-tools` stage3 |
-| Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **部分 PASS**：正常关闭后重启可恢复历史；**崩溃恢复未验证** | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY`（正常关闭路径） |
+| Session Resume | **NOT_SUPPORTED**（方法不存在；复用 id 报 `already exists`） | **CONFIRMED**（正常关闭路径：重启进程后 `session/resume` 恢复历史）；中断中的最后一轮 = **UNKNOWN**（U7，`DEFERRED`） | 强烈需要 | `cc-3-resume` = `RESUME_RESTORES_HISTORY` |
 | 工具审批回调（DSH 原生、可依赖） | `UNKNOWN / NOT_OBSERVED` | **仍 `UNKNOWN / NOT_OBSERVED`**（协议无审批消息类型；运行时未发起过 server→client 请求。「未观察到」≠「不存在」） | 需要（但可绕过，见 §3C） | `cc-5-capability` + 传输层类型声明 |
 | `session/approve` 协议方法 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`unknown method`） | 需要 | `cc-5-capability` |
 | Runtime 级取消 | NOT_SUPPORTED | **仍 NOT_SUPPORTED**（`session/cancel` → unknown method） | 不假设存在 | `cc-5-capability` |
@@ -141,7 +141,7 @@ Runtime 结束（正常关闭已实测；崩溃未实测）
 
 - 依赖整族精确钉版本（cordis 4.0.5 / group 1.0.5 / include 1.0.10 / loader 1.0.6 / sdk-client 0.2.1-rc.3）。
 - **不要升级用户全局 DSH**。`dsh` on PATH 是 0.1.5-rc.1，用户日常用的是桌面端 0.2.1-rc.3；Studio 应自带/锁定自己的运行时，不依赖 PATH。
-- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/npm test`（R1.4 基线：68 项回归测试 + 六探针 6/6 + 两个门禁 PASS）与 `legacy-0.1.5` 套件；协议随时可能变。
+- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/npm test`（当前基线：135 项回归测试 + 六探针 6/6 + 三道门禁 PASS；另有不消耗模型额度的 CC-6 退出码探针）与 `legacy-0.1.5` 套件；协议随时可能变。
 - 依赖锁由 `profile-locks/<profile>/package-lock.json` + `tree.json` 共同定义；普通运行不生成锁，只校验，漂移即失败。升级流程是 `npm run lock:update` → 重跑 `npm test`。
 
 ## 4. 已实测的缺陷与防御

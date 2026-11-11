@@ -1,5 +1,10 @@
 # PHASE 00 工作报告（供外部评审）
 
+权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
+
+> **历史记录（0.1.5 运行时快照，2026-11-11 标注）**：本文件记录 PHASE 00 首轮在 **DSH 0.1.5** 上的实测与结论；`5/5`、`3 PASS / 4 BLOCKED`、退出码、阶段判定等均为当时状态，**保留原样只作追溯**，不代表当前事实。
+> 当前生产目标是 DSH 0.2.1-rc.3 + commandcode；当前结论见 `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md` 头部「PHASE 00 最终结论」与 `phase_00_final`。
+
 > 这份报告是**独立可读**的：评审者不需要看仓库其他文件，也能判断本阶段做了什么、证据是否可信、结论是否成立。
 > 需要深挖时，各节都指向具体文件路径。
 >
@@ -40,7 +45,9 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 
 ### 一句话
 
-**基础设施链路 5/5 打通；模型层被账号余额卡住；技术选型给出 ADR 但未获批准，故未进入 PHASE 01。**
+**（0.1.5 时期）基础设施链路 5/5 打通；模型层被账号余额卡住；技术选型给出 ADR 但未获批准，故未进入 PHASE 01。**
+
+> 当前（0.2.1-rc.3 + commandcode）真实模型链路六探针 6/6 PASS，见 `evidence/r14/summary.json`（`2026-11-10T12:43:44.987Z`，本轮未重跑）。
 
 ---
 
@@ -82,9 +89,9 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 
 ---
 
-## 4. 验证结果
+## 4. 验证结果（0.1.5 legacy 套件）
 
-一条命令复现：`cd spike/dsh-probe && node run-all.mjs`
+一条命令复现（0.1.5）：`cd spike/dsh-probe && node run-all.mjs`
 
 退出码语义：`0` 全 PASS；`2` 存在 BLOCKED；`1` 存在 FAIL。**当前为 2。**
 
@@ -104,20 +111,28 @@ dsh: QUOTA: Insufficient Balance (request_id: adb91a31-0e96-408e-b3fa-105f72fe0f
 
 ## 5. 六个关键技术结论（每条都有实测支撑）
 
-### 5.1 当前 DSH 版本不支持取消、恢复、工具审批
+### 5.1 0.1.5 的能力边界（0.2.1-rc.3 已修订，见本节末）
 
-不是"没测"，是**协议里根本没有**：
+0.1.5 上这几项不是"没测"，是**协议里根本没有**（原始记录保留如下）：
 
 | 能力 | 实测结果 |
 |---|---|
 | 运行中取消 | `session/cancel` → `unknown DeepSeek Harness SDK runtime method: session/cancel` |
 | 会话恢复 | `session/resume` → 同上；且复用已存在 sessionId 直接报 `session "..." already exists` |
 | 会话关闭 | `session/close` → 同上 |
-| 工具审批回调 | 协议无任何 server→client 请求；官方说明称该能力"是死能力，服务器从不发送" |
+| 工具审批回调 | 协议无任何 server→client 请求；当时转述官方说明称该能力"是死能力，服务器从不发送"（0.1.5 观测；现行口径 `UNKNOWN / NOT_OBSERVED`，"未观察到"≠"不存在"） |
 
-**架构含义**：Studio 必须自己承接这些语义——
-- 停止 = 关闭 Runtime 进程树，UI 必须区分「停止查看」与「停止运行」
-- 恢复 = Studio 自己的任务状态 + 「上下文再水化包」注入新会话，不能依赖 DSH
+**架构含义（0.1.5 当时）**：Studio 必须自己承接取消语义——
+- 停止 = 关闭 Runtime 进程树，UI 必须区分「停止查看」与「停止运行」（0.2.1 仍无运行时级取消，这一点不变）
+- 恢复 = Studio 自己的任务状态 + 「上下文再水化包」注入新会话（0.1.5 无 resume 时的做法；0.2.1-rc.3 改为**优先官方 `session/resume`，失败再水化**，见 ADR-0002 D4）
+
+**当前（DSH 0.2.1-rc.3）五类能力必须分开记录**：
+
+- 正常关闭后 Session Resume = **CONFIRMED**（CC-3：新进程 resume 后答出随机口令）
+- 中断中的最后一轮恢复 = **UNKNOWN**（U7，`DEFERRED` 到 PHASE 01）
+- DSH 原生审批回调 = **UNKNOWN / NOT_OBSERVED**
+- `session/approve` = **NOT_SUPPORTED**（`-32603 unknown ... method`）
+- Runtime 级取消 `session/cancel` = **NOT_SUPPORTED**（同上）
 
 ### 5.2 工具桥接唯一通路是 MCP
 
@@ -189,8 +204,12 @@ Error: atomic-write: timed out waiting for the writer lock at ...\profiles\node_
 | 3 | 至少一条真实 Prompt 成功并收到可追踪结果 | **BLOCKED** | Prompt 入队成功、产生 15 条可追踪事件，但模型 402 |
 | 4 | 事件/状态能记录并在 UI 或 CLI 展示 | PASS | 诊断壳实时输出 `RUNNING/IDLE`、事件数、错误原因 |
 | 5 | Studio 只读工具被 DSH 调用成功 | **BLOCKED** | 注册链路 PASS；模型未运行，无 `tools/call` |
-| 6 | Runtime 关闭后进程确实退出，记录退出码 | PASS | 进程表复核；exit 0（正常）/ 1（启动失败） |
-| 7 | Session 恢复/审批能力已验证或明确标记不支持 | PASS | 均标 `NOT_SUPPORTED`，有 `unknown method` 证据 |
+| 6 | Runtime 关闭后进程确实退出，记录退出码 | PASS（0.1.5 启动器级；0.2.1 见下方注） | 进程表复核；exit 0（正常）/ 1（启动失败） |
+| 7 | Session 恢复/审批能力已验证或明确标记不支持 | PASS（0.1.5） | 0.1.5 上 resume/审批均 `NOT_SUPPORTED`，有 `unknown method` 证据；0.2.1 起：正常关闭 Resume=**CONFIRMED**、审批=`UNKNOWN / NOT_OBSERVED`、`session/approve`=`NOT_SUPPORTED` |
+
+> **门禁 6 注（0.2.1-rc.3，2026-11-11）**：按原始措辞「Runtime 关闭后进程确实退出，记录退出码」判定，已满足。
+> `evidence/cc-6-exitcode/summary.json`（`npm run probe:exit`）：正常 close → `exitCode = 0`；外部 `taskkill /F` 强杀 → `exitCode = 1`；两次均 `PROCESS_ABSENT`；`modelCallsMade = 0`。
+> 取得通道是 SDK 公开导出的 `TransportClosedError` message 中的 `exit code: <n>`（`lib/types/client.d.ts` 已文档化）；0.2.1-rc.3 **没有**结构化访问器（`HarnessClient#exitCode` 私有、`close()` 返回 `Promise<void>`、`HarnessClientOptions` 无 onExit 钩子），解析失败返回 `null`，不猜。见 `src/lib/exitcode.mjs`、`src/probe-runtime-exit.mjs`。
 | 8 | 技术选型 ADR 写明取舍和风险 | PASS | ADR-0001 / ADR-0002 |
 | 9 | 无密钥进入日志或 Git | PASS | 见 §11 |
 | 10 | GitHub 推送与复审交接完成 | **PASS**（2026-11-10 18:13 达成） | 已推送 `phase/00-feasibility`，远端 SHA 与本地一致，见 §14 |
@@ -225,7 +244,9 @@ Error: atomic-write: timed out waiting for the writer lock at ...\profiles\node_
 | 体积 | 大（~120–180 MB） | 小 |
 | 打包/升级风险 | 成熟 | sidecar 签名与分发链更长 |
 
-**推荐 A 的核心理由**：本产品的复杂度重心在 Runtime 生命周期与写锁（DSH 无取消、无恢复，停止只能关进程），而不是安装体积。B 把复杂度加在最脆弱的地方。
+**推荐 A 的核心理由**：本产品的复杂度重心在 Runtime 生命周期与写锁（DSH 无运行时级取消——0.2.1-rc.3 仍 `NOT_SUPPORTED`，停止只能关进程），而不是安装体积。B 把复杂度加在最脆弱的地方。
+
+> 注（2026-11-11）：「无恢复」已不成立——0.2.1-rc.3 正常关闭后 `session/resume` = **CONFIRMED**（CC-3）；中断轮次仍是 `UNKNOWN`（U7）。上面的推荐理由只需「无运行时级取消」即可成立。
 
 **同时明确**：数据库选型（SQLite 的 ABI 或 `node:sqlite`）**推迟到 PHASE 01**，本阶段没有业务数据，提前锁定只会制造返工。
 
@@ -256,6 +277,7 @@ Error: atomic-write: timed out waiting for the writer lock at ...\profiles\node_
 7. Python SDK 路线
 8. Cocos Creator / 微信开发者工具的实际调用（属 PHASE 06）
 9. 三个"无取消/无恢复/无审批"结论在 **0.2.x** 上是否仍成立（本阶段未升级验证）
+   → 已由 R1 在 0.2.1-rc.3 上回答：**resume = CONFIRMED（正常关闭）**、cancel = `NOT_SUPPORTED`（仍成立）、审批 = `UNKNOWN / NOT_OBSERVED`。
 
 ---
 

@@ -1,0 +1,3 @@
+{"ts":"2026-11-11T03:57:56.179Z","type":"scenario.graceful","exitCode":0,"afterClose":{"status":"PROCESS_ABSENT","waitedMs":1040,"remaining":0},"source":"exit-handler"}
+{"ts":"2026-11-11T03:58:01.664Z","type":"scenario.forced","exitCode":1,"afterKill":{"status":"PROCESS_ABSENT","waitedMs":1013,"remaining":0},"source":"exit-handler"}
+{"ts":"2026-11-11T03:58:01.664Z","type":"verdict","verdict":"PASS","conclusion":"SDK_REPORTS_MANAGED_PROCESS_EXIT_CODE","exitCodes":{"graceful":0,"forced":1}}
