@@ -36,7 +36,7 @@
       "id": "B2",
       "item": "DSH 0.2.1-rc.3 能连接 MCP Server",
       "status": "PASS",
-      "evidence": "evidence/phase-01-b/mcp/handshake.json"
+      "evidence": "evidence/phase-01-b/mcp/protocol-negotiation.json"
     },
     {
       "id": "B3",
@@ -105,7 +105,8 @@
     "sdk_version": "1.32.2",
     "tool": "get_studio_health",
     "tool_name_in_dsh": "mcp__studio__get_studio_health",
-    "protocol_note": "DSH 0.2.1-rc.3 的 MCP client 基于 @modelcontextprotocol/client@2.2.0（支持 2025-11-25 起）。SDK 1.32.2 的 LATEST 为 DRAFT-2026-v1，支持列表内含 2025-06-18，实测协商成功并由 DSH 接受。"
+    "protocol_note": "实测线路抓包：DSH client 请求 2025-11-25，Studio server 回应 2025-11-25，完全一致，无降级；随后 notifications/initialized 与 tools/list 在同一版本下完成。证据 evidence/phase-01-b/mcp/protocol-negotiation.json。",
+    "protocol_negotiated": "2025-11-25"
   },
   "packaging": {
     "tool": "electron-builder 26.18.0",

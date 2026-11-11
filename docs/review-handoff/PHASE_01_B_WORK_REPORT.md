@@ -35,8 +35,12 @@ PHASE 01-A 的关闭状态、PHASE 00 的证据与权威状态、`phase-01-a` �
 
 **为什么是 1.32.x**：DSH 0.2.1-rc.3 的 MCP client 实际基于 `@modelcontextprotocol/client@2.2.0`（v2 拆包线），
 其 `SUPPORTED_PROTOCOL_VERSIONS` 为 `[2025-11-25, 2025-06-18, 2025-03-26, 2024-11-05, 2024-10-07]`。
-官方 v1 线（`@modelcontextprotocol/sdk`）只有 1.x；1.32.2 的 LATEST 为 `DRAFT-2026-v1`，支持列表含
-`2025-06-18`。实测协商成功、DSH 接受并正常注册工具，因此不需要引入 v2 拆包线。
+官方 v1 线（`@modelcontextprotocol/sdk`）只有 1.x。**实测协商结果是双方都到 `2025-11-25`，完全一致**，
+不存在降级：抓包见 `evidence/phase-01-b/mcp/protocol-negotiation.json`（client 请求 `2025-11-25` →
+server 回应 `2025-11-25` → `notifications/initialized` → `tools/list`）。
+
+同一次抓包还看到 DSH 客户端在 auto 模式下的行为：先发 `server/discover` 探针，我们的 server 不实现该方法、
+应答错误后客户端回退到 legacy initialize。这也是每次连接会出现两个 server 进程的原因（探针进程被丢弃）。
 
 **实测握手证据**：`evidence/phase-01-b/mcp/handshake.json` 的 audit 里记录
 `initialize.completed`，`clientInfo = { name: "dsh-mcp-client", version: "0.0.1" }`；Server 侧同时记录了

@@ -5,6 +5,7 @@
 | 路径 | 证明什么 | 归属验收 |
 |---|---|---|
 | `mcp/handshake.json` | 开发环境：DSH Runtime 用 `patches` 连上官方 SDK 写的 Studio MCP Server（`initialize.completed`，clientInfo = dsh-mcp-client） | B1, B2 |
+| `mcp/protocol-negotiation.json` | **线路抓包**：client 请求 `2025-11-25`、server 回应 `2025-11-25`，一致；随后 `notifications/initialized` + `tools/list` 同版本完成 | B2 |
 | `mcp/tool-call.json` | 开发环境：真实模型回合调用 `mcp__studio__get_studio_health`，Server 侧 audit 有 `tools/call` + `tools/call.served` | B3 |
 | `mcp/packaged-handshake.json` | **安装后**的 artifacts：安装目录 exe（node 模式）加载 app.asar 里的 SDK client，DSH 连上 asar 内的 Studio MCP Server | B7 |
 | `mcp/packaged-tool-call.json` | **安装后**：真实模型回合调用工具成功（`toolCalled: true`） | B3, B7 |

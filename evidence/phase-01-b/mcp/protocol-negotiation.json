@@ -1,0 +1,139 @@
+{
+  "generatedAt": "2026-11-11T08:21:38.024Z",
+  "purpose": "实际线路抓包：DSH MCP client 与 Studio MCP Server 之间的 initialize 交换原文（此前证据只记录了 clientInfo，没有记录协商出的协议版本）",
+  "method": "在真实 server 前挂一个透明 stdio 代理，记录双向 JSON-RPC 帧；DSH 仍用真实 HarnessClient + 真实 dsh runtime 连接",
+  "sdk": {
+    "package": "@modelcontextprotocol/sdk",
+    "version": "1.32.2"
+  },
+  "dshClient": {
+    "name": "dsh-mcp-client",
+    "version": "0.0.1",
+    "package": "@modelcontextprotocol/client@2.2.0"
+  },
+  "negotiation": {
+    "clientRequestedProtocolVersion": "2025-11-25",
+    "serverRespondedProtocolVersion": "2025-11-25",
+    "match": true,
+    "clientInfo": {
+      "name": "dsh-mcp-client",
+      "version": "0.0.1"
+    },
+    "serverInfo": {
+      "name": "ai-game-studio-tools",
+      "version": "0.1.0-phase01b"
+    },
+    "clientCapabilities": {}
+  },
+  "observations": {
+    "discoverProbeFirst": true,
+    "discoverNote": "DSH 客户端在 auto 模式下先发 server/discover 探针；我们的 server 不实现该方法，响应错误后客户端回退到 legacy initialize。这也是每次连接会出现两个 server 进程的原因。",
+    "toolsListAfterInitialize": true,
+    "toolsCallCoveredBy": "evidence/phase-01-b/mcp/tool-call.json（同一条连接路径上完成真实 tools/call）"
+  },
+  "frames": [
+    {
+      "dir": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": "server-discover-probe-1",
+        "method": "server/discover",
+        "params": {
+          "_meta": {
+            "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+            "io.modelcontextprotocol/clientInfo": {
+              "name": "dsh-mcp-client",
+              "version": "0.0.1"
+            },
+            "io.modelcontextprotocol/clientCapabilities": {}
+          }
+        }
+      }
+    },
+    {
+      "dir": "server->client",
+      "message": {
+        "jsonrpc": "2.0",
+        "id": "server-discover-probe-1",
+        "error": {
+          "code": -32601,
+          "message": "Method not found"
+        }
+      }
+    },
+    {
+      "dir": "client->server",
+      "message": {
+        "method": "initialize",
+        "params": {
+          "protocolVersion": "2025-11-25",
+          "capabilities": {},
+          "clientInfo": {
+            "name": "dsh-mcp-client",
+            "version": "0.0.1"
+          }
+        },
+        "jsonrpc": "2.0",
+        "id": 0
+      }
+    },
+    {
+      "dir": "server->client",
+      "message": {
+        "result": {
+          "protocolVersion": "2025-11-25",
+          "capabilities": {
+            "tools": {
+              "listChanged": true
+            }
+          },
+          "serverInfo": {
+            "name": "ai-game-studio-tools",
+            "version": "0.1.0-phase01b"
+          }
+        },
+        "jsonrpc": "2.0",
+        "id": 0
+      }
+    },
+    {
+      "dir": "client->server",
+      "message": {
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+      }
+    },
+    {
+      "dir": "client->server",
+      "message": {
+        "method": "tools/list",
+        "jsonrpc": "2.0",
+        "id": 1
+      }
+    },
+    {
+      "dir": "server->client",
+      "message": {
+        "result": {
+          "tools": [
+            {
+              "name": "get_studio_health",
+              "title": "Get Studio health",
+              "description": "Read-only health snapshot of the AI Game Studio process: component version, current phase, runtime facts and self-check results. Takes no arguments and changes nothing.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {}
+              },
+              "execution": {
+                "taskSupport": "forbidden"
+              }
+            }
+          ]
+        },
+        "jsonrpc": "2.0",
+        "id": 1
+      }
+    }
+  ]
+}
