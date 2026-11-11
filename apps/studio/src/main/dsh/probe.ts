@@ -44,6 +44,10 @@ interface SdkModule {
 }
 
 export interface HarnessClientLike {
+  /** Session-level API, present on the real client and used by the task runner. */
+  prompt?(sessionId: string, contentBlocks: unknown[]): Promise<string>
+  resumeSession?(sessionId: string): Promise<void>
+  subscribeSessionTree?(sessionId: string): unknown
   start(): void
   initialize(params: Record<string, unknown>): Promise<{ serverInfo?: DshServerInfo }>
   close(): Promise<void>

@@ -12,6 +12,7 @@ import path from 'node:path'
 import { configFilePath, loadConfig, saveConfig, type StudioConfig } from './config'
 import { createLogger } from './logger'
 import { DshConnectionService, SHUTDOWN_BOUND_MS } from './dsh/service'
+import { TaskService } from './tasks/service'
 import { CHANNELS, registerIpc } from './ipc'
 import { createMainWindow } from './window'
 
@@ -26,6 +27,7 @@ if (process.env.STUDIO_USER_DATA) {
 
 let mainWindow: BrowserWindow | null = null
 let service: DshConnectionService | null = null
+let tasks: TaskService | null = null
 let shutdownState: 'idle' | 'running' | 'done' = 'idle'
 
 function pushState(): void {
@@ -50,6 +52,12 @@ async function gracefulQuit(code: number): Promise<void> {
 
   let exitCode = code
   try {
+    // Tasks first: a running task holds a runtime, and the supervisor is the thing that
+    // knows how to reclaim it. The health probe then finds nothing left to reap.
+    await tasks?.dispose('app-quit').catch((error) => {
+      console.error('[studio] task shutdown failed:', error)
+      exitCode = 1
+    })
     const result = await service?.shutdown('app-quit')
     // The exit code follows the safety property, not the clean path: if a process from
     // this probe could still be alive, the process must not exit 0.
@@ -181,10 +189,32 @@ async function bootstrap(): Promise<void> {
   })
   service.on('state', () => pushState())
 
+  // Task state outlives any single probe, so it is created here and disposed on quit.
+  tasks = new TaskService({
+    logger,
+    userDataDir,
+    dshHome: path.join(userDataDir, 'dsh-home'),
+    profile: config.dsh.profile,
+    provider: config.dsh.provider,
+    model: config.dsh.model,
+    cwd: app.getPath('documents') || userDataDir,
+    entryPath: config.dsh.entryPath ?? null,
+  })
+  tasks.on('changed', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(CHANNELS.tasksChanged)
+  })
+  void tasks
+    .recoverOnStartup()
+    .then((result) => {
+      if (result.recovered.length > 0) logger.warn('task.recovered.interrupted', { tasks: result.recovered })
+    })
+    .catch((error) => logger.error('task.recovery.failed', { error: String(error) }))
+
   mainWindow = createMainWindow()
 
   registerIpc({
     service,
+    tasks,
     logger,
     logDir,
     configPath: configFilePath(userDataDir),

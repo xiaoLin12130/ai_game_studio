@@ -1,0 +1,229 @@
+/**
+ * TaskService: the single owner of task state inside the main process.
+ *
+ * It wires the durable store, the runtime supervisor and the runner together, and exposes
+ * a small, deliberate surface to the IPC layer. The renderer never sees a store handle, a
+ * client or a session id it can act on directly — only named actions that the state
+ * machine validates first.
+ */
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { bundledDsh, type DshEntry } from '../dsh/locate'
+import { EventEmitter } from 'node:events'
+import { RuntimeSupervisor } from '../runtime/supervisor'
+import { resolveDshEntry } from '../dsh/locate'
+import { TaskRunner } from './runner'
+import { TaskStore } from './store'
+import { ACTIONS_FOR } from './machine'
+import { DEFAULT_ACCEPTANCE, type AcceptanceSpec, type TaskAction, type TaskIsolation, type TaskRecord, type TaskView } from './types'
+
+export interface TaskServiceLogger {
+  info(event: string, fields?: Record<string, unknown>): void
+  warn(event: string, fields?: Record<string, unknown>): void
+  error(event: string, fields?: Record<string, unknown>): void
+}
+
+export interface TaskServiceOptions {
+  logger: TaskServiceLogger
+  userDataDir: string
+  dshHome: string
+  profile: string
+  provider: string
+  model: string
+  cwd: string
+  /** Optional explicit DSH entry override (same meaning as the probe's config). */
+  entryPath?: string | null
+  /** Test seams. */
+  store?: TaskStore
+  supervisor?: RuntimeSupervisor
+}
+
+export interface CreateTaskRequest {
+  title: string
+  goal: string
+  type?: string
+  isolation?: TaskIsolation
+  acceptance?: Partial<AcceptanceSpec>
+}
+
+export interface TaskSummary extends TaskRecord {
+  sessionId: string | null
+  availableActions: TaskAction[]
+}
+
+export class TaskService extends EventEmitter {
+  readonly store: TaskStore
+  readonly supervisor: RuntimeSupervisor
+  readonly runner: TaskRunner
+  readonly #logger: TaskServiceLogger
+  readonly #options: TaskServiceOptions
+  #disposed = false
+  #profileCheck: { ok: boolean; detail: string } | null = null
+
+  constructor(options: TaskServiceOptions) {
+    super()
+    this.#options = options
+    this.#logger = options.logger
+    const dbPath = path.join(options.userDataDir, 'studio.db')
+    this.store = options.store ?? new TaskStore(dbPath)
+    this.supervisor =
+      options.supervisor ??
+      new RuntimeSupervisor({
+        logger: options.logger,
+        dshHome: options.dshHome,
+        profile: options.profile,
+        provider: options.provider,
+        model: options.model,
+        cwd: options.cwd,
+        entry: resolveDshEntry(options.entryPath ?? null),
+      })
+    this.runner = new TaskRunner({
+      store: this.store,
+      supervisor: this.supervisor,
+      logger: options.logger,
+      recordsDir: path.join(options.userDataDir, 'records'),
+    })
+    this.supervisor.on('task:changed', () => this.emit('changed'))
+  }
+
+  /**
+   * A task needs a runtime whose profile can load the configured provider. On a fresh
+   * DSH home that is not true yet, so this checks (and, once, installs) the provider
+   * through DSH's own plugin manager before the first real run.
+   *
+   * The result is cached and surfaced: a task that cannot get a usable profile fails with
+   * PROFILE_NOT_READY instead of a mysterious runtime exit.
+   */
+  ensureProfile(): { ok: boolean; detail: string } {
+    if (this.#profileCheck) return this.#profileCheck
+    const profileDir = path.join(this.#options.dshHome, 'profiles', this.#options.profile)
+    const providerDir = path.join(profileDir, 'node_modules', '@mars-sea', 'dsh-commandcode-provider')
+    if (fs.existsSync(providerDir)) {
+      this.#profileCheck = { ok: true, detail: 'provider already installed' }
+      return this.#profileCheck
+    }
+    // Materialise the profile first: writing package.json by hand leaves a shell with no
+    // services, and every plugin then waits forever.
+    // The probe lets the SDK resolve its own CLI; here we need the actual file to invoke
+    // DSH's plugin manager, so use the same resolver the SDK itself uses.
+    const entry: DshEntry = resolveDshEntry(this.#options.entryPath ?? null)
+    const cli = this.#options.entryPath ?? bundledDsh().entry
+    if (!cli) {
+      this.#profileCheck = { ok: false, detail: 'the dsh CLI entry could not be resolved' }
+      this.#logger.error('task.profile.not-ready', { ...this.#profileCheck })
+      return this.#profileCheck
+    }
+    let bootstrapped = false
+    try {
+      const install = spawnSync(
+        process.execPath,
+        [cli, 'plugin', '--profile', this.#options.profile, 'add', '@mars-sea/dsh-commandcode-provider@0.15.4'],
+        { env: { ...process.env, DSH_HOME: this.#options.dshHome }, encoding: 'utf8', timeout: 300000 },
+      )
+      bootstrapped = install.status === 0
+      if (!bootstrapped) {
+        this.#profileCheck = { ok: false, detail: String(install.stderr ?? install.error ?? '').slice(-400) || 'plugin install failed' }
+        this.#logger.error('task.profile.not-ready', { ...this.#profileCheck })
+        return this.#profileCheck
+      }
+      this.#profileCheck = { ok: true, detail: 'provider installed' }
+    } catch (error) {
+      this.#profileCheck = { ok: false, detail: String((error as Error)?.message ?? error) }
+      this.#logger.error('task.profile.not-ready', { ...this.#profileCheck })
+    }
+    this.#logger.info('task.profile.ready', { ...this.#profileCheck })
+    return this.#profileCheck
+  }
+
+  /** Tasks that were mid-flight when the app stopped are marked INTERRUPTED, resumable. */
+  async recoverOnStartup(): Promise<{ recovered: string[] }> {
+    const result = await this.runner.recoverOnStartup()
+    if (result.recovered.length > 0) this.emit('changed')
+    return result
+  }
+
+  create(request: CreateTaskRequest): TaskSummary {
+    const id = 'task-' + crypto.randomUUID().slice(0, 8)
+    const acceptance: AcceptanceSpec = { ...DEFAULT_ACCEPTANCE, ...(request.acceptance ?? {}) }
+    this.store.createTask({
+      id,
+      title: request.title.trim(),
+      goal: request.goal.trim(),
+      type: request.type ?? 'analysis',
+      isolation: request.isolation ?? 'writable',
+      acceptance,
+    })
+    this.#logger.info('task.create', { taskId: id, isolation: request.isolation ?? 'writable' })
+    this.emit('changed')
+    return this.#summary(this.store.getTask(id) as TaskRecord)
+  }
+
+  list(): TaskSummary[] {
+    return this.store.listTasks().map((task) => this.#summary(task))
+  }
+
+  get(id: string): (TaskView & { availableActions: TaskAction[] }) | null {
+    const view = this.store.getTaskView(id)
+    if (!view) return null
+    return { ...view, availableActions: [...ACTIONS_FOR[view.status]] }
+  }
+
+  /**
+   * Run one of the named actions. Every path goes through the runner, which enforces the
+   * transition table; an action that is not available in the current state is refused with
+   * a readable message rather than silently ignored.
+   */
+  async act(id: string, action: TaskAction): Promise<TaskSummary> {
+    const task = this.store.getTask(id)
+    if (!task) throw new Error('unknown task: ' + id)
+    if (!ACTIONS_FOR[task.status].includes(action)) {
+      throw new Error('action "' + action + '" is not available while the task is ' + task.status)
+    }
+    if (action === 'start' || action === 'retry' || action === 'resume') {
+      const profile = this.ensureProfile()
+      if (!profile.ok) {
+        this.store.appendEvent({ taskId: id, kind: 'task.profile.not-ready', summary: profile.detail.slice(0, 200) })
+        throw new Error('the DSH profile cannot load the configured provider: ' + profile.detail.slice(0, 200))
+      }
+    }
+    this.#logger.info('task.action', { taskId: id, action, status: task.status })
+    switch (action) {
+      case 'start':
+        await this.runner.start(id)
+        break
+      case 'stop':
+        await this.runner.stop(id)
+        break
+      case 'resume':
+        await this.runner.resume(id)
+        break
+      case 'retry':
+        await this.runner.retry(id)
+        break
+      case 'cancel':
+        await this.runner.cancel(id)
+        break
+    }
+    return this.#summary(this.store.getTask(id) as TaskRecord)
+  }
+
+  runtimes(): ReturnType<RuntimeSupervisor['snapshot']> {
+    return this.supervisor.snapshot()
+  }
+
+  #summary(task: TaskRecord): TaskSummary {
+    const sessions = this.store.listSessions(task.id)
+    const latest = sessions.length > 0 ? sessions[sessions.length - 1] : null
+    return { ...task, sessionId: latest?.id ?? null, availableActions: [...ACTIONS_FOR[task.status]] }
+  }
+
+  async dispose(reason: string): Promise<void> {
+    if (this.#disposed) return
+    this.#disposed = true
+    const summary = await this.supervisor.shutdownAll(reason)
+    this.#logger.info('task.service.dispose', { reason, ...summary })
+    this.store.close()
+  }
+}

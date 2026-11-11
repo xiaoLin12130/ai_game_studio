@@ -46,6 +46,79 @@
           <pre id="diagnostics">加载中…</pre>
         </details>
       </section>
+
+      <section class="card tasks-card" id="tasks-card">
+        <div class="card-head">
+          <h2>任务</h2>
+          <div class="tasks-head-tools">
+            <span class="tasks-count" id="tasks-count">加载中…</span>
+            <button id="tasks-refresh" class="button button-ghost button-small" type="button">刷新</button>
+          </div>
+        </div>
+
+        <div class="tasks-layout">
+          <aside class="task-list-pane" aria-label="任务列表">
+            <div class="tasks-alert" id="tasks-alert" role="alert" hidden></div>
+
+            <ul class="task-list" id="task-list">
+              <li class="task-list-empty">正在加载任务…</li>
+            </ul>
+
+            <form class="task-form" id="task-form" autocomplete="off">
+              <h3 class="task-form-title">新建任务</h3>
+
+              <label class="field">
+                <span class="field-label">标题</span>
+                <input
+                  class="input"
+                  id="task-title"
+                  name="title"
+                  type="text"
+                  maxlength="120"
+                  placeholder="例如：检查存档写入是否幂等"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span class="field-label">目标</span>
+                <textarea
+                  class="input"
+                  id="task-goal"
+                  name="goal"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="描述希望 DSH 完成的事情"
+                  required
+                ></textarea>
+              </label>
+
+              <div class="field field-inline" role="radiogroup" aria-label="隔离类型">
+                <span class="field-label">隔离类型</span>
+                <label class="radio-pill">
+                  <input type="radio" name="isolation" value="readonly" />
+                  <span>只读</span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="isolation" value="writable" checked />
+                  <span>写入</span>
+                </label>
+              </div>
+
+              <div class="task-form-foot">
+                <span class="task-form-error" id="task-form-error" role="alert" hidden></span>
+                <button class="button" id="task-create" type="submit">创建任务</button>
+              </div>
+            </form>
+          </aside>
+
+          <div class="task-detail-pane">
+            <div class="task-detail-body" id="task-detail-body">
+              <p class="task-detail-placeholder">正在加载任务…</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="footer">
