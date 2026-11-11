@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T10:59:30.933Z",
+  "generatedAt": "2026-11-11T11:22:26.252Z",
   "mode": "ready",
   "appVersion": "0.1.0",
   "versions": {
@@ -29,8 +29,8 @@
       "code": "HANDSHAKE_OK",
       "message": "DSH 运行时已启动并完成 SDK 握手。"
     },
-    "lastCheckedAt": "2026-11-11T10:59:30.795Z",
-    "lastDurationMs": 3371,
+    "lastCheckedAt": "2026-11-11T11:22:26.152Z",
+    "lastDurationMs": 3255,
     "serverInfo": {
       "name": "deepseek-harness-sdk-runtime",
       "version": "0.0.1"
@@ -50,5 +50,5 @@
     "factExit": "0"
   },
   "second": null,
-  "totalMs": 3509
+  "totalMs": 3354
 }

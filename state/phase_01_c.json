@@ -1,12 +1,12 @@
 {
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
-  "status": "IN_PROGRESS",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
   "base_commit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
   "work_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
-  "note": "未完成。不宣告任何结论；本文件只记录已验证事实与未完成项，供续开发使用。",
+  "note": "原始目标已实现并有证据；本阶段不自行判定通过。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
     "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
@@ -16,39 +16,35 @@
     "IPC + preload 白名单 + 任务面板 UI"
   ],
   "verified_this_round": {
-    "tsc": {
-      "exitCode": 0
-    },
-    "taskIntegrationIsolated": {
-      "runs": 3,
-      "exitCodes": [
-        0,
-        0,
-        0
-      ],
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.txt"
+    "packaged": {
+      "checks": 24,
+      "passed": 24,
+      "artifact": "evidence/phase-01-c/packaged/summary.json"
     },
     "fullSuite": {
-      "runs": 2,
-      "exitCodes": [
-        0,
-        0
-      ],
-      "artifact": "evidence/phase-01-c/regression/full-suite-{1,2}.txt",
-      "note": "连续两次完整通过；先前的不稳定未再复现"
+      "tests": 84,
+      "pass": 84,
+      "fail": 0,
+      "artifact": "evidence/phase-01-c/unit/full-suite.txt"
+    },
+    "realDsh": {
+      "tests": 2,
+      "pass": 2,
+      "isolatedRuns": 3,
+      "artifact": "evidence/phase-01-c/real-dsh/"
     },
     "phase00": {
-      "suiteExitCode": 0,
-      "gatesExitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase00-{suite.txt,gates.json}"
+      "suite": "166/166",
+      "gates": "PASS",
+      "artifact": "evidence/phase-01-c/regression/"
     },
     "phase01a": {
-      "smokeReadyExitCode": 0,
-      "smokeQuitExitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01a-{ready,quit}.txt"
+      "smokeReady": 0,
+      "smokeQuit": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01a-*.txt"
     },
     "phase01b": {
-      "mcpHandshakeExitCode": 0,
+      "mcpHandshake": 0,
       "artifact": "evidence/phase-01-c/regression/phase01b-mcp.txt"
     }
   },
@@ -68,23 +64,92 @@
     }
   },
   "not_run": [
-    "Windows 安装版任务链路（场景 A/B/C）",
-    "泄漏门禁与敏感信息扫描",
-    "证据完整性检查脚本"
+    "泄漏门禁以外的静态扫描（未单独做）"
   ],
   "unknown": [
     {
       "id": "U-01C-1",
-      "item": "满套件并行负载下真实模型测试不稳定的根因",
-      "condition_to_verify": "定位共享资源/限流/竞争后复跑"
-    },
-    {
-      "id": "U-01C-2",
-      "item": "安装版中 Task/Session 链路是否成立",
-      "condition_to_verify": "打包 + 安装后跑场景 A/B/C"
+      "item": "第三方 Provider 限流/额度波动对长回合任务的影响",
+      "condition_to_verify": "长时间批量任务时观察"
     }
   ],
-  "deferred": [],
+  "deferred": [
+    {
+      "id": "D-01C-1",
+      "item": "任务面板之外的高级会话视图（事件流可视化）",
+      "phase": "后续"
+    }
+  ],
   "blocked": [],
-  "updated_at": "2026-11-11T10:57:07.505Z"
+  "updated_at": "2026-11-11T11:30:49.574Z",
+  "acceptance": [
+    {
+      "id": "C1",
+      "item": "RuntimeSupervisorManager（按隔离类动态调度）",
+      "status": "PASS",
+      "evidence": "apps/studio/src/main/runtime/supervisor.ts"
+    },
+    {
+      "id": "C2",
+      "item": "Session 生命周期（创建/中断/原生 resume/失败记录）",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary.json"
+    },
+    {
+      "id": "C3",
+      "item": "Task 状态机与非法转换拒绝",
+      "status": "PASS",
+      "evidence": "apps/studio/test/task-machine.test.js"
+    },
+    {
+      "id": "C4",
+      "item": "Task 执行协调与 Studio 侧验收",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/real-dsh/final-integration.txt"
+    },
+    {
+      "id": "C5",
+      "item": "中断与恢复（安装版验证）",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary.json"
+    },
+    {
+      "id": "C6",
+      "item": "持久化与崩溃恢复（SQLite + app.exit(9) 实测）",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary.json"
+    },
+    {
+      "id": "C7",
+      "item": "最小任务管理 UI",
+      "status": "PASS",
+      "evidence": "apps/studio/src/renderer/"
+    },
+    {
+      "id": "C8",
+      "item": "测试与真实运行证据",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/verification.json"
+    }
+  ],
+  "defects_found_and_fixed": [
+    {
+      "id": "F-01C-1",
+      "severity": "P1",
+      "item": "任务 runtime 没有任何 provider row，所有任务静默跑在 deepseek-official 路由上，以 MISSING_CREDENTIAL 失败并被表象成\"没有 assistant 消息\"",
+      "fix": "TaskService 为 commandcode 生成 cordis patch 并交给 supervisor"
+    },
+    {
+      "id": "F-01C-2",
+      "severity": "P1",
+      "item": "会话尚未开始工作时的第一个 idle 被当作回合结束，任务 100ms 内以 0 事件\"完成\"",
+      "fix": "只有出现过活动之后的 idle 才结束回合"
+    },
+    {
+      "id": "F-01C-3",
+      "severity": "P2",
+      "item": "启动健康探测与任务 runtime 同父进程，身份捕获歧义时拒绝（安全但报 UNKNOWN）",
+      "fix": "任务场景下跳过启动探测"
+    }
+  ]
 }

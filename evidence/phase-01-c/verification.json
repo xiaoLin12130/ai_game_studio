@@ -1,0 +1,156 @@
+{
+  "generatedAt": "2026-11-11T11:30:34.541Z",
+  "phase": "PHASE_01_C",
+  "branch": "phase/01-c-session-task-lifecycle",
+  "baseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
+  "note": "Every entry is a command that was actually run in this round; counts are read from the raw logs next to them.",
+  "matrix": [
+    {
+      "name": "build-typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 84,
+        "pass": 84,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/unit/full-suite.txt"
+    },
+    {
+      "name": "real-dsh-task-integration",
+      "command": "node --test test/task-integration.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/real-dsh/final-integration.txt",
+      "note": "真实 DSH + commandcode + 真实模型回合"
+    },
+    {
+      "name": "real-dsh-isolated-runs",
+      "command": "node --test test/task-integration.test.js (x3)",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.txt",
+      "note": "连续 3 次隔离运行均退出码 0"
+    },
+    {
+      "name": "package-installer",
+      "command": "npx electron-builder --win",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/packaged/summary.json",
+      "note": "AI-Game-Studio-0.1.0-x64.exe 237547404 bytes"
+    },
+    {
+      "name": "install-silent",
+      "command": "AI-Game-Studio-0.1.0-x64.exe /S /D=<dir>",
+      "exitCode": 0
+    },
+    {
+      "name": "packaged-task-scenarios",
+      "command": "node scripts/smoke-tasks-packaged.mjs <install dir>",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "checks": 24,
+        "passed": 24
+      },
+      "artifact": "evidence/phase-01-c/packaged/summary.json"
+    },
+    {
+      "name": "phase00-suite",
+      "command": "node tests/run-tests.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "counts": {
+        "pass": 166,
+        "total": 166
+      },
+      "artifact": "evidence/phase-01-c/regression/phase00-suite.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
+    },
+    {
+      "name": "phase01a-smoke-ready",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "phase01a-smoke-quit-during-probe",
+      "command": "node scripts/smoke.mjs quit-during-probe",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01a-quit.txt"
+    },
+    {
+      "name": "phase01b-mcp-handshake",
+      "command": "node scripts/mcp-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01b-mcp.txt"
+    }
+  ],
+  "packagedScenarios": {
+    "checks": {
+      "A.exitZero": true,
+      "A.producedSmoke": true,
+      "A.taskSucceeded": true,
+      "A.hadSession": true,
+      "A.verified": true,
+      "A.transitionsOk": true,
+      "A.noRuntimeLeft": true,
+      "A.noLingeringApp": true,
+      "B.exitZero": true,
+      "B.producedSmoke": true,
+      "B.wasInterrupted": true,
+      "B.interruptedIsRecorded": true,
+      "B.resumedToTerminal": true,
+      "B.sessionReused": true,
+      "B.twoAttempts": true,
+      "B.noLingeringApp": true,
+      "C.crashedAsExpected": true,
+      "C.crashLeftTaskRunning": true,
+      "C.recoveryProducedSmoke": true,
+      "C.sawInterruptedState": true,
+      "C.resumedToTerminal": true,
+      "C.recordedNewAttempt": true,
+      "C.appExited": true,
+      "C.noLingeringApp": true
+    },
+    "failed": []
+  },
+  "artifacts": {
+    "installerBytes": 237547404,
+    "phase01bInstaller": {
+      "file": "apps/studio/release/AI-Game-Studio-0.1.0-x64.exe",
+      "bytes": 237521179,
+      "megabytes": 226.5,
+      "sha256": "2C0491B413EAC17EE3B3AB9CA52B5A0C6247F49AA7F5DAA875BA332F05BAD5E4"
+    }
+  },
+  "allPassed": true
+}

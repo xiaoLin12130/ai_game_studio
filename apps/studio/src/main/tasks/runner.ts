@@ -199,6 +199,17 @@ export class TaskRunner {
       const subscription = this.#subscribe(lease.client, sessionId)
       await lease.client.prompt(sessionId, [{ type: 'text', text: prompt }])
       const observed = await this.#observe(lease.client, sessionId, attempt.id, recordStream, subscription)
+      this.#store.appendEvent({
+        taskId,
+        attemptId: attempt.id,
+        kind: 'run.observed',
+        summary:
+          'events=' + observed.events.length +
+          ' idle=' + observed.idle +
+          ' error=' + String(observed.error ?? '') +
+          ' types=' + JSON.stringify(observed.events.map((e) => String((e as { type?: string }).type ?? '?'))).slice(0, 400) +
+          ' last=' + JSON.stringify(observed.events[observed.events.length - 1] ?? null).slice(0, 900),
+      })
       recordStream.close()
       this.#store.endAttempt({
         attemptId: attempt.id,
@@ -275,9 +286,19 @@ export class TaskRunner {
     if (!subscription) return { idle: false, error: 'no notification subscription available', events }
     try {
       const deadline = Date.now() + this.#runTimeoutMs
+      // A session that has not started working yet is already "idle". Treating that first
+      // idle as the end of the turn ends the run before the prompt is even processed — the
+      // task then "finishes" in 100 ms with no evidence. Only an idle that follows real
+      // activity closes the turn.
+      let sawWork = false
       for (;;) {
         const remaining = deadline - Date.now()
-        if (remaining <= 0) return { idle: false, error: 'attempt exceeded ' + this.#runTimeoutMs + 'ms', events }
+        if (remaining <= 0) {
+          // Nothing ever ran: that is a finished turn with no evidence, which the verifier
+          // reports as NO_EVENTS rather than as a timeout.
+          if (!sawWork && events.length === 0) return { idle: true, events }
+          return { idle: false, error: 'attempt exceeded ' + this.#runTimeoutMs + 'ms', events }
+        }
         const next = await Promise.race([
           subscription.next(),
           new Promise<null>((resolve) => setTimeout(() => resolve(null), Math.min(remaining, 30000))),
@@ -285,9 +306,12 @@ export class TaskRunner {
         if (next === null) continue
         onNotification(next)
         const n = next as { method?: string; params?: Record<string, unknown> }
-        if (n?.method === 'session.status' && n.params?.status === 'idle') return { idle: true, events }
-        if (n?.method === 'session.status' && n.params?.status === 'error') {
-          return { idle: false, error: String(n.params?.message ?? 'session error'), events }
+        if (n?.method === 'session.event') sawWork = true
+        if (n?.method === 'session.status') {
+          const status = String(n.params?.status ?? '')
+          if (status && status !== 'idle') sawWork = true
+          if (status === 'idle' && sawWork) return { idle: true, events }
+          if (status === 'error') return { idle: false, error: String(n.params?.message ?? 'session error'), events }
         }
       }
     } catch (error) {

@@ -70,6 +70,8 @@ export interface SupervisorOptions {
   readonlyRuntimes?: number
   /** How long a runtime may take to start before the lease fails. */
   startTimeoutMs?: number
+  /** Cordis patches applied to every runtime this supervisor starts. */
+  patches?: string[]
   /** Test seam: build a client without spawning the real SDK. */
   clientFactory?: (options: Record<string, unknown>) => HarnessClientLike
 }
@@ -136,6 +138,7 @@ export class RuntimeSupervisor extends EventEmitter {
       env: childEnvironment(),
     }
     if (this.#options.entry.bin) options.dshBin = this.#options.entry.bin
+    if (this.#options.patches?.length) options.patches = this.#options.patches
     const factory = this.#options.clientFactory ?? ((opts: Record<string, unknown>) => new sdk.HarnessClient(opts))
     const client = factory(options) as RuntimeClient
 

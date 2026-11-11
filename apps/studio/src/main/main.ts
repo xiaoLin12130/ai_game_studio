@@ -110,6 +110,102 @@ async function runSmoke(): Promise<void> {
     return
   }
 
+  // ---- task lifecycle scenarios (PHASE 01-C) -------------------------------------
+  if (SMOKE.startsWith('task-') && tasks) {
+    const write = (payload: Record<string, unknown>) => {
+      fs.mkdirSync(SMOKE_OUT as string, { recursive: true })
+      fs.writeFileSync(path.join(SMOKE_OUT as string, 'smoke.json'), JSON.stringify({ generatedAt: new Date().toISOString(), mode: SMOKE, ...payload }, null, 2) + '\n')
+    }
+    const waitForTask = async (id: string, wanted: string[], timeoutMs: number) => {
+      const end = Date.now() + timeoutMs
+      while (Date.now() < end) {
+        const current = tasks!.store.getTask(id)
+        if (current && wanted.includes(current.status)) return current
+        await new Promise((resolve) => setTimeout(resolve, 250))
+      }
+      return tasks!.store.getTask(id)
+    }
+    const snapshot = (id: string) => {
+      const view = tasks!.store.getTaskView(id)
+      return view
+        ? {
+            id: view.id,
+            status: view.status,
+            attempts: view.attempts.length,
+            sessions: view.sessions.length,
+            transitions: view.transitions.map((x) => x.to),
+            verifications: view.verifications.map((v) => v.ok),
+            error: view.lastErrorMessage,
+            events: tasks!.store.listEvents(view.id, 8),
+          }
+        : null
+    }
+    const goal = 'Reply with exactly one word: hello. Do not use any tools.'
+    try {
+      if (SMOKE === 'task-run') {
+        const created = tasks.create({ title: 'packaged task run', goal, type: 'analysis', isolation: 'writable' })
+        await tasks.act(created.id, 'start')
+        const final = await waitForTask(created.id, ['SUCCEEDED', 'FAILED'], 240000)
+        write({ task: snapshot(created.id), finalStatus: final?.status ?? null, runtimes: tasks.runtimes() })
+        app.quit()
+        return
+      }
+      if (SMOKE === 'task-interrupt-resume') {
+        const created = tasks.create({ title: 'packaged interrupt and resume', goal: 'Count slowly from 1 to 50, one number per line.', type: 'analysis', isolation: 'writable' })
+        await tasks.act(created.id, 'start')
+        const running = await waitForTask(created.id, ['RUNNING'], 180000)
+        if (running?.status !== 'RUNNING') {
+          write({ phase: 'start-failed', task: snapshot(created.id) })
+          app.quit()
+          return
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+        await tasks.act(created.id, 'stop')
+        const interrupted = await waitForTask(created.id, ['INTERRUPTED'], 180000)
+        const atInterrupt = snapshot(created.id)
+        if (interrupted?.status !== 'INTERRUPTED') {
+          write({ phase: 'interrupt-failed', task: atInterrupt })
+          app.quit()
+          return
+        }
+        await tasks.act(created.id, 'resume')
+        const final = await waitForTask(created.id, ['SUCCEEDED', 'FAILED'], 240000)
+        write({ phase: 'done', atInterrupt, task: snapshot(created.id), finalStatus: final?.status ?? null, runtimes: tasks.runtimes() })
+        app.quit()
+        return
+      }
+      if (SMOKE === 'task-start-and-crash') {
+        const created = tasks.create({ title: 'packaged crash recovery', goal: 'Count slowly from 1 to 50, one number per line.', type: 'analysis', isolation: 'writable' })
+        await tasks.act(created.id, 'start')
+        const running = await waitForTask(created.id, ['RUNNING'], 180000)
+        write({ phase: 'crashing', task: snapshot(created.id), isRunning: running?.status === 'RUNNING' })
+        // Deliberately skip the graceful path: this is what a crash looks like to the next
+        // launch — no shutdown, no runtime close, no final transition.
+        app.exit(9)
+        return
+      }
+      if (SMOKE === 'task-recover') {
+        const interrupted = tasks.store.listTasks().filter((x) => x.status === 'INTERRUPTED')
+        if (interrupted.length === 0) {
+          write({ phase: 'nothing-to-recover', tasks: tasks.store.listTasks().map((x) => ({ id: x.id, status: x.status })) })
+          app.quit()
+          return
+        }
+        const target = interrupted[0]
+        const before = snapshot(target.id)
+        await tasks.act(target.id, 'resume')
+        const final = await waitForTask(target.id, ['SUCCEEDED', 'FAILED'], 240000)
+        write({ phase: 'done', before, task: snapshot(target.id), finalStatus: final?.status ?? null, recovered: true })
+        app.quit()
+        return
+      }
+    } catch (error) {
+      write({ phase: 'error', error: String((error as Error)?.message ?? error) })
+      app.exit(1)
+      return
+    }
+  }
+
   const deadline = started + 120000
   while (service.isChecking() || service.getState().lastCheckedAt === null) {
     if (Date.now() > deadline) break
@@ -226,7 +322,9 @@ async function bootstrap(): Promise<void> {
 
   mainWindow.webContents.once('did-finish-load', () => {
     pushState()
-    if (config.ui.autoProbeOnStart || SMOKE) {
+    // A task scenario must not race the startup probe for the same parent process: both
+    // runtimes are children of this process, and the probe refuses an ambiguous identity.
+    if ((config.ui.autoProbeOnStart && !SMOKE.startsWith('task-')) || (SMOKE && !SMOKE.startsWith('task-'))) {
       void service?.check('startup').catch((error) => logger.error('dsh.probe.unhandled', { error: String(error) }))
     }
     if (SMOKE) void runSmoke()

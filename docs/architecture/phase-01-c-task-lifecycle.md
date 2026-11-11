@@ -167,6 +167,13 @@ INTERRUPTED → RESUMING → 新 Runtime → client.resumeSession(sessionId) →
 - 事件表只存**元数据与摘要**；完整输出写文件系统（`<userData>/records/<taskId>/<attemptId>.jsonl`），库里存相对路径。
 - 迁移按 `schema_version` 顺序执行；未知更高版本直接拒绝启动持久化（不猜）。
 
+## 8.1 两个只有跑真东西才暴露的缺陷
+
+| 编号 | 问题 | 结论 |
+|---|---|---|
+| F-01C-1 | 任务 runtime 没有 provider row，静默跑在 `deepseek-official` 路由上，以 `MISSING_CREDENTIAL` 失败并被表象成"没有 assistant 消息" | 装插件 ≠ 注册 row；commandcode 必须通过 cordis patch 注入 |
+| F-01C-2 | 会话开始工作前的第一个 `idle` 被当成回合结束 | 只有出现过活动之后的 idle 才结束回合 |
+
 ## 9. UI
 
 在现有 vanilla 渲染层上扩展（不引入 React）：

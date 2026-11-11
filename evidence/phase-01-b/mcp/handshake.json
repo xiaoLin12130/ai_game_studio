@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T10:59:36.912Z",
+  "generatedAt": "2026-11-11T11:22:32.349Z",
   "mode": "handshake-only",
   "provider": "commandcode",
   "model": "deepseek/deepseek-v4-flash",
@@ -23,34 +23,34 @@
   "runtimeExitCode": 0,
   "audit": [
     {
-      "ts": "2026-11-11T10:59:42.000Z",
-      "pid": 25848,
+      "ts": "2026-11-11T11:22:37.275Z",
+      "pid": 22540,
       "kind": "server.start",
       "server": "ai-game-studio-tools",
       "version": "0.1.0-phase01b",
       "node": "v24.19.0"
     },
     {
-      "ts": "2026-11-11T10:59:42.002Z",
-      "pid": 25848,
+      "ts": "2026-11-11T11:22:37.287Z",
+      "pid": 22540,
       "kind": "transport.connected"
     },
     {
-      "ts": "2026-11-11T10:59:42.207Z",
-      "pid": 28368,
+      "ts": "2026-11-11T11:22:37.492Z",
+      "pid": 6476,
       "kind": "server.start",
       "server": "ai-game-studio-tools",
       "version": "0.1.0-phase01b",
       "node": "v24.19.0"
     },
     {
-      "ts": "2026-11-11T10:59:42.209Z",
-      "pid": 28368,
+      "ts": "2026-11-11T11:22:37.494Z",
+      "pid": 6476,
       "kind": "transport.connected"
     },
     {
-      "ts": "2026-11-11T10:59:42.219Z",
-      "pid": 28368,
+      "ts": "2026-11-11T11:22:37.503Z",
+      "pid": 6476,
       "kind": "initialize.completed",
       "client": {
         "name": "dsh-mcp-client",
@@ -59,8 +59,8 @@
       "capabilities": {}
     },
     {
-      "ts": "2026-11-11T10:59:42.410Z",
-      "pid": 28368,
+      "ts": "2026-11-11T11:22:37.713Z",
+      "pid": 6476,
       "kind": "server.stop",
       "reason": "stdin-eof"
     }

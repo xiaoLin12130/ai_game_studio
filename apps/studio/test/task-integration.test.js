@@ -87,8 +87,9 @@ test('a real task runs on a real runtime and is verified by Studio', OPTIONS, as
   assert.ok(view.attempts[0].sessionId, 'the attempt must be linked to a DSH session')
   assert.equal(view.verifications.at(-1).ok, true)
   assert.equal(view.sessions.at(-1).state, 'ENDED')
-  const runtime = service.runtimes()
-  assert.equal(runtime.length, 0, 'a writable task must not leave its runtime behind')
+  // The lease is released just after the terminal transition, so the runtime leaves the
+  // supervisor's map a tick later. Wait for it rather than sampling once and calling it a leak.
+  await waitFor(() => service.runtimes().length === 0, 30000, 'the task runtime to be reclaimed')
 
   // The full event stream is on disk, not in the database.
   const recordPath = path.join(service.store.listAttempts(created.id)[0].recordPath ?? '')

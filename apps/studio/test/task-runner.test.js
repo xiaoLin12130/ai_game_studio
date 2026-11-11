@@ -170,7 +170,10 @@ test('a run that ends with evidence reaches SUCCEEDED through VERIFYING', async 
 test('a run with no evidence is not success, whatever the model says', async (t) => {
   const { store, runner, runtime, task } = harness(t, {
     onPrompt(state) {
-      setTimeout(() => state.push({ method: 'session.status', params: { status: 'idle' } }), 10)
+      setTimeout(() => {
+        state.push({ method: 'session.status', params: { status: 'running' } })
+        state.push({ method: 'session.status', params: { status: 'idle' } })
+      }, 10)
     },
   })
   await runner.start(task.id)
