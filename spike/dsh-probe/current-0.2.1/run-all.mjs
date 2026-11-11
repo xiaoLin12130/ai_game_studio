@@ -23,7 +23,7 @@ import { redact, REPO_ROOT } from './src/lib/redact.mjs'
 import { scanTree } from './src/lib/scrub.mjs'
 import { out, err, createForwarder } from './src/lib/safe-output.mjs'
 import { writeJsonFile } from './src/lib/evidence.mjs'
-import { decideOverall, loadStateCheck, checkProjectState } from './src/lib/gates.mjs'
+import { decideOverall, loadStateCheck, checkProjectState, officialStateFile } from './src/lib/gates.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 /**
@@ -102,18 +102,25 @@ if (setupFailure) {
 // ---------------------------------------------------------------------------
 // `CC_STATE_FILE` is a test seam: the negative test points it at a mutated copy so a
 // broken state can be proven to abort the suite without touching the real state file
-// or spending a single model call.
+// or spending a single model call. It is honoured only in an explicit test run
+// (`CC_TEST_MODE=1`); an official `npm test` refuses it instead of grading something
+// other than the repository's own state.
 let stateGate = { status: 'PASS', checked: null, errors: [] }
-try {
-  const loaded = loadStateCheck(REPO_ROOT, process.env.CC_STATE_FILE ?? null)
-  const check = checkProjectState(loaded)
-  stateGate = {
-    status: check.ok ? 'PASS' : 'FAIL',
-    checked: check.checked,
-    errors: check.errors,
+const stateOverride = officialStateFile(process.env)
+if (!stateOverride.ok) {
+  stateGate = { status: 'FAIL', checked: null, errors: [stateOverride.error] }
+} else {
+  try {
+    const loaded = loadStateCheck(REPO_ROOT, stateOverride.file)
+    const check = checkProjectState(loaded)
+    stateGate = {
+      status: check.ok ? 'PASS' : 'FAIL',
+      checked: check.checked,
+      errors: check.errors,
+    }
+  } catch (error) {
+    stateGate = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
   }
-} catch (error) {
-  stateGate = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
 }
 
 if (stateGate.status === 'FAIL') {

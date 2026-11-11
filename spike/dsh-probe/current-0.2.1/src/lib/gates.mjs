@@ -402,7 +402,12 @@ export function loadStateCheck(root, stateFile = null) {
   // caught: `state/` or `docs/review-handoff/` can be a junction pointing outside the
   // repository, and the plain read here would follow it. The same containment rule now
   // guards the two inputs that decide what the gates even get to look at.
-  let file
+  //
+  // Review caught the follow-on too: reporting the escape and then reading the escaped
+  // path anyway is a detection, not a refusal. When containment fails the file is now
+  // left unread, and the caller gets a null state plus `state-escape`.
+  let file = null
+  let stateUnreadable = false
   if (stateFile === null) {
     const contained = resolveContainedRealPath(root, 'state/project_state.json')
     if (!contained.ok) {
@@ -410,18 +415,18 @@ export function loadStateCheck(root, stateFile = null) {
         code: 'state-escape',
         message: `the state file must live inside the repository: ${contained.message ?? 'state/project_state.json'}`,
       })
-      file = path.resolve(root, 'state', 'project_state.json')
+      stateUnreadable = true // deliberate: do not read the escaped target
     } else {
       file = contained.real
     }
   } else {
-    // `CC_STATE_FILE` is a test/operator seam: the regression suite injects a mutated copy
-    // outside the repository. It is resolved for links but not confined to the root — an
-    // attacker who can set this process's environment does not need this seam.
+    // Only reachable through an explicit test run (see officialStateFile). The path is
+    // resolved for links; confinement to the repository is enforced by the callers, not
+    // here, so the library stays usable for fixtures built in a temp directory.
     file = realpathOrNull(path.resolve(stateFile)) ?? path.resolve(stateFile)
   }
 
-  const state = JSON.parse(fs.readFileSync(file, 'utf8'))
+  const state = stateUnreadable ? null : JSON.parse(fs.readFileSync(file, 'utf8'))
 
   const docs = {}
   for (const rel of STATE_DOC_POINTERS) {
@@ -439,7 +444,40 @@ export function loadStateCheck(root, stateFile = null) {
       /* left out so checkProjectState can name the missing document */
     }
   }
-  return { state, docs, root, violations }
+  return { state, docs, root, violations, stateUnreadable }
+}
+
+/**
+ * Which state file an official run is allowed to grade.
+ *
+ * `CC_STATE_FILE` exists so the regression suite can grade a deliberately broken copy.
+ * Review found it had also become an input to `npm run gates`, which meant the official
+ * verifier could be pointed at a repository-external file. A test seam must not be a
+ * production input, so an official run now refuses an override unless it is explicitly a
+ * test run (`CC_TEST_MODE=1`), and even then the override is reported as such.
+ *
+ * @param {Record<string, string|undefined>} [env]
+ * @returns {{ok: boolean, file: string|null, testOverride: boolean, error: {code: string, message: string}|null}}
+ */
+export function officialStateFile(env = {}) {
+  const override = env?.CC_STATE_FILE
+  if (!override || String(override).trim().length === 0) {
+    return { ok: true, file: null, testOverride: false, error: null }
+  }
+  if (env?.CC_TEST_MODE === '1') {
+    return { ok: true, file: String(override), testOverride: true, error: null }
+  }
+  return {
+    ok: false,
+    file: null,
+    testOverride: false,
+    error: {
+      code: 'state-override-forbidden',
+      message:
+        'CC_STATE_FILE is only honoured in an explicit test run (CC_TEST_MODE=1); ' +
+        'an official run grades state/project_state.json and nothing else',
+    },
+  }
 }
 
 /**
@@ -459,7 +497,13 @@ export function checkProjectState({ state, docs = {}, root = null, violations = 
   }
 
   if (!state || typeof state !== 'object') {
-    return { ok: false, errors: [{ code: 'state-unreadable', message: 'project_state.json is not an object' }], checked }
+    // Keep the containment diagnostics: an escaped state file fails both because it is
+    // unreadable *and* because of why it was not read.
+    return {
+      ok: false,
+      errors: [...errors, { code: 'state-unreadable', message: 'project_state.json is not an object' }],
+      checked,
+    }
   }
 
   // 1. One declared source of truth, and it is the final record.

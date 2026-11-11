@@ -31,6 +31,7 @@ import {
   checkProjectState,
   checkEvidencePath,
   resolveContainedRealPath,
+  officialStateFile,
   isInsideDirectory,
   staysInside,
   loadStateCheck,
@@ -893,6 +894,98 @@ await test('state: a state/ junction out of the repository is rejected', () => {
   expectCode(result, 'state-escape')
 })
 
+await test('state: an escaped state file is not read at all', () => {
+  const { root, outside } = stateEscapeFixture('state-escape-no-read')
+  // If the loader still read the escaped target it would have to parse this.
+  fs.writeFileSync(path.join(outside, 'project_state.json'), '<< not json at all >>')
+  let loaded
+  assert.doesNotThrow(() => {
+    loaded = loadStateCheck(root)
+  }, 'an escaped state file must not be read, let alone parsed')
+  assert.equal(loaded.state, null, 'no state object may come from outside the repository')
+  assert.ok(
+    loaded.violations.some((v) => v.code === 'state-escape'),
+    JSON.stringify(loaded.violations),
+  )
+  const result = checkProjectState(loaded)
+  assert.equal(result.ok, false)
+  expectCodes(result, ['state-escape', 'state-unreadable'])
+})
+
+await test('official: no override means "grade the repository state"', () => {
+  const plain = officialStateFile({})
+  assert.equal(plain.ok, true)
+  assert.equal(plain.file, null)
+  assert.equal(plain.testOverride, false)
+})
+
+await test('official: an override without a test run is refused', () => {
+  const refused = officialStateFile({ CC_STATE_FILE: path.join(BS, 'outside', 'project_state.json') })
+  assert.equal(refused.ok, false)
+  assert.equal(refused.error.code, 'state-override-forbidden')
+  const empty = officialStateFile({ CC_STATE_FILE: '' })
+  assert.equal(empty.ok, true, 'an empty override is not an override')
+})
+
+await test('official: a test run may inject, and says so', () => {
+  const result = officialStateFile({ CC_STATE_FILE: 'somewhere/project_state.json', CC_TEST_MODE: '1' })
+  assert.equal(result.ok, true)
+  assert.equal(result.testOverride, true)
+})
+
+/** Run the official gate script with a throwaway output file and a given environment. */
+function runOfficialGates(env, outFile) {
+  return spawnSync(process.execPath, [path.join(PROBE_ROOT, 'scripts', 'run-gates.mjs')], {
+    cwd: PROBE_ROOT,
+    encoding: 'utf8',
+    env: { ...process.env, CC_GATE_OUT: outFile, ...env },
+  })
+}
+
+await test('official: npm run gates refuses a repository-external CC_STATE_FILE (valid but wrong state)', () => {
+  const dir = made('official-override-valid')
+  const fake = path.join(dir, 'project_state.json')
+  const fakeState = structuredClone(loadStateCheck(REPO_ROOT).state)
+  fakeState.phase_00_final.gates['05_studio_readonly_tool_invoked'].status = 'BLOCKED'
+  fs.writeFileSync(fake, JSON.stringify(fakeState, null, 2))
+
+  const outFile = path.join(dir, 'final-gates.json')
+  const sentinel = '{"published":"do-not-touch"}\n'
+  fs.writeFileSync(outFile, sentinel)
+
+  const run = runOfficialGates({ CC_STATE_FILE: fake }, outFile)
+  assert.equal(run.status, 1, 'official gate must refuse the override, got ' + run.status + ': ' + String(run.stdout).slice(-300))
+  assert.ok(
+    String(run.stderr).includes('state-override-forbidden'),
+    'the refusal must name its code: ' + String(run.stderr).slice(-300),
+  )
+  assert.equal(
+    fs.readFileSync(outFile, 'utf8'),
+    sentinel,
+    'a refused run must not overwrite the published artifact with a refusal',
+  )
+})
+
+await test('official: npm run gates refuses a repository-external CC_STATE_FILE (invalid state)', () => {
+  const dir = made('official-override-invalid')
+  const fake = path.join(dir, 'project_state.json')
+  fs.writeFileSync(fake, '{ not json')
+  const outFile = path.join(dir, 'final-gates.json')
+  const run = runOfficialGates({ CC_STATE_FILE: fake }, outFile)
+  assert.equal(run.status, 1, 'official gate must refuse the override, got ' + run.status)
+  assert.equal(fs.existsSync(outFile), false, 'a refused run must not overwrite the published artifact')
+})
+
+await test('official: without an override the gate grades the repository state', () => {
+  const dir = made('official-clean')
+  const outFile = path.join(dir, 'final-gates.json')
+  const run = runOfficialGates({}, outFile)
+  assert.equal(run.status, 0, 'official gate should pass on the real tree: ' + String(run.stdout).slice(-400))
+  const artifact = JSON.parse(fs.readFileSync(outFile, 'utf8'))
+  assert.equal(artifact.gates.state.status, 'PASS')
+  assert.equal(artifact.gates.state.checked.gates, 10)
+})
+
 await test('state: a docs/review-handoff junction out of the repository is rejected', () => {
   const { root } = docEscapeFixture('doc-escape')
   const loaded = loadStateCheck(root)
@@ -1303,6 +1396,7 @@ await test('suite: broken project state aborts before any probe (real exit code)
     env: {
       ...process.env,
       CC_STATE_FILE: brokenStateFile,
+      CC_TEST_MODE: '1', // the seam is honoured only in an explicit test run
       CC_EVIDENCE_OUT: evidenceOut,
     },
   })
@@ -1315,7 +1409,7 @@ await test('suite: broken project state aborts before any probe (real exit code)
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
-  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r152', 'tests.json')
+  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r153', 'tests.json')
   const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
   const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
     cwd: PROBE_ROOT,

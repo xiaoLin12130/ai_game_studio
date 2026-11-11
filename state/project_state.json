@@ -106,7 +106,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T04:29:34.989Z",
+  "updated_at": "2026-11-11T04:39:39.085Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -621,23 +621,23 @@
         ]
       },
       "final_gate_regression": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r152/final-gates.json",
-        "at": "2026-11-11T04:29:08.931Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r153/final-gates.json",
+        "at": "2026-11-11T04:39:22.085Z",
         "dependency": "PASS",
         "state": "PASS",
         "leak": "PASS",
-        "scanned_files": 191,
-        "files_in_publish_set": 191,
+        "scanned_files": 194,
+        "files_in_publish_set": 194,
         "leaks": 0,
         "overall": "PASS",
         "model_probes_run": false
       },
       "regression_tests": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r152/tests.json",
-        "at": "2026-11-11T04:29:08.704Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r153/tests.json",
+        "at": "2026-11-11T04:39:21.838Z",
         "node": "v24.19.0",
-        "total": 156,
-        "passed": 156,
+        "total": 163,
+        "passed": 163,
         "failed": 0,
         "exit_code": 0
       },
@@ -646,8 +646,8 @@
         "tests/run-tests.mjs：35+ 条反向断言（门禁 ID 换名、文档集合、空/目录/损坏/路径穿越证据、门禁 6 内容级断言、锁缺失、串线、状态门禁）"
       ],
       "previous_round": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r151/final-gates.json",
-        "note": "R15.1 轮（评审对象 89ee04c）的结果，冻结保留。R15 轮见 evidence/r15/。"
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r152/final-gates.json",
+        "note": "R15.2 轮（评审对象 b689fb9）的结果，冻结保留。更早轮次见 evidence/r151/ 与 evidence/r15/。"
       }
     },
     "blocking_items": [],
@@ -788,13 +788,18 @@
         },
         {
           "command": "npm run test:unit",
-          "result": "156/156 PASS",
+          "result": "163/163 PASS",
           "exit_code": 0
         },
         {
           "command": "npm run gates",
-          "result": "dependency/state/leak all PASS, 191/191 files, 0 leaks",
+          "result": "dependency/state/leak all PASS, 194/194 files, 0 leaks",
           "exit_code": 0
+        },
+        {
+          "command": "npm run gates with CC_STATE_FILE set",
+          "result": "exit 1 with state-override-forbidden",
+          "exit_code": 1
         },
         {
           "command": "npm run probe:exit",
@@ -807,8 +812,8 @@
           "exit_code": 0
         },
         {
-          "command": "mutation check (revert state/doc containment + gate-6 structure)",
-          "result": "11 targeted tests failed; file restored with identical sha256",
+          "command": "mutation check (revert escaped-read guard + override policy)",
+          "result": "4 targeted tests failed; file restored with identical sha256",
           "exit_code": 1
         }
       ],
@@ -820,8 +825,8 @@
       ]
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
-    "convergence_round": "r152",
-    "updated_at": "2026-11-11T04:29:34.989Z",
+    "convergence_round": "r153",
+    "updated_at": "2026-11-11T04:39:39.085Z",
     "commit_provenance": {
       "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
       "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
@@ -836,7 +841,8 @@
     "verifier_hardening": {
       "rounds": [
         "r151",
-        "r152"
+        "r152",
+        "r153"
       ],
       "items": [
         "R15.1：证据路径按真实路径解析（realpath / Windows Junction），阻断仓库内链接指向仓库外",
@@ -844,12 +850,26 @@
         "R15.1：门禁 06 拒绝 noExitCodeReason 冒充退出码",
         "R15.2：状态文件与全部 8 份指针文档读取前做真实路径 containment（state-escape / doc-escape）",
         "R15.2：门禁 06 改为结构化校验（两个场景 + 整数 + PROCESS_ABSENT + 来源必须是 SDK 通道）",
-        "R15.2：新增 13 项负向测试；变异验证下 11 条关键用例会失败"
+        "R15.3：containment 失败时不再读取逃逸目标（state 置 null，返回 state-escape + state-unreadable）",
+        "R15.3：officialStateFile() 隔离测试注入口；正式 npm run gates / npm test 拒绝 CC_STATE_FILE（state-override-forbidden），仅 CC_TEST_MODE=1 允许注入",
+        "R15.3：新增 7 项负向测试；变异验证下 4 条关键用例会失败"
       ]
     },
     "limitations": [
       "门禁 6 的退出码来自 SDK 公开错误类型的 message 文本，不是结构化字段；SDK 升级后需重跑 CC-6 确认格式未变。",
       "门禁 4 的展示中，事件/状态时间线来自真实录制运行的回放；实时事件流本轮未重跑，登记为 deferred.U9。"
-    ]
+    ],
+    "official_state_input": {
+      "policy": "official runs grade state/project_state.json and nothing else; CC_STATE_FILE is honoured only when CC_TEST_MODE=1",
+      "codes": [
+        "state-override-forbidden",
+        "state-escape",
+        "state-unreadable"
+      ],
+      "enforced_in": [
+        "spike/dsh-probe/current-0.2.1/scripts/run-gates.mjs",
+        "spike/dsh-probe/current-0.2.1/run-all.mjs"
+      ]
+    }
   }
 }

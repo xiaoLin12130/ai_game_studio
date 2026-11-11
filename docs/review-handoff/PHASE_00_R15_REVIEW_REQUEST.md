@@ -1,4 +1,4 @@
-# PHASE 00-R1.5｜收敛轮 + R15.1 / R15.2 修复轮 复审请求
+# PHASE 00-R1.5｜收敛轮 + R15.1 / R15.2 / R15.3 修复轮 复审请求
 
 > 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
@@ -7,6 +7,51 @@
 - 上一轮评审固定的提交：`6943618efa63b60193eda2749782b856ea54d58f`（R14 收尾）
 - 再上一轮评审固定的提交：`36d0cfe`（R15 收敛轮，评审结论 PARTIALLY_VERIFIED）
 - 再上一轮的上一轮：`89ee04c`（R15.1 修复轮，评审结论 PARTIALLY_VERIFIED）
+- 再上一轮的上一轮：`b689fb9`（R15.2 修复轮，评审结论 PARTIALLY_VERIFIED）
+
+## 0.000 R15.3：状态读取入口的最终隔离（本轮）
+
+评审在 `b689fb9` 上确认了门禁 06 与门禁 04 的处理，但指出状态入口还有两个问题。
+两处都成立，本轮修完，并且换了测试的断言方式。
+
+### 0.000.1 发现逃逸却仍然读取
+
+旧实现记录 `state-escape` 之后仍把词法路径交给 `fs.readFileSync()`——
+**检测到了，但没有拒绝**。现在 containment 失败时：
+
+```
+violations.push(state-escape) → state = null → 不执行 readFileSync
+                              → checkProjectState 返回 [state-escape, state-unreadable]
+```
+
+负向测试不再只断言"最终判定失败"：把仓库外的 `project_state.json` 写成**非法 JSON**，
+断言 `loadStateCheck()` **不抛错**且 `state === null`。如果实现仍然去读，就必然抛解析错误。
+这是从行为上证明外部文件没有被读取，而不是从错误码推断。
+
+### 0.000.2 测试注入口被正式命令继承
+
+`npm run gates` 原来直接读 `process.env.CC_STATE_FILE`，等于正式验收通道可以被指向仓库外。
+新增 `officialStateFile(env)`：
+
+| 环境 | 结果 |
+|---|---|
+| 无 `CC_STATE_FILE` | `{ok:true, file:null}` → 只读仓库内 `state/project_state.json` |
+| 有 `CC_STATE_FILE`、无 `CC_TEST_MODE=1` | `{ok:false, code:'state-override-forbidden'}` → 正式门禁**明确失败** |
+| 有 `CC_STATE_FILE` 且 `CC_TEST_MODE=1` | `{ok:true, testOverride:true}` → 仅测试注入 |
+
+`scripts/run-gates.mjs` 与 `run-all.mjs` 都走这个判定；被拒绝时把
+`state-override-forbidden` 写进门禁结果并 exit 1，不拿外部状态当权威。
+
+另加 `CC_GATE_OUT`（测试用**输出**路径），让回归测试能跑真正的官方门禁脚本，
+而不改写已发布的轮次目录。它只决定结果写到哪，不决定校验哪份权威。
+
+### 0.000.3 新增负向测试 7 项
+
+逃逸状态文件不得被读取；`officialStateFile` 的四种环境组合；
+官方门禁 + 仓库外合法但错误的状态 → exit 1 且记录 `state-override-forbidden`；
+官方门禁 + 仓库外非法状态 → 同样失败；官方门禁无注入 → exit 0 且实际校验仓库内状态。
+
+回归测试：**156 → 163**。证据轮次：`evidence/r152/`（R15.2，冻结）→ `evidence/r153/`（本轮）。
 
 ## 0.0 R15.2：评审在 R15.1 上发现的三个问题（已修）
 
@@ -55,7 +100,7 @@ repo/docs/review-handoff → (Junction) → <abs-path>/outside/
 所以门禁 04 = **PASS**（记录 + 展示均已满足），实时事件流单独登记 `deferred.U9`（DEFERRED，`blocking:false`）。
 `blocking_items` 现为空；两条能力限制移到 `limitations`。
 
-回归测试：**143 → 156**（新增 13 项）。证据轮次：`evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（本轮）。
+回归测试：**143 → 156**（新增 13 项）。证据轮次：`evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（R15.2，冻结）→ `evidence/r153/`（本轮的 R15.3 结果）。
 
 ## 0.1 R15.1：评审在 R15 上发现的两个验证器缺陷（已修）
 
@@ -100,7 +145,7 @@ junction 逃逸必须失败 / 仓库内链接必须放行 / 链接尾部缺失�
 **变异验证**：把两处修复人工回退后重跑，上述 3 条关键用例失败、其余全过；
 恢复后文件 sha256 一致。
 
-回归测试：**135 → 143**。证据轮次：`evidence/r15/`（R15，冻结）→ `evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（本轮的 R15.2 结果）。
+回归测试：**135 → 143**。证据轮次：`evidence/r15/`（R15，冻结）→ `evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（R15.2，冻结）→ `evidence/r153/`（本轮）。
 
 ## 1. R15 轮只做了四件事
 
@@ -155,7 +200,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 | 门禁 6 内容不校验 | 证据必须含整数 `exitCode`（旧的 cc-3 证据现在会判失败） |
 | 无判定一致性 | PASS 判定不得跑在门禁前面，也不得与 blocking_items 并存 |
 
-回归测试 **107 → 143 → 156**，每条新用例都是一个「以前能通过」的利用手法。
+回归测试 **107 → 143 → 156 → 163**，每条新用例都是一个「以前能通过」的利用手法。
 另做过一次变异验证：把门禁人工削弱回旧逻辑，**恰好 7 条目标用例失败**，恢复后文件 sha256 一致。
 
 ## 4. 怎么验（三条命令，尽量别跑第四条）
@@ -163,7 +208,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 ```powershell
 cd spike\dsh-probe\current-0.2.1
 
-npm run test:unit    # 期望 156/156 PASS，exit 0；只有 exit 0 才发布 r152/tests.json
+npm run test:unit    # 期望 163/163 PASS，exit 0；只有 exit 0 才发布 r153/tests.json
 npm run gates        # 期望 dependency/state/leak 全 PASS，0 泄漏，exit 0
 npm run probe:exit   # 期望 graceful=0 / forced=1，均 PROCESS_ABSENT，exit 0（0 模型调用）
 

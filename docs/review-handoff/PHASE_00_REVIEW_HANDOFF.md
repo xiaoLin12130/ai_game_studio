@@ -71,7 +71,7 @@
 
 ## 4. 测试/构建命令与结果（0.1.5 legacy 快照）
 
-> **当前生产目标的命令**：`cd spike/dsh-probe/current-0.2.1 && npm test`（六探针 6/6 PASS，最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，本轮未重跑；门禁回归与测试结果见 `evidence/r152/final-gates.json`、`evidence/r152/tests.json`）。
+> **当前生产目标的命令**：`cd spike/dsh-probe/current-0.2.1 && npm test`（六探针 6/6 PASS，最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，本轮未重跑；门禁回归与测试结果见 `evidence/r153/final-gates.json`、`evidence/r153/tests.json`）。
 > 以下代码块是 0.1.5 的原始命令与输出，保留原样。
 
 ```bash
@@ -195,7 +195,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
 cd ai_game_studio/spike/dsh-probe/current-0.2.1
 npm install
-npm test          # 156 项回归测试 → 六探针 → 三道门禁（消耗真实模型调用）；门禁回归结果见 evidence/r152/
+npm test          # 163 项回归测试 → 六探针 → 三道门禁（消耗真实模型调用）；门禁回归结果见 evidence/r153/
 npm run gates     # 只跑依赖 / 状态一致性 / 脱敏门禁，不消耗模型调用
 ```
 

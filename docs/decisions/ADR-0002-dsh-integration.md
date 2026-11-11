@@ -141,7 +141,7 @@ Runtime 结束（正常关闭已实测；崩溃未实测）
 
 - 依赖整族精确钉版本（cordis 4.0.5 / group 1.0.5 / include 1.0.10 / loader 1.0.6 / sdk-client 0.2.1-rc.3）。
 - **不要升级用户全局 DSH**。`dsh` on PATH 是 0.1.5-rc.1，用户日常用的是桌面端 0.2.1-rc.3；Studio 应自带/锁定自己的运行时，不依赖 PATH。
-- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/npm test`（当前基线：156 项回归测试 + 六探针 6/6 + 三道门禁 PASS；另有不消耗模型额度的 CC-6 退出码探针）与 `legacy-0.1.5` 套件；协议随时可能变。
+- 升级前必须重跑 `spike/dsh-probe/current-0.2.1/npm test`（当前基线：163 项回归测试 + 六探针 6/6 + 三道门禁 PASS；另有不消耗模型额度的 CC-6 退出码探针）与 `legacy-0.1.5` 套件；协议随时可能变。
 - 依赖锁由 `profile-locks/<profile>/package-lock.json` + `tree.json` 共同定义；普通运行不生成锁，只校验，漂移即失败。升级流程是 `npm run lock:update` → 重跑 `npm test`。
 
 ## 4. 已实测的缺陷与防御

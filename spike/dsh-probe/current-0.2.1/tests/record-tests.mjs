@@ -20,7 +20,7 @@ const PROBE_ROOT = path.resolve(HERE, '..')
 const resultFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-tests-')), 'tests.json')
 // Same rule as `scripts/run-gates.mjs`: a convergence round publishes its own result
 // instead of overwriting the record of the previous round.
-const round = process.env.CC_GATE_ROUND ?? 'r152'
+const round = process.env.CC_GATE_ROUND ?? 'r153'
 const published = path.join(PROBE_ROOT, 'evidence', round, 'tests.json')
 
 const run = spawnSync(process.execPath, [path.join(HERE, 'run-tests.mjs')], {

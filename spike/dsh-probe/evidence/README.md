@@ -8,7 +8,7 @@
 
 ```
 cd spike/dsh-probe/current-0.2.1 && node run-all.mjs      # 期望 PASS 6/6 + 三道门禁 PASS, exit 0
-# 只跑门禁（不消耗模型调用）：npm run gates → 结果写 evidence/r152/final-gates.json
+# 只跑门禁（不消耗模型调用）：npm run gates → 结果写 evidence/r153/final-gates.json
 ```
 
 | 目录 | 证明什么 |

@@ -22,7 +22,7 @@
 | Python | `Python 3.14.7` | `python --version` |
 | DSH CLI（PATH 全局） | `0.1.5-rc.1` | `dsh --version` |
 | `DSH_HOME` 环境变量 | `<user-home>\.dsh` | `$env:DSH_HOME` |
-| 探针实际使用的 Node | `v22.22.2`（记录于 `evidence/r152/tests.json` 的 `node` 字段与 `evidence/r14/summary.json`） | 见证据文件 |
+| 探针实际使用的 Node | `v22.22.2`（记录于 `evidence/r153/tests.json` 的 `node` 字段与 `evidence/r14/summary.json`） | 见证据文件 |
 
 > **注意（真实差异，不是笔误）**：本机同时在用的 Node 有两个版本——交互终端是 v24.19.0，
 > 而探针与回归测试记录的是 v22.22.2。两者都是真实观测，谁跑的就记谁的。
@@ -55,7 +55,7 @@
 
 不能证明：这台机器之外的环境；也不能证明 PATH 上的全局 `dsh@0.1.5-rc.1` 被使用过——
 探针从 `node_modules` 里按精确版本加载 0.2.1-rc.3，这一点由 `evidence/r14/summary.json` 的
-`runtime: "0.2.1-rc.3"` 与依赖门禁的版本区间校验共同证明（见 `evidence/r152/final-gates.json`）。
+`runtime: "0.2.1-rc.3"` 与依赖门禁的版本区间校验共同证明（见 `evidence/r153/final-gates.json`）。
 
 历史清单里出现的 `Git 2.55.0` 与本文的 `2.54.0` 不一致，属于不同时间的两次观测；
 以本文（2026-11-11 实测）为当前值，历史值不再引用。

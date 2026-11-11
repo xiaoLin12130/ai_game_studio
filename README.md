@@ -87,13 +87,13 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test          # 156 项回归测试 + 六探针 + 三道门禁；期望 exit 0
+npm test          # 163 项回归测试 + 六探针 + 三道门禁；期望 exit 0
 ```
 
 只回归受影响的门禁（**不消耗真实模型调用**）：
 
 ```powershell
-npm run test:unit   # 156 项；只有退出 0 才发布 tests.json（当前发布到 evidence/r152/tests.json）
+npm run test:unit   # 163 项；只有退出 0 才发布 tests.json（当前发布到 evidence/r153/tests.json）
 npm run gates       # 依赖 + 状态一致性 + 脱敏三道门禁，写 final-gates.json
 ```
 

@@ -6,8 +6,8 @@
 > 因此下文出现的「5/5」属于当时规模，保留原样。**当前基线不是本文的数字，也不以 `r14` 段为准**：
 > 唯一权威记录是 `state/project_state.json` → `phase_00_final`。当前规模：六探针 **6/6 PASS**
 > （最后一次完整真实运行 `2026-11-10T12:43:44.987Z`，`evidence/r14/summary.json`，本轮未重跑）、
-> **三道门禁**（dependency / state / leak，结果见 `evidence/r152/final-gates.json`）、回归测试 **156/156 PASS**
-> （`evidence/r152/tests.json`），另有不消耗模型额度的 CC-6 退出码探针。
+> **三道门禁**（dependency / state / leak，结果见 `evidence/r153/final-gates.json`）、回归测试 **163/163 PASS**
+> （`evidence/r153/tests.json`），另有不消耗模型额度的 CC-6 退出码探针。
 
 本文件补充并修正 `PHASE_00_EVIDENCE.md`。**0.1.5 的历史证据已冻结**在
 `spike/dsh-probe/legacy-0.1.5/`（探针源码 + 证据快照），后续不再覆盖。

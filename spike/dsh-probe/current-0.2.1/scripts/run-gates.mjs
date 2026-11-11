@@ -15,12 +15,26 @@ import { fileURLToPath } from 'node:url'
 import { setupProfiles } from './setup-profiles.mjs'
 import { REPO_ROOT } from '../src/lib/redact.mjs'
 import { scanTree } from '../src/lib/scrub.mjs'
-import { loadStateCheck, checkProjectState } from '../src/lib/gates.mjs'
+import { loadStateCheck, checkProjectState, officialStateFile } from '../src/lib/gates.mjs'
 import { writeJsonFile } from '../src/lib/evidence.mjs'
 import { out, err } from '../src/lib/safe-output.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 const probeRoot = path.resolve(root, '..')
+
+/**
+ * Refuse a test-seam override before doing anything else.
+ *
+ * This runs before the output path is even computed: a refused run must not overwrite the
+ * published round artifact with a FAIL that describes the refusal rather than the tree.
+ * The published evidence stays whatever the last legitimate run produced.
+ */
+const stateOverride = officialStateFile(process.env)
+if (!stateOverride.ok) {
+  err(`\n[gates] REFUSED ${stateOverride.error.code}: ${stateOverride.error.message}\n`)
+  err('[gates] nothing was graded and no evidence file was written.\n')
+  process.exit(1)
+}
 /**
  * PHASE 00 convergence publishes into its own round directory.
  *
@@ -29,8 +43,15 @@ const probeRoot = path.resolve(root, '..')
  * produced it — the exact failure mode the r14 README exists to prevent. `CC_GATE_ROUND`
  * keeps the old behaviour available for a reproduction that really does want r14.
  */
-const round = process.env.CC_GATE_ROUND ?? 'r152'
-const output = path.join(probeRoot, 'evidence', round, 'final-gates.json')
+const round = process.env.CC_GATE_ROUND ?? 'r153'
+/**
+ * `CC_GATE_OUT` is a test-only write target so the regression suite can exercise this
+ * script without rewriting the published round. It changes where a result is written,
+ * never what authority is graded.
+ */
+const output = process.env.CC_GATE_OUT
+  ? path.resolve(process.env.CC_GATE_OUT)
+  : path.join(probeRoot, 'evidence', round, 'final-gates.json')
 
 const steps = []
 let dependency = { status: 'PASS' }
@@ -65,9 +86,11 @@ const leak = {
   errors: scanned.errors,
 }
 
+// A forbidden override was already refused above, so reaching here means either no
+// override at all or an explicit test run (CC_TEST_MODE=1).
 let state = { status: 'PASS', checked: null, errors: [] }
 try {
-  const check = checkProjectState(loadStateCheck(REPO_ROOT, process.env.CC_STATE_FILE ?? null))
+  const check = checkProjectState(loadStateCheck(REPO_ROOT, stateOverride.file))
   state = { status: check.ok ? 'PASS' : 'FAIL', checked: check.checked, errors: check.errors }
 } catch (error) {
   state = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
