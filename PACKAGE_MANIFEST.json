@@ -4,6 +4,9 @@
   "created_date": "2026-11-10",
   "initial_phase": "PHASE_00",
   "phase_count": 8,
+  "describes": "the initial PHASE 00 starter package (charter, agent rules, staged plan, state templates, review protocol) as it was delivered",
   "contains_application_source_code": false,
+  "scope_note": "This manifest describes the starter kit that PHASE 00 began from. It is not a manifest of the current repository: since PHASE 01-A the repo also contains the Electron application under apps/studio, and this field is kept as an accurate description of the starter package, not of the repo.",
+  "current_repo_contains_application_source_code": true,
   "purpose": "Product charter, agent rules, staged implementation plan, state templates, and GitHub review protocol"
 }

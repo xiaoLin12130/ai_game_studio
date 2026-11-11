@@ -54,10 +54,15 @@ async function gracefulQuit(code: number): Promise<void> {
   try {
     // Tasks first: a running task holds a runtime, and the supervisor is the thing that
     // knows how to reclaim it. The health probe then finds nothing left to reap.
-    await tasks?.dispose('app-quit').catch((error) => {
+    const taskShutdown = await tasks?.dispose('app-quit').catch((error) => {
       console.error('[studio] task shutdown failed:', error)
-      exitCode = 1
+      return null
     })
+    if (!taskShutdown || !taskShutdown.ok) {
+      // A runtime we could not close is a leaked process; the exit code says so.
+      console.error('[studio] task runtimes were not all closed:', JSON.stringify(taskShutdown ?? {}))
+      exitCode = 1
+    }
     const result = await service?.shutdown('app-quit')
     // The exit code follows the safety property, not the clean path: if a process from
     // this probe could still be alive, the process must not exit 0.

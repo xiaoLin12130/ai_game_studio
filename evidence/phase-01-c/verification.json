@@ -1,28 +1,53 @@
 {
-  "generatedAt": "2026-11-11T11:30:34.541Z",
+  "generatedAt": "2026-11-11T12:08:50.318Z",
   "phase": "PHASE_01_C",
   "branch": "phase/01-c-session-task-lifecycle",
-  "baseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "note": "Every entry is a command that was actually run in this round; counts are read from the raw logs next to them.",
+  "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
+  "reviewBaseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
+  "note": "Each entry is a command that was actually run; counts are parsed from the artefact beside it. Artefacts are listed by path — no globs or placeholders.",
   "matrix": [
     {
-      "name": "build-typescript",
+      "name": "typescript",
       "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
       "cwd": "apps/studio",
       "exitCode": 0,
       "artifact": "evidence/phase-01-c/unit/tsc.txt"
     },
     {
-      "name": "studio-full-suite",
+      "name": "studio-full-suite-run-1",
       "command": "node --test",
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "tests": 84,
-        "pass": 84,
+        "tests": 90,
+        "pass": 90,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/full-suite.txt"
+      "artifact": "evidence/phase-01-c/unit/full-suite-1.txt"
+    },
+    {
+      "name": "studio-full-suite-run-2",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 90,
+        "pass": 90,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/unit/full-suite-2.txt"
+    },
+    {
+      "name": "runtime-supervisor-races",
+      "command": "node --test test/runtime-supervisor.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     {
       "name": "real-dsh-task-integration",
@@ -34,12 +59,11 @@
         "pass": 2,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/real-dsh/final-integration.txt",
-      "note": "真实 DSH + commandcode + 真实模型回合"
+      "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
     },
     {
-      "name": "real-dsh-isolated-runs",
-      "command": "node --test test/task-integration.test.js (x3)",
+      "name": "real-dsh-isolated-run-1",
+      "command": "node --test test/task-integration.test.js",
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
@@ -47,42 +71,57 @@
         "pass": 2,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.txt",
-      "note": "连续 3 次隔离运行均退出码 0"
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-1.txt"
     },
     {
-      "name": "package-installer",
-      "command": "npx electron-builder --win",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "AI-Game-Studio-0.1.0-x64.exe 237547404 bytes"
-    },
-    {
-      "name": "install-silent",
-      "command": "AI-Game-Studio-0.1.0-x64.exe /S /D=<dir>",
-      "exitCode": 0
-    },
-    {
-      "name": "packaged-task-scenarios",
-      "command": "node scripts/smoke-tasks-packaged.mjs <install dir>",
+      "name": "real-dsh-isolated-run-2",
+      "command": "node --test test/task-integration.test.js",
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "checks": 24,
-        "passed": 24
+        "tests": 2,
+        "pass": 2,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-2.txt"
+    },
+    {
+      "name": "real-dsh-isolated-run-3",
+      "command": "node --test test/task-integration.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-3.txt"
+    },
+    {
+      "name": "packaged-task-scenarios",
+      "command": "node scripts/smoke-tasks-packaged.mjs <installed app>",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "checks": 34,
+        "failed": 0
       },
       "artifact": "evidence/phase-01-c/packaged/summary.json"
+    },
+    {
+      "name": "packaged-mcp-tool-call",
+      "command": "node scripts/mcp-packaged.mjs <installed app> --prompt",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/packaged/mcp-tool-call.json",
+      "note": "PHASE 01-B 的安装版 MCP 真实工具调用（本轮补跑）"
     },
     {
       "name": "phase00-suite",
       "command": "node tests/run-tests.mjs",
       "cwd": "spike/dsh-probe/current-0.2.1",
       "exitCode": 0,
-      "counts": {
-        "pass": 166,
-        "total": 166
-      },
+      "counts": null,
       "artifact": "evidence/phase-01-c/regression/phase00-suite.txt"
     },
     {
@@ -91,6 +130,14 @@
       "cwd": "spike/dsh-probe/current-0.2.1",
       "exitCode": 0,
       "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
+    },
+    {
+      "name": "phase01a-smoke-failure",
+      "command": "node scripts/smoke.mjs failure",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01a-failure.txt",
+      "note": "本轮补齐的缺失回归"
     },
     {
       "name": "phase01a-smoke-ready",
@@ -117,6 +164,9 @@
   "packagedScenarios": {
     "checks": {
       "A.exitZero": true,
+      "A.disposeHadNoFailure": true,
+      "A.runtimeProcessGone": true,
+      "A.runtimeCheckStatus": "ABSENT",
       "A.producedSmoke": true,
       "A.taskSucceeded": true,
       "A.hadSession": true,
@@ -125,6 +175,9 @@
       "A.noRuntimeLeft": true,
       "A.noLingeringApp": true,
       "B.exitZero": true,
+      "B.disposeHadNoFailure": true,
+      "B.runtimeProcessGone": true,
+      "B.runtimeCheckStatus": "ABSENT",
       "B.producedSmoke": true,
       "B.wasInterrupted": true,
       "B.interruptedIsRecorded": true,
@@ -139,18 +192,24 @@
       "C.resumedToTerminal": true,
       "C.recordedNewAttempt": true,
       "C.appExited": true,
-      "C.noLingeringApp": true
+      "C.noLingeringApp": true,
+      "C.disposeHadNoFailure": true,
+      "C.runtimeProcessGone": true,
+      "C.runtimeCheckStatus": "ABSENT",
+      "C.crashLeftNoOrphan": true
     },
     "failed": []
   },
-  "artifacts": {
-    "installerBytes": 237547404,
-    "phase01bInstaller": {
-      "file": "apps/studio/release/AI-Game-Studio-0.1.0-x64.exe",
-      "bytes": 237521179,
-      "megabytes": 226.5,
-      "sha256": "2C0491B413EAC17EE3B3AB9CA52B5A0C6247F49AA7F5DAA875BA332F05BAD5E4"
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "静态吊销检查（证书/OEM）",
+      "reason": "本阶段未引入签名或 OEM 分发"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "依赖审计（npm audit）",
+      "reason": "本轮未改动依赖树；未执行，记为 NOT_RUN 而非 PASS"
     }
-  },
-  "allPassed": true
+  ]
 }

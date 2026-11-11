@@ -1,0 +1,14 @@
+✔ shutdownAll waits for a close that a lease release already started (11.1943ms)
+✔ two concurrent close requests share one SDK close (1.608ms)
+✔ a close that never settles is a failure, not a success (123.8597ms)
+✔ a close that rejects is kept and reported, not silently dropped (1.3523ms)
+✔ a clean close disappears from management and is reported closed (1.2772ms)
+✔ dispose reports ok only when every runtime actually closed (29.461ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 546.4744

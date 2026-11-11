@@ -1,6 +1,8 @@
 # PHASE 01-C 工作报告 — DSH Session 生命周期与 Studio Task 状态管理
 
-> **状态：`READY_FOR_EXTERNAL_REVIEW`。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+> **状态：`READY_FOR_EXTERNAL_REVIEW`（第 2 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+>
+> 第 1 轮评审基线 §8cb415b§；本轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。
 
 ## 1. 本阶段原始目标
 
@@ -44,27 +46,39 @@
 
 架构文档：`docs/architecture/phase-01-c-task-lifecycle.md`（含完整状态转换表）。
 
-## 5. 本轮发现并修掉的缺陷
+## 5. 缺陷与修复
 
-这三个都是"跑真东西"才暴露的，不是设计推演出来的：
+### 5.1 第 1 轮评审指出的 P1（本轮修复）
 
-| 编号 | 级别 | 问题 | 修复 |
-|---|---|---|---|
-| F-01C-1 | **P1** | 任务 runtime 里没有任何 provider row，所有任务静默跑在 `deepseek-official` 路由上，以 `MISSING_CREDENTIAL` 失败，却被表象成"没有 assistant 消息" | TaskService 为 commandcode 生成 cordis patch 交给 supervisor |
-| F-01C-2 | **P1** | 会话尚未开始工作时的第一个 `idle` 被当作回合结束，任务 100ms 内以 0 事件"完成" | 只有出现过活动之后的 idle 才结束回合 |
-| F-01C-3 | P2 | 启动健康探测与任务 runtime 同父进程，身份捕获歧义时拒绝（安全但报 UNKNOWN） | 任务场景下跳过启动探测 |
+| 编号 | 问题 | 修复 |
+|---|---|---|
+| P1-CLOSE-RACE | `#close()` 遇到 `state === 'closing'` 直接返回，`shutdownAll()` 不等待在途关闭，把仍在关闭的 Runtime 记为 failed | 每个 Runtime 保存唯一 `closePromise`，首次调用创建、后续一律 await 同一个；`shutdownAll` 等待而非猜测 |
+| P1-CLOSE-TIMEOUT | `Promise.race([close, sleep(25000)])` 的超时分支正常 resolve，未关闭的 Runtime 可能被标成 `closed` | 超时改为抛错：未确认关闭不设 `closed`；失败保留在管理表并以 failed 上报，不再静默删除 |
+| P1-DISPOSE-RESULT | `dispose()` 返回 closed/failed，但 `gracefulQuit()` 没有检查 | `dispose` 返回 `{closed, failed, ok}` 并记 `task.service.dispose.failed`；退出码按 `ok` 决定 |
 
-F-01C-1 值得单独说明：它是最危险的一类失败——任务看起来"跑了"，实际连模型都没调用，而错误信息指向一个不相关的环节。
+新增 `test/runtime-supervisor.test.js`（6 项，全部用 deferred promise 构造竞态，不靠 sleep）：release 与 shutdown 共享同一 close、并发请求只调一次 SDK close、关闭挂起必须失败且保留在管理表、关闭抛错必须上报 failed、干净关闭才消失、dispose 在任一 Runtime 关闭失败时返回 `ok:false`。
+
+### 5.2 顺带修掉的真实缺陷
+
+`#create()` 的启动超时定时器在握手成功后没有清除，会让事件循环空转满 90 秒（测试文件因此耗时 90s）。已改为在 `finally` 中 `clearTimeout`，同一组测试从 90s 降到 0.56s。
+
+### 5.3 上一轮记录的三处缺陷（保留说明）
+
+| 编号 | 级别 | 问题 |
+|---|---|---|
+| F-01C-1 | P1 | 任务 runtime 没有 provider row，静默跑在 `deepseek-official` 路由上，以 `MISSING_CREDENTIAL` 失败并被表象成"没有 assistant 消息" |
+| F-01C-2 | P1 | 会话未开始工作时的第一个 `idle` 被当作回合结束，任务 100ms 内以 0 事件"完成" |
+| F-01C-3 | P2 | 启动健康探测与任务 runtime 同父进程，身份捕获歧义时拒绝（安全但报 UNKNOWN） |
 
 ## 6. 安装版验证（本轮核心）
 
-真实安装包（NSIS，237,547,404 字节），静默安装后运行三个场景，**24/24 断言通过**（`evidence/phase-01-c/packaged/summary.json`）：
+真实安装包（NSIS），静默安装后运行三个场景，**34/34 断言通过**（`evidence/phase-01-c/packaged/summary.json`）。每个场景都额外检查 §disposeHadNoFailure§（日志无 §task.service.dispose.failed§ / §runtime.close.failed§）与 §runtimeProcessGone§（按 DSH home 查进程表，状态必须为 §ABSENT§）：
 
 | 场景 | 内容 | 结果 |
 |---|---|---|
 | A 正常完成 | 创建任务 → 真实模型回合 → Studio 验收 → SUCCEEDED → 无残留 runtime、无残留 GUI 进程 | PASS |
 | B 中断恢复 | 启动 → 停止（经 INTERRUPTING）→ INTERRUPTED → resume → **同一 session** → 新 attempt → 终态 | PASS |
-| C 崩溃恢复 | 运行中 `app.exit(9)`（无优雅关闭）→ 重启 → 识别 INTERRUPTED → 恢复 → 新 attempt → 干净退出 | PASS |
+| C 崩溃恢复 | 运行中 §app.exit(9)§（无优雅关闭）→ **崩溃后立即查进程表**（§crashLeftNoOrphan§）→ 重启 → 识别 INTERRUPTED → 恢复 → 新 attempt → 干净退出 | PASS |
 
 C 场景是真实的异常退出，不是故障注入：进程被直接结束，没有 shutdown、没有 runtime close。
 
@@ -73,14 +87,17 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 | 命令 | 退出码 | 结果 | 证据 |
 |---|---|---|---|
 | `tsc -p tsconfig.json` | 0 | — | `unit/tsc.txt` |
-| `node --test`（应用全量） | 0 | **84/84**，0 失败 | `unit/full-suite.txt` |
-| `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/final-integration.txt` |
-| 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-{1,2,3}.txt` |
+| `node --test`（应用全量，连续两次） | 0 / 0 | **90/90**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
+| `node --test test/runtime-supervisor.test.js` | 0 | **6/6**（关闭竞态） | `unit/supervisor-race.txt` |
+| `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
+| 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |
 | `node scripts/run-gates.mjs`（PHASE 00 门禁） | 0 | PASS，0 泄漏 | `regression/phase00-gates.json` |
+| `node scripts/smoke.mjs failure`（01-A，本轮补跑） | 0 | — | `regression/phase01a-failure.txt` |
 | `node scripts/smoke.mjs ready`（01-A） | 0 | — | `regression/phase01a-ready.txt` |
 | `node scripts/smoke.mjs quit-during-probe`（01-A） | 0 | — | `regression/phase01a-quit.txt` |
-| `node scripts/mcp-probe.mjs`（01-B） | 0 | — | `regression/phase01b-mcp.txt` |
+| `node scripts/mcp-probe.mjs`（01-B，开发环境握手） | 0 | — | `regression/phase01b-mcp.txt` |
+| `node scripts/mcp-packaged.mjs --prompt`（01-B，**安装版真实工具调用**，本轮补跑） | 0 | `toolCalled: true` | `packaged/mcp-tool-call.json` |
 
 关于上一轮"满套件不稳定"：本轮定位到**不是**模型或限流问题，而是我自己的断言取样太早（任务刚到 SUCCEEDED 就检查 runtime 是否已回收，而 `release()` 在下一拍才关完）。改成等待回收后，满套件连续通过。
 
@@ -88,7 +105,7 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 
 跑 PHASE 01-A / 01-B 回归时，`scripts/smoke.mjs` 与 `scripts/mcp-probe.mjs` 会把结果写回它们自己的证据目录，从而**覆写了 6 个历史证据文件**（`evidence/phase-01-a/smoke/{ready,quit-during-probe}/*`、`evidence/phase-01-b/mcp/handshake.json`）。
 
-已在提交前用 `git checkout 908c2fb -- evidence/phase-01-a evidence/phase-01-b` 全部还原，还原后与 PHASE 01-B 关闭提交的 diff 为空。本阶段的回归结果以 `evidence/phase-01-c/regression/*.txt` 的原始输出为准，不依赖被覆盖的历史文件。
+已在提交前用 `git checkout 908c2fb -- evidence/phase-01-a evidence/phase-01-b` 全部还原，还原后与 PHASE 01-B 关闭提交的 diff 为空。本阶段的回归结果以 `regression/phase01a-failure.txt`、`regression/phase01a-ready.txt`、`regression/phase01a-quit.txt` 的原始输出为准，不依赖被覆盖的历史文件。
 
 ## 8. 证据
 
@@ -100,6 +117,7 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 |---|---|
 | UNKNOWN | U-01C-1 第三方 Provider 限流/额度波动对长回合任务的影响 |
 | DEFERRED | D-01C-1 任务面板之外的会话事件流可视化 |
+| NOT_RUN | 静态吊销检查（未引入签名/OEM）；`npm audit` 依赖审计（本轮未改依赖树） |
 | BLOCKED | 无 |
 
 ## 10. 结论

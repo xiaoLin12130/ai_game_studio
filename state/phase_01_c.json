@@ -4,8 +4,6 @@
   "status": "READY_FOR_EXTERNAL_REVIEW",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
-  "base_commit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "work_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
   "note": "原始目标已实现并有证据；本阶段不自行判定通过。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
@@ -16,35 +14,58 @@
     "IPC + preload 白名单 + 任务面板 UI"
   ],
   "verified_this_round": {
-    "packaged": {
-      "checks": 24,
-      "passed": 24,
-      "artifact": "evidence/phase-01-c/packaged/summary.json"
+    "tsc": {
+      "exitCode": 0
     },
     "fullSuite": {
-      "tests": 84,
-      "pass": 84,
+      "runs": 2,
+      "tests": 90,
+      "pass": 90,
       "fail": 0,
-      "artifact": "evidence/phase-01-c/unit/full-suite.txt"
+      "artifacts": [
+        "evidence/phase-01-c/unit/full-suite-1.txt",
+        "evidence/phase-01-c/unit/full-suite-2.txt"
+      ]
+    },
+    "supervisorRaces": {
+      "tests": 6,
+      "pass": 6,
+      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     "realDsh": {
       "tests": 2,
       "pass": 2,
-      "isolatedRuns": 3,
-      "artifact": "evidence/phase-01-c/real-dsh/"
+      "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
+    },
+    "packaged": {
+      "checks": 34,
+      "failed": 0,
+      "artifact": "evidence/phase-01-c/packaged/summary.json"
+    },
+    "packagedMcp": {
+      "toolCalled": true,
+      "artifact": "evidence/phase-01-c/packaged/mcp-tool-call.json"
     },
     "phase00": {
       "suite": "166/166",
       "gates": "PASS",
-      "artifact": "evidence/phase-01-c/regression/"
+      "artifacts": [
+        "evidence/phase-01-c/regression/phase00-suite.txt",
+        "evidence/phase-01-c/regression/phase00-gates.json"
+      ]
     },
     "phase01a": {
-      "smokeReady": 0,
-      "smokeQuit": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01a-*.txt"
+      "failure": 0,
+      "ready": 0,
+      "quit": 0,
+      "artifacts": [
+        "evidence/phase-01-c/regression/phase01a-failure.txt",
+        "evidence/phase-01-c/regression/phase01a-ready.txt",
+        "evidence/phase-01-c/regression/phase01a-quit.txt"
+      ]
     },
     "phase01b": {
-      "mcpHandshake": 0,
+      "handshake": 0,
       "artifact": "evidence/phase-01-c/regression/phase01b-mcp.txt"
     }
   },
@@ -64,7 +85,8 @@
     }
   },
   "not_run": [
-    "泄漏门禁以外的静态扫描（未单独做）"
+    "静态吊销检查（未引入签名/OEM，NOT_RUN）",
+    "npm audit 依赖审计（本轮未改依赖树，NOT_RUN）"
   ],
   "unknown": [
     {
@@ -81,7 +103,7 @@
     }
   ],
   "blocked": [],
-  "updated_at": "2026-11-11T11:30:49.574Z",
+  "updated_at": "2026-11-11T12:09:27.159Z",
   "acceptance": [
     {
       "id": "C1",
@@ -123,7 +145,7 @@
       "id": "C7",
       "item": "最小任务管理 UI",
       "status": "PASS",
-      "evidence": "apps/studio/src/renderer/"
+      "evidence": "apps/studio/src/renderer"
     },
     {
       "id": "C8",
@@ -151,5 +173,68 @@
       "item": "启动健康探测与任务 runtime 同父进程，身份捕获歧义时拒绝（安全但报 UNKNOWN）",
       "fix": "任务场景下跳过启动探测"
     }
-  ]
+  ],
+  "git": {
+    "branch": "phase/01-c-session-task-lifecycle",
+    "stage_base_commit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
+    "implementation_commit": "8cb415b1c37da72b318f4a00f551133357e587b9",
+    "review_baseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
+    "record_commit": null,
+    "record_commit_note": "本次 P1 修复提交的 SHA 由评审方从分支 HEAD 读取。状态文件不写自身 SHA，避免自引用或伪造。"
+  },
+  "review_round": {
+    "round": "R1",
+    "reviewed_baseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
+    "findings": {
+      "P1-CLOSE-RACE": "Runtime close 不是 single-flight：state==='closing' 时提前返回，shutdownAll 不等待在途关闭，把仍在关闭的 Runtime 记为 failed",
+      "P1-CLOSE-TIMEOUT": "Promise.race([close, sleep]) 在超时分支正常 resolve，可能把未关闭的 Runtime 标记为 closed",
+      "P1-DISPOSE-RESULT": "TaskService.dispose 返回 closed/failed，但 gracefulQuit 没有检查，失败仍可能被记录为正常退出",
+      "P2-MISSING-REGRESSION": "缺少 PHASE 01-A 的 failure 冒烟与 PHASE 01-B 安装版 MCP 真实工具调用",
+      "P3-RECORDS": "work_commit 字段语义混乱；verification.json 使用 isolated-{1,2,3} 这类非真实路径；PACKAGE_MANIFEST 的 contains_application_source_code 与当前交付包混淆"
+    },
+    "resolution": {
+      "P1-CLOSE-RACE": {
+        "fixed": true,
+        "what": "每个 Runtime 保存唯一的 closePromise；第一次调用创建，后续一律 await 同一个 Promise；shutdownAll 等待在途关闭而不是提前判定失败",
+        "evidence": [
+          "apps/studio/src/main/runtime/supervisor.ts",
+          "evidence/phase-01-c/unit/supervisor-race.txt"
+        ]
+      },
+      "P1-CLOSE-TIMEOUT": {
+        "fixed": true,
+        "what": "超时分支改为抛错：未确认关闭不得设置 state='closed'；失败保留在管理表中并以 failed 上报，不再静默删除",
+        "evidence": [
+          "apps/studio/src/main/runtime/supervisor.ts",
+          "evidence/phase-01-c/unit/supervisor-race.txt"
+        ]
+      },
+      "P1-DISPOSE-RESULT": {
+        "fixed": true,
+        "what": "dispose 返回 {closed, failed, ok} 并记录 task.service.dispose.failed；gracefulQuit 检查 ok，失败时以非零码退出",
+        "evidence": [
+          "apps/studio/src/main/tasks/service.ts",
+          "apps/studio/src/main/main.ts",
+          "evidence/phase-01-c/packaged/summary.json"
+        ]
+      },
+      "P2-MISSING-REGRESSION": {
+        "fixed": true,
+        "what": "补跑 PHASE 01-A failure 冒烟与 PHASE 01-B 安装版 MCP 真实工具调用（toolCalled=true）",
+        "evidence": [
+          "evidence/phase-01-c/regression/phase01a-failure.txt",
+          "evidence/phase-01-c/packaged/mcp-tool-call.json"
+        ]
+      },
+      "P3-RECORDS": {
+        "fixed": true,
+        "what": "状态文件改为 git{stage_base_commit, implementation_commit, review_baseline, record_commit:null}；verification.json 逐条列真实路径；PACKAGE_MANIFEST 增加 describes/scope_note 明确它描述的是 PHASE 00 starter kit",
+        "evidence": [
+          "state/phase_01_c.json",
+          "evidence/phase-01-c/verification.json",
+          "PACKAGE_MANIFEST.json"
+        ]
+      }
+    }
+  }
 }

@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-11-11T12:08:57.937Z",
+  "purpose": "PHASE 01-B 的安装版 MCP 真实工具调用，本轮作为缺失回归补跑；原始输出来自 scripts/mcp-packaged.mjs --prompt",
+  "source": "evidence/phase-01-c/packaged/mcp-tool-call.json",
+  "ok": true,
+  "mode": "prompt",
+  "initialized": true,
+  "toolCalled": true,
+  "toolServed": true,
+  "endpoints": {
+    "exe": "<abs-path>",
+    "asar": "<abs-path>",
+    "server": "<abs-path>"
+  },
+  "auditKinds": [
+    "server.start",
+    "transport.connected",
+    "server.start",
+    "transport.connected",
+    "initialize.completed",
+    "tools/call",
+    "tools/call.served",
+    "server.stop"
+  ]
+}

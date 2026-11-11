@@ -40,7 +40,15 @@ export interface RuntimeHandle {
   lastError: string | null
   /** Resolves when the runtime exits unexpectedly; used to fail its tasks fast. */
   death: Promise<{ runtimeId: string; reason: string; error: string | null }>
+  /**
+   * The one close operation for this runtime. Every later request awaits this same
+   * promise instead of returning early, so a shutdown never reports a close that is
+   * still in progress as either done or failed.
+   */
+  closePromise: Promise<CloseResult> | null
 }
+
+export type CloseResult = { ok: true } | { ok: false; error: string; timedOut: boolean }
 
 export interface RuntimeLease {
   runtimeId: string
@@ -70,6 +78,8 @@ export interface SupervisorOptions {
   readonlyRuntimes?: number
   /** How long a runtime may take to start before the lease fails. */
   startTimeoutMs?: number
+  /** How long a close may take before it is reported as failed (never as success). */
+  closeTimeoutMs?: number
   /** Cordis patches applied to every runtime this supervisor starts. */
   patches?: string[]
   /** Test seam: build a client without spawning the real SDK. */
@@ -158,6 +168,7 @@ export class RuntimeSupervisor extends EventEmitter {
       startedAt: new Date().toISOString(),
       lastError: null,
       death,
+      closePromise: null,
     }
 
     // The subscription is how a dead runtime announces itself: the async iterator rejects
@@ -192,12 +203,19 @@ export class RuntimeSupervisor extends EventEmitter {
     const timeoutMs = this.#options.startTimeoutMs ?? 90000
     try {
       client.start()
-      await Promise.race([
-        client.initialize({ cwd: this.#options.cwd, provider: this.#options.provider, model: this.#options.model }),
-        sleep(timeoutMs).then(() => {
-          throw new RuntimeStartError(id, 'runtime start exceeded ' + timeoutMs + 'ms')
-        }),
-      ])
+      // The timeout timer must be cleared when the handshake wins, otherwise it keeps the
+      // event loop alive for its full duration (and delays a clean process exit).
+      let startTimer: NodeJS.Timeout | undefined
+      try {
+        await Promise.race([
+          client.initialize({ cwd: this.#options.cwd, provider: this.#options.provider, model: this.#options.model }),
+          new Promise<never>((_resolve, reject) => {
+            startTimer = setTimeout(() => reject(new RuntimeStartError(id, 'runtime start exceeded ' + timeoutMs + 'ms')), timeoutMs)
+          }),
+        ])
+      } finally {
+        clearTimeout(startTimer)
+      }
       handle.state = 'ready'
       this.#options.logger.info('runtime.ready', { runtimeId: id, isolation })
       return handle
@@ -248,27 +266,64 @@ export class RuntimeSupervisor extends EventEmitter {
         const busy = Math.max(0, (this.#busy.get(runtime!.id) ?? 1) - 1)
         this.#busy.set(runtime!.id, busy)
         if (busy === 0) runtime!.taskIds.delete(input.taskId)
-        if (runtime!.isolation === 'writable' || busy === 0) await this.#close(runtime!, reason)
+        if (runtime!.isolation === 'writable' || busy === 0) {
+          const result = await this.#close(runtime!, reason)
+          if (!result.ok) {
+            this.#options.logger.error('runtime.release.failed', { runtimeId: runtime!.id, reason, error: result.error })
+          }
+        }
       },
     }
     this.#options.logger.info('runtime.lease', { runtimeId: runtime.id, taskId: input.taskId, isolation: runtime.isolation, label: input.label ?? null })
     return lease
   }
 
-  async #close(runtime: RuntimeHandle, reason: string): Promise<void> {
-    if (runtime.state === 'closing' || runtime.state === 'closed') return
+  /**
+   * Close one runtime, at most once.
+   *
+   * The first caller starts the operation and stores its promise; everybody else awaits
+   * that same promise. This is what stops a shutdown from declaring a runtime "failed"
+   * only because a lease release happened to start closing it first.
+   *
+   * A close that does not finish inside the bound is a failure, not a quiet success: the
+   * SDK close promise can simply never settle, and a resolved race would otherwise mark a
+   * live process as clean.
+   */
+  #close(runtime: RuntimeHandle, reason: string): Promise<CloseResult> {
+    if (runtime.closePromise) return runtime.closePromise
+    runtime.closePromise = this.#performClose(runtime, reason)
+    return runtime.closePromise
+  }
+
+  async #performClose(runtime: RuntimeHandle, reason: string): Promise<CloseResult> {
     runtime.state = 'closing'
+    const bound = this.#options.closeTimeoutMs ?? 25000
     try {
-      await Promise.race([runtime.client.close(), sleep(25000)])
+      const outcome = await Promise.race([
+        runtime.client.close().then(() => 'closed' as const),
+        sleep(bound).then(() => 'timeout' as const),
+      ])
+      if (outcome === 'timeout') {
+        throw new Error('runtime close exceeded ' + bound + 'ms')
+      }
       runtime.state = 'closed'
       this.#options.logger.info('runtime.closed', { runtimeId: runtime.id, reason })
-    } catch (error) {
-      runtime.state = 'failed'
-      runtime.lastError = String((error as Error)?.message ?? error)
-      this.#options.logger.error('runtime.close.failed', { runtimeId: runtime.id, reason, error: runtime.lastError })
-    } finally {
       this.#runtimes.delete(runtime.id)
       this.#busy.delete(runtime.id)
+      return { ok: true }
+    } catch (error) {
+      const message = String((error as Error)?.message ?? error)
+      runtime.state = 'failed'
+      runtime.lastError = message
+      this.#options.logger.error('runtime.close.failed', {
+        runtimeId: runtime.id,
+        reason,
+        error: message,
+        timedOut: /exceeded/.test(message),
+      })
+      // Deliberately kept in the map: a runtime we could not close has to stay visible and
+      // count as failed at shutdown, not disappear and be counted as handled.
+      return { ok: false, error: message, timedOut: /exceeded/.test(message) }
     }
   }
 
@@ -276,10 +331,16 @@ export class RuntimeSupervisor extends EventEmitter {
     this.#closed = true
     const closed: string[] = []
     const failed: string[] = []
+    // Snapshot first: closes that were already started by a lease release are joined here
+    // rather than restarted, and runtimes that failed to close stay in the map, so a second
+    // shutdown would still see them.
     for (const runtime of [...this.#runtimes.values()]) {
-      await this.#close(runtime, reason)
-      if (runtime.state === 'closed') closed.push(runtime.id)
+      const result = await this.#close(runtime, reason)
+      if (result.ok) closed.push(runtime.id)
       else failed.push(runtime.id)
+    }
+    if (failed.length > 0) {
+      this.#options.logger.error('runtime.shutdown.incomplete', { reason, failed })
     }
     return { closed, failed }
   }

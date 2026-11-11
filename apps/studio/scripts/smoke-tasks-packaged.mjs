@@ -14,6 +14,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
@@ -84,6 +85,26 @@ async function run(mode, userData, timeoutMs = 420000) {
   return { mode, wallMs: Date.now() - started, exitCode: exit.timedOut ? null : exit.code, timedOut: exit.timedOut, smoke, logTail: log }
 }
 
+const require = createRequire(import.meta.url)
+
+/**
+ * Look for processes still holding this run's DSH home — the runtime, not the GUI.
+ *
+ * Reuses the process table that PHASE 01-A already validated, which excludes its own query
+ * process by sentinel. Returns { status, pids } so "could not check" stays distinct from
+ * "nothing found".
+ */
+async function runtimeProcesses(dshHome) {
+  const { createProcessTable } = require(path.join(REPO, 'apps', 'studio', 'dist', 'main', 'dsh', 'processes.js'))
+  const table = createProcessTable()
+  const listing = await table.list(8000)
+  if (!listing.ok) return { status: 'FAILED', pids: [], error: listing.error }
+  const pids = listing.processes.filter((proc) => String(proc.commandLine ?? '').includes(dshHome)).map((proc) => proc.pid)
+  return { status: pids.length > 0 ? 'PRESENT' : 'ABSENT', pids, error: null }
+}
+
+const disposeFailed = (logTail) => (logTail ?? []).some((line) => line.includes('task.service.dispose.failed') || line.includes('runtime.close.failed'))
+
 function lingering() {
   const result = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command',
     "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*AI Game Studio*' } | Select-Object -ExpandProperty ProcessId"],
@@ -99,8 +120,14 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-A-'))
   const result = await run('task-run', userData)
   scenarios.A = result
+  scenarios.A.dshHome = path.join(userData, 'dsh-home')
+  scenarios.A.runtimeCheck = await runtimeProcesses(scenarios.A.dshHome)
   scenarios.A.checks = {
     exitZero: result.exitCode === 0,
+    disposeHadNoFailure: !disposeFailed(result.logTail),
+    // A failed check is UNKNOWN, never "gone".
+    runtimeProcessGone: scenarios.A.runtimeCheck.status === 'ABSENT',
+    runtimeCheckStatus: scenarios.A.runtimeCheck.status,
     producedSmoke: Boolean(result.smoke),
     taskSucceeded: result.smoke?.finalStatus === 'SUCCEEDED',
     hadSession: (result.smoke?.task?.sessions ?? 0) >= 1,
@@ -116,8 +143,13 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-B-'))
   const result = await run('task-interrupt-resume', userData)
   scenarios.B = result
+  scenarios.B.dshHome = path.join(userData, 'dsh-home')
+  scenarios.B.runtimeCheck = await runtimeProcesses(scenarios.B.dshHome)
   scenarios.B.checks = {
     exitZero: result.exitCode === 0,
+    disposeHadNoFailure: !disposeFailed(result.logTail),
+    runtimeProcessGone: scenarios.B.runtimeCheck.status === 'ABSENT',
+    runtimeCheckStatus: scenarios.B.runtimeCheck.status,
     producedSmoke: Boolean(result.smoke),
     wasInterrupted: result.smoke?.atInterrupt?.status === 'INTERRUPTED',
     interruptedIsRecorded: (result.smoke?.atInterrupt?.transitions ?? []).includes('INTERRUPTING'),
@@ -133,11 +165,13 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-C-'))
   const crash = await run('task-start-and-crash', userData, 300000)
   const afterCrash = lingering()
+  const orphanRuntimes = await runtimeProcesses(path.join(userData, 'dsh-home'))
   for (const pid of afterCrash) {
     try { spawnSync('taskkill', ['/F', '/PID', pid], { windowsHide: true, timeout: 15000 }) } catch { /* gone */ }
   }
   const recover = await run('task-recover', userData)
-  scenarios.C = { crash, recover, orphanPidsAfterCrash: afterCrash }
+  const runtimeCheckAfter = await runtimeProcesses(path.join(userData, 'dsh-home'))
+  scenarios.C = { crash, recover, orphanPidsAfterCrash: afterCrash, orphanRuntimeCheck: orphanRuntimes }
   scenarios.C.checks = {
     crashedAsExpected: crash.exitCode === 9,
     crashLeftTaskRunning: crash.smoke?.isRunning === true,
@@ -147,6 +181,10 @@ fs.mkdirSync(OUT, { recursive: true })
     recordedNewAttempt: (recover.smoke?.task?.attempts ?? 0) >= 2,
     appExited: recover.exitCode === 0,
     noLingeringApp: lingering().length === 0,
+    disposeHadNoFailure: !disposeFailed(recover.logTail),
+    runtimeProcessGone: runtimeCheckAfter.status === 'ABSENT',
+    runtimeCheckStatus: runtimeCheckAfter.status,
+    crashLeftNoOrphan: orphanRuntimes.status === 'ABSENT',
   }
 }
 
@@ -154,7 +192,17 @@ const allChecks = Object.fromEntries(
   Object.entries(scenarios).flatMap(([name, value]) => Object.entries(value.checks ?? {}).map(([k, v]) => [name + '.' + k, v])),
 )
 const failed = Object.entries(allChecks).filter(([, ok]) => !ok).map(([name]) => name)
-const summary = { generatedAt: new Date().toISOString(), exe, checks: allChecks, failed, ok: failed.length === 0, scenarios }
+// Evidence is committed, so absolute paths are written as placeholders: the leak gate
+// treats a real drive path in a tracked file as a defect, and reviewer machines differ.
+const redact = (value) =>
+  typeof value === 'string'
+    ? value.replace(/[A-Za-z]:\\[^"']*/g, '<abs-path>').replace(/[A-Za-z]:\/[^"']*/g, '<abs-path>')
+    : Array.isArray(value)
+      ? value.map(redact)
+      : value && typeof value === 'object'
+        ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, redact(v)]))
+        : value
+const summary = { generatedAt: new Date().toISOString(), exe: '<abs-path>', checks: allChecks, failed, ok: failed.length === 0, scenarios: redact(scenarios) }
 fs.writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify(summary, null, 2) + '\n')
 console.log(JSON.stringify({ ok: summary.ok, failed, checks: allChecks }, null, 2))
 process.exit(summary.ok ? 0 : 1)

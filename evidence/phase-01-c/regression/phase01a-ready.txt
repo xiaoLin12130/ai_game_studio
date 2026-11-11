@@ -15,6 +15,6 @@
     "handshakeIdentity": true,
     "exitCodeObservedInUi": true
   },
-  "wallMs": 3747,
+  "wallMs": 3657,
   "exitCode": 0
 }

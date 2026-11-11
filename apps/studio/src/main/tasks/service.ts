@@ -247,11 +247,23 @@ export class TaskService extends EventEmitter {
     return { ...task, sessionId: latest?.id ?? null, availableActions: [...ACTIONS_FOR[task.status]] }
   }
 
-  async dispose(reason: string): Promise<void> {
-    if (this.#disposed) return
+  /**
+   * Shut every task runtime down and report what actually happened.
+   *
+   * A runtime that could not be closed is a failure the caller has to see: the app must
+   * not exit 0 while a runtime from this session may still be alive.
+   */
+  async dispose(reason: string): Promise<{ closed: string[]; failed: string[]; ok: boolean }> {
+    if (this.#disposed) return { closed: [], failed: [], ok: true }
     this.#disposed = true
     const summary = await this.supervisor.shutdownAll(reason)
-    this.#logger.info('task.service.dispose', { reason, ...summary })
+    const ok = summary.failed.length === 0
+    if (ok) {
+      this.#logger.info('task.service.dispose', { reason, ...summary })
+    } else {
+      this.#logger.error('task.service.dispose.failed', { reason, ...summary })
+    }
     this.store.close()
+    return { ...summary, ok }
   }
 }
