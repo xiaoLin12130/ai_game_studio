@@ -12,7 +12,7 @@
 - Full Commit SHA：**以分支 `phase/00-feasibility` 的 HEAD 为准**（`git rev-parse HEAD`）。
   报告不内嵌自身 SHA，避免出现「评审打开的固定提交」与「交付版本」不一致。
 - **唯一事实源**：`state/project_state.json` → **`phase_00_final`**。
-- Status：**`PARTIALLY_VERIFIED`** — 冻结范围内 10 条门禁均有证据；正式 PASS 由外部评审决定。
+- Status：**`APPROVED`（PASS）** — 10 条原始验收门禁全部满足并有直接证据；收尾轮集中修复 2 个 P0（冻结证据被全量运行覆盖、内容规则按扩展名静默跳过）后关闭。收尾报告：`docs/review-handoff/PHASE_00_CLOSURE_REPORT.md`。
   「模型层被账号余额阻断」是 0.1.5 时期的**错误结论，已推翻**：真实模型链路（commandcode +
   deepseek/deepseek-v4.1-flash）在 DSH 0.2.1-rc.3 上 6/6 PASS。
 - 本轮（最终收尾）**未重跑真实模型探针**；六探针结论沿用 `evidence/r14/summary.json`
@@ -169,7 +169,7 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 **NO — 等待明确外部复审结论。**
 
-当前状态 `PARTIALLY_VERIFIED`，按 `phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md` 的结束状态约定，本阶段不得标记 PASS，也不得进入 PHASE 01。
+当前状态 **`APPROVED`（PASS）**：按 `phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md` 的结束状态约定，门禁全部满足，阶段已关闭并可进入 PHASE 01（启动条件见收尾报告 §F）。
 
 ---
 

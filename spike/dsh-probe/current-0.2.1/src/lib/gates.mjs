@@ -353,6 +353,24 @@ export function checkEvidencePath(root, rel, contentRule = null) {
     }
   }
 
+  // A rule that only runs for some extensions is not a rule. Review found the third
+  // shape of the same hole: gate 6's structured check simply did not execute when the
+  // evidence path ended in .md, so pointing it at any Markdown document returned PASS.
+  // If a gate defines a content rule, evidence that cannot be inspected for it fails.
+  const machineReadable = extension === '.json' || extension === '.jsonl'
+  if (typeof contentRule === 'function' && !machineReadable) {
+    return {
+      ok: false,
+      errors: [
+        {
+          code: 'gate-evidence-content',
+          message: `${rel}: this gate needs a machine-readable evidence file, but the path is "${extension || 'no extension'}" so the content rule cannot be evaluated`,
+        },
+      ],
+      kind: extension || null,
+    }
+  }
+
   if (extension === '.json') {
     try {
       const value = JSON.parse(text)

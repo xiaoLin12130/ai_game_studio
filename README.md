@@ -59,7 +59,7 @@
 
 | 项 | 值 |
 |---|---|
-| 阶段结论 | **`PARTIALLY_VERIFIED`** — 冻结范围内 10 条门禁均有证据；正式 PASS 由外部独立评审决定 |
+| 阶段结论 | **`APPROVED`（PASS）** — 10 条原始验收门禁全部满足并有直接证据；收尾轮集中修复 2 个 P0 后关闭。详见 `docs/review-handoff/PHASE_00_CLOSURE_REPORT.md` |
 | 六探针 | **6/6 PASS**（最后一次完整真实运行 `2026-11-10T12:43:44Z`；后续各轮按评审要求未重复模型调用） |
 | 门禁 | 依赖 PASS；脱敏 PASS（全部发布文件、0 泄漏）；项目状态一致性 PASS |
 | 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |

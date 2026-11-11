@@ -2,6 +2,8 @@
 
 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
+> **PHASE 00 已于 2026-11-11 关闭：`APPROVED`（PASS）**。本文件正文仍是 0.1.5 时代的历史报告，其中 `PARTIALLY_VERIFIED` / `BLOCKED` 为当时结论。最终判定、门禁证据与 PHASE 01 移交条件见 `docs/review-handoff/PHASE_00_CLOSURE_REPORT.md`。
+
 > ## ⚠️ 本报告已被 PHASE 00-R1 部分取代（2026-11-10）
 >
 > 本文件保留为 **0.1.5 运行时的历史记录**，不再作为当前事实来源。三处结论已修正：

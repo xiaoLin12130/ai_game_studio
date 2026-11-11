@@ -3,7 +3,7 @@
 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
 - 当前项目：AI Game Studio。
-- 当前阶段：**PHASE 00 最终收尾 — `PARTIALLY_VERIFIED`，等待外部正式复审**。
+- 当前阶段：**PHASE 00 已关闭 — `APPROVED`（PASS）**。下一步是 PHASE 01，不是继续微调 PHASE 00。收尾报告见 `docs/review-handoff/PHASE_00_CLOSURE_REPORT.md`。
 - **唯一事实源**：`state/project_state.json` → **`phase_00_final`**（`authoritative_source.current_record` 声明）。
   `phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 全是历史快照，只读保留，勿引用为当前状态。
 - 当前状态：冻结范围内 10 条门禁均有证据；六探针 **6/6 PASS**（最后一次完整真实运行

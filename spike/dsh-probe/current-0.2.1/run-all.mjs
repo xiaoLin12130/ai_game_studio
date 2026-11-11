@@ -31,8 +31,18 @@ const root = path.dirname(fileURLToPath(import.meta.url))
  * evidence directory, so a deliberately failing run cannot overwrite the real results.
  */
 const evidenceRoot = process.env.CC_EVIDENCE_OUT ? path.resolve(process.env.CC_EVIDENCE_OUT) : path.join(root, 'evidence')
-const aggregateDir = path.join(evidenceRoot, '_aggregate')
-const r14Dir = path.join(evidenceRoot, 'r14')
+/**
+ * A full run publishes into its own round directory.
+ *
+ * It used to write straight into `evidence/r14/`, which is the frozen record of the
+ * 2026-11-10 six-probe run — the only real model evidence in the repository. Running
+ * `npm test` again would have overwritten that file while `state/project_state.json`
+ * still cited its timestamp, leaving the repository holding evidence that contradicts
+ * its own state. A new run gets a new round; `CC_FULL_ROUND` names it.
+ */
+const fullRound = process.env.CC_FULL_ROUND ?? 'r154'
+const aggregateDir = path.join(evidenceRoot, fullRound, '_aggregate')
+const bundleDir = path.join(evidenceRoot, fullRound)
 
 const probes = [
   ['CC-0-cli', 'src/probe-cli-baseline.mjs'],
@@ -259,11 +269,11 @@ const summary = {
 }
 
 writeJsonFile(path.join(aggregateDir, 'run-all.json'), summary)
-writeJsonFile(path.join(r14Dir, 'summary.json'), summary)
+writeJsonFile(path.join(bundleDir, 'summary.json'), summary)
 
-/* The r14 bundle splits the gates out so a reviewer can read one file each. */
-writeJsonFile(path.join(r14Dir, 'scrub.json'), { generatedAt: summary.generatedAt, ...leakGate })
-writeJsonFile(path.join(r14Dir, 'dependencies.json'), { generatedAt: summary.generatedAt, gate: dependencyGate })
+/* The bundle splits the gates out so a reviewer can read one file each. */
+writeJsonFile(path.join(bundleDir, 'scrub.json'), { generatedAt: summary.generatedAt, ...leakGate })
+writeJsonFile(path.join(bundleDir, 'dependencies.json'), { generatedAt: summary.generatedAt, gate: dependencyGate })
 
 out('\n===== SUMMARY (0.2.1-rc.3 + commandcode) =====\n')
 out(`${dependencyGate.status.padEnd(8)}gate:dependency\n`)

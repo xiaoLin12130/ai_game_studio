@@ -43,7 +43,7 @@ if (!stateOverride.ok) {
  * produced it — the exact failure mode the r14 README exists to prevent. `CC_GATE_ROUND`
  * keeps the old behaviour available for a reproduction that really does want r14.
  */
-const round = process.env.CC_GATE_ROUND ?? 'r153'
+const round = process.env.CC_GATE_ROUND ?? 'r154'
 /**
  * `CC_GATE_OUT` is a test-only write target so the regression suite can exercise this
  * script without rewriting the published round. It changes where a result is written,
@@ -88,6 +88,10 @@ const leak = {
 
 // A forbidden override was already refused above, so reaching here means either no
 // override at all or an explicit test run (CC_TEST_MODE=1).
+//
+// Review caught that `testOverride` was computed and then never consumed: an artifact
+// produced from an injected state looked exactly like one produced from the repository.
+// It is now written into the artifact, so the two cannot be confused later.
 let state = { status: 'PASS', checked: null, errors: [] }
 try {
   const check = checkProjectState(loadStateCheck(REPO_ROOT, stateOverride.file))
@@ -95,18 +99,24 @@ try {
 } catch (error) {
   state = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
 }
+const stateSource = {
+  kind: stateOverride.testOverride ? 'test-injected' : 'repository',
+  file: stateOverride.testOverride ? path.relative(probeRoot, path.resolve(stateOverride.file)) : 'state/project_state.json',
+}
 
 const result = {
   generatedAt: new Date().toISOString(),
   purpose: 'PHASE 00 gate-only regression; the six real model probes were not repeated.',
   modelProbesRun: false,
   lastFullProbeRun: 'spike/dsh-probe/current-0.2.1/evidence/r14/summary.json',
+  stateSource,
   gates: { dependency, state, leak },
   overall: [dependency.status, state.status, leak.status].every((s) => s === 'PASS') ? 'PASS' : 'FAIL',
 }
 
 writeJsonFile(output, result)
 out(`[gates] dependency=${dependency.status} state=${state.status} leak=${leak.status} scanned=${scanned.scanned}/${scanned.files} leaks=${scanned.leaks.length}\n`)
+out(`[gates] stateSource=${stateSource.kind} (${stateSource.file})\n`)
 if (state.status === 'FAIL') {
   for (const problem of state.errors.slice(0, 12)) out(`[gates] state ${problem.code}: ${problem.message}\n`)
 }

@@ -1,10 +1,10 @@
 {
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
-  "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
+  "product_status": "PHASE_00_APPROVED",
   "current_phase": "PHASE_00",
   "phase_status": {
-    "PHASE_00": "PARTIALLY_VERIFIED",
+    "PHASE_00": "PASS",
     "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_02": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_03": "BLOCKED_BY_PREVIOUS_REVIEW",
@@ -106,7 +106,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T04:39:39.085Z",
+  "updated_at": "2026-11-11T05:00:38.995Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -533,9 +533,9 @@
     "authored_at": "2026-11-11T04:10:00.000Z",
     "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
     "scope_definition": "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md",
-    "verdict": "PARTIALLY_VERIFIED",
-    "verdict_reason": "10 条 PHASE 00 原始验收门禁现在全部有可机器校验的直接证据（见 gates 与 evidence）：门禁 6 按原始措辞由 CC-6 取得被 SDK 托管 Runtime 的真实退出码（正常 close = 0、外部强杀 = 1，两次均 PROCESS_ABSENT，0 模型调用），且 R15.2 起证据规则为结构化校验（两个场景、整数退出码、PROCESS_ABSENT、来源必须是 SDK 通道）。门禁 1 为交付环境真实盘点；门禁 4 按范围原文判定为\"记录 + 展示\"，已由诊断 CLI 满足，实时事件流另行登记为 U9（DEFERRED，非阻断）；门禁 7 五类能力分开归类。R15.2 另按评审意见补上验证器最后两个入口：状态文件与全部指针文档读取前做真实路径 containment（阻断 state/ 与 docs/ 的 Junction 逃逸），门禁 6 不再接受 JSON 任意位置出现的整数 exitCode。仍不自行宣布 PASS：本轮结论尚未经外部独立评审复核；且存在两条已记录的能力限制（退出码走 message 文本通道；实时事件流未重跑）。按阶段定义，正式 PASS 需外部评审确认后给出；确认前不进入 PHASE 01。",
-    "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
+    "verdict": "PASS",
+    "verdict_reason": "PHASE 00 已按原始范围文件关闭。10 条验收门禁全部有直接、可机器校验的证据，且由 checkProjectState() 强制：门禁 1（交付环境真实盘点，0.2.1-rc.3 基线）；2（SDK/DSH 版本兼容，依赖门禁校验版本区间）；3（真实 Prompt 口令回显，沿用 2026-11-10 运行）；4（事件/状态已记录并由诊断 CLI 展示，实时流另列 U9）；5（Studio 只读工具被模型真实调用且 Server 侧审计到执行）；6（CC-6 取得被 SDK 托管 Runtime 的真实退出码 0/1，结构化校验）；7（五类能力分开归类：Resume=CONFIRMED / 中断轮次=UNKNOWN(U7) / 审批=UNKNOWN / session-approve 与 cancel=NOT_SUPPORTED）；8（ADR-0001/0002 写明取舍与风险）；9（脱敏门禁 0 泄漏，历史与跟踪文件无凭据）；10（已推送 public 仓库并完成交接）。本轮收尾审查另发现并修复 1 个 P0：全量运行 npm test 会把结果写进冻结的 evidence/r14/，可能覆盖唯一真实模型证据并使状态引用失效；已改为写入独立的轮次目录（CC_FULL_ROUND）。两条已记录的能力限制不阻断本阶段：退出码经 SDK 已文档化的 message 文本通道取得（不是结构化字段，升级需重跑 CC-6）；诊断 CLI 的事件时间线来自真实录制运行的回放（实时流见 U9）。六项真实模型探针本轮未重跑，结论沿用 evidence/r14（2026-11-10T12:43:44.987Z）。",
+    "product_status": "PHASE_00_APPROVED",
     "model_probes_rerun_this_round": false,
     "gates": {
       "01_environment_inventory": {
@@ -580,8 +580,8 @@
       },
       "09_no_secrets_in_git_or_logs": {
         "status": "PASS",
-        "evidence": "spike/dsh-probe/current-0.2.1/evidence/r14/final-gates.json",
-        "note": "脱敏门禁 + 凭据规则 + 统一输出层"
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/r154/final-gates.json",
+        "note": "脱敏门禁（leak）对当前发布集全量扫描的结果，随每轮重新生成；本轮 0 泄漏。凭据规则、统一输出层与历史清洗记录见同轮产物与 evidence/r14/negative-leak-gate.json。"
       },
       "10_github_push_and_review_handoff": {
         "status": "PASS",
@@ -621,23 +621,24 @@
         ]
       },
       "final_gate_regression": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r153/final-gates.json",
-        "at": "2026-11-11T04:39:22.085Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r154/final-gates.json",
+        "at": "2026-11-11T05:00:12.448Z",
         "dependency": "PASS",
         "state": "PASS",
         "leak": "PASS",
-        "scanned_files": 194,
-        "files_in_publish_set": 194,
+        "scanned_files": 199,
+        "files_in_publish_set": 199,
         "leaks": 0,
         "overall": "PASS",
-        "model_probes_run": false
+        "model_probes_run": false,
+        "state_source": "repository"
       },
       "regression_tests": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r153/tests.json",
-        "at": "2026-11-11T04:39:21.838Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r154/tests.json",
+        "at": "2026-11-11T05:00:12.179Z",
         "node": "v24.19.0",
-        "total": 163,
-        "passed": 163,
+        "total": 166,
+        "passed": 166,
         "failed": 0,
         "exit_code": 0
       },
@@ -646,8 +647,8 @@
         "tests/run-tests.mjs：35+ 条反向断言（门禁 ID 换名、文档集合、空/目录/损坏/路径穿越证据、门禁 6 内容级断言、锁缺失、串线、状态门禁）"
       ],
       "previous_round": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r152/final-gates.json",
-        "note": "R15.2 轮（评审对象 b689fb9）的结果，冻结保留。更早轮次见 evidence/r151/ 与 evidence/r15/。"
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r153/final-gates.json",
+        "note": "R15.3 轮（评审对象 84d7a97）的结果，冻结保留。更早轮次见 evidence/r152、r151、r15。"
       }
     },
     "blocking_items": [],
@@ -770,6 +771,7 @@
     ],
     "next_phase": {
       "phase": "PHASE 01",
+      "status": "READY_TO_START",
       "first_tasks": [
         "按已验证的 DSH SDK 链路落地 Windows 本地应用基础与真实连接状态展示",
         "官方 MCP SDK 兼容性冒烟（U5）并替换 PHASE 00 手写原型",
@@ -777,7 +779,7 @@
         "崩溃恢复与中断轮次可靠性验证（U4/U7）",
         "产品决策：DSH_HOME 策略（U2）"
       ],
-      "precondition": "外部独立评审确认 PHASE 00；在此之前不进入 PHASE 01 业务功能开发"
+      "precondition": "PHASE 00 已批准；PHASE 01 可按上述任务启动。PHASE 00 不再接受微调，除非发现影响已批准结论的实质缺陷。"
     },
     "final_verification": {
       "commands": [
@@ -788,17 +790,17 @@
         },
         {
           "command": "npm run test:unit",
-          "result": "163/163 PASS",
+          "result": "166/166 PASS",
           "exit_code": 0
         },
         {
           "command": "npm run gates",
-          "result": "dependency/state/leak all PASS, 194/194 files, 0 leaks",
+          "result": "dependency/state/leak all PASS, 199/199 files, 0 leaks, stateSource=repository",
           "exit_code": 0
         },
         {
           "command": "npm run gates with CC_STATE_FILE set",
-          "result": "exit 1 with state-override-forbidden",
+          "result": "REFUSED state-override-forbidden, exit 1, no evidence written",
           "exit_code": 1
         },
         {
@@ -812,8 +814,8 @@
           "exit_code": 0
         },
         {
-          "command": "mutation check (revert escaped-read guard + override policy)",
-          "result": "4 targeted tests failed; file restored with identical sha256",
+          "command": "mutation checks (R15.1 / R15.2 / R15.3 / F2)",
+          "result": "7 + 11 + 4 + 2 targeted tests failed on reverted code; every file restored with identical sha256",
           "exit_code": 1
         }
       ],
@@ -826,7 +828,7 @@
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
     "convergence_round": "r153",
-    "updated_at": "2026-11-11T04:39:39.085Z",
+    "updated_at": "2026-11-11T05:00:38.995Z",
     "commit_provenance": {
       "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
       "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
@@ -842,7 +844,8 @@
       "rounds": [
         "r151",
         "r152",
-        "r153"
+        "r153",
+        "r154"
       ],
       "items": [
         "R15.1：证据路径按真实路径解析（realpath / Windows Junction），阻断仓库内链接指向仓库外",
@@ -852,7 +855,11 @@
         "R15.2：门禁 06 改为结构化校验（两个场景 + 整数 + PROCESS_ABSENT + 来源必须是 SDK 通道）",
         "R15.3：containment 失败时不再读取逃逸目标（state 置 null，返回 state-escape + state-unreadable）",
         "R15.3：officialStateFile() 隔离测试注入口；正式 npm run gates / npm test 拒绝 CC_STATE_FILE（state-override-forbidden），仅 CC_TEST_MODE=1 允许注入",
-        "R15.3：新增 7 项负向测试；变异验证下 4 条关键用例会失败"
+        "R15.3：新增 7 项负向测试；变异验证下 4 条关键用例会失败",
+        "R15.4：全量运行不再写入冻结的 evidence/r14（改为 CC_FULL_ROUND 轮次目录），失败/被拒运行不会覆盖唯一真实模型证据",
+        "R15.4：有内容规则的门禁必须提供 JSON/JSONL 证据，Markdown/无扩展名一律判 gate-evidence-content（此前规则按扩展名静默跳过）",
+        "R15.4：门禁产物记录 stateSource（repository / test-injected），注入运行不再与官方产物无法区分",
+        "R15.4：门禁 09 指向当前轮次的全量脱敏扫描，而不是覆盖面更小的历史产物"
       ]
     },
     "limitations": [
@@ -870,6 +877,21 @@
         "spike/dsh-probe/current-0.2.1/scripts/run-gates.mjs",
         "spike/dsh-probe/current-0.2.1/run-all.mjs"
       ]
+    },
+    "closure": {
+      "decided_at": "2026-11-11T04:56:47.833Z",
+      "round": "r154",
+      "decision": "APPROVED",
+      "basis": [
+        "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md 的 10 条验收门禁全部满足",
+        "checkProjectState() 独立校验通过：门禁/文档/证据/一致性",
+        "正式门禁三道（dependency / state / leak）全部 PASS",
+        "回归测试全绿，负向用例经变异验证确实能抓住回归",
+        "历史证据完整：evidence/r14 与 r15/r151/r152/r153 均未被本轮覆盖"
+      ],
+      "poc_found_and_fixed_this_round": 1,
+      "model_probes_rerun": false,
+      "retained_probe_evidence": "evidence/r14/summary.json at 2026-11-10T12:43:44.987Z, 6/6 PASS, exit 0"
     }
   }
 }

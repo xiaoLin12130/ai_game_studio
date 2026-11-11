@@ -709,6 +709,28 @@ await test('evidence: gate 6 must actually carry the exit code it claims', () =>
   assert.equal(/graceful/i.test(serialised) && /forced|kill/i.test(serialised), true, 'both teardown paths must be recorded')
 })
 
+await test('evidence: a gate with a content rule cannot be satisfied by a Markdown file', () => {
+  // Review's third shape of the same hole: the rule only ran for .json/.jsonl, so
+  // pointing gate 6 at any Markdown document returned PASS without checking anything.
+  const result = withBrokenState((s) => {
+    s.phase_00_final.gates['06_runtime_exit_code_recorded'].evidence = 'docs/decisions/ADR-0002-dsh-integration.md'
+  })
+  expectCode(result, 'gate-evidence-content')
+  assert.ok(
+    result.errors.some((e) => e.code === 'gate-evidence-content' && e.message.includes('machine-readable')),
+    JSON.stringify(result.errors)
+  )
+})
+
+await test('evidence: a gate with a content rule rejects an extensionless and a .txt path', () => {
+  for (const rel of ['.gitignore', 'spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/cli-output.txt']) {
+    const result = withBrokenState((s) => {
+      s.phase_00_final.gates['06_runtime_exit_code_recorded'].evidence = rel
+    })
+    expectCode(result, 'gate-evidence-content')
+  }
+})
+
 await test('evidence: the old cc-3 evidence cannot satisfy gate 6 any more', () => {
   // This is the exact defect the external review found: valid JSON, no exit code,
   // gate declared PASS on it. Pointing gate 6 back at it must fail on content.
@@ -984,6 +1006,20 @@ await test('official: without an override the gate grades the repository state',
   const artifact = JSON.parse(fs.readFileSync(outFile, 'utf8'))
   assert.equal(artifact.gates.state.status, 'PASS')
   assert.equal(artifact.gates.state.checked.gates, 10)
+  assert.equal(artifact.stateSource.kind, 'repository', 'an official run must say it graded the repository state')
+})
+
+await test('official: an injected run marks the artifact as test-injected', () => {
+  const dir = made('official-injected-marked')
+  const fake = path.join(dir, 'project_state.json')
+  fs.writeFileSync(fake, JSON.stringify(loadStateCheck(REPO_ROOT).state, null, 2))
+  const outFile = path.join(dir, 'final-gates.json')
+
+  const run = runOfficialGates({ CC_STATE_FILE: fake, CC_TEST_MODE: '1' }, outFile)
+  assert.equal(run.status, 0, 'a valid injected state may pass in a test run: ' + String(run.stdout).slice(-300))
+  const artifact = JSON.parse(fs.readFileSync(outFile, 'utf8'))
+  assert.equal(artifact.stateSource.kind, 'test-injected', 'the artifact must not look like an official run')
+  assert.ok(artifact.stateSource.file.endsWith('project_state.json'))
 })
 
 await test('state: a docs/review-handoff junction out of the repository is rejected', () => {
@@ -1357,6 +1393,9 @@ process.env.CC_DSH_HOME = previous.home
 // End to end: a failing gate produces exit 1 and a FAIL aggregate
 // ---------------------------------------------------------------------------
 
+/** Where a full run publishes; must be a new round so the frozen r14 is never rewritten. */
+const FULL_ROUND = 'suite-fixture-round'
+
 await test('suite: dependency gate failure exits 1', () => {  const evidenceOut = path.join(depRoot, 'evidence')
   const brokenLocks = path.join(depRoot, 'broken-locks')
   copyTree(LOCK_SOURCE, brokenLocks)
@@ -1371,14 +1410,21 @@ await test('suite: dependency gate failure exits 1', () => {  const evidenceOut 
       CC_LOCK_ROOT: brokenLocks,
       CC_DSH_HOME: path.join(depRoot, 'broken-home'),
       CC_EVIDENCE_OUT: evidenceOut,
+      CC_FULL_ROUND: FULL_ROUND,
     },
   })
 
   assert.equal(run.status, 1, `expected exit 1, got ${run.status}: ${String(run.stdout).slice(-400)}`)
-  const aggregate = JSON.parse(fs.readFileSync(path.join(evidenceOut, '_aggregate', 'run-all.json'), 'utf8'))
+  const aggregate = JSON.parse(
+    fs.readFileSync(path.join(evidenceOut, FULL_ROUND, '_aggregate', 'run-all.json'), 'utf8'),
+  )
   assert.equal(aggregate.gates.dependency.status, 'FAIL')
   assert.equal(aggregate.overall, 'FAIL')
   assert.equal(aggregate.total, 0, 'no probe should have run')
+
+  // The frozen record of the only real model run must never be the write target.
+  assert.equal(fs.existsSync(path.join(evidenceOut, 'r14')), false, 'a full run must not write into evidence/r14')
+  assert.ok(fs.existsSync(path.join(evidenceOut, FULL_ROUND, 'summary.json')), 'the run publishes into its own round')
 })
 
 await test('suite: broken project state aborts before any probe (real exit code)', () => {
@@ -1398,18 +1444,21 @@ await test('suite: broken project state aborts before any probe (real exit code)
       CC_STATE_FILE: brokenStateFile,
       CC_TEST_MODE: '1', // the seam is honoured only in an explicit test run
       CC_EVIDENCE_OUT: evidenceOut,
+      CC_FULL_ROUND: FULL_ROUND,
     },
   })
 
   assert.equal(run.status, 1, `expected exit 1, got ${run.status}: ${String(run.stdout).slice(-500)}`)
-  const aggregate = JSON.parse(fs.readFileSync(path.join(evidenceOut, '_aggregate', 'run-all.json'), 'utf8'))
+  const aggregate = JSON.parse(
+    fs.readFileSync(path.join(evidenceOut, FULL_ROUND, '_aggregate', 'run-all.json'), 'utf8'),
+  )
   assert.equal(aggregate.gates.state.status, 'FAIL')
   assert.equal(aggregate.overall, 'FAIL')
   assert.equal(aggregate.total, 0, 'no probe should have run')
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
-  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r153', 'tests.json')
+  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r154', 'tests.json')
   const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
   const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
     cwd: PROBE_ROOT,
@@ -1440,7 +1489,7 @@ const summary = {
  *
  * A test run that is deliberately broken (or simply fails) must not be able to
  * overwrite the published evidence. By default the result lands in a throwaway
- * directory; `tests/record-tests.mjs` points this at `evidence/r14/tests.json` and
+ * directory; `tests/record-tests.mjs` points this at `evidence/<round>/tests.json` and
  * copies it there only when the run exits 0.
  */
 const resultFile = process.env.CC_TEST_EVIDENCE_OUT
