@@ -117,8 +117,15 @@ if (setupFailure) {
 // other than the repository's own state.
 let stateGate = { status: 'PASS', checked: null, errors: [] }
 const stateOverride = officialStateFile(process.env)
+// PHASE 01 engineering item 8.2: the summary has to say which state it graded, otherwise
+// a test-injected full run produces an aggregate indistinguishable from an official one.
+// `scripts/run-gates.mjs` already records this; the full-run summary did not.
+const stateSource = {
+  kind: stateOverride.testOverride ? 'test-injected' : 'repository',
+  file: stateOverride.testOverride ? String(stateOverride.file) : 'state/project_state.json',
+}
 if (!stateOverride.ok) {
-  stateGate = { status: 'FAIL', checked: null, errors: [stateOverride.error] }
+  stateGate = { status: 'FAIL', checked: null, errors: [stateOverride.error], stateSource }
 } else {
   try {
     const loaded = loadStateCheck(REPO_ROOT, stateOverride.file)
@@ -127,6 +134,7 @@ if (!stateOverride.ok) {
       status: check.ok ? 'PASS' : 'FAIL',
       checked: check.checked,
       errors: check.errors,
+      stateSource,
     }
   } catch (error) {
     stateGate = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }

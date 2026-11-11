@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-11-11T05:52:24.082Z",
+  "appVersion": "0.1.0",
+  "versions": {
+    "electron": "44.7.0",
+    "chrome": "152.0.7977.130",
+    "node": "24.21.0"
+  },
+  "window": {
+    "count": 1,
+    "visible": true,
+    "title": "AI Game Studio",
+    "bounds": {
+      "x": 780,
+      "y": 340,
+      "width": 1000,
+      "height": 720
+    },
+    "imageSize": {
+      "width": 984,
+      "height": 655
+    },
+    "url": "fil<abs-path>"
+  },
+  "state": {
+    "status": "READY",
+    "detail": {
+      "code": "HANDSHAKE_OK",
+      "message": "DSH 运行时已启动并完成 SDK 握手。"
+    },
+    "lastCheckedAt": "2026-11-11T05:52:24.028Z",
+    "lastDurationMs": 2193,
+    "serverInfo": {
+      "name": "deepseek-harness-sdk-runtime",
+      "version": "0.0.1"
+    },
+    "dshVersion": "0.2.1-rc.3",
+    "entryKind": "bundled",
+    "entryPath": "<repo>\\apps\\studio\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+    "runtimeExitCode": 0,
+    "configRecovered": false,
+    "configRecoveryNote": null
+  },
+  "totalMs": 2246
+}

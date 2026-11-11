@@ -1,0 +1,30 @@
+{
+  "name": "ai-game-studio",
+  "productName": "AI Game Studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Game Studio desktop shell — PHASE 01-A windows foundation and real DSH connection status",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "postinstall": "node scripts/ensure-electron.mjs",
+    "start": "npm run build && electron .",
+    "smoke": "npm run build && node scripts/smoke.mjs",
+    "test": "npm run build && node --test"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "electron": "44.7.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-sdk-client": "0.2.1-rc.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "studio": {
+    "electronPin": "44.7.0",
+    "electronPinReason": "DSH 的 node-addon-require-builtin 只接受特定 Electron 运行时指纹（43.0.0 / 44.0.0 / 44.7.0 / 45.0.0-alpha.6）。45.3.0 会被拒绝并让 runtime 在握手前退出。44.7.0 与 DSH Desktop 自身所用版本一致。"
+  }
+}

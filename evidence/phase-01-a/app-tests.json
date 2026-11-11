@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-11-11T05:52:21.579Z",
+  "command": "node --test",
+  "exitCode": 0,
+  "durationMs": 8088,
+  "counts": {
+    "tests": 33,
+    "pass": 33,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "testFileList": [
+    "config.test.js",
+    "logger.test.js",
+    "probe.integration.test.js",
+    "service.test.js",
+    "status.test.js"
+  ]
+}

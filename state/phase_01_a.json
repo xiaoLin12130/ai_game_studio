@@ -1,0 +1,183 @@
+{
+  "record": "phase_01_a",
+  "phase": "PHASE 01-A — Windows 桌面应用基础与 DSH 真实连接状态",
+  "status": "PASS",
+  "authority": {
+    "note": "PHASE 00 的权威记录仍为 state/project_state.json → phase_00_final（已 APPROVED）。本文件只描述 PHASE 01-A，不改变也不重开 PHASE 00 的任何结论。",
+    "phase_00_final_commit": "9c8757c8e91ec10ca0fd1114408306dd72980709",
+    "phase_00_final_tag": "phase-00-final"
+  },
+  "branch": "phase/01-a-windows-foundation",
+  "baseline_commit": "9c8757c8e91ec10ca0fd1114408306dd72980709",
+  "review_baseline_semantics": {
+    "problem": "PHASE 00 状态里 review_baseline_commit=6230340，而关闭报告引用的评审固定提交是 84d7a97，两个字段含义被混用。",
+    "three_concepts": {
+      "product_baseline": "上一阶段最终批准提交，作为本阶段开发基线（PHASE 01-A = 9c8757c8）。",
+      "review_pinned_commit": "外部评审固定的那个提交（PHASE 00 收敛轮为 84d7a97）。",
+      "phase_closing_commit": "阶段关闭时的分支 HEAD（不写进仓库自身，由评审方 pin）。"
+    },
+    "decision": "不在 PHASE 00 记录上改名或回填（禁止重开已关闭阶段）。本阶段起，新状态结构只用上述三个明确字段名；PHASE 00 的 phase_00_final.commit_provenance 已含解释，保持原样。",
+    "action": "DEFERRED — 由 PHASE 01-B/后续状态结构统一；不阻塞 PHASE 01-A。"
+  },
+  "stack": {
+    "shell": "Electron 44.7.0（精确钉死）",
+    "language": "TypeScript 5.9（tsc 编译，无打包器）",
+    "renderer": "静态 HTML + CSS + 编译后的 DOM 脚本（无前端框架）",
+    "renderer_rationale": "PHASE 01-A 只有一个状态卡片；引入 React/Vite 会把失败面从 1 个编译产物扩大到开发服务器、路由与 CSP。渲染进程被 IPC 完全隔离，PHASE 01-B/04 引入框架时不需要改主进程与适配层。",
+    "electron_pin_reason": "DSH 的 node-addon-require-builtin 只接受特定 Electron 运行时指纹（43.0.0 / 44.0.0 / 44.7.0 / 45.0.0-alpha.6）。45.3.0 会被拒绝，表现为 runtime 在握手前退出。44.7.0 与 DSH Desktop 自身所用版本一致。"
+  },
+  "dsh_readiness": {
+    "definition": "用真实 dsh 可执行文件，在隔离 DSH home 上 spawn SDK runtime，在超时内完成 initialize 握手并拿到 serverInfo，随后关闭并确认进程退出。",
+    "implementation": "apps/studio/src/main/dsh/probe.ts",
+    "sends_prompt": false,
+    "uses_network_credentials": false,
+    "proves": [
+      "runtime 能用当前 profile 与 home 启动",
+      "插件树挂载完成",
+      "当前 provider/model 路由可解析",
+      "stdio JSON-RPC 双向可用",
+      "关闭后进程确实退出"
+    ],
+    "does_not_prove": [
+      "模型真的能回答（未发 prompt，不验证凭据/额度/网络）",
+      "版本匹配（握手成功不代表版本对，版本单独读 manifest）",
+      "用户真实 ~/.dsh profile 可用（探测用隔离 home + 内置 sdk profile）",
+      "工具/沙箱/终端行为与长跑稳定性"
+    ],
+    "electron_quirk": "子进程必须带 ELECTRON_RUN_AS_NODE=1，否则 electron.exe 按 GUI 启动，表现为握手超时。",
+    "single_flight": true,
+    "polling": false
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "item": "应用在 Windows 上可启动，主窗口可见",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-a/desktop-smoke/smoke.json"
+    },
+    {
+      "id": "A2",
+      "item": "显示 DSH 真实状态（无假数据/固定字符串/模拟延迟）",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-a/desktop-smoke/smoke.json"
+    },
+    {
+      "id": "A3",
+      "item": "DSH 不可用时有明确状态与可读原因，应用仍可用",
+      "status": "PASS",
+      "evidence": "apps/studio/test/probe.integration.test.js"
+    },
+    {
+      "id": "A4",
+      "item": "DSH 恢复后重新检测并更新状态",
+      "status": "PASS",
+      "evidence": "apps/studio/src/main/dsh/service.ts"
+    },
+    {
+      "id": "A5",
+      "item": "应用可正常关闭，退出后不残留运行时进程",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-a/desktop-smoke/smoke-run.json"
+    },
+    {
+      "id": "A6",
+      "item": "配置与日志写在用户数据目录",
+      "status": "PASS",
+      "evidence": "apps/studio/src/main/config.ts"
+    },
+    {
+      "id": "A7",
+      "item": "配置损坏时应用不崩溃且恢复可见",
+      "status": "PASS",
+      "evidence": "apps/studio/test/config.test.js"
+    },
+    {
+      "id": "A8",
+      "item": "单元 + 集成（真实 DSH）+ Windows 桌面冒烟全部通过",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-a/app-tests.json"
+    },
+    {
+      "id": "A9",
+      "item": "阶段报告、证据、Git 提交与推送完成",
+      "status": "PASS",
+      "evidence": "docs/review-handoff/PHASE_01_A_WORK_REPORT.md"
+    }
+  ],
+  "problems": {
+    "p0": [],
+    "p1": [],
+    "p2": [
+      {
+        "id": "P2-1",
+        "title": "渲染层未使用框架",
+        "detail": "与 ADR-0001 §4 的 React 建议不同；本阶段以最小失败面为先，渲染进程已被 IPC 隔离，后续可替换。",
+        "blocking": false
+      },
+      {
+        "id": "P2-2",
+        "title": "正式安装包未构建",
+        "detail": "ADR-0001 §5 的打包冒烟（asar 内 dsh、MCP、进程树）未执行；桌面开发构建已实际运行验证。",
+        "blocking": false
+      }
+    ],
+    "p3": []
+  },
+  "deferred": [
+    {
+      "id": "D1",
+      "item": "Electron 打包冒烟（ADR-0001 §5 七项）",
+      "phase": "PHASE 01-B 或独立打包阶段",
+      "risk": "打包后 SDK 可能无法解析 runtime；本阶段只验证开发构建"
+    },
+    {
+      "id": "D2",
+      "item": "review_baseline_commit 字段语义统一",
+      "phase": "PHASE 01-B 状态结构调整",
+      "risk": "不改则历史字段继续有歧义；已在 review_baseline_semantics 说明"
+    }
+  ],
+  "blocked": [],
+  "unknown": [
+    {
+      "id": "U-01A-1",
+      "item": "打包后 dsh runtime 能否启动",
+      "why_unknown": "未构建安装包，无法验证 asar 内路径与原生 addon 解析",
+      "condition_to_verify": "执行 electron-builder 打包后跑 ADR-0001 §5 清单"
+    }
+  ],
+  "verification": {
+    "appTests": {
+      "command": "node --test",
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-a/app-tests.json"
+    },
+    "desktopSmoke": {
+      "command": "node scripts/smoke.mjs",
+      "checks": 10,
+      "passed": 10,
+      "exitCode": 0,
+      "wallMs": 2334,
+      "artifact": "evidence/phase-01-a/desktop-smoke/smoke-run.json"
+    },
+    "phase00Regression": {
+      "command": "node tests/run-tests.mjs（PHASE 00 套件，未重新发布其证据轮次）",
+      "tests": 166,
+      "pass": 166,
+      "fail": 0,
+      "exitCode": 0,
+      "note": "PHASE 00 的 r154 证据未被覆盖；本轮只验证 PHASE 01 的两处附加改动未破坏它。"
+    },
+    "phase00Gates": {
+      "command": "node scripts/run-gates.mjs（CC_GATE_OUT 指向 phase 证据）",
+      "overall": "PASS",
+      "leaks": 0,
+      "artifact": "evidence/phase-01-a/phase00-gates.json"
+    }
+  },
+  "model_probes_rerun": false,
+  "updated_at": "2026-11-11T05:51:37.551Z"
+}

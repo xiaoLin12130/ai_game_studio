@@ -1,0 +1,41 @@
+✔ defaults exist so a first launch needs no file (2.7411ms)
+✔ a valid file round-trips through save and load (1.3771ms)
+✔ a corrupt file is moved aside, defaults are used, and the user is told (2.4115ms)
+✔ validation rejects out-of-range timeouts and keeps the default (0.1859ms)
+✔ validation coerces a non-object into defaults with a problem (0.1402ms)
+✔ unknown config versions are reported, not silently accepted (0.1753ms)
+✔ a configured dsh entry is preserved and trimmed (0.2257ms)
+✔ secret-looking keys are redacted at any depth (2.0971ms)
+✔ credential-shaped strings are scrubbed even under innocent keys (0.3981ms)
+✔ log lines are json, redacted, and carry the event name (2.1055ms)
+✔ an oversized log is rotated instead of growing without bound (1.8586ms)
+✔ the bundled dsh entry resolves without spawning anything (4.7852ms)
+✔ a healthy runtime is reported READY with a server identity (1918.5898ms)
+✔ a missing profile is UNAVAILABLE and says which one (210.3082ms)
+✔ a configured entry that does not exist fails without spawning (0.6162ms)
+✔ an impossible deadline is TIMEOUT, not a false pass (1907.4362ms)
+✔ the exit code is only taken from the documented message line (0.3872ms)
+✔ the initial state is UNCHECKED and says so (1.9372ms)
+✔ a real check moves CHECKING then READY and reports timing (1914.6472ms)
+✔ a second check while one is running joins it instead of stacking runtimes (1953.8529ms)
+✔ a recovered config is surfaced on the state instead of being swallowed (0.76ms)
+✔ the isolated home is created under user data when none is configured (0.6811ms)
+✔ every status has a user-facing label (1.178ms)
+✔ a missing module is classified as a missing runtime (0.3231ms)
+✔ a missing profile is classified separately from a missing binary (0.2211ms)
+✔ an unusable home directory is classified (0.1946ms)
+✔ a corrupt profile manifest is classified (0.1522ms)
+✔ an unknown provider route is classified (0.135ms)
+✔ a degraded profile bundle is classified (0.1261ms)
+✔ a plain timeout stays a timeout (0.1667ms)
+✔ the generic transport message keeps the first line for diagnostics (0.351ms)
+✔ an empty failure is unknown, not ready (0.2983ms)
+✔ readiness requires a status and a server identity (0.2007ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8021.4386

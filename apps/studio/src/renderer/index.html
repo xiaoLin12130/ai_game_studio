@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"
+    />
+    <title>AI Game Studio</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <span class="brand-name">AI Game Studio</span>
+        <span class="brand-version" id="app-version">v—</span>
+      </div>
+      <div class="topbar-status">
+        <span class="pill" id="status-pill" data-status="UNCHECKED">未检测</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="card" id="dsh-card">
+        <div class="card-head">
+          <h2>DSH 运行时</h2>
+          <button id="recheck" class="button" type="button">重新检测</button>
+        </div>
+
+        <p class="headline" id="headline">尚未检测 DSH。</p>
+
+        <dl class="facts">
+          <div class="fact"><dt>运行时版本</dt><dd id="fact-dsh-version">—</dd></div>
+          <div class="fact"><dt>协议服务</dt><dd id="fact-server">—</dd></div>
+          <div class="fact"><dt>最近检测</dt><dd id="fact-checked">—</dd></div>
+          <div class="fact"><dt>耗时</dt><dd id="fact-duration">—</dd></div>
+          <div class="fact"><dt>运行时退出码</dt><dd id="fact-exit">—</dd></div>
+          <div class="fact"><dt>入口来源</dt><dd id="fact-entry">—</dd></div>
+        </dl>
+
+        <div class="notice" id="config-notice" hidden></div>
+
+        <details class="diagnostics">
+          <summary>诊断信息</summary>
+          <pre id="diagnostics">加载中…</pre>
+        </details>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <button id="open-logs" class="button button-ghost" type="button">打开日志目录</button>
+      <span class="footer-note">DSH 负责 AI 执行，Studio 负责应用与状态管理。</span>
+    </footer>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

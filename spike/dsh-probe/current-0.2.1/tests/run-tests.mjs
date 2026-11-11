@@ -1421,6 +1421,7 @@ await test('suite: dependency gate failure exits 1', () => {  const evidenceOut 
   assert.equal(aggregate.gates.dependency.status, 'FAIL')
   assert.equal(aggregate.overall, 'FAIL')
   assert.equal(aggregate.total, 0, 'no probe should have run')
+  assert.equal(aggregate.gates.state.stateSource.kind, 'repository', 'an official run must record the repository state')
 
   // The frozen record of the only real model run must never be the write target.
   assert.equal(fs.existsSync(path.join(evidenceOut, 'r14')), false, 'a full run must not write into evidence/r14')
@@ -1455,6 +1456,11 @@ await test('suite: broken project state aborts before any probe (real exit code)
   assert.equal(aggregate.gates.state.status, 'FAIL')
   assert.equal(aggregate.overall, 'FAIL')
   assert.equal(aggregate.total, 0, 'no probe should have run')
+  assert.equal(
+    aggregate.gates.state.stateSource.kind,
+    'test-injected',
+    'an injected run must not produce an aggregate that looks official',
+  )
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
