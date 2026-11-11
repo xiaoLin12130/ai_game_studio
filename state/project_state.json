@@ -41,12 +41,12 @@
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-10T12:44:10.985Z",
+    "last_pushed_at": "2026-11-11T02:31:44.975Z",
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
     "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
     "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
-    "r1_4_1_commit": null
+    "r1_4_1_commit": "7ba76e07998f769ed570404bd1784444feca6b10"
   },
   "phase_00": {
     "gate_results": {
@@ -104,7 +104,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external review of PHASE 00-R1.4.1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-11T02:29:48.160Z",
+  "updated_at": "2026-11-11T02:31:44.976Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -440,8 +440,8 @@
       "external_review_verdict": "PARTIALLY_VERIFIED",
       "reviewed_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
       "baseline_commit": "0b9bc289e66e813402029ac58586abc02a23d4f3",
-      "delivery_commit": null,
-      "delivery_commit_note": "Backfilled by the following metadata-only commit. The report is byte-identical in the implementation commit and HEAD.",
+      "delivery_commit": "7ba76e07998f769ed570404bd1784444feca6b10",
+      "delivery_commit_note": "The implementation commit contains all code, tests, evidence and the final report. This metadata-only commit records its SHA and does NOT modify the report, so the report is byte-identical in DELIVERY COMMIT and branch HEAD.",
       "result": "READY_FOR_EXTERNAL_REVIEW",
       "stage_status": "PARTIALLY_VERIFIED",
       "model_probes_run": false,
