@@ -30,10 +30,13 @@ import {
   decideOverall,
   checkProjectState,
   checkEvidencePath,
+  resolveContainedRealPath,
+  isInsideDirectory,
   staysInside,
   loadStateCheck,
   REQUIRED_GATE_IDS,
   REQUIRED_OUTPUT_FILES,
+  EVIDENCE_CONTENT_RULES,
   STATE_DOC_POINTERS,
 } from '../src/lib/gates.mjs'
 import { parseExitCode, EXIT_CODE_PATTERN } from '../src/lib/exitcode.mjs'
@@ -718,6 +721,131 @@ await test('evidence: a gate without a content rule is unaffected by content rul
   assert.equal(result.ok, true, JSON.stringify(result.errors))
 })
 
+// ---------------------------------------------------------------------------
+// R15.1: review found two ways the verifier could still be lied to
+// ---------------------------------------------------------------------------
+// 1. `staysInside` is lexical, so a junction inside the repo pointing outside it passed
+//    the check while fs.statSync/readFileSync followed the link. Windows junctions need
+//    no privileges, which makes this the practical attack, not a theoretical one.
+// 2. gate 6 accepted `noExitCodeReason` as if it were a recorded exit code.
+
+/** A repo root plus a directory outside it, wired together with a link. */
+function linkFixture(name) {
+  const base = made(name)
+  const root = path.join(base, 'repo')
+  const outside = path.join(base, 'outside')
+  fs.mkdirSync(path.join(root, 'evidence'), { recursive: true })
+  fs.mkdirSync(outside, { recursive: true })
+  fs.writeFileSync(path.join(outside, 'secret.json'), '{"stolen":true}\n')
+
+  const link = path.join(root, 'evidence', 'external-link')
+  let created = null
+  for (const type of ['junction', 'dir']) {
+    try {
+      fs.symlinkSync(outside, link, type)
+      created = type
+      break
+    } catch {
+      /* try the next link flavour */
+    }
+  }
+  // A security test that silently skips is the false green this whole round is about.
+  assert.ok(
+    created !== null,
+    'this host cannot create a directory link (junction or symlink), so the containment check cannot be proven here',
+  )
+  return { root, outside, link, kind: created }
+}
+
+await test('evidence: a junction that leaves the repository root is rejected', () => {
+  const { root } = linkFixture('realpath-escape')
+  // The lexical path is inside the repo; the real target is not.
+  assert.equal(staysInside(root, 'evidence/external-link/secret.json'), true, 'the lexical check alone still accepts it')
+  const contained = resolveContainedRealPath(root, 'evidence/external-link/secret.json')
+  assert.equal(contained.ok, false, 'real path must be refused')
+  assert.equal(contained.code, 'gate-evidence-escape')
+
+  const check = checkEvidencePath(root, 'evidence/external-link/secret.json')
+  assert.equal(check.ok, false)
+  assert.equal(check.errors[0].code, 'gate-evidence-escape')
+})
+
+await test('evidence: a link that stays inside the repository root is allowed', () => {
+  const base = made('realpath-inside')
+  fs.mkdirSync(path.join(base, 'evidence', 'real'), { recursive: true })
+  fs.writeFileSync(path.join(base, 'evidence', 'real', 'summary.json'), '{"ok":true}\n')
+  fs.symlinkSync(path.join(base, 'evidence', 'real'), path.join(base, 'evidence', 'alias'), 'junction')
+  const check = checkEvidencePath(base, 'evidence/alias/summary.json')
+  assert.equal(check.ok, true, JSON.stringify(check.errors))
+})
+
+await test('evidence: a junctioned path to a missing file still fails on the ancestor', () => {
+  const { root } = linkFixture('realpath-missing-tail')
+  // File does not exist, but its nearest existing ancestor resolves outside the repo.
+  const contained = resolveContainedRealPath(root, 'evidence/external-link/not-there.json')
+  assert.equal(contained.ok, false)
+  assert.equal(contained.code, 'gate-evidence-escape')
+})
+
+await test('evidence: isInsideDirectory is not a string prefix test', () => {
+  const parent = path.join(BS, 'repo', 'root')
+  assert.equal(isInsideDirectory(parent, path.join(parent, 'a', 'b.json')), true)
+  assert.equal(isInsideDirectory(parent, parent), false)
+  assert.equal(isInsideDirectory(parent, path.join(BS, 'repo', 'root-evil', 'x.json')), false)
+  assert.equal(isInsideDirectory(parent, path.join(BS, 'repo', 'root', '..', 'outside-x')), false)
+})
+
+await test('state: a gate is resolved through links, not just spelled correctly', () => {
+  const data = stateData()
+  const { root } = linkFixture('realpath-state')
+  const result = checkProjectState({
+    state: {
+      ...structuredClone(data.state),
+      phase_00_final: {
+        ...structuredClone(data.state.phase_00_final),
+        gates: {
+          ...structuredClone(data.state.phase_00_final.gates),
+          '05_studio_readonly_tool_invoked': {
+            ...structuredClone(data.state.phase_00_final.gates['05_studio_readonly_tool_invoked']),
+            evidence: 'evidence/external-link/secret.json',
+          },
+        },
+      },
+    },
+    docs: data.docs,
+    root,
+  })
+  assert.equal(result.ok, false)
+  assert.ok(
+    result.errors.some((e) => e.code === 'gate-evidence-escape'),
+    JSON.stringify(result.errors.map((e) => e.code)),
+  )
+})
+
+await test('evidence: a noExitCodeReason cannot stand in for gate 6 exit code', () => {
+  const dir = made('reason-only')
+  write(path.join(dir, 'only-reason.json'), JSON.stringify({ noExitCodeReason: 'SDK did not provide an exit code' }, null, 2))
+  const result = checkEvidencePath(dir, 'only-reason.json', EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'])
+  assert.equal(result.ok, false, 'a reason is not a recorded exit code')
+  assert.equal(result.errors[0].code, 'gate-evidence-content')
+  assert.ok(result.errors[0].message.includes('noExitCodeReason'), result.errors[0].message)
+})
+
+await test('evidence: an integer exitCode satisfies gate 6 content rule', () => {
+  const dir = made('code-only')
+  write(path.join(dir, 'code.json'), JSON.stringify({ scenario: 'graceful', exitCode: 0 }, null, 2))
+  const result = checkEvidencePath(dir, 'code.json', EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'])
+  assert.equal(result.ok, true, JSON.stringify(result.errors))
+})
+
+await test('evidence: a string exitCode does not satisfy gate 6 content rule', () => {
+  const dir = made('string-code')
+  write(path.join(dir, 'string.json'), JSON.stringify({ exitCode: '0' }, null, 2))
+  const result = checkEvidencePath(dir, 'string.json', EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'])
+  assert.equal(result.ok, false)
+  assert.equal(result.errors[0].code, 'gate-evidence-content')
+})
+
 await test('state: the phase definition output files must exist', () => {
   for (const rel of REQUIRED_OUTPUT_FILES) {
     const result = checkProjectState({ state: stateData().state, docs: stateData().docs, root: REPO_ROOT })
@@ -1006,7 +1134,7 @@ await test('suite: broken project state aborts before any probe (real exit code)
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
-  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r15', 'tests.json')
+  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r151', 'tests.json')
   const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
   const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
     cwd: PROBE_ROOT,

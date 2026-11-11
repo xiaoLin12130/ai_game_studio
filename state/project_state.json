@@ -106,7 +106,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T04:11:02.663Z",
+  "updated_at": "2026-11-11T04:21:13.680Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -534,7 +534,7 @@
     "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
     "scope_definition": "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md",
     "verdict": "PARTIALLY_VERIFIED",
-    "verdict_reason": "10 条 PHASE 00 原始验收门禁现在全部有可机器校验的直接证据（见 gates 与 evidence）：门禁 6 不再靠改写措辞，而是由 CC-6 取得被 SDK 托管 Runtime 的真实退出码——正常 close = 0、外部强杀 = 1，两次均 PROCESS_ABSENT，消耗模型调用 0 次；门禁 1 换成交付环境（0.2.1-rc.3 / SDK 0.2.1-rc.3 / 插件 0.15.4）的真实盘点；门禁 4 补了当前切片可复跑的诊断 CLI（live 展示连接/会话/回收与退出码，replay 展开真实录制的事件与状态时间线）；门禁 7 的五类能力（Resume / 中断轮次 / 审批回调 / session-approve / session-cancel）在文档与状态里已分开，不再合并。仍不自行宣布 PASS，原因有三且都已记录：（1）退出码通道是已文档化的 message 文本（TransportClosedError），0.2.1-rc.3 没有结构化访问器，属能力限制；（2）门禁 4 的实时事件流需要一次真实模型轮次，本轮没有权限/额度重跑，因此用真实录制运行做 CLI 展示；（3）本轮结论尚未经外部独立评审复核。按阶段定义，正式 PASS 需外部评审确认后给出；在确认之前不进入 PHASE 01。",
+    "verdict_reason": "10 条 PHASE 00 原始验收门禁现在全部有可机器校验的直接证据（见 gates 与 evidence）：门禁 6 不再靠改写措辞，而是由 CC-6 取得被 SDK 托管 Runtime 的真实退出码——正常 close = 0、外部强杀 = 1，两次均 PROCESS_ABSENT，消耗模型调用 0 次；门禁 1 换成交付环境（0.2.1-rc.3 / SDK 0.2.1-rc.3 / 插件 0.15.4）的真实盘点；门禁 4 补了当前切片可复跑的诊断 CLI（live 展示连接/会话/回收与退出码，replay 展开真实录制的事件与状态时间线）；门禁 7 的五类能力（Resume / 中断轮次 / 审批回调 / session-approve / session-cancel）在文档与状态里已分开，不再合并。仍不自行宣布 PASS，原因有三且都已记录：（1）退出码通道是已文档化的 message 文本（TransportClosedError），0.2.1-rc.3 没有结构化访问器，属能力限制；（2）门禁 4 的实时事件流需要一次真实模型轮次，本轮没有权限/额度重跑，因此用真实录制运行做 CLI 展示；（3）R15.1 已按评审意见修复两处验证器缺陷（链接逃逸、门禁 6 接受 noExitCodeReason），并各配可复现的负向测试；（4）本轮结论尚未经外部独立评审复核。按阶段定义，正式 PASS 需外部评审确认后给出；在确认之前不进入 PHASE 01。",
     "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
     "model_probes_rerun_this_round": false,
     "gates": {
@@ -566,7 +566,7 @@
       "06_runtime_exit_code_recorded": {
         "status": "PASS",
         "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-6-exitcode/summary.json",
-        "note": "CC-6 实测被管理 Runtime 的真实退出码：正常 close = 0，外部强杀 = 1；两次均 PROCESS_ABSENT。取得通道为 SDK 公开导出类型 TransportClosedError 的 message（\"exit code: <n>\"，lib/types/client.d.ts 明文声明），值来自 child.once(\"exit\") 对 SDK 亲自 spawn 的那个子进程；0.2.1-rc.3 无结构化访问器（exitCode 为私有字段、close() 返回 void、无 onExit 选项）。未使用 CLI 启动器退出码，未读取私有字段。消耗模型调用 0 次。"
+        "note": "CC-6 实测被管理 Runtime 的真实退出码：正常 close = 0，外部强杀 = 1；两次均 PROCESS_ABSENT。取得通道为 SDK 公开导出类型 TransportClosedError 的 message（\"exit code: <n>\"，lib/types/client.d.ts 明文声明），值来自 child.once(\"exit\") 对 SDK 亲自 spawn 的那个子进程；0.2.1-rc.3 无结构化访问器。R15.1 起内容规则只接受整数 exitCode：noExitCodeReason 不再能满足本门禁（理由不是退出码）。未使用 CLI 启动器退出码，未读取私有字段。消耗模型调用 0 次。"
       },
       "07_session_resume_approval_classified": {
         "status": "PASS",
@@ -621,30 +621,34 @@
         ]
       },
       "final_gate_regression": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r15/final-gates.json",
-        "at": "2026-11-11T04:11:13.507Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r151/final-gates.json",
+        "at": "2026-11-11T04:21:07.496Z",
         "dependency": "PASS",
         "state": "PASS",
         "leak": "PASS",
-        "scanned_files": 185,
-        "files_in_publish_set": 185,
+        "scanned_files": 188,
+        "files_in_publish_set": 188,
         "leaks": 0,
         "overall": "PASS",
         "model_probes_run": false
       },
       "regression_tests": {
-        "file": "spike/dsh-probe/current-0.2.1/evidence/r15/tests.json",
-        "at": "2026-11-11T04:10:09.111Z",
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r151/tests.json",
+        "at": "2026-11-11T04:20:32.665Z",
         "node": "v24.19.0",
-        "total": 135,
-        "passed": 135,
+        "total": 143,
+        "passed": 143,
         "failed": 0,
         "exit_code": 0
       },
       "negative_proofs": [
         "evidence/r14/negative-leak-gate.json：六探针全 PASS 仍因泄漏判 OVERALL FAIL / exit 1",
         "tests/run-tests.mjs：35+ 条反向断言（门禁 ID 换名、文档集合、空/目录/损坏/路径穿越证据、门禁 6 内容级断言、锁缺失、串线、状态门禁）"
-      ]
+      ],
+      "previous_round": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r15/final-gates.json",
+        "note": "R15 轮（评审对象 36d0cfe）的门禁与测试结果，冻结保留，不再作为当前结果引用。"
+      }
     },
     "blocking_items": [
       "门禁 6 的退出码来自 SDK 公开错误类型的 message 文本，不是结构化字段；SDK 升级后需重跑 CC-6 确认格式未变",
@@ -779,12 +783,12 @@
         },
         {
           "command": "npm run test:unit",
-          "result": "135/135 PASS",
+          "result": "143/143 PASS",
           "exit_code": 0
         },
         {
           "command": "npm run gates",
-          "result": "dependency/state/leak all PASS, 185/185 files, 0 leaks",
+          "result": "dependency/state/leak all PASS, 188/188 files, 0 leaks",
           "exit_code": 0
         },
         {
@@ -798,8 +802,8 @@
           "exit_code": 0
         },
         {
-          "command": "mutation check (weakened gates.mjs)",
-          "result": "exactly 7 targeted tests failed; file restored with identical sha256",
+          "command": "mutation check (revert realpath containment + gate-6 rule)",
+          "result": "the 3 targeted tests failed; file restored with identical sha256",
           "exit_code": 1
         }
       ],
@@ -811,8 +815,8 @@
       ]
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
-    "convergence_round": "r15",
-    "updated_at": "2026-11-11T04:11:02.663Z",
+    "convergence_round": "r151",
+    "updated_at": "2026-11-11T04:21:13.680Z",
     "commit_provenance": {
       "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
       "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
@@ -823,6 +827,15 @@
       "branch": "phase/00-feasibility",
       "policy": "branch-head",
       "note": "评审请固定分支 HEAD。仓库内不复刻本提交自身的 SHA（会形成自指）；本轮的内容提交 c5cb28d 是稳定不可变的，可作为溯源锚点。"
+    },
+    "verifier_hardening": {
+      "round": "r151",
+      "items": [
+        "证据路径按真实路径解析（realpath / Windows Junction），阻断仓库内链接指向仓库外的逃逸",
+        "isInsideDirectory 使用 path.relative 判定包含关系，不是字符串前缀比较",
+        "门禁 06 只接受整数 exitCode；noExitCodeReason 不满足 PASS",
+        "新增 8 项对应负向测试；变异验证下 3 条关键用例会失败"
+      ]
     }
   }
 }

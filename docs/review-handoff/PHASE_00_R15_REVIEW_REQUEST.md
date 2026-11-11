@@ -1,12 +1,58 @@
-# PHASE 00-R1.5｜收敛轮复审请求
+# PHASE 00-R1.5｜收敛轮 + R15.1 修复轮 复审请求
 
 > 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
 - 分支：`phase/00-feasibility`
 - 评审固定点：**该分支 HEAD**（`phase_00_final.delivery_point.policy = branch-head`）。本文件刻意不写提交 SHA——写进去就要再提交一次，新提交又让那个 SHA 失效。
-- 上一轮评审固定的提交：`6943618efa63b60193eda2749782b856ea54d58f`
+- 上一轮评审固定的提交：`6943618efa63b60193eda2749782b856ea54d58f`（R14 收尾）
+- 再上一轮评审固定的提交：`36d0cfe`（R15 收敛轮，评审结论 PARTIALLY_VERIFIED）
 
-## 1. 这一轮只做四件事
+## 0. R15.1：评审在 R15 上发现的两个验证器缺陷（已修）
+
+评审在 `36d0cfe` 上认定门禁 06 的取证方式可接受、状态门禁进步最大，但同时指出
+**验证器自身**还有两个边界问题。两处都属实，本轮已修，并各配一条能复现逃逸的负向测试。
+
+### 0.1 链接逃逸：`staysInside()` 只看词法，不看真实目标
+
+旧实现用 `path.resolve` 比较字符串前缀，因此下面这条路径**通过**检查：
+
+```
+repo/evidence/external-link  →  (Junction)  →  <abs-path>/outside/
+repo/evidence/external-link/secret.json
+```
+
+词法上它在仓库内，但 `fs.statSync` / `fs.readFileSync` 会跟随链接读到仓库外的文件。
+Windows 上**普通用户无需管理员权限即可创建 Junction**，所以这是可实际利用的路径。
+
+修复：新增 `resolveContainedRealPath()`
+
+1. 先做词法拒绝（`..`、绝对路径），不进文件系统；
+2. 找到**最深的真实存在祖先**并 `realpath`（`fs.realpathSync.native`，可解析 Junction），
+   因此**路径中间的链接组件也会被解析**；
+3. 把不存在的尾部拼回去，再与仓库根的 `realpath` 用 `path.relative` 比较
+   （win32 上大小写不敏感），而不是字符串前缀；
+4. 证据读写改用解析后的真实路径。
+
+### 0.2 门禁 06：`noExitCodeReason` 被当成退出码
+
+旧规则同时接受整数 `exitCode` 和非空字符串 `noExitCodeReason`，等于允许只写
+`{"noExitCodeReason": "SDK did not provide an exit code"}` 就满足门禁 06。
+
+修复：**只接受整数 `exitCode`**。`noExitCodeReason` 不再满足 PASS，报错会明确写出
+"理由是理由，不是退出码"。
+
+### 0.3 新增负向测试（8 项）
+
+junction 逃逸必须失败 / 仓库内链接必须放行 / 链接尾部缺失仍按祖先判定 /
+`isInsideDirectory` 不是前缀比较 / 状态文件经链接逃逸必须失败 /
+只有 `noExitCodeReason` 必须失败 / 整数 `exitCode` 必须通过 / 字符串 `exitCode` 必须失败。
+
+**变异验证**：把两处修复人工回退后重跑，上述 3 条关键用例失败、其余全过；
+恢复后文件 sha256 一致。
+
+回归测试：**135 → 143**。证据轮次：`evidence/r15/`（R15，冻结）→ `evidence/r151/`（本轮）。
+
+## 1. R15 轮只做了四件事
 
 | # | 事项 | 动的是 |
 |---|---|---|
@@ -59,7 +105,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 | 门禁 6 内容不校验 | 证据必须含整数 `exitCode`（旧的 cc-3 证据现在会判失败） |
 | 无判定一致性 | PASS 判定不得跑在门禁前面，也不得与 blocking_items 并存 |
 
-回归测试 **107 → 135**，每条新用例都是一个「以前能通过」的利用手法。
+回归测试 **107 → 143**，每条新用例都是一个「以前能通过」的利用手法。
 另做过一次变异验证：把门禁人工削弱回旧逻辑，**恰好 7 条目标用例失败**，恢复后文件 sha256 一致。
 
 ## 4. 怎么验（三条命令，尽量别跑第四条）
@@ -67,7 +113,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 ```powershell
 cd spike\dsh-probe\current-0.2.1
 
-npm run test:unit    # 期望 135/135 PASS，exit 0；只有 exit 0 才发布 r15/tests.json
+npm run test:unit    # 期望 143/143 PASS，exit 0；只有 exit 0 才发布 r151/tests.json
 npm run gates        # 期望 dependency/state/leak 全 PASS，0 泄漏，exit 0
 npm run probe:exit   # 期望 graceful=0 / forced=1，均 PROCESS_ABSENT，exit 0（0 模型调用）
 

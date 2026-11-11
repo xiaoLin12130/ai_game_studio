@@ -113,6 +113,94 @@ export function staysInside(root, rel) {
   return resolved.startsWith(normalRoot + path.sep)
 }
 
+/** Real path, following symlinks and Windows junctions; `null` when nothing exists there. */
+function realpathOrNull(target) {
+  try {
+    return fs.realpathSync.native ? fs.realpathSync.native(target) : fs.realpathSync(target)
+  } catch {
+    try {
+      return fs.realpathSync(target)
+    } catch {
+      return null
+    }
+  }
+}
+
+/** Is `child` strictly below `parent`? Compares with `path.relative`, which is case-folding on win32. */
+export function isInsideDirectory(parent, child) {
+  const relative = path.relative(parent, child)
+  if (relative === '') return false
+  if (path.isAbsolute(relative)) return false
+  return relative.split(path.sep)[0] !== '..'
+}
+
+/**
+ * Resolve where a repository-relative path *actually* lands on disk.
+ *
+ * The lexical check alone was not enough, and review was right: `path.resolve` never
+ * looks at the filesystem, so `evidence/link/secret.json` passes it even when `link` is
+ * a junction pointing outside the repository — `fs.statSync` and `fs.readFileSync` then
+ * happily follow the link. On Windows that needs no privileges at all: junctions are
+ * creatable by any user, directory symlinks are not.
+ *
+ * Resolution strategy:
+ *   1. reject lexically (`..`, absolute paths) before touching the filesystem;
+ *   2. walk up to the deepest path that really exists and `realpath` that ancestor —
+ *      this covers a symlinked/junctioned component in the middle of the path;
+ *   3. re-append the non-existent tail and compare against the `realpath` of the root.
+ *
+ * @param {string} root absolute repository root
+ * @param {string} rel repository-relative path taken from the state file
+ * @returns {{ok: boolean, code: string|null, real: string|null, realRoot: string|null, message: string|null}}
+ */
+export function resolveContainedRealPath(root, rel) {
+  if (!staysInside(root, rel)) {
+    return {
+      ok: false,
+      code: 'gate-evidence-escape',
+      real: null,
+      realRoot: null,
+      message: `path escapes the repository root: ${rel}`,
+    }
+  }
+
+  const lexical = path.resolve(root, rel)
+  const realRoot = realpathOrNull(path.resolve(root)) ?? path.resolve(root)
+
+  let probe = lexical
+  const tail = []
+  let realAncestor = null
+  while (true) {
+    realAncestor = realpathOrNull(probe)
+    if (realAncestor !== null) break
+    const parent = path.dirname(probe)
+    if (parent === probe) break
+    tail.unshift(path.basename(probe))
+    probe = parent
+  }
+  if (realAncestor === null) {
+    return {
+      ok: false,
+      code: 'gate-evidence-escape',
+      real: null,
+      realRoot,
+      message: `no existing ancestor could be resolved for: ${rel}`,
+    }
+  }
+
+  const real = tail.length === 0 ? realAncestor : path.join(realAncestor, ...tail)
+  if (!isInsideDirectory(realRoot, real)) {
+    return {
+      ok: false,
+      code: 'gate-evidence-escape',
+      real,
+      realRoot,
+      message: `resolved path leaves the repository root: ${rel} -> ${real}`,
+    }
+  }
+  return { ok: true, code: null, real, realRoot, message: null }
+}
+
 /**
  * Facts an evidence file must actually contain, per gate.
  *
@@ -124,23 +212,28 @@ export function staysInside(root, rel) {
  */
 export const EVIDENCE_CONTENT_RULES = {
   '06_runtime_exit_code_recorded': (value) => {
-    const problems = []
+    // A recorded reason explains why a code is *missing*; it cannot stand in for a code.
+    // Accepting it let a future round satisfy "记录退出码" with prose saying there is no
+    // exit code — the same overclaim this gate exists to stop, one indirection later.
     const codes = []
+    const reasons = []
     const walk = (node) => {
       if (node === null || typeof node !== 'object') return
       for (const [key, child] of Object.entries(node)) {
         if (key === 'exitCode' && Number.isInteger(child)) codes.push(child)
-        else if (key === 'noExitCodeReason' && typeof child === 'string' && child.trim().length > 0) codes.push(child)
+        else if (key === 'noExitCodeReason' && typeof child === 'string' && child.trim().length > 0) reasons.push(child)
         walk(child)
       }
     }
     walk(value)
     if (codes.length === 0) {
-      problems.push(
-        'gate 6 requires the managed runtime exit code in its evidence: no integer "exitCode" and no "noExitCodeReason" was found',
-      )
+      const hint =
+        reasons.length > 0
+          ? `; the evidence only carries noExitCodeReason ("${reasons[0].slice(0, 80)}"), and a reason is not a recorded exit code`
+          : ''
+      return [`gate 6 requires an integer "exitCode" in its evidence${hint}`]
     }
-    return problems
+    return []
   },
 }
 
@@ -164,16 +257,18 @@ export function checkEvidencePath(root, rel, contentRule = null) {
   if (typeof rel !== 'string' || rel.trim().length === 0) {
     return { ok: false, errors: [{ code: 'gate-no-evidence', message: 'evidence path is empty' }], kind: null }
   }
-  if (!staysInside(root, rel)) {
+  const contained = resolveContainedRealPath(root, rel)
+  if (!contained.ok) {
     return {
       ok: false,
-      errors: [{ code: 'gate-evidence-escape', message: `evidence path escapes the repository root: ${rel}` }],
+      errors: [{ code: contained.code ?? 'gate-evidence-escape', message: contained.message ?? `evidence escapes the repository root: ${rel}` }],
       kind: null,
     }
   }
 
-  const absolute = path.resolve(root, rel)
-  const extension = path.extname(absolute).toLowerCase()
+  // Read through the resolved real path: the lexical one was only a claim about spelling.
+  const absolute = contained.real
+  const extension = path.extname(path.resolve(root, rel)).toLowerCase()
 
   let stat
   try {

@@ -1,6 +1,6 @@
 {
   "probe": "CC-6-runtime-exit-code",
-  "startedAt": "2026-11-11T04:10:09.489Z",
+  "startedAt": "2026-11-11T04:20:33.167Z",
   "scope_gate": "Runtime 关闭后进程确实退出，记录退出码。",
   "modelCallsMade": 0,
   "provider": "commandcode",
@@ -38,7 +38,7 @@
       "count": 1
     },
     "pids": [
-      27520
+      22944
     ],
     "exitCode": 0,
     "exitCodeSource": "exit-handler",
@@ -46,7 +46,7 @@
     "errorName": "TransportClosedError",
     "afterClose": {
       "status": "PROCESS_ABSENT",
-      "waitedMs": 1350,
+      "waitedMs": 1092,
       "remaining": 0
     }
   },
@@ -57,7 +57,7 @@
       "count": 1
     },
     "pids": [
-      27052
+      10444
     ],
     "killedBy": "taskkill /F",
     "exitCode": 1,
@@ -66,7 +66,7 @@
     "errorName": "TransportClosedError",
     "afterKill": {
       "status": "PROCESS_ABSENT",
-      "waitedMs": 983,
+      "waitedMs": 1042,
       "remaining": 0
     },
     "closeAfterKillResolved": true
@@ -82,6 +82,6 @@
     "noModelCallMade": true
   },
   "verdict": "PASS",
-  "finishedAt": "2026-11-11T04:10:21.735Z",
+  "finishedAt": "2026-11-11T04:20:43.896Z",
   "conclusion": "SDK_REPORTS_MANAGED_PROCESS_EXIT_CODE"
 }
