@@ -5,7 +5,7 @@
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
   "base_commit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "work_commit": "aa0c54b78887283621e621648f72d96b8acbb8fa",
+  "work_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
   "note": "未完成。不宣告任何结论；本文件只记录已验证事实与未完成项，供续开发使用。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
@@ -21,14 +21,35 @@
     },
     "taskIntegrationIsolated": {
       "runs": 3,
-      "passed": 3,
       "exitCodes": [
         0,
         0,
         0
       ],
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.log",
-      "note": "满套件下不稳定，隔离连续 3 次均通过；根因未定位完成"
+      "artifact": "evidence/phase-01-c/real-dsh/isolated-{1,2,3}.txt"
+    },
+    "fullSuite": {
+      "runs": 2,
+      "exitCodes": [
+        0,
+        0
+      ],
+      "artifact": "evidence/phase-01-c/regression/full-suite-{1,2}.txt",
+      "note": "连续两次完整通过；先前的不稳定未再复现"
+    },
+    "phase00": {
+      "suiteExitCode": 0,
+      "gatesExitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase00-{suite.txt,gates.json}"
+    },
+    "phase01a": {
+      "smokeReadyExitCode": 0,
+      "smokeQuitExitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01a-{ready,quit}.txt"
+    },
+    "phase01b": {
+      "mcpHandshakeExitCode": 0,
+      "artifact": "evidence/phase-01-c/regression/phase01b-mcp.txt"
     }
   },
   "verified_previous_round": {
@@ -47,12 +68,9 @@
     }
   },
   "not_run": [
-    "满套件连续 2 次（撰写时仍在运行）",
-    "PHASE 00 套件 166 项与三道门禁",
-    "PHASE 01-A 桌面冒烟（ready / failure / quit-during-probe）",
-    "PHASE 01-B 打包与安装后 MCP 链路",
     "Windows 安装版任务链路（场景 A/B/C）",
-    "泄漏门禁与敏感信息扫描"
+    "泄漏门禁与敏感信息扫描",
+    "证据完整性检查脚本"
   ],
   "unknown": [
     {

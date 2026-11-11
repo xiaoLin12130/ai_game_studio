@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T06:59:05.770Z",
+  "generatedAt": "2026-11-11T10:59:32.727Z",
   "mode": "quit-during-probe",
   "stateAtQuit": {
     "status": "CHECKING",
@@ -17,5 +17,5 @@
     "configRecovered": false,
     "configRecoveryNote": null
   },
-  "elapsedMs": 304
+  "elapsedMs": 309
 }

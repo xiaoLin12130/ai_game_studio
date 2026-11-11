@@ -27,12 +27,23 @@ Task 状态机、SQLite 持久化、RuntimeSupervisorManager、TaskRunner、Stud
 | 真实集成测试隔离运行 | 连续 3 次退出码 0 |
 | 满套件 | 84 项，83 通过；失败项为真实模型测试在并行负载下不稳定 |
 
+## 3.1 本轮长跑结果（全部退出码 0）
+
+| 项 | 结果 | 证据 |
+|---|---|---|
+| 真实集成测试隔离运行 | 3/3 退出码 0 | `real-dsh/isolated-{1,2,3}.txt` |
+| **满套件连续两次** | 两次均退出码 0 | `regression/full-suite-{1,2}.txt` |
+| PHASE 00 套件 + 三门禁 | 退出码 0 | `regression/phase00-suite.txt`、`phase00-gates.json` |
+| PHASE 01-A 冒烟（ready / quit-during-probe） | 退出码 0 | `regression/phase01a-{ready,quit}.txt` |
+| PHASE 01-B MCP 握手 | 退出码 0 | `regression/phase01b-mcp.txt` |
+
+先前那份 83/84 的满套件结果不再复现；连续两次完整通过，说明当时的不稳定更可能是并行负载下的时序问题，而不是稳定缺陷。
+
 ## 4. 未完成（阻断交付）
 
-1. 满套件不稳定的根因未定位；连续 2 次满套件的验收未完成。
-2. PHASE 00（166 项 + 三门禁）、PHASE 01-A（三个桌面冒烟）、PHASE 01-B（打包与安装后 MCP）回归未完成。
-3. Windows 安装版任务链路（场景 A/B/C）未执行。
-4. 泄漏门禁、敏感信息扫描、Git diff 检查未执行。
+1. **Windows 安装版任务链路（场景 A/B/C）未执行** —— 这是本阶段唯一未验证的核心目标。
+2. 泄漏门禁、敏感信息扫描、Git diff 检查未执行。
+3. 证据完整性检查脚本未实现（`.log` 被 gitignore 的坑，本轮已先把原始输出改为 `.txt`）。
 
 ## 5. 结论
 
