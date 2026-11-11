@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T06:34:59.601Z",
+  "generatedAt": "2026-11-11T06:59:12.256Z",
   "node": "v24.19.0",
   "electron": "44.7.0",
   "matrix": [
@@ -8,7 +8,7 @@
       "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
       "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 870,
+      "durationMs": 918,
       "artifact": null
     },
     {
@@ -16,11 +16,11 @@
       "command": "node --test",
       "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 29515,
+      "durationMs": 35801,
       "artifact": "evidence/phase-01-a/app-tests.json",
       "counts": {
-        "tests": 53,
-        "pass": 53,
+        "tests": 58,
+        "pass": 58,
         "fail": 0,
         "skipped": 0
       }
@@ -30,7 +30,7 @@
       "command": "node scripts/smoke.mjs ready",
       "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 4424,
+      "durationMs": 4776,
       "artifact": "evidence/phase-01-a/smoke/ready/smoke-run.json"
     },
     {
@@ -38,7 +38,7 @@
       "command": "node scripts/smoke.mjs failure",
       "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 3789,
+      "durationMs": 16919,
       "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json"
     },
     {
@@ -46,7 +46,7 @@
       "command": "node scripts/smoke.mjs quit-during-probe",
       "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 4338,
+      "durationMs": 4598,
       "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
     },
     {
@@ -54,7 +54,7 @@
       "command": "node tests/run-tests.mjs",
       "cwd": "spike/dsh-probe/current-0.2.1",
       "exitCode": 0,
-      "durationMs": 2130,
+      "durationMs": 2154,
       "artifact": null,
       "counts": {
         "pass": 166,
@@ -66,12 +66,12 @@
       "command": "node scripts/run-gates.mjs (CC_GATE_OUT=evidence/phase-01-a/phase00-gates.json)",
       "cwd": "spike/dsh-probe/current-0.2.1",
       "exitCode": 0,
-      "durationMs": 267,
+      "durationMs": 256,
       "artifact": "evidence/phase-01-a/phase00-gates.json",
       "artifactStatus": {
         "overall": "PASS",
         "leaks": 0,
-        "scanned": 250
+        "scanned": 251
       }
     }
   ],

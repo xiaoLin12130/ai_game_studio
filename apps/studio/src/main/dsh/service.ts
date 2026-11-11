@@ -20,8 +20,13 @@ import { runProbe, type ProbeHandle, type TeardownReport } from './probe'
 
 export type CheckReason = 'startup' | 'manual' | 'config-change'
 
-/** How long shutdown waits for the runtime to be confirmed gone before giving up. */
-export const SHUTDOWN_BOUND_MS = 20000
+/**
+ * How long shutdown waits for the runtime to be confirmed gone.
+ *
+ * Must exceed the probe's own teardown bound (22 s: 15 s close + 6 s fallback + final
+ * confirmation) so the coordinator never gives up on a teardown that is still working.
+ */
+export const SHUTDOWN_BOUND_MS = 25000
 
 export interface ShutdownResult {
   /**
@@ -50,7 +55,10 @@ export interface ServiceDeps {
   /** Test seam: substitutes the SDK client and the OS process probe. */
   probeDeps?: {
     clientFactory?: (options: Record<string, unknown>) => import('./probe').HarnessClientLike
-    processProbe?: (dshHome: string) => import('./processes').RuntimeProcessFinding
+    processTable?: import('./processes').ProcessTable
+    killer?: import('./processes').AsyncProcessKiller
+    captureIdentity?: typeof import('./processes').captureRuntimeIdentity
+    terminateIdentity?: typeof import('./processes').terminateRuntimeIdentity
   }
 }
 
@@ -246,6 +254,8 @@ export class DshConnectionService extends EventEmitter {
         closeError: report?.closeError ?? null,
         processCheckStatus: report?.processCheckStatus ?? null,
         processAbsent: report?.processAbsent ?? null,
+        runtimePid: report?.runtimePid ?? null,
+        identitySource: report?.identitySource ?? null,
         remainingPids: report?.remainingPids ?? null,
         forcedTerminationAttempted: report?.forcedTerminationAttempted ?? false,
         forcedTerminationSucceeded: report?.forcedTerminationSucceeded ?? false,

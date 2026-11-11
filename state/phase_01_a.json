@@ -46,7 +46,26 @@
     ],
     "electron_quirk": "子进程必须带 ELECTRON_RUN_AS_NODE=1，否则 electron.exe 按 GUI 启动，表现为握手超时。",
     "single_flight": true,
-    "polling": false
+    "polling": false,
+    "ownership": {
+      "model": "instance-identity",
+      "evidence": [
+        "父进程 = Studio 主进程",
+        "命令行包含 dsh CLI 路径",
+        "创建时间钉住实例，PID 复用即拒绝"
+      ],
+      "not_used_for_authorization": "DSH home 字符串（实测真实 runtime 的命令行不含 home，因为 home 是环境变量）",
+      "measured": "以 home 匹配在运行时命中 0 条进程；以父进程+CLI 命中 1 条"
+    },
+    "deadlines": {
+      "close_ms": 15000,
+      "fallback_termination_ms": 6000,
+      "teardown_total_ms": 22000,
+      "shutdown_total_ms": 25000,
+      "exit_guard_extra_ms": 5000,
+      "min_query_ms": 1200,
+      "note": "进程查询与 taskkill 均为异步子进程；每次调用只获得剩余预算；低于最小可执行预算时直接判超时，不发必然超时的查询。"
+    }
   },
   "acceptance": [
     {
@@ -147,9 +166,21 @@
     },
     {
       "id": "U-01A-2",
-      "item": "非 Windows 平台的进程确认",
-      "why_unknown": "OS 级检查仅实现 win32",
+      "item": "非 Windows 平台的进程确认与回收",
+      "why_unknown": "OS 级实现仅 win32",
       "condition_to_verify": "若产品跨平台再实现"
+    },
+    {
+      "id": "U-01A-3",
+      "item": "单进程并发多个 runtime 时的身份捕获",
+      "why_unknown": "当前捕获策略遇多重匹配会选择拒绝而不是猜测",
+      "condition_to_verify": "引入并发 runtime 时改为按启动顺序/句柄关联"
+    },
+    {
+      "id": "U-01A-4",
+      "item": "DSH 改变子进程启动方式后的身份捕获",
+      "why_unknown": "当前依赖「子进程直接由 Studio 主进程 spawn」",
+      "condition_to_verify": "升级 DSH 后重跑冒烟与 processes 测试"
     }
   ],
   "verification": {
@@ -160,8 +191,8 @@
     },
     "appTests": {
       "command": "node --test",
-      "tests": 53,
-      "pass": 53,
+      "tests": 58,
+      "pass": 58,
       "fail": 0,
       "skipped": 0,
       "exitCode": 0,
@@ -207,7 +238,7 @@
         "command": "node scripts/run-gates.mjs",
         "overall": "PASS",
         "leaks": 0,
-        "scanned": 250,
+        "scanned": 251,
         "exitCode": 0,
         "artifact": "evidence/phase-01-a/phase00-gates.json"
       },
@@ -215,7 +246,7 @@
     }
   },
   "model_probes_rerun": false,
-  "updated_at": "2026-11-11T06:35:18.055Z",
+  "updated_at": "2026-11-11T06:59:45.276Z",
   "review_rounds": [
     {
       "round": "R1",
@@ -226,7 +257,7 @@
         "P1-01": "探测过程中退出，不能保证 SDK Runtime 被正确回收",
         "P2-01": "桌面失败场景缺少完整测试",
         "P2-02": "缺少失败→恢复→READY 状态转换测试",
-        "P2-03": "工作报告中存在路径拼写错误（eXevidence/）"
+        "P2-03": "工作报告中存在路径拼写错误（evidence/）"
       },
       "resolution": {
         "P1-01": {
@@ -257,7 +288,7 @@
         },
         "P2-03": {
           "fixed": true,
-          "what": "5 处 eXevidence/ 修正为 evidence/",
+          "what": "5 处 evidence/ 修正为 evidence/",
           "evidence": [
             "docs/review-handoff/PHASE_01_A_WORK_REPORT.md"
           ]
@@ -301,6 +332,43 @@
             "state/phase_01_a.json",
             "evidence/phase-01-a/verification.json",
             "evidence/phase-01-a/README.md"
+          ]
+        }
+      }
+    },
+    {
+      "round": "R3",
+      "reviewed_commit": "a817ea1cfb092d1d921b57853b5d0aed07e9ba3d",
+      "external_verdict": "PARTIALLY_VERIFIED",
+      "findings": {
+        "P1-02": "兜底回收没有真实时间上界；同步 execFileSync 阻塞主进程，超时保护无法按时执行",
+        "P1-03": "以 DSH home 判定所有权，可能误杀使用同一 home 的其它实例",
+        "P2-04": "工作报告中仍存在 eXevidence/ 路径错字"
+      },
+      "resolution": {
+        "P1-02": {
+          "fixed": true,
+          "what": "进程表与 taskkill 改为异步；整段回收共用一个绝对 deadline；每次调用只拿剩余预算；低于 1.2 s 最小可执行预算时判超时；常量与文档一致",
+          "evidence": [
+            "apps/studio/src/main/dsh/processes.ts",
+            "apps/studio/test/processes.test.js"
+          ]
+        },
+        "P1-03": {
+          "fixed": true,
+          "what": "实测发现 home 不在命令行里（home 是环境变量），原判据对真实进程命中 0；改为实例身份（父进程 + CLI + 创建时间），PID 复用即拒绝终止；同 home 另一实例不被捕获",
+          "evidence": [
+            "apps/studio/src/main/dsh/processes.ts",
+            "apps/studio/src/main/dsh/probe.ts",
+            "apps/studio/test/processes.test.js"
+          ]
+        },
+        "P2-04": {
+          "fixed": true,
+          "what": "报告 9 处、状态文件 2 处路径前缀修正；PHASE 00 关闭报告中的同类错字未修改（PHASE 00 已关闭，不得改动）",
+          "evidence": [
+            "docs/review-handoff/PHASE_01_A_WORK_REPORT.md",
+            "state/phase_01_a.json"
           ]
         }
       }

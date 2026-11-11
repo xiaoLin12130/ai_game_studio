@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T06:34:51.712Z",
+  "generatedAt": "2026-11-11T06:59:04.068Z",
   "mode": "failure",
   "appVersion": "0.1.0",
   "versions": {
@@ -30,8 +30,8 @@
       "message": "DSH 缺少所需的 profile，运行时无法启动。",
       "raw": "dsh profile \"definitely-not-a-profile\": JSON-RPC input closed"
     },
-    "lastCheckedAt": "2026-11-11T06:34:50.501Z",
-    "lastDurationMs": 1206,
+    "lastCheckedAt": "2026-11-11T06:58:56.292Z",
+    "lastDurationMs": 7735,
     "serverInfo": null,
     "dshVersion": "0.2.1-rc.3",
     "entryKind": "bundled",
@@ -55,8 +55,8 @@
         "message": "DSH 缺少所需的 profile，运行时无法启动。",
         "raw": "dsh profile \"definitely-not-a-profile\": JSON-RPC input closed"
       },
-      "lastCheckedAt": "2026-11-11T06:34:51.691Z",
-      "lastDurationMs": 1176,
+      "lastCheckedAt": "2026-11-11T06:59:03.927Z",
+      "lastDurationMs": 7619,
       "serverInfo": null,
       "dshVersion": "0.2.1-rc.3",
       "entryKind": "bundled",
@@ -73,5 +73,5 @@
       "factExit": "1"
     }
   },
-  "totalMs": 2416
+  "totalMs": 15511
 }

@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T06:34:57.180Z",
+  "generatedAt": "2026-11-11T06:59:09.824Z",
   "scenario": "quit-during-probe",
   "expected": null,
   "electronVersion": "44.7.0",
-  "wallClockMs": 3222,
+  "wallClockMs": 3415,
   "exitCode": 0,
   "stdoutTail": "\r\n[smoke] quitting during probe, state=CHECKING\n",
   "stderrTail": "",
   "smoke": {
-    "generatedAt": "2026-11-11T06:34:53.392Z",
+    "generatedAt": "2026-11-11T06:59:05.770Z",
     "mode": "quit-during-probe",
     "stateAtQuit": {
       "status": "CHECKING",
@@ -26,11 +26,11 @@
       "configRecovered": false,
       "configRecoveryNote": null
     },
-    "elapsedMs": 302
+    "elapsedMs": 304
   },
   "shutdown": [
     {
-      "ts": "2026-11-11T06:34:53.392Z",
+      "ts": "2026-11-11T06:59:05.772Z",
       "level": "warn",
       "event": "dsh.shutdown",
       "reason": "app-quit",
@@ -38,7 +38,7 @@
       "stopping": true
     },
     {
-      "ts": "2026-11-11T06:34:56.065Z",
+      "ts": "2026-11-11T06:59:08.601Z",
       "level": "info",
       "event": "dsh.shutdown.result",
       "reason": "app-quit",
@@ -50,13 +50,15 @@
       "closeError": null,
       "processCheckStatus": "ABSENT",
       "processAbsent": true,
+      "runtimePid": 29116,
+      "identitySource": "parent-and-bin",
       "remainingPids": [],
       "forcedTerminationAttempted": false,
       "forcedTerminationSucceeded": false,
       "exitCode": 0,
       "error": null,
-      "teardownDurationMs": 2671,
-      "durationMs": 2673
+      "teardownDurationMs": 2828,
+      "durationMs": 2829
     }
   ],
   "leftoversAfterExit": [],

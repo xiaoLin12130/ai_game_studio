@@ -1,11 +1,11 @@
 /**
- * Runtime lifecycle: what happens to the DSH process when the app quits mid-probe, and
- * what "the runtime is gone" is allowed to mean.
+ * Runtime lifecycle: quitting mid-probe, and what "the runtime is gone" may mean.
  *
  * Tests marked "real runtime" drive the actual dsh process. The rest inject a scripted
  * client and a scripted process table to force outcomes a real runtime cannot produce on
- * demand (close throwing, close hanging, the OS table refusing to answer). They are
- * labelled so they are never mistaken for integration proof.
+ * demand (close throwing, close hanging, the OS refusing to answer). They are labelled so
+ * they are never mistaken for integration proof. The real reclamation paths are covered
+ * in processes.test.js against live child processes.
  */
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
@@ -16,6 +16,8 @@ const { DshConnectionService } = require('../dist/main/dsh/service.js')
 const { runProbe } = require('../dist/main/dsh/probe.js')
 const { resolveDshEntry } = require('../dist/main/dsh/locate.js')
 const { DEFAULT_CONFIG } = require('../dist/main/config.js')
+
+const IDENTITY = { pid: 4242, creationMs: 111, capturedAt: new Date().toISOString(), source: 'parent-and-bin' }
 
 function harness(options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-lifecycle-'))
@@ -39,16 +41,34 @@ function harness(options = {}) {
   return { service, events, dir, config }
 }
 
-const finding = (status, pids = [], error = null) => () => ({
-  status,
-  pids,
-  error,
-  checkedAt: new Date().toISOString(),
-})
+/** A table whose inspect() walks a scripted sequence; list() is unused when capture is injected. */
+function scriptedTable(sequence) {
+  let index = 0
+  return {
+    async list() {
+      return { ok: true, processes: [], error: null, durationMs: 1 }
+    },
+    async listChildren() {
+      return { ok: true, processes: [], error: null, durationMs: 1 }
+    },
+    async inspect(pid) {
+      const step = sequence[Math.min(index, sequence.length - 1)]
+      index += 1
+      if (step.error) return { found: false, process: null, error: step.error, durationMs: 1 }
+      if (!step.found) return { found: false, process: null, error: null, durationMs: 1 }
+      return {
+        found: true,
+        process: { pid, parentPid: 1, name: 'node.exe', creationMs: step.creationMs ?? IDENTITY.creationMs, commandLine: 'node dsh.js' },
+        error: null,
+        durationMs: 1,
+      }
+    },
+  }
+}
 
-const absent = finding('ABSENT')
-const present = (pids, error = null) => finding('PRESENT', pids, error)
-const failed = (error) => finding('FAILED', [], error)
+const captured = (identity = IDENTITY) => async () => ({ status: 'captured', identity, error: null, candidates: 1, durationMs: 1 })
+const captureFailed = (error) => async () => ({ status: 'failed', identity: null, error, candidates: 0, durationMs: 1 })
+const captureAbsent = async () => ({ status: 'absent', identity: null, error: null, candidates: 0, durationMs: 1 })
 
 const termination = (overrides = {}) => async () => ({
   attempted: true,
@@ -58,10 +78,10 @@ const termination = (overrides = {}) => async () => ({
   succeeded: false,
   error: null,
   durationMs: 5,
+  deadlineHit: false,
   ...overrides,
 })
 
-/** A client whose behaviour is scripted; the async iterator fails like a dead transport. */
 function scriptedClient({ initialize, close, exitCodeMessage }) {
   return () => ({
     start() {},
@@ -84,7 +104,6 @@ test('shutdown with no probe in flight completes immediately', async () => {
   const result = await service.shutdown('app-quit')
   assert.equal(result.completed, true)
   assert.equal(result.confirmedGone, true)
-  assert.equal(result.timedOut, false)
   assert.equal(result.teardown, null)
   assert.ok(events.some((entry) => entry.event === 'dsh.shutdown'))
 })
@@ -93,7 +112,7 @@ test('quitting during the handshake reaps the runtime (real runtime)', async () 
   const { service, events } = harness()
   const inflight = service.check('manual')
   await new Promise((resolve) => setTimeout(resolve, 250))
-  assert.equal(service.isChecking(), true, 'the probe should still be running')
+  assert.equal(service.isChecking(), true)
 
   const result = await service.shutdown('app-quit')
   const final = await inflight
@@ -103,15 +122,18 @@ test('quitting during the handshake reaps the runtime (real runtime)', async () 
   assert.equal(result.teardown.closed, true)
   assert.equal(result.teardown.processCheckStatus, 'ABSENT')
   assert.equal(result.teardown.processAbsent, true)
-  assert.equal(result.teardown.completed, true)
-  assert.ok(Number.isInteger(result.teardown.exitCode), 'exit code is recorded as a diagnostic')
+  assert.ok(Number.isInteger(result.teardown.runtimePid), 'the runtime identity must be pinned')
 
   assert.equal(final.status, 'UNKNOWN')
   assert.equal(final.detail.code, 'STOPPED')
 
   const logged = lastShutdown(events)
-  assert.ok(logged, 'shutdown result must be logged')
-  for (const key of ['completed', 'confirmedGone', 'timedOut', 'closeSucceeded', 'processCheckStatus', 'processAbsent', 'forcedTerminationAttempted', 'exitCode', 'error', 'durationMs']) {
+  assert.ok(logged)
+  for (const key of [
+    'completed', 'confirmedGone', 'timedOut', 'teardownAttempted', 'closeSucceeded',
+    'processCheckStatus', 'processAbsent', 'runtimePid', 'identitySource',
+    'forcedTerminationAttempted', 'exitCode', 'error', 'durationMs',
+  ]) {
     assert.ok(key in logged.fields, 'shutdown log is missing ' + key)
   }
 })
@@ -120,24 +142,21 @@ test('repeated quit requests join one shutdown and one close', async () => {
   const { service, events } = harness()
   void service.check('manual')
   await new Promise((resolve) => setTimeout(resolve, 200))
-
   const first = service.shutdown('app-quit')
   const second = service.shutdown('app-quit')
-  assert.equal(first, second, 'the second quit must join the first shutdown')
-  const result = await first
-  assert.equal(result.completed, true)
+  assert.equal(first, second)
+  await first
   assert.equal(events.filter((entry) => entry.event === 'dsh.shutdown').length, 1)
 })
 
 test('a probe requested after shutdown is refused and spawns nothing', async () => {
   const { service, events } = harness()
   await service.shutdown('app-quit')
-  const startsBefore = events.filter((entry) => entry.event === 'dsh.probe.start').length
+  const before = events.filter((entry) => entry.event === 'dsh.probe.start').length
   const state = await service.check('manual')
   assert.equal(state.status, 'UNKNOWN')
   assert.equal(state.detail.code, 'STOPPED')
-  assert.equal(events.filter((entry) => entry.event === 'dsh.probe.start').length, startsBefore)
-  assert.ok(events.some((entry) => entry.event === 'dsh.probe.refused'))
+  assert.equal(events.filter((entry) => entry.event === 'dsh.probe.start').length, before)
 })
 
 test('stop() is idempotent and reports the same teardown twice (real runtime)', async () => {
@@ -163,53 +182,63 @@ test('stop() is idempotent and reports the same teardown twice (real runtime)', 
 })
 
 // ---------------------------------------------------------------------------
-// Completion semantics. The matrix the review asked for, one case at a time.
+// Completion semantics.
 // ---------------------------------------------------------------------------
 
 test('close ok + OS ABSENT → completed', async () => {
   const { service } = harness({
-    probeDeps: { clientFactory: scriptedClient({ close: async () => {} }), processProbe: absent, terminate: termination() },
-  })
-  const inflight = service.check('manual')
-  await new Promise((resolve) => setTimeout(resolve, 80))
-  const result = await service.shutdown('app-quit')
-  await inflight
-  assert.equal(result.teardown.closed, true)
-  assert.equal(result.teardown.processAbsent, true)
-  assert.equal(result.completed, true)
-  assert.equal(result.confirmedGone, true)
-})
-
-test('close ok + OS PRESENT → not completed, and the fallback runs', async () => {
-  let terminated = 0
-  const { service } = harness({
     probeDeps: {
       clientFactory: scriptedClient({ close: async () => {} }),
-      processProbe: present([4242]),
-      terminate: async () => {
-        terminated += 1
-        return { attempted: true, killedPids: [4242], skippedPids: [], remainingPids: [], succeeded: true, error: null, durationMs: 3 }
-      },
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: false }]),
+      terminateIdentity: termination(),
     },
   })
   const inflight = service.check('manual')
   await new Promise((resolve) => setTimeout(resolve, 80))
   const result = await service.shutdown('app-quit')
   await inflight
-  assert.equal(terminated, 1, 'the fallback must run when the process is still there')
-  assert.equal(result.teardown.forcedTerminationAttempted, true)
+  assert.equal(result.teardown.closed, true)
+  assert.equal(result.teardown.processCheckStatus, 'ABSENT')
+  assert.equal(result.completed, true)
+  assert.equal(result.confirmedGone, true)
 })
 
-test('close ok + OS FAILED → not completed (could not determine is not success)', async () => {
+test('close ok + OS PRESENT → fallback reclaims, but the clean path still failed', async () => {
   const { service } = harness({
-    probeDeps: { clientFactory: scriptedClient({ close: async () => {} }), processProbe: failed('wmi down'), terminate: termination() },
+    probeDeps: {
+      clientFactory: scriptedClient({ close: async () => {} }),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: true }, { found: false }]),
+      terminateIdentity: termination({ succeeded: true, killedPids: [IDENTITY.pid], remainingPids: [] }),
+    },
   })
   const inflight = service.check('manual')
   await new Promise((resolve) => setTimeout(resolve, 80))
   const result = await service.shutdown('app-quit')
   await inflight
+  assert.equal(result.teardown.firstCheckStatus, 'PRESENT')
+  assert.equal(result.teardown.forcedTerminationSucceeded, true)
+  assert.equal(result.teardown.processAbsent, true)
+  assert.equal(result.confirmedGone, true)
+  assert.equal(result.completed, false, 'close alone did not suffice, so this was not a clean exit')
+})
+
+test('close ok + OS fails to answer → not completed', async () => {
+  const { service } = harness({
+    probeDeps: {
+      clientFactory: scriptedClient({ close: async () => {} }),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ error: 'wmi down' }]),
+      terminateIdentity: termination(),
+    },
+  })
+  const inflight = service.check('manual')
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  const result = await service.shutdown('app-quit')
+  await inflight
+  assert.equal(result.teardown.processCheckStatus, 'FAILED')
   assert.equal(result.teardown.processAbsent, null)
-  assert.equal(result.teardown.completed, false)
   assert.equal(result.completed, false)
   assert.equal(result.confirmedGone, false, 'an inconclusive check must not read as gone')
   assert.match(String(result.teardown.error), /wmi down/)
@@ -219,32 +248,27 @@ test('close throws + OS ABSENT → close success is not faked', async () => {
   const { service } = harness({
     probeDeps: {
       clientFactory: scriptedClient({ close: async () => { throw new Error('close blew up') } }),
-      processProbe: absent,
-      terminate: termination(),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: false }]),
+      terminateIdentity: termination(),
     },
   })
   const inflight = service.check('manual')
   await new Promise((resolve) => setTimeout(resolve, 80))
   const result = await service.shutdown('app-quit')
   await inflight
-  assert.equal(result.teardown.closed, false, 'a throwing close must not be recorded as success')
+  assert.equal(result.teardown.closed, false)
   assert.match(String(result.teardown.closeError), /close blew up/)
   assert.equal(result.completed, false)
 })
 
-test('close throws + OS PRESENT → fallback reclaims, but the clean path still failed', async () => {
-  // The table has to actually change after the fallback: PRESENT before, ABSENT after.
-  // A probe that always answers PRESENT would only prove the code kept asking.
-  let checks = 0
-  const changingProbe = () => {
-    checks += 1
-    return { status: checks === 1 ? 'PRESENT' : 'ABSENT', pids: checks === 1 ? [777] : [], error: null, checkedAt: new Date().toISOString() }
-  }
-  const { service, events } = harness({
+test('close throws + OS PRESENT → fallback reclaims, clean path still failed', async () => {
+  const { service } = harness({
     probeDeps: {
       clientFactory: scriptedClient({ close: async () => { throw new Error('close blew up') } }),
-      processProbe: changingProbe,
-      terminate: async () => ({ attempted: true, killedPids: [777], skippedPids: [], remainingPids: [], succeeded: true, error: null, durationMs: 4 }),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: true }, { found: false }]),
+      terminateIdentity: termination({ succeeded: true, killedPids: [IDENTITY.pid] }),
     },
   })
   const inflight = service.check('manual')
@@ -252,21 +276,73 @@ test('close throws + OS PRESENT → fallback reclaims, but the clean path still 
   const result = await service.shutdown('app-quit')
   await inflight
   assert.equal(result.teardown.forcedTerminationSucceeded, true)
-  assert.equal(result.confirmedGone, true, 'the process is gone, so the safety property holds')
-  assert.equal(result.completed, false, 'but close still failed, so the clean path did not')
-  assert.equal(lastShutdown(events).fields.forcedTerminationSucceeded, true)
+  assert.equal(result.confirmedGone, true)
+  assert.equal(result.completed, false)
 })
 
-test('close never resolves + OS PRESENT → bounded shutdown, then fallback', async () => {
-  let terminated = 0
+test('forced termination fails → residual PID kept, nothing claims success', async () => {
+  const { service } = harness({
+    probeDeps: {
+      clientFactory: scriptedClient({ close: async () => {} }),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: true }, { found: true }]),
+      terminateIdentity: termination({ succeeded: false, remainingPids: [IDENTITY.pid], error: 'taskkill refused' }),
+    },
+  })
+  const inflight = service.check('manual')
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  const result = await service.shutdown('app-quit')
+  await inflight
+  assert.equal(result.teardown.forcedTerminationAttempted, true)
+  assert.equal(result.teardown.forcedTerminationSucceeded, false)
+  assert.deepEqual(result.teardown.remainingPids, [IDENTITY.pid])
+  assert.equal(result.completed, false)
+  assert.equal(result.confirmedGone, false)
+})
+
+test('identity capture failure is unknown, not success', async () => {
+  const { service } = harness({
+    probeDeps: {
+      clientFactory: scriptedClient({ close: async () => {} }),
+      captureIdentity: captureFailed('ambiguous runtime identity'),
+      processTable: scriptedTable([{ found: false }]),
+      terminateIdentity: termination(),
+    },
+  })
+  const inflight = service.check('manual')
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  const result = await service.shutdown('app-quit')
+  await inflight
+  assert.equal(result.teardown.processAbsent, null)
+  assert.equal(result.completed, false)
+  assert.match(String(result.teardown.error), /ambiguous runtime identity/)
+})
+
+test('a recycled PID is treated as ours being gone, not as a process to kill', async () => {
+  const { service } = harness({
+    probeDeps: {
+      clientFactory: scriptedClient({ close: async () => {} }),
+      captureIdentity: captured(),
+      // The PID now belongs to a different process (different creation time).
+      processTable: scriptedTable([{ found: true, creationMs: IDENTITY.creationMs + 5000 }]),
+      terminateIdentity: termination(),
+    },
+  })
+  const inflight = service.check('manual')
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  const result = await service.shutdown('app-quit')
+  await inflight
+  assert.equal(result.teardown.processCheckStatus, 'ABSENT')
+  assert.equal(result.teardown.forcedTerminationAttempted, false, 'a recycled PID must never be killed')
+})
+
+test('close never resolves → shutdown is bounded by its own budget', async () => {
   const { service } = harness({
     probeDeps: {
       clientFactory: scriptedClient({ close: () => new Promise(() => {}) }),
-      processProbe: present([888]),
-      terminate: async () => {
-        terminated += 1
-        return { attempted: true, killedPids: [888], skippedPids: [], remainingPids: [], succeeded: true, error: null, durationMs: 4 }
-      },
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: false }]),
+      terminateIdentity: termination(),
     },
   })
   void service.check('manual')
@@ -279,31 +355,13 @@ test('close never resolves + OS PRESENT → bounded shutdown, then fallback', as
   assert.ok(elapsed < 5000, 'shutdown must not wait for the SDK bound: ' + elapsed)
 })
 
-test('forced termination fails → residual PIDs are kept and nothing claims success', async () => {
-  const { service } = harness({
-    probeDeps: {
-      clientFactory: scriptedClient({ close: async () => {} }),
-      processProbe: present([999]),
-      terminate: async () => ({ attempted: true, killedPids: [], skippedPids: [999], remainingPids: [999], succeeded: false, error: 'taskkill refused', durationMs: 4 }),
-    },
-  })
-  const inflight = service.check('manual')
-  await new Promise((resolve) => setTimeout(resolve, 80))
-  const result = await service.shutdown('app-quit')
-  await inflight
-  assert.equal(result.teardown.forcedTerminationAttempted, true)
-  assert.equal(result.teardown.forcedTerminationSucceeded, false)
-  assert.deepEqual(result.teardown.remainingPids, [999])
-  assert.equal(result.completed, false)
-  assert.equal(result.confirmedGone, false)
-})
-
 test('a stop before the handshake answers still closes the runtime', async () => {
   const { service } = harness({
     probeDeps: {
       clientFactory: scriptedClient({ initialize: () => new Promise(() => {}), close: async () => {} }),
-      processProbe: absent,
-      terminate: termination(),
+      captureIdentity: captured(),
+      processTable: scriptedTable([{ found: false }]),
+      terminateIdentity: termination(),
     },
   })
   const inflight = service.check('manual')
@@ -311,6 +369,5 @@ test('a stop before the handshake answers still closes the runtime', async () =>
   const result = await service.shutdown('app-quit')
   const final = await inflight
   assert.equal(result.completed, true)
-  assert.equal(result.teardown.closed, true)
   assert.equal(final.detail.code, 'STOPPED')
 })

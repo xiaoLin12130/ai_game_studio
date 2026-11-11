@@ -5,19 +5,32 @@
  * probe created was confirmed gone afterwards. A handshake whose process could not be
  * reaped is not "ready" — the UI must not show a healthy state over a leaked process.
  *
- * Confirmation is three-way and only one of the three decides success:
+ * Ownership is an instance identity, not a directory: the SDK passes the DSH home as an
+ * environment variable, so a live runtime's command line does not contain it at all
+ * (measured — a home-based matcher finds zero running runtimes). What the OS does record
+ * is the link the SDK created: the child of *this* process running the dsh CLI. That pair
+ * is captured while the probe is live and pinned with the process creation time, so two
+ * instances sharing a home never see each other's runtime and a recycled PID is refused.
  *
- *   close() resolved                 → the SDK says the child exited
- *   "exit code: N" observed          → diagnostic only, recorded, never a success gate
- *   OS process table says ABSENT     → the deciding evidence
- *
- * If the SDK fails or times out, the probe attempts a bounded, ownership-verified
- * termination of whatever is left, then asks the OS again. Only ABSENT counts.
+ * The deciding evidence for "gone" is the operating system, and every operation runs
+ * against one absolute deadline: close, identity capture, the fallback termination and
+ * its final confirmation all draw from the same budget. The SDK's exit code is recorded
+ * as a diagnostic and is never a success condition.
  */
 import path from 'node:path'
 import { classifyProbeError, type DshServerInfo, type DshStatus, type DshStatusDetail } from '../../shared/status'
 import type { DshEntry } from './locate'
-import { createProcessTable, createRuntimeProcessTerminator, type ProcessTable, type TerminationResult } from './processes'
+import {
+  captureRuntimeIdentity,
+  defaultKiller,
+  defaultProcessTable,
+  terminateRuntimeIdentity,
+  type AsyncProcessKiller,
+  type CaptureResult,
+  type ProcessTable,
+  type RuntimeIdentity,
+  type TerminationResult,
+} from './processes'
 
 /** Import the ESM-only SDK from this CommonJS main process.
  *
@@ -66,12 +79,17 @@ export function childEnvironment(base: NodeJS.ProcessEnv = process.env): NodeJS.
   return env
 }
 
+/** The substring that identifies the dsh CLI in a command line. */
+export function binMarkerFor(entry: DshEntry): string {
+  if (entry.kind === 'bundled') return path.join('@deepseek-ai', 'dsh', 'lib', 'bin.js')
+  return entry.bin ?? ''
+}
+
 export type TeardownReason = 'completed' | 'failed' | 'timeout' | 'stopped' | 'not-started'
 export type ProcessCheckStatus = 'ABSENT' | 'PRESENT' | 'FAILED' | 'SKIPPED'
 
 /** Everything that happened to the runtime this probe owned. */
 export interface TeardownReport {
-  /** Did a runtime process ever exist for this probe? */
   attempted: boolean
   reason: TeardownReason
   /** The SDK's close() resolved. */
@@ -80,8 +98,12 @@ export interface TeardownReport {
   /** Exit code the SDK reported — diagnostic only, never a success condition. */
   exitCode: number | null
   processCheckStatus: ProcessCheckStatus
-  /** true only when the OS table said ABSENT; null means "could not determine". */
+  /** The first OS check, before any fallback ran. "Clean" means close alone sufficed. */
+  firstCheckStatus: ProcessCheckStatus
+  /** true only when the OS said the runtime is gone; null means "could not determine". */
   processAbsent: boolean | null
+  runtimePid: number | null
+  identitySource: RuntimeIdentity['source'] | null
   remainingPids: number[]
   forcedTerminationAttempted: boolean
   forcedTerminationSucceeded: boolean
@@ -102,9 +124,10 @@ export interface ProbeRequest {
   /** Test seams only; production uses the real SDK, the real table and the real killer. */
   deps?: {
     clientFactory?: (options: Record<string, unknown>) => HarnessClientLike
-    processProbe?: (dshHome: string) => import('./processes').RuntimeProcessFinding
     processTable?: ProcessTable
-    terminate?: (dshHome: string, boundMs?: number) => Promise<TerminationResult>
+    killer?: AsyncProcessKiller
+    captureIdentity?: typeof captureRuntimeIdentity
+    terminateIdentity?: typeof terminateRuntimeIdentity
   }
 }
 
@@ -119,25 +142,26 @@ export interface ProbeOutcome {
 
 /** One probe, with the ability to stop it and wait for its runtime to be gone. */
 export interface ProbeHandle {
-  /** Settles only after teardown. */
   done: Promise<ProbeOutcome>
-  /** Idempotent. Asking twice must not produce a second close. */
   stop(reason: string): void
-  /** Resolves with the teardown report; never rejects. */
   stopped(): Promise<TeardownReport>
   readonly stoppedRequested: boolean
 }
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, Math.max(1, ms)))
 const firstLine = (value: unknown): string | null => {
   const text = String((value as Error)?.message ?? value ?? '')
   return text.split(/\r?\n/).map((line) => line.trim()).find((line) => line.length > 0) ?? null
 }
 
-/** Upper bound for the close. The SDK's own ladder is bounded; this is the net. */
-export const TEARDOWN_BOUND_MS = 15000
+/** Upper bound for the whole teardown: close + fallback + final confirmation. */
+export const TEARDOWN_BOUND_MS = 22000
+/** Upper bound for the close alone. */
+export const CLOSE_BOUND_MS = 15000
 /** Upper bound for the fallback termination and its verification. */
 export const FORCE_TERMINATION_BOUND_MS = 6000
+/** How long to wait for the OS to show us the child we just spawned. */
+export const IDENTITY_CAPTURE_BOUND_MS = 8000
 
 class ProbeStopped extends Error {
   constructor() {
@@ -149,7 +173,7 @@ class ProbeStopped extends Error {
 function bounded<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: NodeJS.Timeout
   const timeout = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => reject(new Error(`${label} exceeded ${ms}ms`)), ms)
+    timer = setTimeout(() => reject(new Error(label + ' exceeded ' + ms + 'ms')), Math.max(1, ms))
   })
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>
 }
@@ -164,9 +188,11 @@ export function exitCodeFromMessage(message: string | null | undefined): number 
 
 export function runProbe(request: ProbeRequest): ProbeHandle {
   const started = Date.now()
-  const table = request.deps?.processTable ?? createProcessTable()
-  const processProbe = request.deps?.processProbe ?? table.findRuntimeProcesses
-  const terminate = request.deps?.terminate ?? createRuntimeProcessTerminator({ table })
+  const table = request.deps?.processTable ?? defaultProcessTable
+  const killer = request.deps?.killer ?? defaultKiller
+  const captureIdentity = request.deps?.captureIdentity ?? captureRuntimeIdentity
+  const terminateIdentity = request.deps?.terminateIdentity ?? terminateRuntimeIdentity
+  const marker = binMarkerFor(request.entry)
 
   let client: HarnessClientLike | null = null
   let subscription: ReturnType<HarnessClientLike['subscribe']> | null = null
@@ -175,6 +201,8 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
   let stopReason: string | null = null
   let rejectStop: ((error: Error) => void) | null = null
   let teardown: Promise<TeardownReport> | null = null
+  let capturePromise: Promise<CaptureResult> | null = null
+  let identity: RuntimeIdentity | null = null
 
   const stopSignal = new Promise<never>((_resolve, reject) => {
     rejectStop = reject
@@ -202,6 +230,8 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
     if (teardown) return teardown
     teardown = (async (): Promise<TeardownReport> => {
       const t0 = Date.now()
+      const deadline = t0 + TEARDOWN_BOUND_MS
+      const budget = () => Math.max(0, deadline - Date.now())
       const report: TeardownReport = {
         attempted: client !== null,
         reason,
@@ -209,7 +239,10 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
         closeError: null,
         exitCode: null,
         processCheckStatus: 'SKIPPED',
+        firstCheckStatus: 'SKIPPED',
         processAbsent: null,
+        runtimePid: null,
+        identitySource: null,
         remainingPids: [],
         forcedTerminationAttempted: false,
         forcedTerminationSucceeded: false,
@@ -219,7 +252,6 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
       }
 
       if (!client) {
-        // Nothing was ever spawned, so nothing can be left behind.
         report.processCheckStatus = 'ABSENT'
         report.processAbsent = true
         report.completed = true
@@ -227,46 +259,113 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
         return report
       }
 
-      try {
-        await bounded(client.close(), TEARDOWN_BOUND_MS, 'dsh close')
-        report.closed = true
-      } catch (error) {
-        report.closeError = firstLine(error)
+      // ---- close, inside the shared budget ----
+      const closeBudget = Math.min(CLOSE_BOUND_MS, budget())
+      if (closeBudget <= 0) {
+        report.closeError = 'no time left for the SDK close'
         report.error = report.closeError
-      }
-
-      // The exit code arrives through the subscription rejection; it is recorded for
-      // diagnostics and is deliberately not part of the success condition.
-      await Promise.race([drain, sleep(3000)])
-      report.exitCode = exitCodeFromMessage((subscriptionError as Error | null)?.message ?? null)
-
-      let found = processProbe(request.dshHome)
-      report.processCheckStatus = found.status
-      report.processAbsent = found.status === 'ABSENT' ? true : found.status === 'PRESENT' ? false : null
-      report.remainingPids = found.status === 'PRESENT' ? found.pids : []
-      if (found.status === 'FAILED') {
-        report.error = (report.error ? report.error + '; ' : '') + 'process check failed: ' + (found.error ?? 'unknown')
-      }
-
-      // Only when the OS says the runtime may still be there do we reach for the
-      // fallback. A failed check is not a licence to kill: ownership cannot be proven.
-      if (found.status === 'PRESENT') {
-        const termination = await terminate(request.dshHome, FORCE_TERMINATION_BOUND_MS)
-        report.forcedTerminationAttempted = termination.attempted
-        report.forcedTerminationSucceeded = termination.succeeded
-        if (termination.error) report.error = (report.error ? report.error + '; ' : '') + termination.error
-
-        // Re-query: the fallback only counts if the OS agrees the process is gone.
-        const after = processProbe(request.dshHome)
-        report.processCheckStatus = after.status
-        report.processAbsent = after.status === 'ABSENT' ? true : after.status === 'PRESENT' ? false : null
-        report.remainingPids = after.status === 'PRESENT' ? after.pids : []
-        if (after.status === 'FAILED') {
-          report.error = (report.error ? report.error + '; ' : '') + 'process check after termination failed: ' + (after.error ?? 'unknown')
+      } else {
+        try {
+          await bounded(client.close(), closeBudget, 'dsh close')
+          report.closed = true
+        } catch (error) {
+          report.closeError = firstLine(error)
+          report.error = report.closeError
         }
       }
 
-      report.completed = report.closed && report.processAbsent === true
+      // The exit code arrives through the subscription rejection; recorded for diagnostics
+      // only — it comes from the same side as close() and proves nothing on its own.
+      await Promise.race([drain, sleep(Math.min(3000, budget()))])
+      report.exitCode = exitCodeFromMessage((subscriptionError as Error | null)?.message ?? null)
+
+      // ---- pin the identity the OS recorded for the child we spawned ----
+      if (capturePromise) {
+        const captureBudget = Math.min(IDENTITY_CAPTURE_BOUND_MS, budget())
+        const settled = await Promise.race([
+          capturePromise,
+          sleep(Math.max(1, captureBudget)).then(() => null),
+        ]).catch(() => null)
+        if (settled) {
+          identity = settled.identity
+          report.runtimePid = settled.identity?.pid ?? null
+          report.identitySource = settled.identity?.source ?? null
+          if (settled.status === 'failed') {
+            report.error = (report.error ? report.error + '; ' : '') + 'identity capture failed: ' + (settled.error ?? 'unknown')
+          }
+          if (settled.status === 'absent' && !report.closed) {
+            report.error = (report.error ? report.error + '; ' : '') + 'runtime never appeared in the process table and close did not succeed'
+          }
+        } else {
+          report.error = (report.error ? report.error + '; ' : '') + 'identity capture did not finish inside the budget'
+        }
+      }
+
+      /** Ask the OS whether the pinned runtime is still there. */
+      const inspectRuntime = async (): Promise<void> => {
+        if (!identity) {
+          // We never established which process was ours, so its exit cannot be confirmed —
+          // not even by a successful close. Unknown is not success.
+          report.processCheckStatus = 'FAILED'
+          report.processAbsent = null
+          report.error = (report.error ? report.error + '; ' : '') + 'runtime identity was never established'
+          return
+        }
+        const inspectBudget = Math.min(4000, budget())
+        if (inspectBudget <= 0) {
+          report.processCheckStatus = 'FAILED'
+          report.processAbsent = null
+          report.error = (report.error ? report.error + '; ' : '') + 'no time left to confirm the runtime is gone'
+          return
+        }
+        const inspection = await table.inspect(identity.pid, inspectBudget)
+        if (inspection.error) {
+          report.processCheckStatus = 'FAILED'
+          report.processAbsent = null
+          report.error = (report.error ? report.error + '; ' : '') + 'process check failed: ' + inspection.error
+          return
+        }
+        if (!inspection.found) {
+          report.processCheckStatus = 'ABSENT'
+          report.processAbsent = true
+          report.remainingPids = []
+          return
+        }
+        if (identity.creationMs !== null && inspection.process?.creationMs !== null && inspection.process?.creationMs !== identity.creationMs) {
+          // The PID now belongs to somebody else: our runtime is gone.
+          report.processCheckStatus = 'ABSENT'
+          report.processAbsent = true
+          report.remainingPids = []
+          return
+        }
+        report.processCheckStatus = 'PRESENT'
+        report.processAbsent = false
+        report.remainingPids = [identity.pid]
+      }
+
+      await inspectRuntime()
+      report.firstCheckStatus = report.processCheckStatus
+
+      // ---- fallback: only for a runtime we proved is ours, and only within budget ----
+      if (report.processCheckStatus === 'PRESENT' && identity) {
+        const forceBudget = Math.min(FORCE_TERMINATION_BOUND_MS, budget())
+        if (forceBudget <= 0) {
+          report.error = (report.error ? report.error + '; ' : '') + 'no time left for the fallback termination'
+        } else {
+          const termination = await terminateIdentity(table, killer, identity, { deadline: Date.now() + forceBudget })
+          report.forcedTerminationAttempted = termination.attempted
+          report.forcedTerminationSucceeded = termination.succeeded
+          if (termination.error) report.error = (report.error ? report.error + '; ' : '') + termination.error
+          if (termination.remainingPids.length > 0) report.remainingPids = termination.remainingPids
+          // The final confirmation is mandatory: a deadline is not "gone".
+          await inspectRuntime()
+        }
+      }
+
+      // "completed" is the clean path: close alone was enough, and the OS agreed.
+      // A runtime that needed the fallback is confirmed gone, but it was not a clean exit.
+      report.completed =
+        report.closed && report.processAbsent === true && report.firstCheckStatus === 'ABSENT'
       report.durationMs = Date.now() - t0
       return report
     })()
@@ -311,6 +410,13 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
       })()
 
       client.start()
+      // Capture while the handshake runs: the child is the one process whose parent is us
+      // and whose command line runs the dsh CLI. This is the ownership evidence.
+      capturePromise = captureIdentity(table, {
+        parentPid: process.pid,
+        binMarker: marker,
+        deadline: Date.now() + IDENTITY_CAPTURE_BOUND_MS,
+      })
 
       const initialize = client.initialize({ cwd: request.cwd, provider: request.provider, model: request.model })
       initialize.catch(() => {
@@ -326,9 +432,6 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
 
       const report = await beginTeardown('completed')
       if (!report.completed) {
-        // The handshake worked, but the runtime it created is not confirmed gone. Show a
-        // non-healthy state and keep the diagnostics: a green card over a leaked process
-        // is exactly what this check exists to prevent.
         return finish(
           'UNKNOWN',
           {

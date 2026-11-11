@@ -19,6 +19,6 @@
     "recheckUiConsistent": true,
     "recheckButtonRestored": true
   },
-  "wallMs": 2665,
+  "wallMs": 15769,
   "exitCode": 0
 }

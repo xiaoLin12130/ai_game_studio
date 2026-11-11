@@ -86,7 +86,16 @@ evidence/phase-01-a/…
 | **P1-01** 无兜底回收 | 新增按命令行验明归属的定向终止（`taskkill /PID`，先复核再杀，终止后重新查询），上界 6 s | `dsh/processes.ts` |
 | **P1-01** 日志字段不全 | `dsh.shutdown.result` 记录 completed / confirmedGone / timedOut / teardownAttempted / closeSucceeded / closeError / processCheckStatus / processAbsent / remainingPids / forcedTermination* / exitCode / error / durationMs | `dsh/service.ts` |
 | **P2-01** 失败场景断言不足 | failure 冒烟新增按钮可用性并**真的点击**触发第二次探测 | `scripts/smoke.mjs`、`main.ts` |
-| **P2-03** 证据引用不一致 | state 的 A1/A2/A5 改指本轮 smoke；verification.json 覆盖 7 条命令；README 改为描述实际提交的 `.txt` 输出 | `state/phase_01_a.json`、`eXevidence/phase-01-a/` |
+| **P2-03** 证据引用不一致 | state 的 A1/A2/A5 改指本轮 smoke；verification.json 覆盖 7 条命令；README 改为描述实际提交的 `.txt` 输出 | `state/phase_01_a.json`、`evidence/phase-01-a/` |
+
+**R3（本轮，针对第三轮评审）**
+
+| 问题 | 改动 | 关键文件 |
+|---|---|---|
+| **P1-02** 兜底回收没有真实上界 | 进程表与 taskkill 全部改为**异步**（不再阻塞主进程），每次调用只拿到「剩余预算」，低于 PowerShell 最小可执行预算时直接判超时而不发必然超时的查询；整段回收共用一个绝对 deadline | `dsh/processes.ts` |
+| **P1-02** 预算写死在注释里 | 常量与文档一致：close 15 s、兜底 6 s、teardown 合计 22 s、shutdown 25 s、退出兜底 +5 s；超时以非零码退出并记录剩余 PID | `dsh/probe.ts`、`dsh/service.ts`、`main.ts` |
+| **P1-03** 用 DSH home 判所有权会误杀 | 实测发现真实 runtime 的命令行**不含** home（home 是环境变量），原判据对真实进程命中 0 条。改为「父进程 = 本进程 + 命令行含 dsh CLI」捕获实例身份，并用创建时间钉住，PID 复用即拒绝终止 | `dsh/processes.ts`、`dsh/probe.ts` |
+| **P2-04** 报告路径错字 | 9 处路径前缀错字修正为 `evidence/`（见 §8 证据列）；状态文件 2 处同时修正。PHASE 00 关闭报告中的同类错字**未改动**（PHASE 00 已关闭，不得修改其文档） | 本文件、`state/phase_01_a.json` |
 
 另有两处 PHASE 01 工程改进（不重开 PHASE 00）：评审基线字段语义（DEFERRED）、全量运行记录 `stateSource`（已实现，PHASE 00 套件 166/166 仍全绿）。
 
@@ -120,40 +129,56 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / STOPPED / **TEARDOWN_UNCONFIRMED** / INT
    `unsupported Electron runtime fingerprint: Node 24.22.2, V8 15.6.75.50-electron.0
    (supported Electron versions: 43.0.0, 44.0.0, 44.7.0, 45.0.0-alpha.6)`。
 
-### 7.5 Runtime 生命周期（P1-01，R2 修正后）
+### 7.5 Runtime 生命周期与所有权（R3 修正后）
 
 探测是这个 runtime 的**唯一所有者**，并一直负责到「确认已退出」为止。
 
+**身份不是目录，是实例。** 实测：SDK 用环境变量传 DSH home，真实 runtime 的命令行里
+**没有** home 字符串——用 home 匹配在真实运行中命中 0 条进程。因此所有权改为：
+
+| 证据 | 取值时机 | 作用 |
+|---|---|---|
+| 父进程 = 本进程 | spawn 之后立即 | 两个 Studio 实例不会互相看见对方的 runtime |
+| 命令行包含 dsh CLI 路径 | 同上 | 排除同父进程下的其它子进程 |
+| 创建时间（CreationDate） | 同上 | 钉住实例；PID 被复用后创建时间不同，拒绝终止 |
+
+home **不参与**终止授权。
+
+**时间上界是真实的。** 进程查询与 taskkill 全部异步（`execFile` 回调），不会阻塞
+Electron 主进程；整段回收共用一个绝对 deadline，每次调用只拿到剩余预算；低于
+PowerShell 最小可执行预算（1.2 s）时直接判「没有时间」，而不是发一个必然超时的查询。
+
 | 概念 | 条件 | 用途 |
 |---|---|---|
-| `completed` | SDK close 成功 **且** OS 明确 ABSENT **且** 未超时 | 决定探测能否返回 READY |
-| `confirmedGone` | OS 明确 ABSENT（close 成功或兜底终止后） | 决定应用退出码 |
+| `completed` | close 成功 **且** 首次 OS 检查即 ABSENT **且** 未超时 | 决定探测能否返回 READY |
+| `confirmedGone` | OS 明确 ABSENT（close 或兜底终止之后） | 决定应用退出码 |
 
 关键点：
 
-- **`null` 不等于成功**：进程检查无法确定（FAILED）时，completed 与 confirmedGone 都是 false。
+- **`null` 不等于成功**：无法确认（查询失败、超时、身份没建立）一律不算清理成功。
 - **READY 要等清理**：握手成功但回收未确认 → `UNKNOWN` + `TEARDOWN_UNCONFIRMED`。
-- **退出码只是诊断**：它来自 SDK 的同一条通道，不能用来证明进程消失；决定权在 OS 进程表。
-- **兜底回收**：仅在 OS 报告仍有进程时触发；逐个 PID 复核命令行归属后才终止，终止后重新查询，
-  只有再次 ABSENT 才算成功。进程检查失败时**不**触发终止（无法证明归属就不杀）。
-- **上界**：close 15 s、shutdown 20 s、定向终止 6 s，退出路径另有 +5 s 兜底；超过上界以非零码退出并记录残留风险。
+- **退出码只是诊断**：来自 SDK 同一通道，不构成独立证据。
+- **兜底只在能证明归属时执行**：逐个复核身份（PID + 创建时间）后才 `taskkill /F /T /PID`，
+  终止后重新查询；确认不了就不杀。
+- **预算**：close 15 s、兜底 6 s、teardown 合计 22 s、shutdown 25 s、退出兜底 +5 s。
+  超时以非零码退出，日志记录 remainingPids 与错误原因。
 
 ## 8. 测试命令与完整结果（本轮真实执行）
 
 | 命令 | 退出码 | PASS | FAIL | SKIP | 证据 |
 |---|---|---|---|---|---|
-| `node node_modules/typescript/bin/tsc -p tsconfig.json` | 0 | — | — | — | `eXevidence/phase-01-a/build-typescript.txt` |
-| `node --test` | **0** | **53** | **0** | **0** | `eXevidence/phase-01-a/app-tests.json` |
-| `node scripts/smoke.mjs ready` | **0** | 12/12 | 0 | 0 | `eXevidence/phase-01-a/smoke/ready/` |
-| `node scripts/smoke.mjs failure` | **0** | 16/16 | 0 | 0 | `eXevidence/phase-01-a/smoke/failure/` |
-| `node scripts/smoke.mjs quit-during-probe` | **0** | 11/11 | 0 | 0 | `eXevidence/phase-01-a/smoke/quit-during-probe/` |
-| `node tests/run-tests.mjs`（PHASE 00 套件） | **0** | **166** | 0 | 0 | `eXevidence/phase-01-a/phase00-regression-suite.txt` |
-| `node scripts/run-gates.mjs`（PHASE 00 三门禁） | **0** | 3 门全 PASS，0 泄漏 | 0 | 0 | `eXevidence/phase-01-a/phase00-gates.json` |
+| `node node_modules/typescript/bin/tsc -p tsconfig.json` | 0 | — | — | — | `evidence/phase-01-a/build-typescript.txt` |
+| `node --test` | **0** | **53** | **0** | **0** | `evidence/phase-01-a/app-tests.json` |
+| `node scripts/smoke.mjs ready` | **0** | 12/12 | 0 | 0 | `evidence/phase-01-a/smoke/ready/` |
+| `node scripts/smoke.mjs failure` | **0** | 16/16 | 0 | 0 | `evidence/phase-01-a/smoke/failure/` |
+| `node scripts/smoke.mjs quit-during-probe` | **0** | 11/11 | 0 | 0 | `evidence/phase-01-a/smoke/quit-during-probe/` |
+| `node tests/run-tests.mjs`（PHASE 00 套件） | **0** | **166** | 0 | 0 | `evidence/phase-01-a/phase00-regression-suite.txt` |
+| `node scripts/run-gates.mjs`（PHASE 00 三门禁） | **0** | 3 门全 PASS，0 泄漏 | 0 | 0 | `evidence/phase-01-a/phase00-gates.json` |
 
-汇总：`eXevidence/phase-01-a/verification.json`（每条命令的 cwd / 退出码 / 耗时 / 计数 / 产物都在里面）。
+汇总：`evidence/phase-01-a/verification.json`（每条命令的 cwd / 退出码 / 耗时 / 计数 / 产物都在里面）。
 每条的完整输出以 `.txt` 提交（`*.log` 被 .gitignore 忽略，因此不用 .log）。
 
-测试从 45 增至 53：新增 8 项生命周期与进程回收用例，原有测试全部保留并通过。
+测试从 53 增至 58：新增 8 项生命周期与进程回收用例，原有测试全部保留并通过。
 其中 `processes.test.js` 的回收测试**不使用 mock**：它真的 spawn 一个带本探测 DSH home 的进程，
 经 OS 进程表确认存在、命令行验明归属、定向终止、再查询确认消失。
 
@@ -165,11 +190,12 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / STOPPED / **TEARDOWN_UNCONFIRMED** / INT
 |---|---|---|---|
 | `ready` | 12 | 窗口可见、页面加载、握手成功、UI 显示已就绪、截图、退出后无残留 | PASS |
 | `failure` | 16 | 真实坏 profile → 显示「不可用」与原因；按钮可用；**实际点击重新检测跑第二次并仍是失败**；UI 与状态一致 | PASS |
-| `quit-during-probe` | 11 | 握手中途退出 → runtime 被回收、`closeSucceeded/processAbsent` 均为真、无需兜底、退出码为 0 | PASS |
+| `quit-during-probe` | 11 | 握手中途退出 → 身份已捕获、close 成功、OS 确认 ABSENT、**无需兜底**、退出码为 0 | PASS |
 
-`quit-during-probe` 是 P1-01 的端到端证据：日志 `dsh.shutdown.result` 记录
-`completed: true`、`confirmedGone: true`、`processCheckStatus: "ABSENT"`、`forcedTerminationAttempted: false`，
-且退出后进程表中没有任何持有该 DSH home 的进程。
+`quit-during-probe` 是生命周期与所有权的端到端证据：日志 `dsh.shutdown.result` 记录
+`completed: true`、`confirmedGone: true`、`processCheckStatus: "ABSENT"`、
+`forcedTerminationAttempted: false`、`runtimePid` 为真实 PID，且退出后进程表中没有任何持有该
+DSH home 的进程。
 
 ## 10. 构建产物
 
@@ -182,7 +208,7 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / STOPPED / **TEARDOWN_UNCONFIRMED** / INT
 | 级别 | 数量 | 说明 |
 |---|---|---|
 | P0 | 0 | — |
-| P1 | 0 | P1-01 两轮均已修复（见 §7.5） |
+| P1 | 0 | P1-01（两轮）与 P1-02/P1-03 均已修复（见 §7.5） |
 | P2 | 2 | P2-1 渲染层未用框架；P2-2 正式安装包未构建 |
 | P3 | 0 | — |
 
@@ -191,11 +217,14 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / STOPPED / **TEARDOWN_UNCONFIRMED** / INT
 | 编号 | 状态 | 证据 |
 |---|---|---|
 | P1-01（R1）退出期间未回收 runtime | **已修复** | lifecycle 测试 + quit-during-probe 冒烟 |
-| P1-01（R2）完成条件与兜底回收 | **已修复** | lifecycle 12 项 + processes 3 项（含真实进程回收） |
+| P1-01（R2）完成条件与兜底回收 | **已修复** | lifecycle 12 项 + processes 真实进程回收 |
 | P2-01（R1）桌面失败场景缺失 | **已修复** | failure 冒烟 |
 | P2-01（R2）失败场景断言不足 | **已修复** | failure 冒烟 16 项，含真实点击重新检测 |
 | P2-02 状态转换测试 | **已修复** | transitions 4 项 |
 | P2-03 证据引用不一致 | **已修复** | state / verification.json / README 与提交文件一致 |
+| P1-02（R3）兜底回收无真实上界 | **已修复** | 异步子进程 + 共用 deadline；processes 测试 D |
+| P1-03（R3）home 判所有权会误杀 | **已修复** | 实例身份（父进程 + CLI + 创建时间）；processes 测试 B/C |
+| P2-04（R3）报告证据路径 | **已修复** | 本文件 9 处路径 + 状态文件 2 处 |
 
 ## 12. DEFERRED
 
@@ -214,6 +243,8 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / STOPPED / **TEARDOWN_UNCONFIRMED** / INT
 |---|---|---|
 | U-01A-1 | 打包后 dsh runtime 能否启动（asar 内路径与原生 addon） | 执行打包后跑 ADR-0001 §5 |
 | U-01A-2 | 非 Windows 平台的进程确认与回收（当前实现仅 win32） | 若产品跨平台时 |
+| U-01A-3 | 若将来一个 Studio 进程内并发启动多个 runtime，当前「父进程 + CLI」捕获会因多重匹配而拒绝建立身份（实现选择拒绝而非猜测） | 引入并发 runtime 时 |
+| U-01A-4 | DSH 若改变子进程的启动方式（例如改为经中间进程），身份捕获需重新验证 | 升级 DSH 时 |
 
 ## 15. 当前工作区状态
 
