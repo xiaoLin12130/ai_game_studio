@@ -53,12 +53,14 @@
 
 ---
 
-## 当前状态（PHASE 00-R1.4 之后）
+## 当前状态（PHASE 00-R1.4.1 之后）
 
 | 项 | 值 |
 |---|---|
-| 阶段 | **PHASE 00-R1.4**（集中收尾：证据安全、依赖门禁、探针质量） |
-| 结果 | 六项探针 6/6 PASS，两个门禁（依赖 / 脱敏）PASS，退出码 0；待外部复审 |
+| 阶段 | **PHASE 00-R1.4.1**（四项收口：输出安全、扫描覆盖、依赖完整性、交付统一） |
+| 六探针 | **6/6 PASS**（最后一次完整真实运行 `2026-11-10T12:43:44Z`；R1.4.1 按评审要求未重复模型调用） |
+| 最终门禁回归 | 依赖 PASS；脱敏 PASS，扫描 **173/173** 发布文件、泄漏 0，exit 0 |
+| 回归测试 | **90/90 PASS**，exit 0 |
 | 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |
 | 分支 | `phase/00-feasibility` |
 | 仓库 | public（按用户要求保持公开） |
@@ -66,8 +68,9 @@
 
 > 注意：PATH 上的 `dsh` 是 0.1.5-rc.1，**不是**用户日常运行的版本。本项目的验证目标是 0.2.1-rc.3。
 
-权威事实源：`state/project_state.json` 的 `phase_00_r1.r14`。
-整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`（R1.4 章节在最前，R1 / R1.1 / R1.2 / R1.3 为历史记录）。
+权威事实源：`state/project_state.json` 的 `phase_00_r1.r141`。
+整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`（头部为「R1.4.1 当前状态」，其余章节为历史记录）。
+证据文件归属见 `spike/dsh-probe/current-0.2.1/evidence/r14/README.md`。
 
 ## 如何验证（真实命令）
 
@@ -81,7 +84,14 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test          # 68 项回归测试 + 六探针 + 两个门禁；期望 exit 0
+npm test          # 90 项回归测试 + 六探针 + 两个门禁；期望 exit 0
+```
+
+只回归受影响的门禁（**不消耗真实模型调用**）：
+
+```powershell
+npm run test:unit   # 90 项；只有退出 0 才发布 tests.json
+npm run gates       # 依赖 + 脱敏门禁，写 final-gates.json
 ```
 
 Windows `cmd.exe`：

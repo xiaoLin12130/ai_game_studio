@@ -348,6 +348,7 @@ function regenerateLock(name, log) {
     plugin: PLUGIN,
     version: entry.version,
     integrity: entry.integrity ?? null,
+    resolved: entry.resolved ?? null,
     files: staged.count,
     sha256: staged.sha256,
     generatedBy: 'scripts/setup-profiles.mjs --update-lock',
@@ -360,20 +361,23 @@ function regenerateLock(name, log) {
 /** Load and validate the lockfile. Missing is fatal outside maintenance mode. */
 function loadLock(name, { regenerate = false, log = () => {} } = {}) {
   const paths = lockPaths(name)
+  // Maintenance mode is a full re-baseline: it must not be blocked by the very
+  // consistency checks it is about to satisfy.
+  if (regenerate) return regenerateLock(name, log)
+
   const missingFiles = [paths.manifest, paths.lock, paths.tree].filter((file) => !fs.existsSync(file))
 
-  if (missingFiles.length && !regenerate) {
+  if (missingFiles.length) {
     throw new DependencyError(
       'lock-missing',
       `dependency lock for ${name} is incomplete; run with --update-lock to regenerate it`,
       { missing: missingFiles.map(displayPath) },
     )
   }
-  if (missingFiles.length) return regenerateLock(name, log)
+  // A normal run never regenerates a lock. See the `regenerate` early return above.
 
   const declared = readJsonOrError(paths.manifest, name, 'lock-manifest-invalid')?.dependencies?.[PLUGIN]
   if (declared !== PLUGIN_VERSION) {
-    if (regenerate) return regenerateLock(name, log)
     throw new DependencyError(
       'lock-manifest-mismatch',
       `profile-locks/${name}/package.json declares ${declared ?? 'nothing'} but ${PLUGIN_VERSION} is required`,
@@ -391,7 +395,6 @@ function loadLock(name, { regenerate = false, log = () => {} } = {}) {
     })
   }
   if (entry.version !== PLUGIN_VERSION) {
-    if (regenerate) return regenerateLock(name, log)
     throw new DependencyError(
       'lock-version-mismatch',
       `lockfile pins ${PLUGIN}@${entry.version} but ${PLUGIN_VERSION} is required`,
@@ -406,8 +409,26 @@ function loadLock(name, { regenerate = false, log = () => {} } = {}) {
       lock: entry.version,
     })
   }
+  // R1.4.1: presence of these fields is not the same as agreement with the baseline.
+  // A re-resolved tarball (or a tampered lockfile) changes integrity/resolved while
+  // leaving the version string alone; that must fail rather than silently reusing a
+  // cached staging tree.
+  if (!tree.integrity || tree.integrity !== entry.integrity) {
+    throw new DependencyError(
+      'tree-integrity-mismatch',
+      `tree.json integrity for ${name} does not match package-lock.json`,
+      { tree: tree.integrity ?? null, lock: entry.integrity },
+    )
+  }
+  if (!tree.resolved || tree.resolved !== entry.resolved) {
+    throw new DependencyError(
+      'tree-resolved-mismatch',
+      `tree.json resolved for ${name} does not match package-lock.json`,
+      { tree: tree.resolved ?? null, lock: entry.resolved },
+    )
+  }
 
-  log({ step: 'lock.verified', profile: name, version: entry.version, integrity: 'present' })
+  log({ step: 'lock.verified', profile: name, version: entry.version, integrity: 'matches', resolved: 'matches' })
   return { ...paths, entry, tree }
 }
 

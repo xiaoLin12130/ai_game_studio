@@ -45,7 +45,14 @@
     "A normal run never generates a lockfile. Missing lock is a hard failure (lock-missing); regeneration is a separate maintenance command (npm run lock:update).",
     "CC-0 classifies failures from stdout AND stderr (src/lib/diagnostics.mjs); the model writes its reasoning to stderr, so keeping a stderr tail is a privacy leak, not just noise.",
     "Route assertions now live in src/lib/assertions.mjs and are unit-tested with an empty list, a wrong model and a second-hop fallback, so the vacuous-true case cannot return unnoticed.",
-    "Every probe run so far observed exactly one request/header per turn, including the tool-using CC-2; multi-hop coverage remains unobserved and is recorded as such in routeShape."
+    "Every probe run so far observed exactly one request/header per turn, including the tool-using CC-2; multi-hop coverage remains unobserved and is recorded as such in routeShape.",
+    "A report must never embed its own commit SHA. Backfilling the SHA changed the report, so the fixed commit the reviewer opened was not the delivered version. SHA now lives only in state/project_state.json, written by a metadata-only commit that does not touch the report.",
+    "Do not use an extension whitelist for a leak scan: .gitignore and package.json.orig were skipped that way. Scan every published file; skip binary by NUL byte and report skippedBinary.",
+    "A path segment class that rejects all whitespace misses ordinary directories with spaces. Allow spaces but keep the regex linear; nested star quantifiers cause catastrophic backtracking and heap exhaustion.",
+    "findLeaks must build its RegExp with the g flag. Without it exec restarts at index 0 forever and an infinite loop exhausts the heap.",
+    "Credential-shaped values need their own redaction rules and tests, even when no real key has leaked yet; otherwise the code cannot prove it protects credentials.",
+    "Dependency integrity requires comparing tree.json integrity AND resolved against package-lock.json, not merely checking that the fields exist. Staging cache reuse must not bypass that comparison.",
+    "A failing test run must not overwrite published evidence. Use an explicit output path and publish only on a real zero exit code; prove it with fault injection."
   ],
   "do_not_assume": [
     "Electron is not approved yet; ADR-0001 is PROPOSED / CONDITIONAL pending packaged smoke tests.",
@@ -58,6 +65,8 @@
     "Do not run fs.cpSync or bulk fs.rmSync against dsh-home or node_modules on this host; the shim kills the process.",
     "Do not add a second redaction implementation; extend src/lib/redact.mjs.",
     "Do not write to stdout/stderr directly in probe code; use src/lib/safe-output.mjs.",
-    "Do not let a run auto-create a lockfile and then claim reproducibility."
+    "Do not let a run auto-create a lockfile and then claim reproducibility.",
+    "Do not put the delivery commit SHA into the delivery report.",
+    "Do not re-run the six real model probes for a change that only touches redaction, scanning, dependency metadata or docs."
   ]
 }

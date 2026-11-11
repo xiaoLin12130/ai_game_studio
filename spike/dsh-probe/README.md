@@ -22,7 +22,7 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install                                  # 探针依赖，精确钉版本
 $env:COMMANDCODE_API_KEY = "..."             # 只从环境变量读，绝不写进仓库
-npm test                                     # 68 项回归测试 + 六探针 + 两个门禁
+npm test                                     # 90 项回归测试 + 六探针 + 两个门禁
 ```
 
 Windows `cmd.exe`：
@@ -35,7 +35,8 @@ npm test
 ```
 
 只跑套件（跳过回归测试）：`node run-all.mjs`，期望 `PASS 6/6  GATES PASS/PASS  exit 0`。
-只跑回归测试：`node tests/run-tests.mjs`，期望 `68/68 tests passed  exit 0`。
+只跑回归测试：`npm run test:unit`，期望 `90/90 tests passed  exit 0`；只有退出 0 才发布 `tests.json`。
+只跑受影响门禁（不消耗模型调用）：`npm run gates`。
 
 `run-all.mjs` 会**先校验依赖**，再跑探针，最后跑脱敏门禁：
 
@@ -113,7 +114,9 @@ node run-all.mjs
 
 - 证据写在 `current-0.2.1/evidence/<probe>/`，`summary.json` 是判定，`records.jsonl` 是时间序列。
 - **所有证据写入都经 `redact()`**：仓库根 → `<repo>`、用户目录 → `<user-home>`、主机名 → `<host>`、
-  任意绝对路径（盘符/UNC/POSIX 系统根）→ `<abs-path>`。
+  任意绝对路径（盘符 / 带空格目录 / UNC / POSIX 系统根）→ `<abs-path>`，
+  凭据形状（API key、token、Bearer、JWT、私钥块、赋值式密钥）→ `<credential>`。
+  规则与扫描器共用 `src/lib/redact.mjs` 同一份定义，不会出现「写得干净、查得不同」。
 - **不保存模型原文**：CLI 探针只保留退出码、耗时、随机标识是否回显、是否自述模型名、截断后的答案行；
   失败只记录**类别**（QUOTA / AUTH / PLUGIN_INCOMPATIBLE / …），不记录错误文本。
 - 控制台输出同样脱敏：所有写出口都在 `src/lib/safe-output.mjs`，子进程输出按**行**转发后逐行脱敏。
@@ -125,7 +128,8 @@ cd spike\dsh-probe
 node scrub-evidence.mjs --check    # 有残留、扫描失败、或扫不到文件 → 退出 1
 ```
 
-扫描范围是**整个仓库的发布文件**（git 跟踪 + 未跟踪未忽略），不是几个目录。
+扫描范围是**整个仓库的发布文件**（git 跟踪 + 未跟踪未忽略），**不设扩展名白名单**：
+`.gitignore`、`.orig` 等同样被检查，二进制按 NUL 字节识别并计入 `skippedBinary`。
 数据与文档文件会被就地清洗；源码只报告、不改写。
 套件本身也执行同一份扫描（`src/lib/scrub.mjs`），失败即 `OVERALL FAIL`。
 
@@ -134,10 +138,10 @@ node scrub-evidence.mjs --check    # 有残留、扫描失败、或扫不到文�
 ## 4. 回归测试
 
 ```powershell
-node tests/run-tests.mjs     # 68 项，全部在临时目录里运行
+npm run test:unit            # 90 项，夹具全部在临时目录里运行
 ```
 
-覆盖：路径检测 14 阳性 / 12 阴性、扫描器边界（空目录、读失败、JSON 解码）、
+覆盖：路径检测（含一般带空格目录）、凭据规则 7 阳性 / 4 阴性、扫描器边界（空目录、读失败、JSON 解码、无扩展名文件、二进制 NUL）、
 CLI 退出码、错误分类 6 例、路由断言 4 例、并发隔离 4 例、门禁判定 5 例、
 版本范围 5 例、依赖五场景、以及「依赖门禁失败 → 套件退出 1」的端到端用例。
 

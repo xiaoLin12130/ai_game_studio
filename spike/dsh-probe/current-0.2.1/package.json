@@ -7,13 +7,14 @@
   "scripts": {
     "setup": "node scripts/setup-profiles.mjs",
     "lock:update": "node scripts/setup-profiles.mjs --update-lock",
-    "test:unit": "node tests/run-tests.mjs",
+    "test:unit": "node tests/record-tests.mjs",
     "test:suite": "node run-all.mjs",
-    "test": "node tests/run-tests.mjs && node run-all.mjs",
+    "test": "node tests/record-tests.mjs && node run-all.mjs",
     "scrub": "node ../scrub-evidence.mjs --check",
     "probe:commandcode": "node src/probe-commandcode.mjs",
     "probe:tools": "node src/probe-cc-tools.mjs",
-    "probe:capability": "node src/probe-capability.mjs"
+    "probe:capability": "node src/probe-capability.mjs",
+    "gates": "node scripts/run-gates.mjs"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.5",

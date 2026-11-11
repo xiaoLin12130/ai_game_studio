@@ -15,8 +15,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { findLeaks, isAllowedLine } from './redact.mjs'
 
-/** Files worth reading as text. Everything else is treated as binary and skipped. */
-export const TEXT_FILE = /\.(md|markdown|json|jsonl|ndjson|txt|mjs|cjs|js|ts|tsx|yml|yaml|csv|log|html|css|xml|toml|ini|cfg)$/i
+/**
+ * No extension whitelist.
+ *
+ * R1.4 review found that `.gitignore` and `package.json.orig` were text files the scan
+ * silently skipped because their names did not match a whitelist — 167 of 169 files.
+ * Scope is now "every published file": binary content is detected by a NUL byte in the
+ * decoded text, which is both more complete and less arbitrary than a list of suffixes.
+ * The only exclusions are directories (below) and files that are demonstrably binary.
+ */
+const NUL = '\u0000'
 
 /**
  * Directories never descended into.
@@ -143,11 +151,9 @@ export function scanTree({ root, mode = 'git', requireFiles = true }) {
     return { ok: false, scanned: 0, leaks, errors, mode, files: 0 }
   }
 
-  const candidates = relativeFiles.filter((rel) => {
-    const parts = rel.split(/[\\/]/)
-    if (parts.some((part) => SKIP_DIRS.includes(part))) return false
-    return TEXT_FILE.test(rel)
-  })
+  const candidates = relativeFiles.filter((rel) => !rel.split(/[\\/]/).some((part) => SKIP_DIRS.includes(part)))
+  let scanned = 0
+  let skippedBinary = 0
 
   for (const rel of candidates) {
     const file = path.join(root, rel)
@@ -159,16 +165,24 @@ export function scanTree({ root, mode = 'git', requireFiles = true }) {
       errors.push({ stage: 'read', file: rel, message: String(error?.message ?? error).slice(0, 200) })
       continue
     }
+    // A NUL byte means binary. Skipping is content-based and recorded in the result,
+    // not a silent hole in the scope.
+    if (text.includes(NUL)) {
+      skippedBinary += 1
+      continue
+    }
+    scanned += 1
     for (const hit of scanText(rel, text)) leaks.push({ file: rel, ...hit })
   }
 
-  if (requireFiles && candidates.length === 0) {
+  if (requireFiles && scanned === 0) {
     errors.push({ stage: 'scope', message: 'no text files were found to scan' })
   }
 
   return {
     ok: leaks.length === 0 && errors.length === 0,
-    scanned: candidates.length,
+    scanned,
+    skippedBinary,
     leaks,
     errors,
     mode,

@@ -1,8 +1,8 @@
 {
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
-  "product_status": "PHASE_00_R1_4_COMPLETED_PENDING_REVIEW",
-  "current_phase": "PHASE_00-R1.4",
+  "product_status": "PHASE_00_R1_4_1_COMPLETED_PENDING_REVIEW",
+  "current_phase": "PHASE_00-R1.4.1",
   "phase_status": {
     "PHASE_00": "SUPERSEDED_BY_R1",
     "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
@@ -13,7 +13,8 @@
     "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_00-R1": "SUPERSEDED_BY_R1_4",
-    "PHASE_00-R1.4": "PARTIALLY_VERIFIED_PENDING_REVIEW"
+    "PHASE_00-R1.4": "SUPERSEDED_BY_R1_4_1",
+    "PHASE_00-R1.4.1": "PARTIALLY_VERIFIED_PENDING_REVIEW"
   },
   "product_scope": {
     "target_os": "Windows local single-user first",
@@ -44,7 +45,8 @@
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
     "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
-    "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef"
+    "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
+    "r1_4_1_commit": null
   },
   "phase_00": {
     "gate_results": {
@@ -101,8 +103,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "Await external review of PHASE 00-R1.4. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-10T12:36:37.073Z",
+  "next_action": "Await external review of PHASE 00-R1.4.1. Do NOT start PHASE 01 without explicit approval.",
+  "updated_at": "2026-11-11T02:29:48.160Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -293,7 +295,7 @@
     },
     "r14": {
       "authored_at": "2026-11-10T12:36:37.072Z",
-      "tested_at": "2026-11-10T12:33:20.949Z",
+      "tested_at": "2026-11-10T12:43:44.987Z",
       "review_round": 5,
       "baseline_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
       "start_commit": "e3176bfe850fc0aa7902eff41390d43f2baafdff",
@@ -313,7 +315,7 @@
       "gates": {
         "dependency": "PASS",
         "leak": "PASS",
-        "scanned_files": 163,
+        "scanned_files": 167,
         "leaks_found": 0
       },
       "regression_tests": {
@@ -325,12 +327,14 @@
       },
       "acceptance": {
         "outputs_redacted_single_layer": {
-          "status": "CONFIRMED",
-          "evidence": "safe-output.mjs is the only writer; 12 negative redaction cases pass"
+          "status": "PARTIALLY_VERIFIED",
+          "evidence": "safe-output.mjs is the only writer; 12 negative redaction cases pass",
+          "review_note": "tests used process.stdout.write; no credential rules; failing runs overwrote published evidence"
         },
         "scan_scope_and_fixtures": {
-          "status": "CONFIRMED",
-          "evidence": "163 publish files scanned; 14 positive / 12 negative cases"
+          "status": "PARTIALLY_VERIFIED",
+          "evidence": "163 publish files scanned; 14 positive / 12 negative cases",
+          "review_note": "spaced Windows paths missed; .gitignore and .orig excluded; 167 of 169 files scanned"
         },
         "leak_failure_fails_suite": {
           "status": "CONFIRMED",
@@ -341,8 +345,9 @@
           "evidence": "five dependency scenarios pass"
         },
         "lockfile_missing_drift_corrupt": {
-          "status": "CONFIRMED",
-          "evidence": "lock-missing / lock-version-mismatch / lock-manifest-mismatch / lock-invalid"
+          "status": "PARTIALLY_VERIFIED",
+          "evidence": "lock-missing / lock-version-mismatch / lock-manifest-mismatch / lock-invalid",
+          "review_note": "integrity/resolved presence checked but not compared to tree.json"
         },
         "dependency_failure_affects_exit_code": {
           "status": "CONFIRMED",
@@ -369,8 +374,9 @@
           "evidence": "README, ADR-0002, report header, probe README aligned"
         },
         "state_consistent": {
-          "status": "CONFIRMED",
-          "evidence": "this block is the single source; top-level fields synced"
+          "status": "PARTIALLY_VERIFIED",
+          "evidence": "this block is the single source; top-level fields synced",
+          "review_note": "tested_at 12:33 vs aggregate 12:43; scanned 163 vs evidence 167; report differed from the fixed commit"
         }
       },
       "negative_proofs": {
@@ -388,6 +394,109 @@
         "tests/run-tests.mjs (68 cases)",
         "profile-locks/<profile>/tree.json (installed tree fingerprint)"
       ],
+      "blockers": [],
+      "unverified": [
+        "crash recovery via forced kill",
+        "interrupted turn resume",
+        "approval callback end-to-end flow",
+        "multi-hop request/header behaviour (only one hop observed)",
+        "multi-runtime concurrency limits and cost",
+        "electron packaged chain",
+        "dsh 0.2.2 capabilities"
+      ],
+      "report": "docs/review-handoff/PHASE_00_R1_WORK_REPORT.md",
+      "evidence_dir": "spike/dsh-probe/current-0.2.1/evidence/r14/",
+      "external_review": {
+        "verdict": "PARTIALLY_VERIFIED",
+        "reviewed_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
+        "note": "The 12-CONFIRMED claim was rejected. Four items were downgraded to PARTIALLY_VERIFIED and fixed in R1.4.1.",
+        "overclaimed": [
+          [
+            "outputs_redacted_single_layer",
+            "PARTIALLY_VERIFIED",
+            "tests used process.stdout.write; no credential rules; failing runs overwrote published evidence"
+          ],
+          [
+            "scan_scope_and_fixtures",
+            "PARTIALLY_VERIFIED",
+            "spaced Windows paths missed; .gitignore and .orig excluded; 167 of 169 files scanned"
+          ],
+          [
+            "lockfile_missing_drift_corrupt",
+            "PARTIALLY_VERIFIED",
+            "integrity/resolved presence checked but not compared to tree.json"
+          ],
+          [
+            "state_consistent",
+            "PARTIALLY_VERIFIED",
+            "tested_at 12:33 vs aggregate 12:43; scanned 163 vs evidence 167; report differed from the fixed commit"
+          ]
+        ]
+      }
+    },
+    "r141": {
+      "authored_at": "2026-11-11T02:26:36.240Z",
+      "review_round": 6,
+      "external_review_verdict": "PARTIALLY_VERIFIED",
+      "reviewed_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
+      "baseline_commit": "0b9bc289e66e813402029ac58586abc02a23d4f3",
+      "delivery_commit": null,
+      "delivery_commit_note": "Backfilled by the following metadata-only commit. The report is byte-identical in the implementation commit and HEAD.",
+      "result": "READY_FOR_EXTERNAL_REVIEW",
+      "stage_status": "PARTIALLY_VERIFIED",
+      "model_probes_run": false,
+      "last_full_probe_run": {
+        "at": "2026-11-10T12:43:44.987Z",
+        "probes": 6,
+        "passed": 6,
+        "blocked": 0,
+        "failed": 0,
+        "overall": "PASS",
+        "exit_code": 0,
+        "scanned_files": 167,
+        "evidence": "evidence/r14/summary.json"
+      },
+      "gate_regression": {
+        "command": "npm run gates",
+        "at": "2026-11-11T02:29:25.435Z",
+        "dependency": "PASS",
+        "leak": "PASS",
+        "scanned_files": 173,
+        "files_in_publish_set": 173,
+        "leaks": 0,
+        "exit_code": 0,
+        "evidence": "evidence/r14/final-gates.json"
+      },
+      "regression_tests": {
+        "command": "npm run test:unit",
+        "total": 90,
+        "passed": 90,
+        "failed": 0,
+        "exit_code": 0,
+        "evidence": "evidence/r14/tests.json"
+      },
+      "acceptance": {
+        "output_safety": {
+          "status": "CONFIRMED",
+          "evidence": "tests/run-tests.mjs and record-tests.mjs; 7 credential rules in redact.mjs; 13 new test cases"
+        },
+        "path_scan_coverage": {
+          "status": "CONFIRMED",
+          "evidence": "general spaced Windows path detected; no extension whitelist; 173/173 publish files scanned"
+        },
+        "dependency_integrity": {
+          "status": "CONFIRMED",
+          "evidence": "tree.json integrity/resolved compared with package-lock.json; 4 tamper cases with distinct error codes"
+        },
+        "delivery_consistency": {
+          "status": "CONFIRMED",
+          "evidence": "report no longer embeds its own SHA; state r141 is the single source; evidence/r14/README.md explains each run"
+        },
+        "six_probes_not_repeated": {
+          "status": "CONFIRMED",
+          "evidence": "per review instruction; last full real run retained at evidence/r14/summary.json"
+        }
+      },
       "blockers": [],
       "unverified": [
         "crash recovery via forced kill",

@@ -1,27 +1,31 @@
-# PHASE 00-R1 工作报告（外部复审整改，含 R1.4 收尾）
+# PHASE 00-R1 工作报告（含 R1.4.1 收尾）
 
-> 本报告覆盖 PHASE 00 的五轮整改。**当前状态以本节为准；从 §1 起各章为历史记录**，其中的「5/5」指当时的五探针套件，不代表当前规模（R1.3 起为六探针）。
+> 本报告覆盖 PHASE 00 的六轮整改。**当前状态只以「R1.4.1 当前状态」一节为准**；其后各章均为历史记录，其中的数字（5/5、163、167、68 项）属于当时的运行规模，不代表当前事实。
 >
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
-> - 日期：2026-11-10
-> - 提交 SHA：R1.4 复审基线 `1928fb1628b8dc3ac057fd618936aa601d9267ef`；R1.3 `1985fb010684de4abd2bb6b9ea54cf06360ffc1e`；R1.2 `052319aac2b6521b84c48b6f268cffa79f77cd99`；R1.1 `207feac5f8556494877fb478562381b108e953a3`；R1 实施 `852d234cec16ed75de2a40809be0fc1bd42bb47b`
+> - 日期：2026-11-11
+> - 外部评审固定的 R1.4 提交：`1928fb1628b8dc3ac057fd618936aa601d9267ef`
+> - 本轮实际基线：`0b9bc289e66e813402029ac58586abc02a23d4f3`（R1.4 最终 HEAD）
+> - **本轮交付 Commit**：分支 `phase/00-feasibility` 的 HEAD。完整 SHA 写在
+>   `state/project_state.json` → `phase_00_r1.r141.delivery_commit`，由紧随其后的一个纯元数据提交回填。
+>   报告**不内嵌自身 Commit SHA** —— 上一轮正是因为把交付 SHA 写在报告里、又在后续提交中改动报告，
+>   造成「评审打开的固定提交」与「交付版本」不是同一份文件。本报告在 R1.4.1 实施提交与 HEAD 中逐字节一致。
 
-## R1.4 当前状态（唯一权威）
+## R1.4.1 当前状态（唯一权威）
 
 | 项 | 值 |
 |---|---|
-| 阶段 | PHASE 00-R1.4（集中收尾，不新增技术探索） |
-| 基线 | 代码基线 `1985fb0`（上轮评审固定），本轮实际起点 `e3176bf` |
-| 探针 | **6/6 PASS**（CC-0 CLI、CC-1 Reply、CC-2 Tools、CC-3 Resume、CC-4 Concurrent、CC-5 Capability） |
-| 门禁 | 依赖门禁 **PASS**；脱敏门禁 **PASS**（扫描 167 个文件，泄漏 0） |
-| 回归测试 | **68/68 PASS**（含阳性/阴性/反向用例） |
-| 套件退出码 | **0**（`OVERALL PASS`） |
-| 阶段判定 | `PARTIALLY_VERIFIED` — 本轮要求的工程门禁已建立，冻结范围外能力仍为 `UNKNOWN` |
+| 阶段 | PHASE 00-R1.4.1（四项收口，不新增技术探索、不重跑模型探针） |
+| 六探针 | **6/6 PASS**，来自最后一次完整真实运行 `2026-11-10T12:43:44Z`（`evidence/r14/summary.json`）；**R1.4.1 按评审要求未重复模型调用** |
+| 最终门禁回归 | 依赖门禁 **PASS**；脱敏门禁 **PASS**：扫描 **173/173** 个发布文件，泄漏 0，exit **0**（`evidence/r14/final-gates.json`） |
+| 回归测试 | **90/90 PASS**，exit **0**（`evidence/r14/tests.json`） |
+| 阶段判定 | `PARTIALLY_VERIFIED` — 本轮四项修正已 `CONFIRMED`；冻结范围外能力仍为 `UNKNOWN` |
 | 阻塞项 | 无（本轮范围内） |
 | 下一步 | 交外部复审；未获明确批准前不进入 PHASE 01 |
 
-权威事实源：`state/project_state.json` → `phase_00_r1.r14`。证据：`spike/dsh-probe/current-0.2.1/evidence/r14/`。
+权威事实源：`state/project_state.json` → `phase_00_r1.r141`。
+证据目录与每个文件的含义见 `spike/dsh-probe/current-0.2.1/evidence/r14/README.md`。
 
 ---
 
@@ -888,7 +892,110 @@ OVERALL FAIL      exit 1
 | DSH 0.2.2 及以后能力 | `UNKNOWN` |
 | 0.1.5 legacy 套件在本机稳定复现 | `BLOCKED`（环境安全垫） |
 
-## R1.4-10｜是否具备提交外部评审条件
+## R1.4-10｜当时的结论（已被外部评审修正）
 
-具备。本轮范围内 12 项验收全部 `CONFIRMED`，六探针与两个门禁可一键复跑（`npm test`）。
+当时写的是「12 项全部 CONFIRMED，具备提交外部评审条件」。**外部复审判定 R1.4 为 `PARTIALLY_VERIFIED`，不认可该结论**，并具体指出：通用输出安全性、全部路径扫描覆盖、依赖锁完整性、文档与状态统一四项只是 `PARTIALLY_VERIFIED`。
+上述问题已在 **R1.4.1** 收口，见本报告最后一章。本节保留原话是为了让修正过程可追溯，不作为当前结论。
+
 PHASE 00 是否正式通过由外部评审决定，本报告不代替该结论。
+
+---
+
+# R1.4.1 收尾（2026-11-11，回应第五次外部复审）
+
+外部评审以固定提交 `1928fb1` 为准，判定 `PARTIALLY_VERIFIED`，并要求只做四项小修正、不重跑模型探针。
+同时指出一个交付流程问题：**上传的报告与固定提交里的报告不是同一份内容**（前者 SHA 已回填、扫描 167；后者仍留着 SHA 占位符、扫描 163）。
+本轮按「先承认版本问题、再一次性收口」执行。
+
+## R1.4.1-0｜交付版本一致性
+
+- 起因：R1.4 把「实施提交」与「SHA 回填 / 数字同步」拆成了多个提交；评审打开实施提交时，看到的是尚未回填的报告。
+- 修正：本报告**不再内嵌自身 Commit SHA**（自引用必然导致回填后版本漂移）。交付 SHA 只写进
+  `state/project_state.json` 的 `r141.delivery_commit`，由一个纯元数据提交回填；该提交**不修改本报告**。
+  因此「R1.4.1 实施提交中的报告」与「分支 HEAD 中的报告」逐字节相同。
+- 评审应打开的固定版本：**分支 `phase/00-feasibility` 的 HEAD**（交付消息中给出完整 SHA）。
+- 历史数字全部标注为历史；当前数字只出现在本章与头部「R1.4.1 当前状态」表。
+
+## R1.4.1-1｜输出安全（P1）
+
+| 问题 | 修正 | 代码 |
+|---|---|---|
+| 测试脚本直接 `process.stdout.write`，异常文本未脱敏 | 全部改为 `safe-output.mjs` 的 `out()` | `tests/run-tests.mjs` |
+| 失败的运行会覆盖已发布 `evidence/r14/tests.json` | `run-tests.mjs` 默认只写临时目录；`tests/record-tests.mjs` 在**真实退出码为 0** 时才发布 | 两个文件 + `package.json` |
+| 规则集只管路径/主机名，无凭据规则 | 新增 7 条凭据规则：OpenAI/GitHub/AWS key、Bearer、JWT、私钥块、`api_key=` 赋值 | `src/lib/redact.mjs` 的 `LEAK_RULES` |
+
+**测试**：7 条凭据正向用例（检测 + 脱敏 + 幂等）、4 条凭据阴性用例（仅变量名、`apiKeyEnv` 间接引用、短前缀、npm integrity）、
+1 条「文件中出现凭据 → 扫描器报出规则 id」、1 条「注入失败时已发布证据不变」。
+另有一条故障注入接缝 `CC_TEST_FAIL_INJECT=1`，使该反向测试验证的是退出码，而不是日志文字。
+
+**没有发现本次证据实际泄露 API Key**；这一项修的是「代码无法证明能保护凭据」，不是补一个已发生的泄露。
+
+## R1.4.1-2｜路径扫描（P1）
+
+| 问题 | 修正 |
+|---|---|
+| 普通带空格目录路径（形如盘符 + `Work Folder` + 子目录 + 文件名）零命中：段类 `[^\\\s...]` 排除了所有空格 | `windows-nested` 改为允许空格、只排除反斜杠/换行/JSON 分隔符；保持单条线性重复，避免嵌套量词回溯 |
+| 169 个发布文件只扫 167 个：`.gitignore`、`package.json.orig` 被扩展名白名单排除 | **删掉扩展名白名单**，范围=全部发布文件；二进制改由 NUL 字节识别并计入 `skippedBinary` |
+
+修复过程中自查发现两个新缺陷并已修掉：
+① 重写时丢了 `findLeaks` 的 `g` 标志，`exec` 永远返回同一匹配导致堆溢出（OOM）；
+② `windows-spaced` 首版用了嵌套 `*`，在证据文件上灾难性回溯。两者都由全仓扫描 + 90 项测试覆盖。
+
+**测试**：新增「一般带空格目录」`Work Folder`、深层带空格 `My Projects / AI Game Studio`、
+扩展名无关文件、二进制按 NUL 跳过、文件内凭据检测。最终 **173/173** 文件全部被扫描。
+
+## R1.4.1-3｜依赖完整性（P2）
+
+`tree.json` 现在记录 `integrity` 与 `resolved`，`loadLock()` 真正把两者与 `package-lock.json` 逐项比对：
+
+- `tree-integrity-mismatch`：tree 与 lock 的 integrity 不一致（含「staging 缓存命中、但 lock 已被重新解析」）；
+- `tree-resolved-mismatch`：`resolved` 不一致；
+- `tree-metadata-mismatch`：版本不一致；
+- `lock-invalid` / `lock-missing` / `lock-manifest-mismatch` / `lock-version-mismatch`：沿用。
+
+`--update-lock` 改为直接重建基线，不再被它本应满足的一致性检查挡住。
+
+**测试**：4 条新增篡改用例（tree.integrity、tree.resolved、lock.integrity、lock.resolved），
+每条断言具体错误码；加上原有五场景与四个错误码，共覆盖 9 种依赖异常。
+
+## R1.4.1-4｜统一数字与状态
+
+以最后一次**真实运行**为准，区分两类证据，避免再出现 163 / 167 / 12:33 / 12:43 混用：
+
+| 记录 | 含义 | 数字 |
+|---|---|---|
+| `evidence/r14/summary.json`、`_aggregate/run-all.json` | 最后一次完整六探针真实运行（12:43:44Z） | 6/6 PASS，双门禁 PASS，扫描 167，exit 0 |
+| `evidence/r14/final-gates.json` | R1.4.1 门禁回归（不跑模型） | 依赖 PASS，脱敏 PASS，扫描 **173/173**，泄漏 0，exit 0 |
+| `evidence/r14/tests.json` | R1.4.1 回归测试 | **90/90 PASS**，exit 0 |
+| `evidence/r14/README.md` | 逐个说明上述文件的归属与时间 | — |
+
+`state/project_state.json` 的 `r14.tested_at` / `gates.scanned_files` 已从 12:33 / 163 修正为 12:43:44Z / 167（取自真实 aggregate），
+新增 `r141` 段记录本轮门禁回归的 173/173 与 90/90；顶层 `product_status`、`current_phase`、`phase_status` 同步。
+
+## R1.4.1-5｜修改文件
+
+**新增** `tests/record-tests.mjs`、`scripts/run-gates.mjs`、`evidence/r14/final-gates.json`、`evidence/r14/README.md`
+**修改** `src/lib/redact.mjs`、`src/lib/scrub.mjs`、`scripts/setup-profiles.mjs`（integrity/resolved）、
+`tests/run-tests.mjs`、`package.json`、`profile-locks/*/tree.json`、
+`README.md`、`spike/dsh-probe/README.md`、本报告、`PHASE_00_REVIEW_HANDOFF.md`、
+`state/project_state.json`、`state/memory.json`、`memory-bank/handoff.md`
+
+## R1.4.1-6｜验收对照
+
+| # | 事项 | 状态 | 证据 |
+|---|---|---|---|
+| 1 | 输出安全：统一出口 + 凭据规则 + 失败不覆盖证据 | CONFIRMED | 90 项测试中的 13 项；`record-tests.mjs` |
+| 2 | 路径扫描：一般空格路径 + 全部发布文本文件 | CONFIRMED | 173/173 扫描；带空格与无扩展名阳性用例 |
+| 3 | 依赖锁：integrity / resolved 与树指纹一致 | CONFIRMED | 4 条篡改用例返回具体错误码 |
+| 4 | 文档、状态、GitHub 版本统一 | CONFIRMED | 头部当前状态表 + `r141` + 本报告不内嵌自身 SHA |
+| 5 | 六探针 / MCP / Resume / 并发 / 路由 / CLI 分类 | CONFIRMED（沿用已提交运行证据，**未重跑**） | `evidence/r14/summary.json` |
+
+## R1.4.1-7｜仍未解决（冻结范围，不扩大）
+
+强制崩溃后恢复、中断轮次恢复、DSH 原生审批回调端到端、多跳 `request/header` 实际行为、
+多 Runtime 并发上限与成本、Electron 打包链路、DSH 0.2.2 能力、0.1.5 legacy 套件本机稳定复现（环境安全垫 `BLOCKED`）。
+
+## R1.4.1-8｜是否具备提交外部评审条件
+
+具备。本轮四项修正均有源码、反向测试与机器可读证据；六探针结果沿用最后一次真实运行，未以 Mock 或未执行项充当 PASS。
+PHASE 00 是否正式通过仍由外部独立评审决定。

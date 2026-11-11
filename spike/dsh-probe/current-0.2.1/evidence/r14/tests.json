@@ -1,18 +1,28 @@
 {
-  "generatedAt": "2026-11-10T12:42:40.092Z",
+  "generatedAt": "2026-11-11T02:28:34.234Z",
   "node": "v22.22.2",
-  "total": 68,
-  "passed": 68,
+  "total": 90,
+  "passed": 90,
   "failed": 0,
   "exitCode": 0,
   "results": [
     {
       "name": "detect: windows drive",
       "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "detect: windows spaces (general)",
+      "ok": true,
       "ms": 0
     },
     {
-      "name": "detect: windows spaces",
+      "name": "detect: windows spaces (deep)",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "detect: windows program files",
       "ok": true,
       "ms": 0
     },
@@ -34,7 +44,7 @@
     {
       "name": "detect: unc",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "detect: posix mnt",
@@ -79,7 +89,7 @@
     {
       "name": "ignore: placeholder repo",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "ignore: placeholder home",
@@ -93,6 +103,11 @@
     },
     {
       "name": "ignore: placeholder abs",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: placeholder credential",
       "ok": true,
       "ms": 0
     },
@@ -137,24 +152,79 @@
       "ms": 0
     },
     {
-      "name": "scan: planted leak is found",
-      "ok": true,
-      "ms": 3
-    },
-    {
-      "name": "scan: clean tree passes",
-      "ok": true,
-      "ms": 2
-    },
-    {
-      "name": "scan: empty scope is an error, not a pass",
+      "name": "ignore: credential env name only",
       "ok": true,
       "ms": 0
     },
     {
+      "name": "ignore: credential env indirection",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: short sk prefix",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "ignore: npm integrity hash",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: openai-style key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: github token is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: aws key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: bearer token is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: assigned api key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: jwt is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "credential: private key is detected and redacted",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "scan: planted leak is found",
+      "ok": true,
+      "ms": 5
+    },
+    {
+      "name": "scan: clean tree passes",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "scan: empty scope is an error, not a pass",
+      "ok": true,
+      "ms": 1
+    },
+    {
       "name": "scan: unreadable file is an error, not a pass",
       "ok": true,
-      "ms": 127
+      "ms": 128
     },
     {
       "name": "scan: json is inspected after decoding",
@@ -162,19 +232,34 @@
       "ms": 3
     },
     {
+      "name": "scan: extensionless and .orig files are in scope",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "scan: binary content is skipped by NUL detection, not by suffix",
+      "ok": true,
+      "ms": 5
+    },
+    {
+      "name": "scan: credential in a file is reported with its rule id",
+      "ok": true,
+      "ms": 2
+    },
+    {
       "name": "cli: leak exits 1",
       "ok": true,
-      "ms": 70
+      "ms": 75
     },
     {
       "name": "cli: clean exits 0",
       "ok": true,
-      "ms": 69
+      "ms": 74
     },
     {
       "name": "cli: empty root exits 1",
       "ok": true,
-      "ms": 66
+      "ms": 74
     },
     {
       "name": "classify: quota on stderr",
@@ -204,7 +289,7 @@
     {
       "name": "classify: unknown text stays unclassified",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "routes: empty list is not a pass",
@@ -269,7 +354,7 @@
     {
       "name": "gate: blocked only is BLOCKED, not FAIL",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "gate: all clear is PASS",
@@ -279,7 +364,7 @@
     {
       "name": "range: required dsh line is accepted",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "range: older runtime is rejected",
@@ -304,7 +389,7 @@
     {
       "name": "deps: fresh home builds both profiles",
       "ok": true,
-      "ms": 108
+      "ms": 119
     },
     {
       "name": "deps: second run is stable and repairs nothing",
@@ -314,12 +399,12 @@
     {
       "name": "deps: tampered install is repaired, not accepted",
       "ok": true,
-      "ms": 89
+      "ms": 96
     },
     {
       "name": "deps: tampered profile manifest is repaired",
       "ok": true,
-      "ms": 30
+      "ms": 32
     },
     {
       "name": "deps: missing lockfile fails",
@@ -329,7 +414,7 @@
     {
       "name": "deps: lockfile version drift fails",
       "ok": true,
-      "ms": 15
+      "ms": 16
     },
     {
       "name": "deps: lockfile manifest drift fails",
@@ -342,9 +427,34 @@
       "ms": 4
     },
     {
+      "name": "deps: tree integrity drift fails",
+      "ok": true,
+      "ms": 5
+    },
+    {
+      "name": "deps: tree resolved drift fails",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "name": "deps: lockfile integrity drift fails even with a cached staging tree",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "deps: lockfile resolved drift fails",
+      "ok": true,
+      "ms": 16
+    },
+    {
       "name": "suite: dependency gate failure exits 1",
       "ok": true,
-      "ms": 244
+      "ms": 327
+    },
+    {
+      "name": "evidence: a failing test run cannot overwrite the published result",
+      "ok": true,
+      "ms": 160
     }
   ]
 }

@@ -2,6 +2,7 @@
   "plugin": "@mars-sea/dsh-commandcode-provider",
   "version": "0.15.4",
   "integrity": "sha512-j6ibijPAQAWHey9eDZb+yl+FOkAsImGVfspkvKUKbLcMoZOK7OWe9uGlbUjFG58xd0rj8ZVQT6RJkSrTeffkpQ==",
+  "resolved": "https://registry.npmjs.org/@mars-sea/dsh-commandcode-provider/-/dsh-commandcode-provider-0.15.4.tgz",
   "files": 16,
   "sha256": "505abdf2b1921ba7a7aa5ffcaabb35cf8e3dc6746be284be89c49695cbdf2555",
   "generatedBy": "scripts/setup-profiles.mjs --update-lock"

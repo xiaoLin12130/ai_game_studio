@@ -4,7 +4,9 @@
 - Phase：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
 - Repository URL：`https://github.com/xiaoLin12130/ai_game_studio`（public）
 - Branch：`phase/00-feasibility`
-- Full Commit SHA：`1928fb1628b8dc3ac057fd618936aa601d9267ef`（**R1.4 复审基线**；其后仅回填本段的文档提交，以 `git rev-parse HEAD` 为准）
+- Full Commit SHA：**以分支 `phase/00-feasibility` 的 HEAD 为准**；本次交付 SHA 见
+  `state/project_state.json` → `phase_00_r1.r141.delivery_commit`（由纯元数据提交回填）。
+  报告不内嵌自身 SHA，避免出现「评审打开的固定提交」与「交付版本」不一致。
 - Status：**`PARTIALLY_VERIFIED`** — 核心链路已验证；模型层被账号余额阻断
 
 ---
@@ -142,23 +144,21 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 ---
 
-## 提交信息（R1.3）
+## 提交信息（R1.4.1）
 
-- 复审基线提交：`1928fb1628b8dc3ac057fd618936aa601d9267ef`（已在远端）
+- 外部评审固定的 R1.4 提交：`1928fb1628b8dc3ac057fd618936aa601d9267ef`
+- R1.4 最终 HEAD（本轮基线）：`0b9bc289e66e813402029ac58586abc02a23d4f3`
+- **本次交付提交**：分支 `phase/00-feasibility` 的 HEAD；完整 SHA 见
+  `state/project_state.json` → `phase_00_r1.r141.delivery_commit`。
 - 分支：`phase/00-feasibility`
 - 工作区状态：干净（`git status --porcelain` 为空）
-- 远端状态：**已推送**，远端 `refs/heads/phase/00-feasibility` 与该 SHA 一致
-- 提交序列：
+- 远端状态：**已推送**
+- 提交序列（节选）：
   - `91a44d8` PHASE 00 实施
-  - `ad94dae` 回填阶段 SHA
-  - `b3fdfb7` 诊断壳
-  - `5658479` 工作报告
   - `852d234` R1 实施（commandcode 实测）
-  - `207feac` R1.1
-  - `052319a` R1.2
-  - `5364d20` R1.2 路径示例改写
-  - `1985fb0` R1.3（脱敏门禁、依赖锁、断言修复）
-  - `1928fb1628b8dc3ac057fd618936aa601d9267ef` **R1.4**（统一输出层、扫描器重建、依赖树指纹、回归测试）
+  - `207feac` R1.1 ｜ `052319a` R1.2 ｜ `1985fb0` R1.3
+  - `1928fb1` R1.4 实施 ｜ `855e876` SHA 回填 ｜ `0b9bc28` 文档同步
+  - 本轮：R1.4.1 实施提交 + 一个纯元数据提交（只回填 SHA，不改本报告）
 
 克隆与复现（**跑生产目标那一套，不是 legacy**）：
 
@@ -166,7 +166,8 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
 cd ai_game_studio/spike/dsh-probe/current-0.2.1
 npm install
-npm test        # 68 项回归测试 → 6 探针 → 2 门禁
+npm test          # 90 项回归测试 → 6 探针 → 2 门禁
+npm run gates     # 只跑受影响门禁，不消耗模型调用
 ```
 
 脱敏门禁：

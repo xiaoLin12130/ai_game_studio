@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url'
 
 import { findLeaks, redactText, REPO_ROOT, HOME_DIR, PROBE_ROOT } from '../src/lib/redact.mjs'
 import { scanTree } from '../src/lib/scrub.mjs'
+import { out } from '../src/lib/safe-output.mjs'
 import { classifyRun } from '../src/lib/diagnostics.mjs'
 import { notificationsIsolated, routesAllMatch, summariseRoutes } from '../src/lib/assertions.mjs'
 import { decideOverall } from '../src/lib/gates.mjs'
@@ -33,6 +34,12 @@ const BS = String.fromCharCode(92) // one backslash
 const WIN = (...parts) => `C:${BS}${parts.join(BS)}`
 const UNC = (server, ...parts) => `${BS}${BS}${server}${BS}${parts.join(BS)}`
 const POSIX = (...parts) => parts.join('/')
+const WINSP = (...parts) => `C:${BS}${parts.join(BS)}`
+const FAKE_KEY = 'sk-' + 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4'
+const FAKE_AWS = 'AKIA' + 'IOSFODNN7EXAMPLE'
+const FAKE_JWT = ['eyJhbGciOiJIUzI1NiJ9', 'eyJzdWIiOiIxMjM0NTY3ODkwIn0', 'abcdefghijklmnop'].join('.')
+const DASH5 = String.fromCharCode(45).repeat(5)
+const FAKE_PEM = `${DASH5}BEGIN RSA PRIVATE KEY${DASH5}\nMIIEowIBAAKCAQEA\n${DASH5}END RSA PRIVATE KEY${DASH5}`
 
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-r14-'))
 const made = (name) => {
@@ -58,15 +65,25 @@ function copyTree(from, to) {
 }
 
 const results = []
+
+/**
+ * Fault-injection seam for `record-tests.mjs`. Publishing must depend on the real exit
+ * code, and the only honest way to test that is to make a run fail on purpose.
+ */
+if (process.env.CC_TEST_FAIL_INJECT === '1') {
+  out('[tests] injected failure (fault-injection mode)\n')
+  process.exit(1)
+}
+
 async function test(name, fn) {
   const started = Date.now()
   try {
     await fn()
     results.push({ name, ok: true, ms: Date.now() - started })
-    process.stdout.write(`PASS  ${name}\n`)
+    out(`PASS  ${name}\n`)
   } catch (error) {
     results.push({ name, ok: false, ms: Date.now() - started, error: String(error?.message ?? error).slice(0, 500) })
-    process.stdout.write(`FAIL  ${name}\n      ${String(error?.message ?? error).split('\n')[0]}\n`)
+    out(`FAIL  ${name}\n      ${String(error?.message ?? error).split('\n')[0]}\n`)
   }
 }
 
@@ -76,7 +93,11 @@ async function test(name, fn) {
 
 const POSITIVE_CASES = [
   ['windows drive', WIN('Users', 'alice', 'notes.txt')],
-  ['windows spaces', WIN('Program Files', 'Some App', 'bin', 'app.exe')],
+  // R1.4.1: a general directory name with a space, NOT the special `Program Files`
+  // root that a dedicated rule happens to recognise.
+  ['windows spaces (general)', WINSP('Work Folder', 'project', 'file.txt')],
+  ['windows spaces (deep)', WINSP('My Projects', 'AI Game Studio', 'src', 'main.ts')],
+  ['windows program files', WIN('Program Files', 'Some App', 'bin', 'app.exe')],
   ['windows deep drive', `H:${BS}work${BS}proj${BS}src${BS}index.ts`],
   ['windows non-ascii', `H:${BS}AI与开发${BS}proj${BS}x`],
   ['windows forward', POSIX('C:', 'Users', 'alice', 'file.txt')],
@@ -91,11 +112,23 @@ const POSITIVE_CASES = [
   ['user home', path.join(HOME_DIR, 'notes.txt')],
 ]
 
+/** Credentials must be detected AND redacted by the very same rule set. */
+const CREDENTIAL_CASES = [
+  ['openai-style key', `key=${FAKE_KEY}`],
+  ['github token', `token=ghp_${'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6'}`],
+  ['aws key', `AWS ${FAKE_AWS}`],
+  ['bearer token', `Authorization: Bearer ${'a1B2c3D4e5F6g7H8i9J0k1L2'}`],
+  ['assigned api key', `COMMANDCODE_API_KEY=${'xyzABC1234567890uvw'}`],
+  ['jwt', FAKE_JWT],
+  ['private key', FAKE_PEM],
+]
+
 const NEGATIVE_CASES = [
   ['placeholder repo', '<repo>/docs/x.md'],
   ['placeholder home', '<user-home>/x'],
   ['placeholder host', 'host=<host>'],
   ['placeholder abs', 'path=<abs-path>'],
+  ['placeholder credential', 'key=<credential>'],
   ['relative path', 'src/lib/redact.mjs'],
   ['url', 'https://example.com/home/user'],
   ['url with port', 'http://127.0.0.1:7890/tmp/x'],
@@ -104,6 +137,10 @@ const NEGATIVE_CASES = [
   ['bare drive', 'C:'],
   ['api path', '/api/v1/users'],
   ['regex source', '/(?<![A-Za-z0-9])[A-Za-z]:' + BS + BS + '[^' + BS + BS + 's]*/g'],
+  ['credential env name only', 'COMMANDCODE_API_KEY'],
+  ['credential env indirection', 'apiKeyEnv: COMMANDCODE_API_KEY'],
+  ['short sk prefix', 'sk-short'],
+  ['npm integrity hash', 'sha512-j6ibijPAQAWHey9eDZb+yl+FOkAsImGVfspkvKUKbLcMoZOK7OWe9uGlbUjFG58xd0rj8ZVQT6RJkSrTeffkpQ=='],
 ]
 
 for (const [label, sample] of POSITIVE_CASES) {
@@ -118,6 +155,19 @@ for (const [label, sample] of NEGATIVE_CASES) {
   await test(`ignore: ${label}`, () => {
     const leaks = findLeaks(sample)
     assert.deepEqual(leaks, [], `false positive on ${JSON.stringify(sample)}: ${JSON.stringify(leaks)}`)
+  })
+}
+
+for (const [label, sample] of CREDENTIAL_CASES) {
+  await test(`credential: ${label} is detected and redacted`, () => {
+    const leaks = findLeaks(sample)
+    assert.ok(
+      leaks.some((l) => l.rule.startsWith('credential-')),
+      `no credential rule fired for ${JSON.stringify(sample)}: ${JSON.stringify(leaks)}`,
+    )
+    const scrubbed = redactText(sample)
+    assert.ok(scrubbed.includes('<credential>'), `not redacted: ${JSON.stringify(scrubbed)}`)
+    assert.equal(findLeaks(scrubbed).filter((l) => l.rule.startsWith('credential-')).length, 0, 'redaction must be idempotent')
   })
 }
 
@@ -171,6 +221,33 @@ await test('scan: json is inspected after decoding', () => {
   const result = scanTree({ root: dir, mode: 'walk' })
   assert.equal(result.ok, false)
   assert.equal(result.leaks[0].rule !== undefined, true)
+})
+
+await test('scan: extensionless and .orig files are in scope', () => {
+  const dir = made('no-extension')
+  write(path.join(dir, '.gitignore'), `${WIN('Users', 'alice', 'a.txt')}\n`)
+  write(path.join(dir, 'package.json.orig'), `${POSIX('/tmp', 'leak', 'x')}\n`)
+  const result = scanTree({ root: dir, mode: 'walk' })
+  assert.equal(result.scanned, 2, JSON.stringify(result))
+  assert.deepEqual([...result.leaks.map((l) => l.file)].sort(), ['.gitignore', 'package.json.orig'])
+})
+
+await test('scan: binary content is skipped by NUL detection, not by suffix', () => {
+  const dir = made('binary')
+  write(path.join(dir, 'blob.data'), `text\u0000binary`)
+  write(path.join(dir, 'note.md'), 'clean\n')
+  const result = scanTree({ root: dir, mode: 'walk' })
+  assert.equal(result.ok, true)
+  assert.equal(result.scanned, 1)
+  assert.equal(result.skippedBinary, 1)
+})
+
+await test('scan: credential in a file is reported with its rule id', () => {
+  const dir = made('credential-file')
+  write(path.join(dir, 'note.txt'), `used ${FAKE_KEY} here\n`)
+  const result = scanTree({ root: dir, mode: 'walk' })
+  assert.equal(result.ok, false)
+  assert.ok(result.leaks.some((l) => l.rule.startsWith('credential-')), JSON.stringify(result.leaks))
 })
 
 // ---------------------------------------------------------------------------
@@ -443,6 +520,58 @@ await test('deps: corrupted lockfile fails with a code', () => {
   }
 })
 
+await test('deps: tree integrity drift fails', () => {
+  const treeFile = path.join(lockRoot, 'cc-sdk', 'tree.json')
+  const backup = fs.readFileSync(treeFile, 'utf8')
+  const tree = JSON.parse(backup)
+  tree.integrity = 'sha512-tampered'
+  fs.writeFileSync(treeFile, `${JSON.stringify(tree, null, 2)}\n`)
+  try {
+    assert.equal(setupCodes(), 'tree-integrity-mismatch')
+  } finally {
+    fs.writeFileSync(treeFile, backup)
+  }
+})
+
+await test('deps: tree resolved drift fails', () => {
+  const treeFile = path.join(lockRoot, 'cc-cli', 'tree.json')
+  const backup = fs.readFileSync(treeFile, 'utf8')
+  const tree = JSON.parse(backup)
+  tree.resolved = 'https://example.invalid/other.tgz'
+  fs.writeFileSync(treeFile, `${JSON.stringify(tree, null, 2)}\n`)
+  try {
+    assert.equal(setupCodes(), 'tree-resolved-mismatch')
+  } finally {
+    fs.writeFileSync(treeFile, backup)
+  }
+})
+
+await test('deps: lockfile integrity drift fails even with a cached staging tree', () => {
+  const lockFile = path.join(lockRoot, 'cc-sdk', 'package-lock.json')
+  const backup = fs.readFileSync(lockFile, 'utf8')
+  const lock = JSON.parse(backup)
+  lock.packages['node_modules/@mars-sea/dsh-commandcode-provider'].integrity = 'sha512-tampered'
+  fs.writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`)
+  try {
+    assert.equal(setupCodes(), 'tree-integrity-mismatch')
+  } finally {
+    fs.writeFileSync(lockFile, backup)
+  }
+})
+
+await test('deps: lockfile resolved drift fails', () => {
+  const lockFile = path.join(lockRoot, 'cc-cli', 'package-lock.json')
+  const backup = fs.readFileSync(lockFile, 'utf8')
+  const lock = JSON.parse(backup)
+  lock.packages['node_modules/@mars-sea/dsh-commandcode-provider'].resolved = 'https://example.invalid/x.tgz'
+  fs.writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`)
+  try {
+    assert.equal(setupCodes(), 'tree-resolved-mismatch')
+  } finally {
+    fs.writeFileSync(lockFile, backup)
+  }
+})
+
 process.env.CC_LOCK_ROOT = previous.lockRoot
 process.env.CC_DSH_HOME = previous.home
 
@@ -450,8 +579,7 @@ process.env.CC_DSH_HOME = previous.home
 // End to end: a failing gate produces exit 1 and a FAIL aggregate
 // ---------------------------------------------------------------------------
 
-await test('suite: dependency gate failure exits 1', () => {
-  const evidenceOut = path.join(depRoot, 'evidence')
+await test('suite: dependency gate failure exits 1', () => {  const evidenceOut = path.join(depRoot, 'evidence')
   const brokenLocks = path.join(depRoot, 'broken-locks')
   copyTree(LOCK_SOURCE, brokenLocks)
   const lockFile = path.join(brokenLocks, 'cc-sdk', 'tree.json')
@@ -475,6 +603,19 @@ await test('suite: dependency gate failure exits 1', () => {
   assert.equal(aggregate.total, 0, 'no probe should have run')
 })
 
+await test('evidence: a failing test run cannot overwrite the published result', () => {
+  const published = path.join(PROBE_ROOT, 'evidence', 'r14', 'tests.json')
+  const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
+  const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
+    cwd: PROBE_ROOT,
+    encoding: 'utf8',
+    env: { ...process.env, CC_TEST_FAIL_INJECT: '1' },
+  })
+  assert.equal(run.status, 1, `expected the injected failure to exit 1, got ${run.status}`)
+  const after = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
+  assert.equal(after, before, 'published tests.json was modified by a failing run')
+})
+
 // ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
@@ -489,11 +630,20 @@ const summary = {
   exitCode: failed.length ? 1 : 0,
   results,
 }
-fs.mkdirSync(path.join(PROBE_ROOT, 'evidence', 'r14'), { recursive: true })
-fs.writeFileSync(
-  path.join(PROBE_ROOT, 'evidence', 'r14', 'tests.json'),
-  `${JSON.stringify(redactResult(summary), null, 2)}\n`,
-)
+/**
+ * Where the machine-readable result goes.
+ *
+ * A test run that is deliberately broken (or simply fails) must not be able to
+ * overwrite the published evidence. By default the result lands in a throwaway
+ * directory; `tests/record-tests.mjs` points this at `evidence/r14/tests.json` and
+ * copies it there only when the run exits 0.
+ */
+const resultFile = process.env.CC_TEST_EVIDENCE_OUT
+  ? path.resolve(process.env.CC_TEST_EVIDENCE_OUT)
+  : path.join(TMP, 'tests.json')
+fs.mkdirSync(path.dirname(resultFile), { recursive: true })
+fs.writeFileSync(resultFile, `${JSON.stringify(redactResult(summary), null, 2)}\n`)
+out(`[tests] result: ${resultFile}\n`)
 
 function redactResult(value) {
   if (typeof value === 'string') return redactText(value)
@@ -506,5 +656,5 @@ function redactResult(value) {
   return value
 }
 
-process.stdout.write(`\n${summary.passed}/${summary.total} tests passed\n`)
+out(`\n${summary.passed}/${summary.total} tests passed\n`)
 process.exitCode = summary.exitCode

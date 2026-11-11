@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-11-11T02:29:25.435Z",
+  "purpose": "R1.4.1 gate-only regression; the six real model probes were not repeated.",
+  "modelProbesRun": false,
+  "lastFullProbeRun": "spike/dsh-probe/current-0.2.1/evidence/r14/summary.json",
+  "gates": {
+    "dependency": {
+      "status": "PASS",
+      "runtime": {
+        "status": "COMPATIBLE",
+        "dsh": "0.2.1-rc.3",
+        "range": ">=0.2.1-rc.2 <0.2.2-0"
+      },
+      "profiles": [
+        {
+          "name": "cc-sdk",
+          "version": "0.15.4",
+          "files": 16,
+          "lock": "profile-locks/cc-sdk/package-lock.json"
+        },
+        {
+          "name": "cc-cli",
+          "version": "0.15.4",
+          "files": 16,
+          "lock": "profile-locks/cc-cli/package-lock.json"
+        }
+      ],
+      "steps": [
+        {
+          "step": "profile.verified",
+          "profile": "cc-sdk"
+        },
+        {
+          "step": "lock.verified",
+          "profile": "cc-sdk",
+          "version": "0.15.4",
+          "integrity": "matches",
+          "resolved": "matches"
+        },
+        {
+          "step": "profile.verified",
+          "profile": "cc-cli"
+        },
+        {
+          "step": "lock.verified",
+          "profile": "cc-cli",
+          "version": "0.15.4",
+          "integrity": "matches",
+          "resolved": "matches"
+        }
+      ]
+    },
+    "leak": {
+      "status": "PASS",
+      "scanned": 173,
+      "skippedBinary": 0,
+      "filesInPublishSet": 173,
+      "leaks": [],
+      "errors": []
+    }
+  },
+  "overall": "PASS"
+}
