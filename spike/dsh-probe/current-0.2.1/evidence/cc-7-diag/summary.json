@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T03:58:01.736Z",
+  "generatedAt": "2026-11-11T03:59:47.417Z",
   "modelCallsMade": 0,
   "replay": {
     "mode": "replay",
@@ -23,7 +23,7 @@
       "name": "deepseek-harness-sdk-runtime",
       "version": "0.0.1"
     },
-    "connectionMs": 2918,
+    "connectionMs": 3391,
     "sessionCreated": false,
     "statuses": [],
     "eventCount": 0,

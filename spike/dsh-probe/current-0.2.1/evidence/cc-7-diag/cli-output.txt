@@ -29,10 +29,10 @@ model               deepseek/deepseek-v4.1-flash
 DSH_HOME            <repo>\spike\dsh-probe\current-0.2.1\dsh-home
 workspace           <repo>\spike\dsh-probe\current-0.2.1\workspace
 stale lock          none
-connected           yes (1806 ms)
+connected           yes (2150 ms)
 server              deepseek-harness-sdk-runtime 0.0.1
 session             未创建（live 模式不发 prompt，因此没有 session）
 status events       none observed (no turn was run)
 session events      0
 teardown exit code  0
-process after close PROCESS_ABSENT (1054 ms)
+process after close PROCESS_ABSENT (1187 ms)

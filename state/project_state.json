@@ -105,7 +105,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T03:58:55.457Z",
+  "updated_at": "2026-11-11T04:00:06.123Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -790,12 +790,12 @@
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
     "convergence_round": "r15",
-    "updated_at": "2026-11-11T03:56:10.024Z",
+    "updated_at": "2026-11-11T04:00:06.123Z",
     "commit_provenance": {
       "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
       "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
       "convergence_commit": "c5cb28d",
-      "note": "6943618 是外部评审固定的提交（本轮工作的起点）；6230340 是它之前那次「记录实现 SHA」的元数据提交，两者不是同一个提交，此前文档混用造成歧义，此处显式区分。convergence_commit 是本轮产出提交，推送后由 github.pushed_commit 记录。"
+      "note": "6943618 是外部评审固定的提交（本轮起点）；6230340 是它之前那次「记录实现 SHA」的元数据提交，两者不是同一个提交，此前文档混用造成歧义，此处显式区分。c5cb28d 是本轮的**内容提交**（代码、证据、文档）；记录 SHA 的元数据提交在其之后，因此**分支 HEAD 才是最终交付点**，state 内的 SHA 只作溯源用。"
     }
   }
 }

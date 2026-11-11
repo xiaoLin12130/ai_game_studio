@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T03:57:51.664Z",
+  "generatedAt": "2026-11-11T03:59:35.821Z",
   "node": "v24.19.0",
   "total": 135,
   "passed": 135,
@@ -34,7 +34,7 @@
     {
       "name": "detect: windows non-ascii",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "detect: windows forward",
@@ -79,7 +79,7 @@
     {
       "name": "detect: repository root",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "detect: user home",
@@ -184,7 +184,7 @@
     {
       "name": "credential: aws key is detected and redacted",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "credential: bearer token is detected and redacted",
@@ -214,7 +214,7 @@
     {
       "name": "scan: clean tree passes",
       "ok": true,
-      "ms": 1
+      "ms": 2
     },
     {
       "name": "scan: empty scope is an error, not a pass",
@@ -224,7 +224,7 @@
     {
       "name": "scan: unreadable file is an error, not a pass",
       "ok": true,
-      "ms": 97
+      "ms": 101
     },
     {
       "name": "scan: json is inspected after decoding",
@@ -234,7 +234,7 @@
     {
       "name": "scan: extensionless and .orig files are in scope",
       "ok": true,
-      "ms": 1
+      "ms": 2
     },
     {
       "name": "scan: binary content is skipped by NUL detection, not by suffix",
@@ -244,27 +244,27 @@
     {
       "name": "scan: credential in a file is reported with its rule id",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "cli: leak exits 1",
       "ok": true,
-      "ms": 67
+      "ms": 70
     },
     {
       "name": "cli: clean exits 0",
       "ok": true,
-      "ms": 68
+      "ms": 74
     },
     {
       "name": "cli: empty root exits 1",
       "ok": true,
-      "ms": 65
+      "ms": 70
     },
     {
       "name": "classify: quota on stderr",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "classify: quota on stdout",
@@ -394,12 +394,12 @@
     {
       "name": "state: a deferred item without a target phase fails",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: a deferred item claimed as CONFIRMED fails",
       "ok": true,
-      "ms": 3
+      "ms": 2
     },
     {
       "name": "state: an UNKNOWN without a verification condition fails",
@@ -414,7 +414,7 @@
     {
       "name": "state: HY4 direct marked as blocking fails",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: deleting a historical round record fails",
@@ -439,17 +439,17 @@
     {
       "name": "gates: exactly the ten PHASE 00 scope ids are required",
       "ok": true,
-      "ms": 2
+      "ms": 1
     },
     {
       "name": "state: swapping a real gate for an invented one keeps the count at ten and still fails",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: a PASS verdict with a non-passing gate is rejected",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: a PASS verdict with non-empty blocking items is rejected",
@@ -464,17 +464,17 @@
     {
       "name": "state: an extra invented gate on top of the real ten fails",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: four wrong-named documents that all say phase_00_final fail",
       "ok": true,
-      "ms": 3
+      "ms": 2
     },
     {
       "name": "state: dropping any one required pointer document fails and names it",
       "ok": true,
-      "ms": 24
+      "ms": 25
     },
     {
       "name": "state: an empty pointer document fails",
@@ -484,7 +484,7 @@
     {
       "name": "evidence: a missing file fails",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "evidence: an empty file fails",
@@ -529,7 +529,7 @@
     {
       "name": "state: a gate whose evidence is empty fails",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: a gate whose evidence path escapes the repository fails",
@@ -544,7 +544,7 @@
     {
       "name": "evidence: gate 6 must actually carry the exit code it claims",
       "ok": true,
-      "ms": 2
+      "ms": 1
     },
     {
       "name": "evidence: the old cc-3 evidence cannot satisfy gate 6 any more",
@@ -554,12 +554,12 @@
     {
       "name": "evidence: a gate without a content rule is unaffected by content rules",
       "ok": true,
-      "ms": 2
+      "ms": 3
     },
     {
       "name": "state: the phase definition output files must exist",
       "ok": true,
-      "ms": 16
+      "ms": 17
     },
     {
       "name": "state: a missing state file is an error, not an empty pass",
@@ -569,22 +569,22 @@
     {
       "name": "exit code: the documented phrase is parsed",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "exit code: a message without one yields null, never a guess",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "output: no direct stream writes outside safe-output.mjs",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "range: required dsh line is accepted",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "range: older runtime is rejected",
@@ -604,17 +604,17 @@
     {
       "name": "range: prerelease ordering",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "deps: fresh home builds both profiles",
       "ok": true,
-      "ms": 38
+      "ms": 39
     },
     {
       "name": "deps: second run is stable and repairs nothing",
       "ok": true,
-      "ms": 11
+      "ms": 13
     },
     {
       "name": "deps: tampered install is repaired, not accepted",
@@ -624,7 +624,7 @@
     {
       "name": "deps: tampered profile manifest is repaired",
       "ok": true,
-      "ms": 12
+      "ms": 10
     },
     {
       "name": "deps: missing lockfile fails",
@@ -634,17 +634,17 @@
     {
       "name": "deps: lockfile version drift fails",
       "ok": true,
-      "ms": 6
+      "ms": 9
     },
     {
       "name": "deps: lockfile manifest drift fails",
       "ok": true,
-      "ms": 1
+      "ms": 2
     },
     {
       "name": "deps: corrupted lockfile fails with a code",
       "ok": true,
-      "ms": 2
+      "ms": 1
     },
     {
       "name": "deps: tree integrity drift fails",
@@ -669,17 +669,17 @@
     {
       "name": "suite: dependency gate failure exits 1",
       "ok": true,
-      "ms": 215
+      "ms": 242
     },
     {
       "name": "suite: broken project state aborts before any probe (real exit code)",
       "ok": true,
-      "ms": 203
+      "ms": 258
     },
     {
       "name": "evidence: a failing test run cannot overwrite the published result",
       "ok": true,
-      "ms": 136
+      "ms": 166
     }
   ]
 }
