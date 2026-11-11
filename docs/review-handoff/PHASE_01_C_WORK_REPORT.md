@@ -84,6 +84,12 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 
 关于上一轮"满套件不稳定"：本轮定位到**不是**模型或限流问题，而是我自己的断言取样太早（任务刚到 SUCCEEDED 就检查 runtime 是否已回收，而 `release()` 在下一拍才关完）。改成等待回收后，满套件连续通过。
 
+## 7.1 一个必须记录的操作
+
+跑 PHASE 01-A / 01-B 回归时，`scripts/smoke.mjs` 与 `scripts/mcp-probe.mjs` 会把结果写回它们自己的证据目录，从而**覆写了 6 个历史证据文件**（`evidence/phase-01-a/smoke/{ready,quit-during-probe}/*`、`evidence/phase-01-b/mcp/handshake.json`）。
+
+已在提交前用 `git checkout 908c2fb -- evidence/phase-01-a evidence/phase-01-b` 全部还原，还原后与 PHASE 01-B 关闭提交的 diff 为空。本阶段的回归结果以 `evidence/phase-01-c/regression/*.txt` 的原始输出为准，不依赖被覆盖的历史文件。
+
 ## 8. 证据
 
 `evidence/phase-01-c/README.md` 索引，总表 `verification.json`。所有原始输出是 `.txt`——`*.log` 被 `.gitignore` 忽略，这个项目已经因此丢过一次证据。

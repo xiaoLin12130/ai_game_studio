@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T11:22:32.268Z",
+  "generatedAt": "2026-11-11T06:59:09.824Z",
   "scenario": "quit-during-probe",
   "expected": null,
   "electronVersion": "44.7.0",
-  "wallClockMs": 3510,
+  "wallClockMs": 3415,
   "exitCode": 0,
   "stdoutTail": "\r\n[smoke] quitting during probe, state=CHECKING\n",
-  "stderrTail": "Error occurred in handler for 'studio:tasks:list': Error: database is not open\n    at TaskStore.listTasks (<repo>\\apps\\studio\\dist\\main\\tasks\\store.js:225:30)\n    at TaskService.list (<repo>\\apps\\studio\\dist\\main\\tasks\\service.js:154:27)\n    at <repo>\\apps\\studio\\dist\\main\\ipc.js:42:76\n    at Session.<anonymous> (node:electron/js2c/browser_init:1:119988)\n    at Session.emit (node:events:514:28) {\n  code: 'ERR_INVALID_STATE'\n}\n",
+  "stderrTail": "",
   "smoke": {
-    "generatedAt": "2026-11-11T11:22:28.125Z",
+    "generatedAt": "2026-11-11T06:59:05.770Z",
     "mode": "quit-during-probe",
     "stateAtQuit": {
       "status": "CHECKING",
@@ -26,11 +26,11 @@
       "configRecovered": false,
       "configRecoveryNote": null
     },
-    "elapsedMs": 309
+    "elapsedMs": 304
   },
   "shutdown": [
     {
-      "ts": "2026-11-11T11:22:28.131Z",
+      "ts": "2026-11-11T06:59:05.772Z",
       "level": "warn",
       "event": "dsh.shutdown",
       "reason": "app-quit",
@@ -38,7 +38,7 @@
       "stopping": true
     },
     {
-      "ts": "2026-11-11T11:22:31.037Z",
+      "ts": "2026-11-11T06:59:08.601Z",
       "level": "info",
       "event": "dsh.shutdown.result",
       "reason": "app-quit",
@@ -50,15 +50,15 @@
       "closeError": null,
       "processCheckStatus": "ABSENT",
       "processAbsent": true,
-      "runtimePid": 26568,
+      "runtimePid": 29116,
       "identitySource": "parent-and-bin",
       "remainingPids": [],
       "forcedTerminationAttempted": false,
       "forcedTerminationSucceeded": false,
       "exitCode": 0,
       "error": null,
-      "teardownDurationMs": 2905,
-      "durationMs": 2906
+      "teardownDurationMs": 2828,
+      "durationMs": 2829
     }
   ],
   "leftoversAfterExit": [],
