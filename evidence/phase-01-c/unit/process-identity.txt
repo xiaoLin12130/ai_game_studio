@@ -1,0 +1,16 @@
+✔ a live runtime whose command line has no DSH home is still reported PRESENT (1.7882ms)
+✔ the home string never appears in a running runtime command line (0.1604ms)
+✔ an exited runtime is ABSENT (0.1321ms)
+✔ a reused pid is ABSENT, and says so (0.2077ms)
+✔ a failed query is FAILED, never ABSENT (0.1487ms)
+✔ an incomparable creation time is UNKNOWN, never ABSENT (0.1479ms)
+✔ capture refuses to pick between two candidates in the same parent (0.2994ms)
+✔ capture pins exactly one runtime and keeps its creation time (0.1664ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 87.5164

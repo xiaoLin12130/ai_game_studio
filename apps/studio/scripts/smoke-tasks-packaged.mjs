@@ -61,6 +61,7 @@ async function run(mode, userData, timeoutMs = 420000) {
     )
   }
   const started = Date.now()
+  let capturePromise = null
   const child = spawn(exe, [], {
     env: {
       ...cleanEnv,
@@ -71,6 +72,7 @@ async function run(mode, userData, timeoutMs = 420000) {
     },
     stdio: 'ignore',
   })
+  if (child.pid) capturePromise = captureIdentity(child.pid)
   const exit = await new Promise((resolve) => {
     const timer = setTimeout(() => resolve({ timedOut: true, code: null }), timeoutMs)
     child.on('exit', (code) => {
@@ -78,29 +80,53 @@ async function run(mode, userData, timeoutMs = 420000) {
       resolve({ timedOut: false, code })
     })
   })
+  const capture = capturePromise ? await capturePromise.catch((error) => ({ status: 'failed', error: String(error?.message ?? error) })) : null
+  const identity = capture?.identity ?? null
   const smokePath = path.join(outDir, 'smoke.json')
   const smoke = fs.existsSync(smokePath) ? JSON.parse(fs.readFileSync(smokePath, 'utf8')) : null
   const logPath = path.join(userData, 'logs', 'studio.log')
   const log = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8').split(/\r?\n/).filter(Boolean).slice(-40) : []
-  return { mode, wallMs: Date.now() - started, exitCode: exit.timedOut ? null : exit.code, timedOut: exit.timedOut, smoke, logTail: log }
+  return {
+    mode,
+    wallMs: Date.now() - started,
+    exitCode: exit.timedOut ? null : exit.code,
+    timedOut: exit.timedOut,
+    smoke,
+    logTail: log,
+    runtimeIdentity: identity,
+    captureStatus: capture?.status ?? 'none',
+    captureError: capture?.error ?? null,
+  }
 }
 
 const require = createRequire(import.meta.url)
+const { createProcessTable, captureRuntimeIdentity, verifyRuntimeIdentity } = require(
+  path.join(REPO, 'apps', 'studio', 'dist', 'main', 'dsh', 'processes.js'),
+)
 
 /**
- * Look for processes still holding this run's DSH home — the runtime, not the GUI.
+ * Capture the runtime's OS identity while it is alive.
  *
- * Reuses the process table that PHASE 01-A already validated, which excludes its own query
- * process by sentinel. Returns { status, pids } so "could not check" stays distinct from
- * "nothing found".
+ * The DSH home is an environment variable, so it is not in the runtime's command line; a
+ * home-based matcher reports ABSENT while the process runs. Identity is captured the way
+ * PHASE 01-A established: a child of the app process that runs the dsh CLI, pinned with its
+ * creation time.
  */
-async function runtimeProcesses(dshHome) {
-  const { createProcessTable } = require(path.join(REPO, 'apps', 'studio', 'dist', 'main', 'dsh', 'processes.js'))
+async function captureIdentity(appPid, timeoutMs = 40000) {
   const table = createProcessTable()
-  const listing = await table.list(8000)
-  if (!listing.ok) return { status: 'FAILED', pids: [], error: listing.error }
-  const pids = listing.processes.filter((proc) => String(proc.commandLine ?? '').includes(dshHome)).map((proc) => proc.pid)
-  return { status: pids.length > 0 ? 'PRESENT' : 'ABSENT', pids, error: null }
+  const capture = await captureRuntimeIdentity(table, {
+    parentPid: appPid,
+    binMarker: path.join('@deepseek-ai', 'dsh', 'lib', 'bin.js'),
+    deadline: Date.now() + timeoutMs,
+  })
+  return capture
+}
+
+/** Ask the OS whether that identity is still alive. Never turns doubt into ABSENT. */
+async function checkIdentity(identity) {
+  if (!identity) return { status: 'UNKNOWN', pid: null, creationMs: null, observedCreationMs: null, reason: 'no identity was captured' }
+  const table = createProcessTable()
+  return verifyRuntimeIdentity(table, identity, 8000)
 }
 
 const disposeFailed = (logTail) => (logTail ?? []).some((line) => line.includes('task.service.dispose.failed') || line.includes('runtime.close.failed'))
@@ -120,12 +146,13 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-A-'))
   const result = await run('task-run', userData)
   scenarios.A = result
-  scenarios.A.dshHome = path.join(userData, 'dsh-home')
-  scenarios.A.runtimeCheck = await runtimeProcesses(scenarios.A.dshHome)
+  scenarios.A.identity = result.runtimeIdentity
+  scenarios.A.runtimeCheck = await checkIdentity(result.runtimeIdentity)
   scenarios.A.checks = {
     exitZero: result.exitCode === 0,
     disposeHadNoFailure: !disposeFailed(result.logTail),
-    // A failed check is UNKNOWN, never "gone".
+    runtimeIdentityCaptured: Boolean(result.runtimeIdentity),
+    // A failed or unknown check is never "gone".
     runtimeProcessGone: scenarios.A.runtimeCheck.status === 'ABSENT',
     runtimeCheckStatus: scenarios.A.runtimeCheck.status,
     producedSmoke: Boolean(result.smoke),
@@ -143,11 +170,12 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-B-'))
   const result = await run('task-interrupt-resume', userData)
   scenarios.B = result
-  scenarios.B.dshHome = path.join(userData, 'dsh-home')
-  scenarios.B.runtimeCheck = await runtimeProcesses(scenarios.B.dshHome)
+  scenarios.B.identity = result.runtimeIdentity
+  scenarios.B.runtimeCheck = await checkIdentity(result.runtimeIdentity)
   scenarios.B.checks = {
     exitZero: result.exitCode === 0,
     disposeHadNoFailure: !disposeFailed(result.logTail),
+    runtimeIdentityCaptured: Boolean(result.runtimeIdentity),
     runtimeProcessGone: scenarios.B.runtimeCheck.status === 'ABSENT',
     runtimeCheckStatus: scenarios.B.runtimeCheck.status,
     producedSmoke: Boolean(result.smoke),
@@ -165,13 +193,15 @@ fs.mkdirSync(OUT, { recursive: true })
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-pkg-C-'))
   const crash = await run('task-start-and-crash', userData, 300000)
   const afterCrash = lingering()
-  const orphanRuntimes = await runtimeProcesses(path.join(userData, 'dsh-home'))
+  // Checked against the identity captured while the runtime was alive, immediately after
+  // the crash — before any recovery could clean it up.
+  const orphanCheck = await checkIdentity(crash.runtimeIdentity)
   for (const pid of afterCrash) {
     try { spawnSync('taskkill', ['/F', '/PID', pid], { windowsHide: true, timeout: 15000 }) } catch { /* gone */ }
   }
   const recover = await run('task-recover', userData)
-  const runtimeCheckAfter = await runtimeProcesses(path.join(userData, 'dsh-home'))
-  scenarios.C = { crash, recover, orphanPidsAfterCrash: afterCrash, orphanRuntimeCheck: orphanRuntimes }
+  const runtimeCheckAfter = await checkIdentity(recover.runtimeIdentity)
+  scenarios.C = { crash, recover, orphanPidsAfterCrash: afterCrash, orphanRuntimeCheck: orphanCheck, capturedIdentity: crash.runtimeIdentity }
   scenarios.C.checks = {
     crashedAsExpected: crash.exitCode === 9,
     crashLeftTaskRunning: crash.smoke?.isRunning === true,
@@ -184,7 +214,9 @@ fs.mkdirSync(OUT, { recursive: true })
     disposeHadNoFailure: !disposeFailed(recover.logTail),
     runtimeProcessGone: runtimeCheckAfter.status === 'ABSENT',
     runtimeCheckStatus: runtimeCheckAfter.status,
-    crashLeftNoOrphan: orphanRuntimes.status === 'ABSENT',
+    crashCapturedIdentity: Boolean(crash.runtimeIdentity),
+    crashOrphanStatus: orphanCheck.status,
+    crashLeftNoOrphan: orphanCheck.status === 'ABSENT',
   }
 }
 

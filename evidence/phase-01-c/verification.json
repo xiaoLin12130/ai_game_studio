@@ -1,10 +1,11 @@
 {
-  "generatedAt": "2026-11-11T12:08:50.318Z",
+  "generatedAt": "2026-11-11T12:56:30.881Z",
   "phase": "PHASE_01_C",
+  "round": "R2",
   "branch": "phase/01-c-session-task-lifecycle",
+  "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "reviewBaseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
-  "note": "Each entry is a command that was actually run; counts are parsed from the artefact beside it. Artefacts are listed by path — no globs or placeholders.",
+  "note": "Only commands actually run in this round. Counts parsed from the artefact next to each entry; artefacts listed by path.",
   "matrix": [
     {
       "name": "typescript",
@@ -19,8 +20,8 @@
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "tests": 90,
-        "pass": 90,
+        "tests": 101,
+        "pass": 101,
         "fail": 0
       },
       "artifact": "evidence/phase-01-c/unit/full-suite-1.txt"
@@ -31,8 +32,8 @@
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "tests": 90,
-        "pass": 90,
+        "tests": 101,
+        "pass": 101,
         "fail": 0
       },
       "artifact": "evidence/phase-01-c/unit/full-suite-2.txt"
@@ -43,11 +44,25 @@
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "tests": 6,
-        "pass": 6,
+        "tests": 9,
+        "pass": 9,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
+      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt",
+      "note": "关闭竞态 6 项 + 启动失败清理 3 项"
+    },
+    {
+      "name": "process-identity",
+      "command": "node --test test/process-identity.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
+      "note": "PRESENT/ABSENT/FAILED/UNKNOWN 的全部分支"
     },
     {
       "name": "real-dsh-task-integration",
@@ -62,67 +77,16 @@
       "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
     },
     {
-      "name": "real-dsh-isolated-run-1",
-      "command": "node --test test/task-integration.test.js",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 2,
-        "pass": 2,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-1.txt"
-    },
-    {
-      "name": "real-dsh-isolated-run-2",
-      "command": "node --test test/task-integration.test.js",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 2,
-        "pass": 2,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-2.txt"
-    },
-    {
-      "name": "real-dsh-isolated-run-3",
-      "command": "node --test test/task-integration.test.js",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 2,
-        "pass": 2,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/real-dsh/isolated-3.txt"
-    },
-    {
       "name": "packaged-task-scenarios",
       "command": "node scripts/smoke-tasks-packaged.mjs <installed app>",
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "checks": 34,
+        "checks": 38,
         "failed": 0
       },
-      "artifact": "evidence/phase-01-c/packaged/summary.json"
-    },
-    {
-      "name": "packaged-mcp-tool-call",
-      "command": "node scripts/mcp-packaged.mjs <installed app> --prompt",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/packaged/mcp-tool-call.json",
-      "note": "PHASE 01-B 的安装版 MCP 真实工具调用（本轮补跑）"
-    },
-    {
-      "name": "phase00-suite",
-      "command": "node tests/run-tests.mjs",
-      "cwd": "spike/dsh-probe/current-0.2.1",
-      "exitCode": 0,
-      "counts": null,
-      "artifact": "evidence/phase-01-c/regression/phase00-suite.txt"
+      "artifact": "evidence/phase-01-c/packaged/summary.json",
+      "note": "A/B/C 均使用捕获的 (pid, creationMs) 身份复核"
     },
     {
       "name": "phase00-gates",
@@ -132,39 +96,22 @@
       "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
     },
     {
-      "name": "phase01a-smoke-failure",
-      "command": "node scripts/smoke.mjs failure",
-      "cwd": "apps/studio",
+      "name": "phase00-suite",
+      "command": "node tests/run-tests.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
       "exitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01a-failure.txt",
-      "note": "本轮补齐的缺失回归"
-    },
-    {
-      "name": "phase01a-smoke-ready",
-      "command": "node scripts/smoke.mjs ready",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01a-ready.txt"
-    },
-    {
-      "name": "phase01a-smoke-quit-during-probe",
-      "command": "node scripts/smoke.mjs quit-during-probe",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01a-quit.txt"
-    },
-    {
-      "name": "phase01b-mcp-handshake",
-      "command": "node scripts/mcp-probe.mjs",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase01b-mcp.txt"
+      "counts": {
+        "pass": 166,
+        "total": 166
+      },
+      "artifact": "evidence/phase-01-c/regression/phase00-suite.txt"
     }
   ],
   "packagedScenarios": {
     "checks": {
       "A.exitZero": true,
       "A.disposeHadNoFailure": true,
+      "A.runtimeIdentityCaptured": true,
       "A.runtimeProcessGone": true,
       "A.runtimeCheckStatus": "ABSENT",
       "A.producedSmoke": true,
@@ -176,6 +123,7 @@
       "A.noLingeringApp": true,
       "B.exitZero": true,
       "B.disposeHadNoFailure": true,
+      "B.runtimeIdentityCaptured": true,
       "B.runtimeProcessGone": true,
       "B.runtimeCheckStatus": "ABSENT",
       "B.producedSmoke": true,
@@ -196,20 +144,31 @@
       "C.disposeHadNoFailure": true,
       "C.runtimeProcessGone": true,
       "C.runtimeCheckStatus": "ABSENT",
+      "C.crashCapturedIdentity": true,
+      "C.crashOrphanStatus": "ABSENT",
       "C.crashLeftNoOrphan": true
     },
     "failed": []
   },
+  "invalidated": [
+    {
+      "id": "INVALID-1",
+      "what": "上一轮的 A/B/C 进程检查使用了 proc.commandLine.includes(dshHome)",
+      "why": "DSH home 通过环境变量传递，运行中的 Runtime 命令行不含它；该判据在 Runtime 仍然运行时也会返回 ABSENT，属于错误的 PASS 依据",
+      "evidence": "evidence/phase-01-c/packaged/summary.json（本轮已用身份检查重写）",
+      "status": "INVALID — 不作为通过依据"
+    }
+  ],
   "notRun": [
     {
       "id": "NOT_RUN-1",
-      "item": "静态吊销检查（证书/OEM）",
-      "reason": "本阶段未引入签名或 OEM 分发"
+      "item": "静态吊销检查",
+      "reason": "未引入签名或 OEM 分发"
     },
     {
       "id": "NOT_RUN-2",
-      "item": "依赖审计（npm audit）",
-      "reason": "本轮未改动依赖树；未执行，记为 NOT_RUN 而非 PASS"
+      "item": "npm audit 依赖审计",
+      "reason": "本轮未改动依赖树"
     }
   ]
 }

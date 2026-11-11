@@ -1,27 +1,32 @@
-# evidence/phase-01-c — 索引
+# evidence/phase-01-c — 索引（R2）
 
-所有原始日志都是 `.txt`（`*.log` 被 `.gitignore` 忽略，本项目已因此丢过一次证据），已脱敏为 `<abs-path>`。
+所有原始日志是 `.txt`（`*.log` 被 `.gitignore` 忽略），已脱敏为 `<abs-path>`。
 
 | 路径 | 内容 | 结果 |
 |---|---|---|
 | `unit/tsc.txt` | TypeScript 检查 | 退出码 0 |
-| `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | **90/90，0 失败**（各一次） |
-| `unit/supervisor-race.txt` | Runtime 关闭竞态测试 | **6/6** |
+| `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | **101/101，0 失败**（各一次） |
+| `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **9/9** |
+| `unit/process-identity.txt` | 进程身份判定四态 | **8/8** |
 | `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | 2/2 |
-| `real-dsh/isolated-1/2/3.txt` | 隔离连续三次 | 各 2/2，退出码 0 |
-| `packaged/summary.json` | **安装版场景 A/B/C** | 34/34 断言 |
-| `packaged/mcp-tool-call.json` | **安装版 MCP 真实工具调用**（本轮补跑） | `toolCalled: true` |
-| `regression/phase00-suite.txt` | PHASE 00 套件 | 166/166 |
-| `regression/phase00-gates.json` | PHASE 00 三道门禁 | PASS，0 泄漏 |
-| `regression/phase01a-failure.txt` | **PHASE 01-A failure 冒烟**（本轮补跑） | 退出码 0 |
-| `regression/phase01a-ready.txt` / `phase01a-quit.txt` | PHASE 01-A 其余冒烟 | 退出码 0 |
+| `real-dsh/isolated-1/2/3.txt` | 隔离连续三次 | 各 2/2 |
+| `packaged/summary.json` | **安装版 A/B/C（R2，身份复核）** | **38/38** |
+| `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | `toolCalled: true` |
+| `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | 166/166，PASS，0 泄漏 |
+| `regression/phase01a-*.txt` | PHASE 01-A 三个冒烟 | 退出码 0 |
 | `regression/phase01b-mcp.txt` | PHASE 01-B MCP 握手（开发环境） | 退出码 0 |
-| `verification.json` | 上述命令的总表（逐条列出文件路径，无通配符） | — |
+| `verification.json` | 本轮真实执行的命令总表 | — |
 
-## 安装版场景（`packaged/summary.json`）
+## 安装版进程检查（R2 的关键改动）
 
-- **A 正常完成**：真实模型回合 → 验收 SUCCEEDED → `disposeHadNoFailure` → 进程表 `ABSENT` → 无残留 GUI。
-- **B 中断恢复**：INTERRUPTING → INTERRUPTED → resume 复用原 session → 新 attempt → 终态 → `disposeHadNoFailure` → 进程表 `ABSENT`。
-- **C 崩溃恢复**：运行中 `app.exit(9)` → 崩溃后进程表检查（`crashLeftNoOrphan`）→ 重启识别 INTERRUPTED → 恢复 → 新 attempt → 干净退出。
+**不再**使用 DSH home 字符串匹配：home 通过环境变量传递，运行中的 Runtime 命令行里没有它，
+用 home 匹配会在进程活着时返回 ABSENT——上一轮的"无残留"结论因此被判定 **INVALID**。
 
-进程检查复用 PHASE 01-A 已验证的进程表（`createProcessTable`），按 DSH home 认领，查询失败记为 `FAILED` 而不是"没找到即没有"。
+现在用 PHASE 01-A 的实例身份：
+
+1. Runtime 运行时用 `captureRuntimeIdentity` 捕获「父进程 + dsh CLI + `creationMs`」；
+2. 退出（或崩溃）后用 `verifyRuntimeIdentity` 复核同一个 `(pid, creationMs)`；
+3. 判定四态 `PRESENT` / `ABSENT` / `FAILED` / `UNKNOWN`，**只有 ABSENT 才算没有残留**；
+4. 查询失败、创建时间无法比较、捕获歧义一律不算成功。
+
+场景 C 在 `app.exit(9)` 之后**立即**用崩溃前捕获的身份检查（`crashOrphanStatus`），再启动恢复。

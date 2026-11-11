@@ -220,19 +220,21 @@ export class RuntimeSupervisor extends EventEmitter {
       this.#options.logger.info('runtime.ready', { runtimeId: id, isolation })
       return handle
     } catch (error) {
+      const startError = String((error as Error)?.message ?? error)
       handle.state = 'failed'
-      handle.lastError = String((error as Error)?.message ?? error)
-      this.#options.logger.error('runtime.start.failed', { runtimeId: id, error: handle.lastError })
-      // A failed start must not leave a child behind; the close path is the same one used
-      // for a normal shutdown, so there is no second cleanup mechanism to keep in sync.
-      try {
-        await Promise.race([client.close(), sleep(20000)])
-      } catch {
-        /* recorded above */
-      }
-      this.#runtimes.delete(id)
-      this.#busy.delete(id)
-      throw new RuntimeStartError(id, handle.lastError)
+      handle.lastError = startError
+      // A failed handshake does not prove the child exited, so cleanup goes through the
+      // same close path as a normal shutdown. If that close also fails, the runtime stays
+      // in the map and shutdownAll reports it: the start error is kept as the cause and the
+      // close error as a separate fact.
+      const closed = await this.#close(handle, 'start-failed')
+      this.#options.logger.error('runtime.start.failed', {
+        runtimeId: id,
+        startError,
+        closeOk: closed.ok,
+        closeError: closed.ok ? null : closed.error,
+      })
+      throw new RuntimeStartError(id, closed.ok ? startError : startError + ' (cleanup failed: ' + closed.error + ')')
     }
   }
 
@@ -298,10 +300,13 @@ export class RuntimeSupervisor extends EventEmitter {
   async #performClose(runtime: RuntimeHandle, reason: string): Promise<CloseResult> {
     runtime.state = 'closing'
     const bound = this.#options.closeTimeoutMs ?? 25000
+    let closeTimer: NodeJS.Timeout | undefined
     try {
       const outcome = await Promise.race([
         runtime.client.close().then(() => 'closed' as const),
-        sleep(bound).then(() => 'timeout' as const),
+        new Promise<'timeout'>((resolve) => {
+          closeTimer = setTimeout(() => resolve('timeout'), bound)
+        }),
       ])
       if (outcome === 'timeout') {
         throw new Error('runtime close exceeded ' + bound + 'ms')
@@ -324,6 +329,8 @@ export class RuntimeSupervisor extends EventEmitter {
       // Deliberately kept in the map: a runtime we could not close has to stay visible and
       // count as failed at shutdown, not disappear and be counted as handled.
       return { ok: false, error: message, timedOut: /exceeded/.test(message) }
+    } finally {
+      clearTimeout(closeTimer)
     }
   }
 

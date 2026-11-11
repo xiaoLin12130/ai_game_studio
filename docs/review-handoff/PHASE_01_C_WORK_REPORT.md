@@ -72,7 +72,7 @@
 
 ## 6. 安装版验证（本轮核心）
 
-真实安装包（NSIS），静默安装后运行三个场景，**34/34 断言通过**（`evidence/phase-01-c/packaged/summary.json`）。每个场景都额外检查 §disposeHadNoFailure§（日志无 §task.service.dispose.failed§ / §runtime.close.failed§）与 §runtimeProcessGone§（按 DSH home 查进程表，状态必须为 §ABSENT§）：
+真实安装包（NSIS），静默安装后运行三个场景，**38/38 断言通过**（`evidence/phase-01-c/packaged/summary.json`）。每个场景都额外检查 §disposeHadNoFailure§（日志无 §task.service.dispose.failed§ / §runtime.close.failed§）与 §runtimeProcessGone§（按 DSH home 查进程表，状态必须为 §ABSENT§）：
 
 | 场景 | 内容 | 结果 |
 |---|---|---|
@@ -87,8 +87,9 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 | 命令 | 退出码 | 结果 | 证据 |
 |---|---|---|---|
 | `tsc -p tsconfig.json` | 0 | — | `unit/tsc.txt` |
-| `node --test`（应用全量，连续两次） | 0 / 0 | **90/90**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
-| `node --test test/runtime-supervisor.test.js` | 0 | **6/6**（关闭竞态） | `unit/supervisor-race.txt` |
+| `node --test`（应用全量，连续两次） | 0 / 0 | **101/101**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
+| `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
+| `node --test test/process-identity.test.js` | 0 | **8/8**（PRESENT/ABSENT/FAILED/UNKNOWN） | `unit/process-identity.txt` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |

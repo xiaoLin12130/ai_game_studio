@@ -370,6 +370,69 @@ export async function captureRuntimeIdentity(
   }
 }
 
+export type IdentityVerdict = 'PRESENT' | 'ABSENT' | 'FAILED' | 'UNKNOWN'
+
+export interface IdentityCheck {
+  status: IdentityVerdict
+  pid: number
+  /** The creation time pinned at capture, if it was available. */
+  creationMs: number | null
+  /** What the OS reports now. */
+  observedCreationMs: number | null
+  reason: string
+}
+
+/**
+ * Ask the OS whether the runtime we captured is still the process behind that PID.
+ *
+ * The DSH home cannot be used for this: it is passed as an environment variable, so a live
+ * runtime's command line does not contain it and a home-based matcher reports ABSENT while
+ * the process is running. Identity is the (pid, creation time) pair captured from the parent
+ * relationship, and anything we cannot confirm is reported as unknown — never as gone.
+ */
+export async function verifyRuntimeIdentity(
+  table: ProcessTable,
+  identity: { pid: number; creationMs: number | null },
+  boundMs = MIN_QUERY_MS * 2,
+): Promise<IdentityCheck> {
+  const base: IdentityCheck = {
+    status: 'FAILED',
+    pid: identity.pid,
+    creationMs: identity.creationMs,
+    observedCreationMs: null,
+    reason: 'not checked',
+  }
+  if (!Number.isInteger(identity.pid) || identity.pid <= 0) {
+    return { ...base, status: 'UNKNOWN', reason: 'no usable pid was captured' }
+  }
+  const inspection = await table.inspect(identity.pid, boundMs)
+  if (inspection.error) {
+    return { ...base, status: 'FAILED', reason: 'process query failed: ' + inspection.error }
+  }
+  if (!inspection.found) {
+    return { ...base, status: 'ABSENT', reason: 'the pid no longer exists' }
+  }
+  const observed = inspection.process?.creationMs ?? null
+  if (identity.creationMs === null || observed === null) {
+    return {
+      ...base,
+      status: 'UNKNOWN',
+      observedCreationMs: observed,
+      reason: 'the pid exists but its creation time could not be compared',
+    }
+  }
+  if (observed !== identity.creationMs) {
+    // Our process is gone; the number now belongs to somebody else.
+    return {
+      ...base,
+      status: 'ABSENT',
+      observedCreationMs: observed,
+      reason: 'pid was reused by a different process',
+    }
+  }
+  return { ...base, status: 'PRESENT', observedCreationMs: observed, reason: 'the captured runtime is still running' }
+}
+
 /**
  * Terminate one captured identity inside an absolute deadline.
  *

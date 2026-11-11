@@ -1,14 +1,17 @@
-✔ shutdownAll waits for a close that a lease release already started (11.1943ms)
-✔ two concurrent close requests share one SDK close (1.608ms)
-✔ a close that never settles is a failure, not a success (123.8597ms)
-✔ a close that rejects is kept and reported, not silently dropped (1.3523ms)
-✔ a clean close disappears from management and is reported closed (1.2772ms)
-✔ dispose reports ok only when every runtime actually closed (29.461ms)
-ℹ tests 6
+✔ shutdownAll waits for a close that a lease release already started (11.9143ms)
+✔ two concurrent close requests share one SDK close (1.9963ms)
+✔ a close that never settles is a failure, not a success (124.1309ms)
+✔ a close that rejects is kept and reported, not silently dropped (1.4787ms)
+✔ a clean close disappears from management and is reported closed (1.4056ms)
+✔ dispose reports ok only when every runtime actually closed (30.943ms)
+✔ a failed handshake cleans up through the close path (1.3685ms)
+✔ a failed handshake whose close never settles keeps the runtime and reports it (165.9618ms)
+✔ a failed handshake whose close rejects keeps the error observable (1.8505ms)
+ℹ tests 9
 ℹ suites 0
-ℹ pass 6
+ℹ pass 9
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 546.4744
+ℹ duration_ms 427.9481

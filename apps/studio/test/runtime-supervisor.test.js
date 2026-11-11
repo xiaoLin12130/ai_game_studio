@@ -200,3 +200,80 @@ test('dispose reports ok only when every runtime actually closed', async (t) => 
   assert.deepEqual(result.failed, ['rt-001'])
   assert.ok(events.some((entry) => entry.event === 'task.service.dispose.failed'), 'the failure must be logged, not swallowed')
 })
+
+test('a failed handshake cleans up through the close path', async (t) => {
+  const control = { closeCalls: 0, mode: 'resolve', gate: deferred(), closeTimeoutMs: 300, initError: 'handshake blew up' }
+  const supervisor = new RuntimeSupervisor({
+    logger: { info() {}, warn() {}, error() {} },
+    dshHome: 'dsh-home',
+    profile: 'sdk',
+    provider: 'commandcode',
+    model: 'm',
+    cwd: 'workspace',
+    entry: ENTRY,
+    closeTimeoutMs: 300,
+    clientFactory: () => {
+      const client = makeClient(control)
+      client.initialize = async () => { throw new Error('handshake blew up') }
+      return client
+    },
+  })
+  t.after(async () => { try { await supervisor.shutdownAll('test-end') } catch {} })
+
+  await assert.rejects(() => supervisor.acquire({ taskId: 'task-1', isolation: 'writable' }), /handshake blew up/)
+  assert.equal(control.closeCalls, 1, 'a failed start must still try to close the child')
+  assert.equal(supervisor.snapshot().length, 0, 'a successful cleanup removes the runtime')
+})
+
+test('a failed handshake whose close never settles keeps the runtime and reports it', async (t) => {
+  const control = { closeCalls: 0, mode: 'hang', gate: deferred(), closeTimeoutMs: 150 }
+  const supervisor = new RuntimeSupervisor({
+    logger: { info() {}, warn() {}, error() {} },
+    dshHome: 'dsh-home',
+    profile: 'sdk',
+    provider: 'commandcode',
+    model: 'm',
+    cwd: 'workspace',
+    entry: ENTRY,
+    closeTimeoutMs: 150,
+    clientFactory: () => {
+      const client = makeClient(control)
+      client.initialize = async () => { throw new Error('handshake blew up') }
+      return client
+    },
+  })
+  t.after(async () => { try { await supervisor.shutdownAll('test-end') } catch {} })
+
+  await assert.rejects(() => supervisor.acquire({ taskId: 'task-1', isolation: 'writable' }), /cleanup failed/)
+  const snapshot = supervisor.snapshot()
+  assert.equal(snapshot.length, 1, 'an unclosed runtime must stay managed')
+  assert.equal(snapshot[0].state, 'failed')
+
+  const result = await supervisor.shutdownAll('app-quit')
+  assert.deepEqual(result.failed, ['rt-001'], 'shutdownAll must still see and report it')
+})
+
+test('a failed handshake whose close rejects keeps the error observable', async (t) => {
+  const control = { closeCalls: 0, mode: 'reject', message: 'close refused', gate: deferred(), closeTimeoutMs: 300 }
+  const supervisor = new RuntimeSupervisor({
+    logger: { info() {}, warn() {}, error() {} },
+    dshHome: 'dsh-home',
+    profile: 'sdk',
+    provider: 'commandcode',
+    model: 'm',
+    cwd: 'workspace',
+    entry: ENTRY,
+    closeTimeoutMs: 300,
+    clientFactory: () => {
+      const client = makeClient(control)
+      client.initialize = async () => { throw new Error('handshake blew up') }
+      return client
+    },
+  })
+  t.after(async () => { try { await supervisor.shutdownAll('test-end') } catch {} })
+
+  await assert.rejects(() => supervisor.acquire({ taskId: 'task-1', isolation: 'writable' }), /close refused/)
+  const snapshot = supervisor.snapshot()
+  assert.equal(snapshot.length, 1)
+  assert.equal(snapshot[0].state, 'failed')
+})
