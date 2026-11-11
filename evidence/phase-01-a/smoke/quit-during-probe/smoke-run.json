@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-11-11T06:19:14.482Z",
+  "scenario": "quit-during-probe",
+  "expected": null,
+  "electronVersion": "44.7.0",
+  "wallClockMs": 3297,
+  "exitCode": 0,
+  "stdoutTail": "\r\n[smoke] quitting during probe, state=CHECKING\n",
+  "stderrTail": "",
+  "smoke": {
+    "generatedAt": "2026-11-11T06:19:10.611Z",
+    "mode": "quit-during-probe",
+    "stateAtQuit": {
+      "status": "CHECKING",
+      "detail": {
+        "code": "PROBE_RUNNING",
+        "message": "正在检测 DSH ..."
+      },
+      "lastCheckedAt": null,
+      "lastDurationMs": null,
+      "serverInfo": null,
+      "dshVersion": "0.2.1-rc.3",
+      "entryKind": "bundled",
+      "entryPath": "<repo>\\apps\\studio\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "runtimeExitCode": null,
+      "configRecovered": false,
+      "configRecoveryNote": null
+    },
+    "elapsedMs": 306
+  },
+  "shutdown": [
+    {
+      "ts": "2026-11-11T06:19:10.612Z",
+      "level": "warn",
+      "event": "dsh.shutdown",
+      "reason": "app-quit",
+      "hadProbe": true,
+      "stopping": true
+    },
+    {
+      "ts": "2026-11-11T06:19:13.348Z",
+      "level": "info",
+      "event": "dsh.shutdown.result",
+      "reason": "app-quit",
+      "completed": true,
+      "timedOut": false,
+      "teardown": {
+        "attempted": true,
+        "reason": "stopped",
+        "closed": true,
+        "exitCode": 0,
+        "processAbsent": true,
+        "error": null,
+        "durationMs": 2736
+      },
+      "durationMs": 2736
+    }
+  ],
+  "leftoversAfterExit": [],
+  "checks": {
+    "exitCodeZero": true,
+    "producedSmokeJson": true,
+    "noLingeringRuntime": true,
+    "runtimeWasOwned": true,
+    "wasProbingWhenQuit": true,
+    "shutdownLogged": true,
+    "runtimeConfirmedGone": true,
+    "processAbsentConfirmed": true,
+    "exitCodeObserved": true
+  },
+  "ok": true
+}

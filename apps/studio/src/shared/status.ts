@@ -30,6 +30,7 @@ export type DshReasonCode =
   | 'INIT_FAILED'
   | 'TIMEOUT'
   | 'CANCELLED'
+  | 'STOPPED'
   | 'INTERNAL_ERROR'
 
 export interface DshStatusDetail {

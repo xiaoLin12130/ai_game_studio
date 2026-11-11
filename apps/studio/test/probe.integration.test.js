@@ -31,7 +31,7 @@ test('a healthy runtime is reported READY with a server identity', async () => {
     timeoutMs: 60000,
     cwd: home,
     entry: resolveDshEntry(null),
-  })
+  }).done
   assert.equal(outcome.status, 'READY', JSON.stringify(outcome.detail))
   assert.equal(outcome.detail.code, 'HANDSHAKE_OK')
   assert.equal(outcome.serverInfo.name, 'deepseek-harness-sdk-runtime')
@@ -49,7 +49,7 @@ test('a missing profile is UNAVAILABLE and says which one', async () => {
     timeoutMs: 20000,
     cwd: home,
     entry: resolveDshEntry(null),
-  })
+  }).done
   assert.equal(outcome.status, 'UNAVAILABLE')
   assert.equal(outcome.detail.code, 'PROFILE_MISSING')
   assert.match(String(outcome.detail.raw), /profile/i)
@@ -65,7 +65,7 @@ test('a configured entry that does not exist fails without spawning', async () =
     timeoutMs: 5000,
     cwd: home,
     entry: resolveDshEntry(path.join(home, 'no-such-dsh.js')),
-  })
+  }).done
   assert.equal(outcome.status, 'UNAVAILABLE')
   assert.equal(outcome.detail.code, 'BINARY_MISSING')
   assert.equal(outcome.durationMs < 1000, true, 'a missing binary must fail fast')
@@ -81,7 +81,7 @@ test('an impossible deadline is TIMEOUT, not a false pass', async () => {
     timeoutMs: 5,
     cwd: home,
     entry: resolveDshEntry(null),
-  })
+  }).done
   assert.equal(outcome.status, 'TIMEOUT')
   assert.equal(outcome.detail.code, 'TIMEOUT')
   assert.equal(outcome.serverInfo, null)

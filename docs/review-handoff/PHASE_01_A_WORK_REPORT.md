@@ -46,12 +46,16 @@
 apps/studio/
 ├── package.json  tsconfig.json
 ├── src/
-│   ├── shared/status.ts                 状态模型与错误分类（纯函数）
+│   ├── shared/status.ts                    状态模型与错误分类（纯函数）
 │   ├── main/{main,window,ipc,config,logger}.ts
-│   ├── main/dsh/{locate,probe,service}.ts
+│   ├── main/dsh/{locate,probe,service,processes}.ts
 │   ├── preload/preload.ts
 │   └── renderer/{index.html,styles.css,renderer.ts}
-├── test/{config,logger,status,service,probe.integration}.test.js   33 项
+├── test/
+│   ├── config / logger / status / service .test.js          基础
+│   ├── probe.integration.test.js                           真实 DSH 集成
+│   ├── lifecycle.test.js                                   Runtime 生命周期（P1-01）
+│   └── transitions.test.js                                 失败→恢复→READY（P2-02）
 └── scripts/{ensure-electron,copy-assets,smoke,record-evidence}.mjs
 
 docs/architecture/desktop-architecture.md
@@ -61,6 +65,15 @@ phases/PHASE_01_A_WINDOWS_FOUNDATION.md
 state/phase_01_a.json
 evidence/phase-01-a/…
 ```
+
+### 6.1 本修复轮（R1）的改动
+
+| 问题 | 改动 | 关键文件 |
+|---|---|---|
+| **P1-01** Runtime 生命周期 | 探测返回可停止的 handle；teardown 单飞且幂等；新增 OS 级进程确认；服务层 shutdown 协调；`before-quit` 拦截退出并等待清理 | `dsh/probe.ts`、`dsh/service.ts`、`dsh/processes.ts`、`main.ts` |
+| **P2-01** 桌面失败场景 | 冒烟拆成三个场景（ready / failure / quit-during-probe），failure 场景用真实坏 profile 验证 UI 呈现 | `scripts/smoke.mjs`、`main.ts` |
+| **P2-02** 状态转换 | 新增 transitions 测试：失败→修复→READY、READY 复检、单飞、状态与 UI 一致 | `test/transitions.test.js` |
+| **P2-03** 报告路径错字 | 5 处 `eXevidence/` 修正为 `evidence/` | 本文件 |
 
 另有两处 PHASE 01 工程改进（不重开 PHASE 00）：
 
@@ -89,9 +102,9 @@ evidence/phase-01-a/…
 
 BINARY_MISSING / PROFILE_MISSING / HOME_UNUSABLE / PROFILE_MANIFEST_INVALID / PROFILE_DEGRADED /
 ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / INTERNAL_ERROR，锚点全部取自本机真实报错，并有单测覆盖。
-**空结果一律 UNKNOWN，绝不默认就绪。**
+另有 STOPPED 表示「被调用方主动停止」，**空结果一律 UNKNOWN，绝不默认就绪。**
 
-### 7.4 两条 Electron 相关的硬约束（本轮实际踩到）
+### 7.4 两条 Electron 相关的硬约束
 
 1. **子进程必须带 `Electron_RUN_AS_NODE`**：SDK 用 `process.execPath` 启动 runtime，在 Electron 里
    那是 `electron.exe`，默认按 GUI 启动，永远不说 JSON-RPC，表现为「握手超时」。
@@ -99,29 +112,57 @@ ROUTE_UNKNOWN / TIMEOUT / INIT_FAILED / INTERNAL_ERROR，锚点全部取自本�
    `unsupported Electron runtime fingerprint: Node 24.22.2, V8 15.6.75.50-electron.0
    (supported Electron versions: 43.0.0, 44.0.0, 44.7.0, 45.0.0-alpha.6)`。
 
-## 8. 测试命令与完整结果
+### 7.5 Runtime 生命周期（P1-01）
+
+探测是这个 runtime 的**唯一所有者**，并一直负责到「确认已退出」为止，包括用户在握手途中退出应用。
+
+| 阶段 | 行为 |
+|---|---|
+| 收到退出请求 | `before-quit` 被拦截（`preventDefault`），开始 shutdown；此后新的探测请求被拒绝 |
+| 停止探测 | `probe.stop()` 幂等：立刻开始 teardown，并打断正在等待握手的那一段 |
+| 关闭 runtime | `client.close()`（SDK 文档保证「进程真正退出后才 resolve」），整段有 15 s 上界 |
+| 确认退出 | 三重信号：① close 已 resolve；② 订阅被 exit 事件以 `exit code: <n>` 失败（记录退出码）；③ **操作系统进程表**里没有该 DSH home 的进程 |
+| 失败/超时 | 记录 `dsh.shutdown.result`（level=error）并给出明确终态；退出等待有硬上界（SHUTDOWN_BOUND_MS + 5 s 兜底），绝不无限阻塞 |
+| 重复退出 | 第二次请求 join 同一个 shutdown，只产生一次 close |
+| 清理幂等 | 每次探测只有一个 teardown promise，`stop()` 多次调用返回同一份报告 |
+
+**为什么需要三重信号**：SDK 的 Promise 与它自己报的退出码来自同一侧；进程表来自另一侧。
+只用 Promise 结束就断言「进程没了」，正是评审指出的不可靠之处。
+
+## 8. 测试命令与完整结果（本轮真实执行）
 
 | 命令 | 结果 | 退出码 | 证据 |
 |---|---|---|---|
 | `npm run build`（tsc + copy-assets） | 通过 | 0 | — |
-| `node --test` | **33/33 PASS**（含 5 项真实 DSH 集成测试） | 0 | `eXevidence/phase-01-a/app-tests.json` |
-| `node scripts/smoke.mjs` | **10/10 检查通过**，墙钟 2.33 s | 0 | `eXevidence/phase-01-a/desktop-smoke/smoke-run.json` |
-| `node tests/run-tests.mjs`（PHASE 00 套件） | **166/166 PASS** | 0 | 未发布，见 §6 说明 |
-| `node scripts/run-gates.mjs`（PHASE 00 三门禁） | dependency / state / leak 全 PASS，0 泄漏 | 0 | `eXevidence/phase-01-a/phase00-gates.json` |
+| `node --test` | **45/45 PASS**（0 fail / 0 skipped） | 0 | `evidence/phase-01-a/app-tests.json` |
+| `node scripts/smoke.mjs ready` | 12/12 检查通过 | 0 | `evidence/phase-01-a/smoke/ready/` |
+| `node scripts/smoke.mjs failure` | 11/11 检查通过（真实坏 profile） | 0 | `evidence/phase-01-a/smoke/failure/` |
+| `node scripts/smoke.mjs quit-during-probe` | 9/9 检查通过（退出时回收 runtime） | 0 | `evidence/phase-01-a/smoke/quit-during-probe/` |
+| `node tests/run-tests.mjs`（PHASE 00 套件） | **166/166 PASS** | 0 | 未重新发布，见下方说明 |
+| `node scripts/run-gates.mjs`（PHASE 00 三门禁） | dependency / state / leak 全 PASS，0 泄漏 | 0 | `evidence/phase-01-a/phase00-gates.json` |
+
+汇总见 `evidence/phase-01-a/verification.json`，每项都有独立日志 `evidence/phase-01-a/*.log`。
 
 测试分三层，互不冒充：单元（纯函数/配置/日志）→ 集成（真实 dsh 进程）→ 桌面（真实 Electron 窗口）。
+**新增的 12 项测试**（45 项中的一部分）覆盖 P1-01 与 P2-02；原有 33 项全部保留并继续通过。
+
+说明：PHASE 00 的 `r154` 证据未被覆盖。本轮只验证「PHASE 00 套件不受本轮改动影响」，因此
+不重新发布其证据轮次。
 
 ## 9. Windows 实际运行验证
 
-由 `scripts/smoke.mjs` 在真实 Windows 上执行，10 项检查全部通过：
+三个场景都由 `scripts/smoke.mjs` 在真实 Windows 上启动真实 Electron 进程：
 
-```
-exitCodeZero / producedSmokeJson / windowVisible / singleWindow / rendererLoaded /
-screenshotWritten / dshReady / handshakeIdentity / runtimeExitCodeObserved / noLingeringRuntime
-```
+| 场景 | 验证内容 | 结果 |
+|---|---|---|
+| `ready` | 窗口可见、页面加载、握手成功、UI 显示已就绪、截图、退出后无残留 | PASS |
+| `failure` | 真实坏 profile → UI 显示「不可用」与原因、应用仍可用、可再次检测 | PASS |
+| `quit-during-probe` | 在握手中途请求退出 → runtime 被回收、进程表确认无残留、退出码被记录 | PASS |
 
-其中 `runtimeExitCodeObserved` 证明探测真的读到了 SDK 报告的 runtime 退出码；`noLingeringRuntime`
-在应用退出后扫描进程表确认无残留。窗口截图：`eXevidence/phase-01-a/desktop-smoke/window.png`。
+`quit-during-probe` 是 P1-01 的端到端证据：应用在握手进行中收到退出请求，日志中
+`dsh.shutdown.result` 记录 `completed: true`、`teardown.closed: true`、`teardown.processAbsent: true`，
+且退出后进程表中没有任何持有该 DSH home 的进程。
+失败场景截图：`evidence/phase-01-a/smoke/failure/window.png`（顶部「不可用」、正文为可读原因）。
 
 ## 10. 构建产物
 
@@ -135,12 +176,21 @@ screenshotWritten / dshReady / handshakeIdentity / runtimeExitCodeObserved / noL
 | 级别 | 数量 | 说明 |
 |---|---|---|
 | P0 | 0 | — |
-| P1 | 0 | — |
+| P1 | 0 | P1-01 已修复（见 §7.5、§8、§9） |
 | P2 | 2 | P2-1 渲染层未用框架；P2-2 正式安装包未构建 |
 | P3 | 0 | — |
 
-本轮实际修复（实施期内，非评审缺陷）：Electron 45 运行时指纹不兼容、子进程缺 `Electron_RUN_AS_NODE`、
-dsh 入口解析方式（CLI 包无 "." export）、证据目录误收 Chromium 用户数据。
+外部评审提出的四项，逐项状态：
+
+| 编号 | 状态 | 证据 |
+|---|---|---|
+| P1-01 退出期间 Runtime 未保证回收 | **已修复** | lifecycle 测试 8 项 + quit-during-probe 冒烟 |
+| P2-01 桌面失败场景缺测试 | **已修复** | failure 冒烟（真实坏 profile + DOM 断言） |
+| P2-02 缺失败→恢复→READY 转换测试 | **已修复** | transitions 测试 4 项 |
+| P2-03 报告路径拼写错误 | **已修复** | 本文件 5 处 eXevidence → evidence |
+
+实施期内另修复（非评审缺陷）：Electron 45 运行时指纹不兼容、子进程缺 `Electron_RUN_AS_NODE`、
+dsh 入口解析方式（CLI 包无 "." export）、证据目录误收 Chromium 用户数据、冒烟残留检查自匹配。
 
 ## 12. DEFERRED
 
@@ -158,6 +208,7 @@ dsh 入口解析方式（CLI 包无 "." export）、证据目录误收 Chromium 
 | ID | 内容 | 何时可验证 |
 |---|---|---|
 | U-01A-1 | 打包后 dsh runtime 能否启动（asar 内路径与原生 addon） | 执行打包后跑 ADR-0001 §5 |
+| U-01A-2 | 非 Windows 平台上的进程确认（当前 OS 级检查只在 win32 生效，其它平台返回 FAILED 并记为未知） | 若产品跨平台时 |
 
 ## 15. 当前工作区状态
 
@@ -166,7 +217,9 @@ PHASE 00 的历史证据（`eXevidence/r14、r15、r151、r152、r153、r154`）
 
 ## 16. 阶段关闭建议
 
-**建议关闭 PHASE 01-A。** 九项验收门禁全部满足且有证据；无 P0/P1；两项 DEFERRED 与一项 UNKNOWN
-均不影响本阶段验收（打包属于下一阶段前置）；测试与桌面验证均在真实 Windows 上执行。
+**READY_FOR_EXTERNAL_REVIEW。** 外部评审提出的 P1-01、P2-01、P2-02、P2-03 均已修复并有真实证据；
+无 P0/P1 遗留；DEFERRED 两项与 UNKNOWN 两项均不影响本阶段验收。
+
+PHASE 01-A 是否正式关闭，由外部独立评审决定，本报告不自行宣布关闭。
 
 下一阶段准备（不直接开始）：PHASE 01-B 接入官方 MCP SDK 替换手写原型，并把打包冒烟作为前置。

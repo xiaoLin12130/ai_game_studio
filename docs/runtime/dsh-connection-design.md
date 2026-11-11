@@ -99,3 +99,55 @@ exitCode  ← TransportClosedError 消息里的 "exit code: <n>"
 - Studio 使用自己的 `<userData>/dsh-home`，从不写入或复用用户 `~/.dsh`。
 - home 不存在时由 dsh 自动创建内置 `sdk` profile，无需联网、无需凭据。
 - 探测不读取、不修改用户的任何 DSH 配置。
+
+## 8. Runtime 生命周期与退出（P1-01 修复）
+
+### 8.1 所有权
+
+一次探测只拥有它自己 spawn 的那个 runtime，并且负责到「确认退出」为止。没有全局的 Runtime
+管理器，也没有第二套清理路径——这避免了「谁来关」的歧义。
+
+### 8.2 退出时的顺序
+
+```
+before-quit 被拦截 (preventDefault)
+      ↓
+service 标记为关闭 —— 之后新探测请求被拒绝
+      ↓
+probe.stop()（幂等）—— 立刻开始 teardown，并打断等待握手的那一段
+      ↓
+client.close()（有上界 15s）
+      ↓
+三重确认：close 已 resolve / 收到 exit code / 进程表里没有该 DSH home 的进程
+      ↓
+写 dsh.shutdown.result 日志
+      ↓
+app.exit()
+```
+
+### 8.3 为什么是三重确认
+
+| 信号 | 来源 | 能证明什么 |
+|---|---|---|
+| `close()` resolve | SDK | 文档保证「进程真正退出后才 resolve」 |
+| `exit code: <n>` 消息 | SDK 的 exit 事件 | 子进程确实收到了退出边沿，并给出退出码 |
+| 进程表 | 操作系统 | 没有进程仍挂在这个 DSH home 上 |
+
+前两者来自同一侧；第三者来自另一侧。评审指出的问题正是「只凭 Promise 结束就认为进程没了」，
+因此第三条是必需的，而不是锦上添花。
+
+### 8.4 清理失败与超时
+
+- 关闭上界：`TEARDOWN_BOUND_MS = 15000`；shutdown 另有 `boundMs`（默认 20000）。
+- 超过上界：记录 `timedOut: true` 与 `completed: false`，日志 level=error，然后**照常退出**。
+  退出流程自身还有 +5s 的兜底定时器，保证即使清理卡死也不会永久阻塞应用退出。
+- ⚠️ 当 `completed=false` 时，**不能声称 runtime 一定已回收**；日志与状态会如实记录这一点。
+
+### 8.5 已知边界
+
+- 进程确认只在 Windows 生效（`Win32_Process` 查询）。其它平台返回 FAILED，报告里记为未知，
+  不当作「已退出」。
+- 进程匹配用「命令行包含该 DSH home」，因此同机上另一个使用同一 home 的 Studio 实例也会被算作残留；
+  这是保守方向的误差。
+- 星号：SDK 没有运行时级取消协议（PHASE 00 已验证 `session/cancel` = NOT_SUPPORTED），
+  所以「停止探测」只能是「关闭本次探测拥有的 runtime」，而不是取消一次进行中的模型任务。

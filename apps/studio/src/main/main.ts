@@ -1,19 +1,23 @@
 /**
  * Application entry: lifecycle, window, IPC, configuration, logging, and the first
- * DSH probe. Everything asynchronous here is bounded — quitting the app cancels a probe
- * instead of waiting for it.
+ * DSH probe.
+ *
+ * The quit path is the part review asked for: Electron must not exit while a probe still
+ * owns a runtime. `before-quit` is intercepted, shutdown is awaited, and only then does
+ * the process exit. The wait is bounded, because a quit that hangs is its own defect.
  */
 import { app, BrowserWindow, nativeImage } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
-import { configFilePath, loadConfig, type StudioConfig } from './config'
+import { configFilePath, loadConfig, saveConfig, type StudioConfig } from './config'
 import { createLogger } from './logger'
-import { DshConnectionService } from './dsh/service'
+import { DshConnectionService, SHUTDOWN_BOUND_MS } from './dsh/service'
 import { CHANNELS, registerIpc } from './ipc'
 import { createMainWindow } from './window'
 
-const SMOKE = process.env.STUDIO_SMOKE === '1'
+const SMOKE = process.env.STUDIO_SMOKE ?? ''
 const SMOKE_OUT = process.env.STUDIO_SMOKE_OUT ? path.resolve(process.env.STUDIO_SMOKE_OUT) : null
+const SMOKE_QUIT_DELAY_MS = Number(process.env.STUDIO_SMOKE_QUIT_DELAY_MS ?? 300)
 
 // An isolated profile for smoke runs and tests, so a check never touches the real one.
 if (process.env.STUDIO_USER_DATA) {
@@ -22,30 +26,94 @@ if (process.env.STUDIO_USER_DATA) {
 
 let mainWindow: BrowserWindow | null = null
 let service: DshConnectionService | null = null
-let quitting = false
+let shutdownState: 'idle' | 'running' | 'done' = 'idle'
 
 function pushState(): void {
   if (!service || !mainWindow || mainWindow.isDestroyed()) return
   mainWindow.webContents.send(CHANNELS.stateChanged, service.getState())
 }
 
+/**
+ * Co-operative quit: stop accepting probes, wait for the runtime to be reaped, exit.
+ *
+ * Repeated quit requests join the same shutdown instead of issuing a second close.
+ */
+async function gracefulQuit(code: number): Promise<void> {
+  if (shutdownState !== 'idle') return
+  shutdownState = 'running'
+  const guard = setTimeout(() => {
+    // Never let cleanup block the process forever; the log records that we gave up.
+    console.error('[studio] shutdown exceeded its bound, exiting anyway')
+    app.exit(1)
+  }, SHUTDOWN_BOUND_MS + 5000)
+  guard.unref()
+
+  let exitCode = code
+  try {
+    const result = await service?.shutdown('app-quit')
+    if (result && !result.completed) exitCode = 1
+  } catch (error) {
+    console.error('[studio] shutdown failed:', error)
+    exitCode = 1
+  } finally {
+    clearTimeout(guard)
+    shutdownState = 'done'
+    app.exit(exitCode)
+  }
+}
+
+/** Read what the renderer actually shows, so the smoke run can compare it to the state. */
+async function readDom(window: BrowserWindow): Promise<Record<string, unknown> | null> {
+  try {
+    return await window.webContents.executeJavaScript(
+      `({
+        pill: (document.getElementById('status-pill') || {}).textContent || null,
+        headline: (document.getElementById('headline') || {}).textContent || null,
+        recheckDisabled: Boolean((document.getElementById('recheck') || {}).disabled),
+        factServer: (document.getElementById('fact-server') || {}).textContent || null,
+        factExit: (document.getElementById('fact-exit') || {}).textContent || null
+      })`,
+      true,
+    )
+  } catch {
+    return null
+  }
+}
+
 async function runSmoke(): Promise<void> {
   if (!SMOKE_OUT || !mainWindow || !service) return
   const started = Date.now()
-  // Wait for the first probe to settle (or the app to be told to give up).
+  const window = mainWindow
+
+  if (SMOKE === 'quit-during-probe') {
+    // Let the probe get into the middle of its handshake, then ask the app to quit the
+    // normal way. Everything after this point is the real quit path.
+    await new Promise((resolve) => setTimeout(resolve, SMOKE_QUIT_DELAY_MS))
+    const stateAtQuit = service.getState()
+    fs.mkdirSync(SMOKE_OUT, { recursive: true })
+    fs.writeFileSync(
+      path.join(SMOKE_OUT, 'smoke.json'),
+      `${JSON.stringify({ generatedAt: new Date().toISOString(), mode: SMOKE, stateAtQuit, elapsedMs: Date.now() - started }, null, 2)}\n`,
+    )
+    console.log('[smoke] quitting during probe, state=' + stateAtQuit.status)
+    app.quit()
+    return
+  }
+
   const deadline = started + 120000
   while (service.isChecking() || service.getState().lastCheckedAt === null) {
     if (Date.now() > deadline) break
     await new Promise((resolve) => setTimeout(resolve, 150))
   }
   const state = service.getState()
-  const window = mainWindow
+  const dom = await readDom(window)
   const shot = await window.webContents.capturePage()
   fs.mkdirSync(SMOKE_OUT, { recursive: true })
   const image = nativeImage.createFromBuffer(shot.toPNG())
   fs.writeFileSync(path.join(SMOKE_OUT, 'window.png'), shot.toPNG())
   const result = {
     generatedAt: new Date().toISOString(),
+    mode: SMOKE || 'ready',
     appVersion: app.getVersion(),
     versions: { electron: process.versions.electron, chrome: process.versions.chrome, node: process.versions.node },
     window: {
@@ -57,13 +125,17 @@ async function runSmoke(): Promise<void> {
       url: window.webContents.getURL(),
     },
     state,
+    dom,
     totalMs: Date.now() - started,
   }
   fs.writeFileSync(path.join(SMOKE_OUT, 'smoke.json'), `${JSON.stringify(result, null, 2)}\n`)
-  const ok = state.status === 'READY' && window.isVisible() && BrowserWindow.getAllWindows().length === 1
-  console.log('[smoke]', JSON.stringify({ ok, status: state.status, totalMs: result.totalMs, image: result.window.imageSize }))
-  quitting = true
-  app.exit(ok ? 0 : 3)
+
+  // The failure scenario is a pass when the UI shows a failure, so the exit code follows
+  // the expectation rather than "READY or bust".
+  const expected = process.env.STUDIO_SMOKE_EXPECT ?? 'READY'
+  const ok = state.status === expected && window.isVisible() && BrowserWindow.getAllWindows().length === 1
+  console.log('[smoke]', JSON.stringify({ ok, expected, status: state.status, totalMs: result.totalMs }))
+  await gracefulQuit(ok ? 0 : 3)
 }
 
 async function bootstrap(): Promise<void> {
@@ -75,7 +147,7 @@ async function bootstrap(): Promise<void> {
 
   const loaded = loadConfig(userDataDir)
   if (loaded.recovered) logger.warn('config.recovered', { note: loaded.note })
-  let config: StudioConfig = loaded.config
+  const config: StudioConfig = loaded.config
 
   service = new DshConnectionService({
     logger,
@@ -132,10 +204,11 @@ if (!gotLock) {
     app.quit()
   })
 
-  app.on('before-quit', () => {
-    if (quitting) return
-    quitting = true
-    service?.cancel('app-quit')
+  // Intercept the quit, reap the runtime, and only then let the process end.
+  app.on('before-quit', (event) => {
+    if (shutdownState === 'done') return
+    event.preventDefault()
+    void gracefulQuit(0)
   })
 
   if (SMOKE) {

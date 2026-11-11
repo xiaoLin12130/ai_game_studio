@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-11-11T06:19:10.611Z",
+  "mode": "quit-during-probe",
+  "stateAtQuit": {
+    "status": "CHECKING",
+    "detail": {
+      "code": "PROBE_RUNNING",
+      "message": "正在检测 DSH ..."
+    },
+    "lastCheckedAt": null,
+    "lastDurationMs": null,
+    "serverInfo": null,
+    "dshVersion": "0.2.1-rc.3",
+    "entryKind": "bundled",
+    "entryPath": "<repo>\\apps\\studio\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+    "runtimeExitCode": null,
+    "configRecovered": false,
+    "configRecoveryNote": null
+  },
+  "elapsedMs": 306
+}

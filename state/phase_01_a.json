@@ -1,7 +1,7 @@
 {
   "record": "phase_01_a",
   "phase": "PHASE 01-A — Windows 桌面应用基础与 DSH 真实连接状态",
-  "status": "PASS",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
   "authority": {
     "note": "PHASE 00 的权威记录仍为 state/project_state.json → phase_00_final（已 APPROVED）。本文件只描述 PHASE 01-A，不改变也不重开 PHASE 00 的任何结论。",
     "phase_00_final_commit": "9c8757c8e91ec10ca0fd1114408306dd72980709",
@@ -142,42 +142,124 @@
     {
       "id": "U-01A-1",
       "item": "打包后 dsh runtime 能否启动",
-      "why_unknown": "未构建安装包，无法验证 asar 内路径与原生 addon 解析",
-      "condition_to_verify": "执行 electron-builder 打包后跑 ADR-0001 §5 清单"
+      "why_unknown": "未构建安装包",
+      "condition_to_verify": "执行打包后跑 ADR-0001 §5"
+    },
+    {
+      "id": "U-01A-2",
+      "item": "非 Windows 平台的进程确认",
+      "why_unknown": "OS 级检查仅实现 win32",
+      "condition_to_verify": "若产品跨平台再实现"
     }
   ],
   "verification": {
+    "tsc": {
+      "command": "npm run build",
+      "exitCode": 0
+    },
     "appTests": {
       "command": "node --test",
-      "tests": 33,
-      "pass": 33,
+      "tests": 45,
+      "pass": 45,
       "fail": 0,
+      "skipped": 0,
       "exitCode": 0,
       "artifact": "evidence/phase-01-a/app-tests.json"
     },
-    "desktopSmoke": {
-      "command": "node scripts/smoke.mjs",
-      "checks": 10,
-      "passed": 10,
-      "exitCode": 0,
-      "wallMs": 2334,
-      "artifact": "evidence/phase-01-a/desktop-smoke/smoke-run.json"
+    "desktopSmoke": [
+      {
+        "scenario": "ready",
+        "checks": 12,
+        "passed": 12,
+        "exitCode": 0,
+        "artifact": "evidence/phase-01-a/smoke/ready/smoke-run.json"
+      },
+      {
+        "scenario": "failure",
+        "checks": 11,
+        "passed": 11,
+        "exitCode": 0,
+        "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json"
+      },
+      {
+        "scenario": "quit-during-probe",
+        "checks": 9,
+        "passed": 9,
+        "exitCode": 0,
+        "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
+      }
+    ],
+    "matrix": {
+      "artifact": "evidence/phase-01-a/verification.json",
+      "allPassed": true
     },
     "phase00Regression": {
-      "command": "node tests/run-tests.mjs（PHASE 00 套件，未重新发布其证据轮次）",
-      "tests": 166,
-      "pass": 166,
-      "fail": 0,
-      "exitCode": 0,
-      "note": "PHASE 00 的 r154 证据未被覆盖；本轮只验证 PHASE 01 的两处附加改动未破坏它。"
-    },
-    "phase00Gates": {
-      "command": "node scripts/run-gates.mjs（CC_GATE_OUT 指向 phase 证据）",
-      "overall": "PASS",
-      "leaks": 0,
-      "artifact": "evidence/phase-01-a/phase00-gates.json"
+      "suite": {
+        "command": "node tests/run-tests.mjs",
+        "tests": 166,
+        "pass": 166,
+        "fail": 0,
+        "exitCode": 0
+      },
+      "gates": {
+        "command": "node scripts/run-gates.mjs",
+        "overall": "PASS",
+        "leaks": 0,
+        "exitCode": 0,
+        "artifact": "evidence/phase-01-a/phase00-gates.json"
+      },
+      "note": "r154 证据未被覆盖；本轮只验证 PHASE 00 不受影响。"
     }
   },
   "model_probes_rerun": false,
-  "updated_at": "2026-11-11T05:51:37.551Z"
+  "updated_at": "2026-11-11T06:17:38.494Z",
+  "review_rounds": [
+    {
+      "round": "R1",
+      "reviewed_commit": "8c760bd770ed3572b02a368d9153b53fd693e204",
+      "reviewed_at_label": "PHASE 01-A 首次提交",
+      "external_verdict": "PARTIALLY_VERIFIED",
+      "findings": {
+        "P1-01": "探测过程中退出，不能保证 SDK Runtime 被正确回收",
+        "P2-01": "桌面失败场景缺少完整测试",
+        "P2-02": "缺少失败→恢复→READY 状态转换测试",
+        "P2-03": "工作报告中存在路径拼写错误（eXevidence/）"
+      },
+      "resolution": {
+        "P1-01": {
+          "fixed": true,
+          "what": "probe 返回可停止的 handle；teardown 单飞幂等；close 有上界；新增 OS 级进程确认；service.shutdown 协调；before-quit 拦截并等待清理",
+          "evidence": [
+            "apps/studio/src/main/dsh/probe.ts",
+            "apps/studio/src/main/dsh/service.ts",
+            "apps/studio/src/main/dsh/main.ts",
+            "apps/studio/test/lifecycle.test.js",
+            "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
+          ]
+        },
+        "P2-01": {
+          "fixed": true,
+          "what": "冒烟拆成 ready / failure / quit-during-probe 三场景；failure 用真实坏 profile 并断言 DOM",
+          "evidence": [
+            "apps/studio/scripts/smoke.mjs",
+            "evidence/phase-01-a/smoke/failure/smoke-run.json"
+          ]
+        },
+        "P2-02": {
+          "fixed": true,
+          "what": "新增 transitions 测试：失败→修复→READY、READY 复检、单飞、状态与 UI 一致",
+          "evidence": [
+            "apps/studio/test/transitions.test.js"
+          ]
+        },
+        "P2-03": {
+          "fixed": true,
+          "what": "5 处 eXevidence/ 修正为 evidence/",
+          "evidence": [
+            "docs/review-handoff/PHASE_01_A_WORK_REPORT.md"
+          ]
+        }
+      }
+    }
+  ]
 }

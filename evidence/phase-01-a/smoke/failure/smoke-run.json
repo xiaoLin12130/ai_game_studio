@@ -1,0 +1,88 @@
+{
+  "generatedAt": "2026-11-11T06:19:10.057Z",
+  "scenario": "failure",
+  "expected": "UNAVAILABLE",
+  "electronVersion": "44.7.0",
+  "wallClockMs": 1542,
+  "exitCode": 0,
+  "stdoutTail": "\r\n[smoke] {\"ok\":true,\"expected\":\"UNAVAILABLE\",\"status\":\"UNAVAILABLE\",\"totalMs\":1267}\n",
+  "stderrTail": "",
+  "smoke": {
+    "generatedAt": "2026-11-11T06:19:08.918Z",
+    "mode": "failure",
+    "appVersion": "0.1.0",
+    "versions": {
+      "electron": "44.7.0",
+      "chrome": "152.0.7977.130",
+      "node": "24.21.0"
+    },
+    "window": {
+      "count": 1,
+      "visible": true,
+      "title": "AI Game Studio",
+      "bounds": {
+        "x": 780,
+        "y": 340,
+        "width": 1000,
+        "height": 720
+      },
+      "imageSize": {
+        "width": 984,
+        "height": 655
+      },
+      "url": "fil<abs-path>"
+    },
+    "state": {
+      "status": "UNAVAILABLE",
+      "detail": {
+        "code": "PROFILE_MISSING",
+        "message": "DSH 缺少所需的 profile，运行时无法启动。",
+        "raw": "dsh profile \"definitely-not-a-profile\": JSON-RPC input closed"
+      },
+      "lastCheckedAt": "2026-11-11T06:19:08.884Z",
+      "lastDurationMs": 1232,
+      "serverInfo": null,
+      "dshVersion": "0.2.1-rc.3",
+      "entryKind": "bundled",
+      "entryPath": "<repo>\\apps\\studio\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+      "runtimeExitCode": 1,
+      "configRecovered": false,
+      "configRecoveryNote": null
+    },
+    "dom": {
+      "pill": "不可用",
+      "headline": "DSH 缺少所需的 profile，运行时无法启动。",
+      "recheckDisabled": false,
+      "factServer": "—",
+      "factExit": "1"
+    },
+    "totalMs": 1267
+  },
+  "shutdown": [
+    {
+      "ts": "2026-11-11T06:19:08.919Z",
+      "level": "info",
+      "event": "dsh.shutdown",
+      "reason": "app-quit",
+      "hadProbe": false,
+      "completed": true,
+      "durationMs": 0
+    }
+  ],
+  "leftoversAfterExit": [],
+  "checks": {
+    "exitCodeZero": true,
+    "producedSmokeJson": true,
+    "noLingeringRuntime": true,
+    "windowVisible": true,
+    "singleWindow": true,
+    "rendererLoaded": true,
+    "screenshotWritten": true,
+    "expectedStatus": true,
+    "domMatchesState": true,
+    "pillRendered": true,
+    "failureReasonShown": true,
+    "appStillUsable": true
+  },
+  "ok": true
+}

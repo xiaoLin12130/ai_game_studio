@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-11-11T06:19:14.504Z",
+  "node": "v24.19.0",
+  "electron": "44.7.0",
+  "matrix": [
+    {
+      "name": "unit-and-integration-tests",
+      "command": "node --test",
+      "exitCode": 0,
+      "durationMs": 27309,
+      "artifact": "evidence/phase-01-a/app-tests.json",
+      "counts": {
+        "tests": 45,
+        "pass": 45,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "desktop-smoke-ready",
+      "command": "node scripts/smoke.mjs ready",
+      "exitCode": 0,
+      "durationMs": 4839,
+      "artifact": "evidence/phase-01-a/smoke/ready/smoke-run.json",
+      "ok": true
+    },
+    {
+      "name": "desktop-smoke-failure",
+      "command": "node scripts/smoke.mjs failure",
+      "exitCode": 0,
+      "durationMs": 2691,
+      "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json",
+      "ok": true
+    },
+    {
+      "name": "desktop-smoke-quit-during-probe",
+      "command": "node scripts/smoke.mjs quit-during-probe",
+      "exitCode": 0,
+      "durationMs": 4426,
+      "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json",
+      "ok": true
+    }
+  ],
+  "allPassed": true,
+  "failedEntries": []
+}
