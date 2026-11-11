@@ -124,28 +124,25 @@
       "id": "U-01B-1",
       "item": "MCP Server 的远程/HTTP transport 未验证（本阶段仅 stdio）",
       "condition_to_verify": "引入远程 MCP 时"
-    },
-    {
-      "id": "U-01B-2",
-      "item": "安装包未做代码签名，SmartScreen 会告警",
-      "condition_to_verify": "有签名证书时"
-    },
-    {
-      "id": "U-01B-3",
-      "item": "GUI 内暂无“手动触发 MCP 工具调用”的按钮；B3/B7 的调用由验证脚本驱动真实运行时完成",
-      "condition_to_verify": "PHASE 01-C 接入工具面板时"
     }
   ],
   "deferred": [
     {
       "id": "D-01B-1",
-      "item": "代码签名（winCodeSign）",
-      "phase": "发布准备阶段"
+      "item": "代码签名（SmartScreen 会告警）",
+      "phase": "发布准备阶段",
+      "reclassified_from": "U-01B-2"
     },
     {
       "id": "D-01B-2",
       "item": "安装包体积优化（226.5 MB）",
       "phase": "发布准备阶段"
+    },
+    {
+      "id": "D-01B-3",
+      "item": "GUI 内的“手动触发 MCP 调用”入口（B3/B7 由验证脚本驱动真实 DSH 完成，属后续阶段）",
+      "phase": "PHASE 01-C",
+      "reclassified_from": "U-01B-3"
     }
   ],
   "blocked": [],
