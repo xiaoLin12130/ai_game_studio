@@ -243,6 +243,12 @@
         "artifact": "evidence/phase-01-a/phase00-gates.json"
       },
       "note": "r154 证据未被覆盖；本轮只验证 PHASE 00 不受影响。"
+    },
+    "processTimings": {
+      "artifact": "evidence/phase-01-a/process-timings.json",
+      "wholeReclaimMs": 2401,
+      "taskkillMs": 107,
+      "queryMs": 1050
     }
   },
   "model_probes_rerun": false,

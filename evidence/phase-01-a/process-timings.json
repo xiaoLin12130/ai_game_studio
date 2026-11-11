@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-11-11T07:00:52.514Z",
+  "machine": {
+    "platform": "win32",
+    "node": "v24.19.0"
+  },
+  "coldStartNote": "PowerShell + WMI startup dominates every query and is why the minimum viable query budget is 1200 ms.",
+  "captureMs": 1296,
+  "captureStatus": "captured",
+  "listChildrenMs": 1102,
+  "verifyPidMs": 1050,
+  "taskkillMs": 107,
+  "confirmGoneMs": 1074,
+  "wholeReclaimMs": 2401,
+  "wholeReclaimResult": {
+    "attempted": true,
+    "killedPids": [
+      27436
+    ],
+    "skippedPids": [],
+    "remainingPids": [],
+    "succeeded": true,
+    "error": null,
+    "durationMs": 2401,
+    "deadlineHit": false
+  },
+  "budgets": {
+    "closeMs": 15000,
+    "fallbackMs": 6000,
+    "teardownTotalMs": 22000,
+    "shutdownTotalMs": 25000,
+    "exitGuardExtraMs": 5000,
+    "minQueryMs": 1200
+  },
+  "conclusion": "A reclaim costs about two queries (verify + confirm) plus one taskkill, roughly 2.5-3.5 s on this machine, which fits inside the 6 s fallback bound with room for one retry."
+}
