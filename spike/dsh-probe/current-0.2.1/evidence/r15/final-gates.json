@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T03:57:51.905Z",
+  "generatedAt": "2026-11-11T03:58:48.860Z",
   "purpose": "PHASE 00 gate-only regression; the six real model probes were not repeated.",
   "modelProbesRun": false,
   "lastFullProbeRun": "spike/dsh-probe/current-0.2.1/evidence/r14/summary.json",

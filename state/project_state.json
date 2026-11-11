@@ -32,16 +32,16 @@
   "github": {
     "remote_url": "https://github.com/xiaoLin12130/ai_game_studio.git",
     "current_branch": "phase/00-feasibility",
-    "last_reviewed_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
-    "last_review_result": "PARTIALLY_VERIFIED (external review of the fixed R1.4 commit)",
+    "last_reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
+    "last_review_result": "PARTIALLY_VERIFIED (external review of 6943618) — convergence round r15 addresses gates 1/4/6; awaiting re-review",
     "push_status": "PUSHED",
     "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73",
     "visibility": "public",
-    "pushed_commit": null,
+    "pushed_commit": "c5cb28d",
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-11T03:00:39.884Z",
+    "last_pushed_at": "2026-11-11T03:58:55.457Z",
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
     "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
@@ -105,7 +105,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T03:56:10.024Z",
+  "updated_at": "2026-11-11T03:58:55.457Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -790,6 +790,12 @@
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
     "convergence_round": "r15",
-    "updated_at": "2026-11-11T03:56:10.024Z"
+    "updated_at": "2026-11-11T03:56:10.024Z",
+    "commit_provenance": {
+      "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
+      "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
+      "convergence_commit": "c5cb28d",
+      "note": "6943618 是外部评审固定的提交（本轮工作的起点）；6230340 是它之前那次「记录实现 SHA」的元数据提交，两者不是同一个提交，此前文档混用造成歧义，此处显式区分。convergence_commit 是本轮产出提交，推送后由 github.pushed_commit 记录。"
+    }
   }
 }
