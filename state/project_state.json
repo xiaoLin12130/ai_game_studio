@@ -37,7 +37,6 @@
     "push_status": "PUSHED",
     "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73",
     "visibility": "public",
-    "pushed_commit": "c5cb28d",
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
@@ -46,7 +45,9 @@
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
     "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
     "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
-    "r1_4_1_commit": "7ba76e07998f769ed570404bd1784444feca6b10"
+    "r1_4_1_commit": "7ba76e07998f769ed570404bd1784444feca6b10",
+    "pushed": true,
+    "push_note": "push 状态为真；不在仓库内固化「本次交付提交」自身的 SHA。原因：写入 SHA 会产生新提交，新提交又使该 SHA 失效，评审打开的提交与本文件所指的提交永远差一个。因此约定：交付点 = 分支 phase/00-feasibility 的 HEAD，由评审方 pin；仓库内只记录历史不可变的 SHA。"
   },
   "phase_00": {
     "gate_results": {
@@ -105,7 +106,7 @@
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
   "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T04:00:06.123Z",
+  "updated_at": "2026-11-11T04:11:02.663Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -596,9 +597,11 @@
       },
       "runtime_exit_code": {
         "file": "spike/dsh-probe/current-0.2.1/evidence/cc-6-exitcode/summary.json",
-        "at": "2026-11-11T03:41:22.098Z",
+        "at": "2026-11-11T04:10:21.735Z",
         "graceful_close_exit_code": 0,
         "forced_kill_exit_code": 1,
+        "process_after_close": "PROCESS_ABSENT",
+        "process_after_kill": "PROCESS_ABSENT",
         "model_calls_made": 0,
         "channel": "TransportClosedError.message (\"exit code: <n>\") — public exported type documented to carry the exit code; value originates from child.once(\"exit\") on the SDK-spawned runtime",
         "limitation": "0.2.1-rc.3 has no structured exit-code accessor: HarnessClient#exitCode is private, close() resolves void, HarnessClientOptions has no exit hook"
@@ -606,24 +609,33 @@
       "cli_display": {
         "file": "spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/summary.json",
         "transcript": "spike/dsh-probe/current-0.2.1/evidence/cc-7-diag/cli-output.txt",
-        "at": "2026-11-11T03:53:30.000Z",
-        "model_calls_made": 0
+        "at": "2026-11-11T04:10:21.807Z",
+        "model_calls_made": 0,
+        "live_exit_code": 0,
+        "live_process_after_close": "PROCESS_ABSENT",
+        "replay_status_timeline": [
+          "running",
+          "idle",
+          "running",
+          "idle"
+        ]
       },
       "final_gate_regression": {
         "file": "spike/dsh-probe/current-0.2.1/evidence/r15/final-gates.json",
-        "at": "2026-11-11T03:48:54.095Z",
+        "at": "2026-11-11T04:11:13.507Z",
         "dependency": "PASS",
         "state": "PASS",
         "leak": "PASS",
-        "scanned_files": 178,
-        "files_in_publish_set": 178,
+        "scanned_files": 185,
+        "files_in_publish_set": 185,
         "leaks": 0,
         "overall": "PASS",
         "model_probes_run": false
       },
       "regression_tests": {
         "file": "spike/dsh-probe/current-0.2.1/evidence/r15/tests.json",
-        "at": "2026-11-11T03:48:00.000Z",
+        "at": "2026-11-11T04:10:09.111Z",
+        "node": "v24.19.0",
         "total": 135,
         "passed": 135,
         "failed": 0,
@@ -767,35 +779,50 @@
         },
         {
           "command": "npm run test:unit",
-          "result": "107/107 PASS",
+          "result": "135/135 PASS",
           "exit_code": 0
         },
         {
           "command": "npm run gates",
-          "result": "dependency/state/leak all PASS, 173/173 files, 0 leaks",
+          "result": "dependency/state/leak all PASS, 185/185 files, 0 leaks",
           "exit_code": 0
         },
         {
-          "command": "node scrub-evidence.mjs --check",
-          "result": "173/173 files, 0 residual",
+          "command": "npm run probe:exit",
+          "result": "graceful=0 forced=1, both PROCESS_ABSENT, 0 model calls",
           "exit_code": 0
+        },
+        {
+          "command": "npm run diag",
+          "result": "live connect + replay transcript written",
+          "exit_code": 0
+        },
+        {
+          "command": "mutation check (weakened gates.mjs)",
+          "result": "exactly 7 targeted tests failed; file restored with identical sha256",
+          "exit_code": 1
         }
       ],
       "model_probes_rerun": false,
       "retained_probe_evidence": "evidence/r14/summary.json at 2026-11-10T12:43:44.987Z, 6/6 PASS, exit 0",
       "not_covered_this_round": [
         "real model execution of the six DSH probes (retained evidence only)",
-        "real Session resume and tool-call runtime behaviour (retained evidence only)"
+        "live event stream in gate 4 display (replay of a real recorded run only)"
       ]
     },
     "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
     "convergence_round": "r15",
-    "updated_at": "2026-11-11T04:00:06.123Z",
+    "updated_at": "2026-11-11T04:11:02.663Z",
     "commit_provenance": {
       "reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
       "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
       "convergence_commit": "c5cb28d",
-      "note": "6943618 是外部评审固定的提交（本轮起点）；6230340 是它之前那次「记录实现 SHA」的元数据提交，两者不是同一个提交，此前文档混用造成歧义，此处显式区分。c5cb28d 是本轮的**内容提交**（代码、证据、文档）；记录 SHA 的元数据提交在其之后，因此**分支 HEAD 才是最终交付点**，state 内的 SHA 只作溯源用。"
+      "note": "6943618 是外部评审固定的提交（本轮起点）；6230340 是它之前那次「记录实现 SHA」的元数据提交，两者不是同一个提交，此前文档混用造成歧义，此处显式区分。c5cb28d 是本轮的**内容提交**（代码、证据、文档），可作溯源锚点；其后仅剩记录 SHA 的元数据提交。按 delivery_point.policy，**评审固定的是分支 HEAD**，仓库内不写本提交自身 SHA。"
+    },
+    "delivery_point": {
+      "branch": "phase/00-feasibility",
+      "policy": "branch-head",
+      "note": "评审请固定分支 HEAD。仓库内不复刻本提交自身的 SHA（会形成自指）；本轮的内容提交 c5cb28d 是稳定不可变的，可作为溯源锚点。"
     }
   }
 }
