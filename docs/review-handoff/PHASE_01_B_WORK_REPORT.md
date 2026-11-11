@@ -1,6 +1,13 @@
 # PHASE 01-B 工作报告 — 官方 MCP SDK 与 Windows 正式打包
 
-> 状态：**READY_FOR_EXTERNAL_REVIEW**。本报告不宣告阶段关闭，关闭由外部独立评审决定。
+> **状态：APPROVED / PASS（PHASE_01_B_APPROVED）** — 外部独立评审于 2026-11-11 给出结论。
+>
+> - 代码评审基线：`90b587dca637aaa1f56b4798e12ce6d56fe54395`（评审收到的 ZIP SHA-256 `805308E3…872CAD5`，277 个跟踪文件）
+> - 阶段最终记录提交：`7d4248f1a5ca1b1adca4a86af88774e1e1542e8f`（只含文档与证据修正，不含代码改动）
+> - 原始验收 B1–B12 全部通过；P0/P1 阻断项 0；UNKNOWN 1 项（HTTP transport）；DEFERRED 4 项
+> - 评审补充确认：协议协商抓包证明双方实际都到 `2025-11-25`，不存在降级（`evidence/phase-01-b/mcp/protocol-negotiation.json`）
+>
+> 以下为交付时的原始内容，未因关闭而改写。
 
 ## 1. 本阶段原始目标
 

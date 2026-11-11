@@ -1,4 +1,4 @@
-## PHASE 01-B（READY_FOR_EXTERNAL_REVIEW）
+## PHASE 01-B（APPROVED / PASS）
 
 - 分支 `phase/01-b-mcp-packaging`，基线 `45c8976`。
 - Studio MCP Server 换成官方 `@modelcontextprotocol/sdk@1.32.2`，工具 `get_studio_health` 完成真实端到端调用（开发环境 + 安装后各一次）。
@@ -6,6 +6,8 @@
 - 回归：应用测试 61/61、PHASE 00 套件 166/166、三门禁 PASS。
 - 报告：`docs/review-handoff/PHASE_01_B_WORK_REPORT.md`；证据：`evidence/phase-01-b/`。
 - 未做（后续阶段）：Session/Task/项目管理/Decision Center/素材库/构建流水线/React 重构。
+- **关闭**：外部评审 2026-11-11 给出 PASS / PHASE_01_B_APPROVED。代码基线 `90b587d`，最终记录提交 `7d4248f`（只含文档与证据修正）。
+- 遗留观察 O-01B-1：每次 MCP 连接会出现两个 Server 进程（server/discover 探针 + 服务进程），探针进程由 DSH 直接终止；安装后冒烟只确认 Runtime 与 GUI 退出，未单独记录探针 PID —— 后续生命周期监控补充。
 
 # 当前交接
 
