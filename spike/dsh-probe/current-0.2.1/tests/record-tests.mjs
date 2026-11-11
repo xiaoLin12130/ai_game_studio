@@ -26,9 +26,11 @@ const run = spawnSync(process.execPath, [path.join(HERE, 'run-tests.mjs')], {
   env: { ...process.env, CC_TEST_EVIDENCE_OUT: resultFile },
 })
 
-// The child already wrote everything through the single redacted output layer.
-if (run.stdout) process.stdout.write(run.stdout)
-if (run.stderr) process.stderr.write(run.stderr)
+// Forward through the single redacted output layer too. An uncaught exception in the
+// child never reaches `err()` and its stack trace contains absolute paths, so a raw
+// stream write here would undo the whole output-safety chain.
+if (run.stdout) out(run.stdout)
+if (run.stderr) err(run.stderr)
 
 if (run.status !== 0) {
   err(`[tests] FAILED (exit ${run.status}); published evidence was left untouched.\n`)

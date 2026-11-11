@@ -1,18 +1,39 @@
-# PHASE 00-R1 工作报告（含 R1.4.1 收尾）
+# PHASE 00-R1 工作报告（含 PHASE 00 最终结论）
 
-> 本报告覆盖 PHASE 00 的六轮整改。**当前状态只以「R1.4.1 当前状态」一节为准**；其后各章均为历史记录，其中的数字（5/5、163、167、68 项）属于当时的运行规模，不代表当前事实。
+> 本报告覆盖 PHASE 00 的六轮整改与最终收尾。**当前状态只以「PHASE 00 最终结论」一节为准**；
+> 其后各章（含「R1.4.1 当前状态」）均为历史记录，其中的数字（5/5、163、167、68/90 项）
+> 属于当时的运行规模，不代表当前事实。
 >
 > - 仓库：`https://github.com/xiaoLin12130/ai_game_studio`（**保持 Public**，未改可见性）
 > - 分支：`phase/00-feasibility`
 > - 日期：2026-11-11
 > - 外部评审固定的 R1.4 提交：`1928fb1628b8dc3ac057fd618936aa601d9267ef`
-> - 本轮实际基线：`0b9bc289e66e813402029ac58586abc02a23d4f3`（R1.4 最终 HEAD）
-> - **本轮交付 Commit**：分支 `phase/00-feasibility` 的 HEAD。完整 SHA 写在
->   `state/project_state.json` → `phase_00_r1.r141.delivery_commit`，由紧随其后的一个纯元数据提交回填。
+> - **本轮审查基准（固定 Commit）**：`6230340071d6618d50d57832f6dff62b8dd8a735`
+> - **本轮交付 Commit**：分支 `phase/00-feasibility` 的 HEAD（`git rev-parse HEAD`）。
 >   报告**不内嵌自身 Commit SHA** —— 上一轮正是因为把交付 SHA 写在报告里、又在后续提交中改动报告，
->   造成「评审打开的固定提交」与「交付版本」不是同一份文件。本报告在 R1.4.1 实施提交与 HEAD 中逐字节一致。
+>   造成「评审打开的固定提交」与「交付版本」不是同一份文件。
 
-## R1.4.1 当前状态（唯一权威）
+## PHASE 00 最终结论（唯一权威）
+
+| 项 | 值 |
+|---|---|
+| 阶段结论 | **`PARTIALLY_VERIFIED`** |
+| 依据 | 冻结范围内 10 条门禁均有证据且为 PASS；但最近一次外部独立评审结论为 `PARTIALLY_VERIFIED`，R1.4.1 收尾尚未获得正式复审通过；本轮未重跑真实模型探针。按阶段定义「只有门禁全部满足才 PASS」，正式 PASS 由外部评审决定，本报告不自行宣布 |
+| 唯一事实源 | `state/project_state.json` → **`phase_00_final`**，由 `authoritative_source.current_record` 显式声明 |
+| 历史记录 | `phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 全部保留、只读，不作当前状态（旧对象里仍留有 `BLOCKED` 的当时结论） |
+| 六探针 | 6/6 PASS，`2026-11-10T12:43:44Z` 真实模型运行（`evidence/r14/summary.json`）；**本轮未重跑、未覆盖、未伪造** |
+| 本轮验证 | `npm run test:unit` / `npm run gates` / `scrub --check` / 静态检查，见「最终验证」一节；数字以对应证据文件为准 |
+| 本轮阻断项 | 无（PHASE 00 范围内）。已修的是「状态权威源不唯一 + 两条核心门禁仍标 BLOCKED」这一交付缺陷 |
+| 8 项未解决问题 | **全部非阻断**，逐项登记于 `phase_00_final.deferred`（含后续阶段、风险、验证条件）与 `unknown` |
+| HY4 | 独立验证事项 `UNKNOWN`：WorkBuddy 免费额度下可用 HY4 开发 ≠ DSH 已能通过官方接口调用 HY4；不阻塞当前阶段、不改架构、不伪造测试 |
+| 下一步 | 等外部评审；通过后按 `phase_00_final.next_phase` 进入 PHASE 01 |
+
+本轮只做范围收口，**未改动任何 DSH 探针执行逻辑**，因此未重跑六项真实模型探针。
+证据目录与每个文件的归属见 `spike/dsh-probe/current-0.2.1/evidence/r14/README.md`。
+
+---
+
+## R1.4.1 当前状态（历史记录，已被上节取代）
 
 | 项 | 值 |
 |---|---|
@@ -20,12 +41,9 @@
 | 六探针 | **6/6 PASS**，来自最后一次完整真实运行 `2026-11-10T12:43:44Z`（`evidence/r14/summary.json`）；**R1.4.1 按评审要求未重复模型调用** |
 | 最终门禁回归 | 依赖门禁 **PASS**；脱敏门禁 **PASS**：扫描 **173/173** 个发布文件，泄漏 0，exit **0**（`evidence/r14/final-gates.json`） |
 | 回归测试 | **90/90 PASS**，exit **0**（`evidence/r14/tests.json`） |
-| 阶段判定 | `PARTIALLY_VERIFIED` — 本轮四项修正已 `CONFIRMED`；冻结范围外能力仍为 `UNKNOWN` |
-| 阻塞项 | 无（本轮范围内） |
-| 下一步 | 交外部复审；未获明确批准前不进入 PHASE 01 |
+| 阶段判定 | `PARTIALLY_VERIFIED` — 四项修正已 `CONFIRMED`；冻结范围外能力仍为 `UNKNOWN` |
 
-权威事实源：`state/project_state.json` → `phase_00_r1.r141`。
-证据目录与每个文件的含义见 `spike/dsh-probe/current-0.2.1/evidence/r14/README.md`。
+当时的权威事实源为 `state/project_state.json` → `phase_00_r1.r141`；**现已由 `phase_00_final` 取代**。
 
 ---
 
@@ -241,7 +259,9 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 
 ## 7. 文档一致性整改（gate 1）
 
-统一为**单一事实源**：`state/project_state.json` 的 `phase_00.gate_results` 是唯一权威；其余文档只引用、不另立统计。
+（**历史记录，R1 当时的做法**）当时统一为单一事实源，指向 `state/project_state.json` 的 `phase_00.gate_results`。
+**当前**的唯一事实源已改为 `state/project_state.json` → `phase_00_final`（见本报告头部「PHASE 00 最终结论」）；
+此处旧指针保留仅为追溯，不代表当前状态。
 
 | 文档 | 整改前 | 整改后 |
 |---|---|---|
@@ -296,7 +316,12 @@ CC-2 的审计日志（Studio 侧，最能说明「真的调用了」）：
 
 ---
 
-## 10. 仍未解决 / 未验证
+## 10. 仍未解决 / 未验证（**R1 当时的历史登记表**）
+
+> 本表保留为历史记录，**不是当前状态**。当时的 `UNTESTED`（U6）不属于本阶段状态集，
+> 且各栏缺少后续阶段、风险与验证条件。当前登记表见本报告末尾「PHASE 00 最终验证与移交」
+> 及 `state/project_state.json` → `phase_00_final.deferred` / `unknown`。
+> 逐项判定「是否阻断 PHASE 00」的结论也写在那一节。
 
 | ID | 项 | 状态 | 说明 |
 |---|---|---|---|
@@ -999,3 +1024,151 @@ PHASE 00 是否正式通过由外部评审决定，本报告不代替该结论�
 
 具备。本轮四项修正均有源码、反向测试与机器可读证据；六探针结果沿用最后一次真实运行，未以 Mock 或未执行项充当 PASS。
 PHASE 00 是否正式通过仍由外部独立评审决定。
+
+
+---
+
+# PHASE 00 最终验证与移交（2026-11-11）
+
+本节是本轮收尾的**唯一当前结论**。审查基准为固定提交 `6230340071d6618d50d57832f6dff62b8dd8a735`；
+工作区当时干净、远端一致，远端报告与本地报告 sha256 相同。
+
+## A. 8 项未解决问题：逐项判定
+
+权威范围来自 `phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md` 的 10 条门禁。
+**8 项全部不在该范围内，且都不影响当前已验证的 DSH 核心调用链，因此没有一项需要在进入下一阶段前修复。**
+
+| ID | 问题 | 在 PHASE 00 范围内 | 影响核心链路 | 已验证的替代 | 状态 | 后续阶段 | 实际风险 | 验证条件 |
+|---|---|---|---|---|---|---|---|---|
+| U1 | Electron 打包链路 | 否（ADR-0001 §5 明列 PHASE 01 冒烟） | 否 | 无，也不影响 SDK 调用 | `DEFERRED` | PHASE 01 | 技术栈仍 `PROPOSED / CONDITIONAL`；打包失败需按 ADR 转 Tauri | 有可安装包并逐条跑完 ADR-0001 §5 |
+| U2 | 生产 DSH_HOME 策略 | 否（产品决策） | 否 | 隔离 home 已在探针里验证可用 | `DEFERRED` + 需用户决策 | PHASE 01 前期 | 隔离要重配 provider；复用会改动用户日常 DSH 配置 | 用户选定后实测隔离 home 加载 commandcode 的前置并更新 ADR-0002 |
+| U3 | 多 Runtime 资源占用 | 否（成本，非能力） | 否 | CC-4 已证 2 个并发 Session 隔离可用 | `DEFERRED` | PHASE 05（PHASE 01 可取基线） | 未知并发下内存/进程上限，影响调度器设计 | N 个并发 Runtime 的资源曲线 |
+| U4 | 崩溃后外部进程回收 | 否；门禁 6 只要求正常关闭后进程退出（已验证） | 部分相关，但已有验证路径 | 正常 `close()` 的进程回收与退出码已实测 | `DEFERRED` | PHASE 01 早期可靠性（ADR-0002 §6#7） | 强杀后可能残留 Shell/MCP 孤儿进程 | 人为 kill Runtime 后观测进程树 |
+| U5 | 官方 MCP SDK 兼容性 | 否（U5 明列 PHASE 01 首任务） | 否 | 工具调用链经 DSH 认可的 MCP bridge 已实测；手写 stdio 原型是显式标注的 PHASE 00 临时实现 | `DEFERRED` | PHASE 01 首任务（ADR-0002 §3D） | 手写帧会随 MCP 协议版本漂移，生产网关必须替换 | 官方 SDK server 起得来、工具进清单、能被 DSH 调用 |
+| U6 | DSH 0.2.2 取消/审批 | 否（未来版本） | 否 | 无取消能力已由「每任务一 Runtime + 关闭进程」隔离替代（ADR-0002 §3B） | `DEFERRED` + 需用户决定 | 版本升级时 | 无取消 → 依赖进程隔离；不升级不影响本阶段 | 有兼容插件后做取消/审批冒烟 |
+| U7 | 中断中最后一轮恢复 | 否；门禁 7 允许「明确标记未测」 | 否 | CC-3 已证完整轮次后正常关闭可 resume | `DEFERRED` | PHASE 01 早期可靠性 | 强杀可能丢失当前轮 | 轮次执行中强杀 → resume → 检查最后一轮 |
+| U8 | 0.1.5 legacy 本机复现 | 否（legacy 已冻结） | 否 | 冻结快照 `spike/dsh-probe/legacy-0.1.5/evidence/` 为权威记录 | `BLOCKED`（环境） | 不解除 | 仅影响历史对照；生产目标是 0.2.1-rc.3 | 换一台无 safe-delete 安全垫的机器 |
+
+**没有为了让 UNKNOWN 数量变成 0 而扩大范围**：本轮未测试崩溃恢复、未研究审批机制、未测试 Electron、未升级 DSH、未启动 PHASE 01、未引入任何新技术探索。
+
+## B. 本轮唯一修复：状态权威源不唯一
+
+独立核查发现，全仓有 **3 个互相竞争的「唯一权威」指针**：
+
+| 位置 | 指向 | 问题 |
+|---|---|---|
+| `docs/phase-reports/PHASE_00_REPORT.md:11` | `phase_00_r1.gate_results` | 其中 `13_automation_and_regression` 仍是 `PARTIALLY_VERIFIED` |
+| 本报告 §7（R1 历史章节） | `phase_00.gate_results` | 其中 `real_prompt_with_trackable_result` 与 `studio_readonly_tool_invoked_by_dsh` **仍是 `BLOCKED`**，而这两条核心门禁实际早已 PASS |
+| 报告头 / `README.md` / `memory-bank/handoff.md` | `phase_00_r1.r141` | 与上面两个并存 |
+
+即：**报告写 PASS，而被文档声明为权威的状态对象里两条核心门禁还是 BLOCKED**。这属于阶段定义门禁 10「复审交接」范围内的真实缺陷，也是历轮返工的同源问题（多个真相源）。
+
+**修法（最小）**：
+
+1. `state/project_state.json` 新增顶层 `authoritative_source.current_record = "phase_00_final"`，
+   并新增唯一当前记录 `phase_00_final`：10 条范围门禁（各带真实证据路径）、`verdict`、
+   8 项 `deferred`（各带 `phase` / `risk` / `verify_when`）、3 项 `unknown`（各带
+   `why_unknown` / `condition_to_verify`）、HY4 独立验证项、用户决策清单、下一阶段计划。
+2. **历史对象一个都没删**：`phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 全部保留只读，
+   并在文档里显式标注为历史快照；顶层 `product_status` / `current_phase` / `phase_status` 同步。
+3. 4 处文档指针统一改指 `phase_00_final`，旧指针所在段落标注「历史记录」。
+4. 新增可证伪的自动化门禁 `checkProjectState()`（`src/lib/gates.mjs`）：
+   检查唯一权威指针、10 条门禁状态与证据文件存在性、DEFERRED/UNKNOWN 字段完整性、
+   HY4 不得标成 CONFIRMED 或 blocking、历史记录不得丢失、4 份文档不得再指向旧对象。
+   **文档集不完整时直接判失败**，不能靠少给文件蒙混通过。
+5. 门禁接入两个入口：`run-all.mjs` 作为**前置门禁**（失败则任何探针都不运行、exit 1），
+   `scripts/run-gates.mjs` 作为门禁回归的第三道门；`decideOverall()` 把 state 失败计入整体判定。
+6. 顺带修掉同一输出链上的最后一个缺口：`tests/record-tests.mjs` 曾直接转发子进程的原始
+   stderr，而未捕获的异常栈里含绝对路径。现已统一走 `safe-output.mjs`，并由静态测试守住。
+
+**负向证明**（都是真实行为/退出码，不是检查日志文字）：
+
+| 用例 | 期望 | 实测 |
+|---|---|---|
+| 删除 `authoritative_source` | `authority-missing` | PASS |
+| 删除 `phase_00_final` | `current-record-missing` | PASS |
+| 把一条范围门禁改成 `BLOCKED` | `gate-not-pass` | PASS |
+| 门禁证据路径指向不存在文件 | `gate-evidence-missing` | PASS |
+| DEFERRED 去掉 `phase` / 标成 `CONFIRMED` | `deferred-incomplete` / `deferred-overclaimed` | PASS |
+| UNKNOWN 去掉验证条件 | `unknown-incomplete` | PASS |
+| HY4 标成 `CONFIRMED` 或 blocking | `hy4-status` / `hy4-blocking` | PASS |
+| 删除历史轮次记录 | `history-lost` | PASS |
+| 文档重新声明旧对象为当前权威 | `doc-stale-pointer` | PASS |
+| 只提供 1 份文档（靠省略求 PASS） | `doc-set-incomplete` | PASS |
+| **真实子进程**：`CC_STATE_FILE` 指向损坏状态后跑 `run-all.mjs` | exit 1、`aggregate.gates.state=FAIL`、`total=0`（零模型调用） | PASS |
+
+## C. HY4 与 WorkBuddy 的边界（独立记录）
+
+- 用户当前通过 **WorkBuddy 免费额度使用 HY4 开发**。这只说明 IDE 侧可用，
+  **不能推出 DSH Runtime 已能通过官方接口调用 HY4**。
+- PHASE 00 的六探针用的是 `commandcode + deepseek/deepseek-v4.1-flash`，
+  **不能当作 HY4 兼容性证据**。
+- 目前没有可用的官方免费 DSH→HY4 接入方式，也**没有做过任何直连测试**。
+  该项记为 `independent_verification.hy4_dsh_direct.status = UNKNOWN`、`blocking = false`，
+  并写明 `why_unknown` 与 `condition_to_verify`。
+- 不要求用户更换模型、不要求付费、不使用 WorkBuddy 私有/逆向接口作为产品依赖、
+  不为验证 HY4 改动 DSH Runtime 核心架构。若将来有官方接入方式，另立独立验证，不并入本阶段。
+
+## D. 本轮独立验证（真实执行）
+
+| 命令 | 结果 | 退出码 |
+|---|---|---|
+| `node --check` 全部改动 `.mjs` | `SYNTAX_OK` | 0 |
+| `npm run test:unit`（`tests/record-tests.mjs`） | **107/107 PASS**，其中 17 项为本轮新增 | 0 |
+| `npm run gates`（依赖 / 状态 / 脱敏三道门） | PASS / PASS / PASS，`173/173` 发布文件、0 泄漏 | 0 |
+| `node scrub-evidence.mjs --check` | `173/173`、0 残留 | 0 |
+| `checkProjectState(loadStateCheck(REPO_ROOT))` 只读复核 | `ok=true`（10 门禁 / 8 DEFERRED / 3 UNKNOWN / 4 文档） | — |
+
+**未重跑六项真实模型探针**：本轮改动只涉及状态记录、文档与门禁编排，
+没有改动任何 DSH 探针执行逻辑；且 `createEvidence()` 写固定路径，重跑会覆盖
+`evidence/cc-*/` 的历史证据。因此六探针结论**明确标注为沿用**
+`evidence/r14/summary.json`（`2026-11-10T12:43:44Z`，6/6 PASS, exit 0），
+**不是本轮测试结果，也没有被覆盖或伪造重跑**。
+
+**未覆盖项（不计 PASS）**：DSH 核心调用链的真实模型执行、Session 恢复与工具调用的真实
+运行时行为，本轮未重新执行；其断言逻辑（路由、并发隔离、错误分类、整体判定）由单元测试
+与故障注入覆盖，真实执行证据沿用上述已提交记录。这正是本阶段结论为
+`PARTIALLY_VERIFIED` 而非 `PASS` 的原因之一。
+
+测试防自证检查：所有负向用例都在临时目录（`CC_STATE_FILE` / `CC_EVIDENCE_OUT` /
+`CC_LOCK_ROOT` / `CC_DSH_HOME`）中注入故障，断言的是**子进程真实退出码或函数返回值**；
+`record-tests.mjs` 只在子进程退出码为 0 时才发布 `tests.json`，失败不覆盖已发布证据。
+`REPO_ROOT` 由模块位置解析，门禁读取的确实是本仓库而非其它目录。
+
+## E. 未解决问题分类
+
+- **本阶段阻断项**：无。
+- **后续阶段处理项**：U1（PHASE 01 打包冒烟）、U3（PHASE 05 资源）、
+  U4 / U5 / U7（PHASE 01 早期可靠性与官方 MCP SDK 冒烟）。
+- **需要用户决策**：U2（DSH_HOME 策略）、U6（是否升级 0.2.2）、
+  ADR-0001 / ADR-0002 仍为 `PROPOSED / CONDITIONAL` 需正式批准、HY4 官方接入方式（如未来需要）。
+- **受环境限制无法验证**：U8（本机 NODE_OPTIONS 注入的 safe-delete 安全垫中止 DSH 0.1.5 profile
+  维护删除）；保留冻结快照，不解除、不假装通过。
+- **UNKNOWN（说明为何未知 + 验证条件）**：K1 审批回调完整流程（`state.phase_00_final.unknown`）、
+  K2 多跳 `request/header`、K3 DSH 0.2.2 能力，以及 HY4 直连；均写明原因与所需条件。
+
+## F. 下一阶段建议
+
+PHASE 00 的技术目标（用官方 DSH SDK 证明最小 AI 调用与受控工具桥接）已经完成。
+**下一阶段应是 PHASE 01「应用基础、项目空间与可靠状态」**，而不是继续开 PHASE 00 整改轮次。
+首批任务按 `phases/PHASE_01_FOUNDATION_PROJECT_WORKSPACE.md` 与 `phase_00_final.next_phase`：
+
+1. 落地 Windows 本地应用基础，展示**真实** DSH 连接状态（未连接必须显示未连接）。
+2. 官方 MCP SDK 兼容性冒烟（U5），把 PHASE 00 的手写 stdio 原型替换为生产实现。
+3. Electron 打包冒烟（U1），据结果让 ADR-0001 转正或按 ADR 切 Tauri。
+4. 崩溃恢复与中断轮次可靠性（U4 / U7）。
+5. 产品决策 DSH_HOME 策略（U2）并更新 ADR-0002。
+
+**前置条件**：外部独立评审确认 PHASE 00。在此之前不进入业务功能开发。
+
+## G. 结论
+
+**`PARTIALLY_VERIFIED`**。
+
+- 冻结范围内 10 条门禁均有证据且为 PASS，本轮唯一真实缺陷（状态权威源）已修复并有负向证明；
+- 但最近一次外部独立评审结论是 `PARTIALLY_VERIFIED`，R1.4.1 收尾尚未获得正式复审通过；
+- 8 项未解决问题按 `DEFERRED` / `BLOCKED` / `UNKNOWN` 明确登记，**不等于 PASS 也不等于 FAIL**；
+- 本轮未重跑真实模型探针，六探针结果属于沿用证据。
+
+按阶段定义「只有门禁全部满足才 PASS」，正式 PASS 由外部独立评审决定，本报告**不自行宣布通过**。
+`READY_FOR_EXTERNAL_REVIEW` 只表示本轮收尾完成、材料可交评审。

@@ -4,20 +4,29 @@
 - Phase：**PHASE 00 — 技术可行性与 DSH 最小垂直切片**
 - Repository URL：`https://github.com/xiaoLin12130/ai_game_studio`（public）
 - Branch：`phase/00-feasibility`
-- Full Commit SHA：**以分支 `phase/00-feasibility` 的 HEAD 为准**；本次交付 SHA 见
-  `state/project_state.json` → `phase_00_r1.r141.delivery_commit`（由纯元数据提交回填）。
+- Full Commit SHA：**以分支 `phase/00-feasibility` 的 HEAD 为准**（`git rev-parse HEAD`）。
   报告不内嵌自身 SHA，避免出现「评审打开的固定提交」与「交付版本」不一致。
-- Status：**`PARTIALLY_VERIFIED`** — 核心链路已验证；模型层被账号余额阻断
+- **唯一事实源**：`state/project_state.json` → **`phase_00_final`**。
+- Status：**`PARTIALLY_VERIFIED`** — 冻结范围内 10 条门禁均有证据；正式 PASS 由外部评审决定。
+  「模型层被账号余额阻断」是 0.1.5 时期的**错误结论，已推翻**：真实模型链路（commandcode +
+  deepseek/deepseek-v4.1-flash）在 DSH 0.2.1-rc.3 上 6/6 PASS。
+- 本轮（最终收尾）**未重跑真实模型探针**；六探针结论沿用 `evidence/r14/summary.json`
+  （`2026-11-10T12:43:44Z`）。8 项未解决问题全部非阻断，逐项带后续阶段与验证条件。
 
 ---
 
 ## 1. 本阶段希望评审者重点检查
 
-1. **是否接受 `PARTIALLY_VERIFIED` 这个判定**，而不是把「基础设施全通、模型没跑」写成 PASS。判定依据在 `docs/phase-reports/PHASE_00_REPORT.md` §5。
-2. **ADR-0001（Electron）的取舍是否成立**：核心论据是「DSH Runtime 与官方 SDK 都是 Node，双运行时（Tauri + sidecar）只为外壳语言付复杂度」。
-3. **ADR-0002 对四个「不存在的官方能力」的处理是否诚实且可实施**：无取消 → 关进程；无恢复 → Studio 自建上下文再水化；无工具审批 → 审批全部留在 Studio 侧；工具只走 MCP。
-4. **是否认同把数据库选型推迟到 PHASE 01**。
-5. **探针本身是否可信**：断言是否够硬、有没有把 BLOCKED 洗成 PASS、有没有硬编码路径或吞错。
+1. **是否接受 `PARTIALLY_VERIFIED` 这个判定**：10 条范围门禁均有证据，但上一轮外部评审结论仍是
+   `PARTIALLY_VERIFIED`、R1.4.1 收尾尚未获正式复审通过、本轮未重跑六项真实模型探针。
+2. **8 项未解决问题是否确实不属于 PHASE 00 阻断项**：判据与逐项风险见
+   `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md` 末尾「PHASE 00 最终验证与移交」A 节。
+3. **状态权威源是否已唯一**：`checkProjectState()` 是否真的能抓住多真相源、旧门禁标 BLOCKED、
+   DEFERRED 缺阶段、UNKNOWN 无验证条件、历史记录被删等情况；负向用例是否验证真实退出码。
+4. **HY4 边界是否被诚实记录**：WorkBuddy 免费额度下用 HY4 开发 ≠ DSH 已能通过官方接口调用 HY4；
+   该项为独立 `UNKNOWN`、不阻塞、不伪造。
+5. **ADR-0001 / ADR-0002 仍为 `PROPOSED / CONDITIONAL`**：Electron 打包冒烟与 DSH_HOME 产品决策
+   留待 PHASE 01，是否认可这个边界；以及下一阶段应先做哪几项。
 
 ## 2. 关键代码路径
 
@@ -144,21 +153,21 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 
 ---
 
-## 提交信息（R1.4.1）
+## 提交信息（PHASE 00 最终收尾）
 
 - 外部评审固定的 R1.4 提交：`1928fb1628b8dc3ac057fd618936aa601d9267ef`
-- R1.4 最终 HEAD（本轮基线）：`0b9bc289e66e813402029ac58586abc02a23d4f3`
-- **本次交付提交**：分支 `phase/00-feasibility` 的 HEAD；完整 SHA 见
-  `state/project_state.json` → `phase_00_r1.r141.delivery_commit`。
+- **本轮审查基准（固定 Commit）**：`6230340071d6618d50d57832f6dff62b8dd8a735`
+- **本次交付提交**：分支 `phase/00-feasibility` 的 HEAD（`git rev-parse HEAD`）。
+  报告不内嵌自身 SHA；当前状态见 `state/project_state.json` → `phase_00_final`。
 - 分支：`phase/00-feasibility`
 - 工作区状态：干净（`git status --porcelain` 为空）
 - 远端状态：**已推送**
 - 提交序列（节选）：
-  - `91a44d8` PHASE 00 实施
-  - `852d234` R1 实施（commandcode 实测）
+  - `91a44d8` PHASE 00 实施 ｜ `852d234` R1 实施（commandcode 实测）
   - `207feac` R1.1 ｜ `052319a` R1.2 ｜ `1985fb0` R1.3
   - `1928fb1` R1.4 实施 ｜ `855e876` SHA 回填 ｜ `0b9bc28` 文档同步
-  - 本轮：R1.4.1 实施提交 + 一个纯元数据提交（只回填 SHA，不改本报告）
+  - `7ba76e0` R1.4.1 实施 ｜ `6230340` R1.4.1 SHA 回填（被本轮评审固定）
+  - 本轮：PHASE 00 最终收尾实施提交（状态权威源、门禁、文档同步）
 
 克隆与复现（**跑生产目标那一套，不是 legacy**）：
 
@@ -166,8 +175,8 @@ printf '' | DSH_HOME=<隔离> dsh --profile sdk     # exit 0（干净关闭）
 git clone -b phase/00-feasibility https://github.com/xiaoLin12130/ai_game_studio.git
 cd ai_game_studio/spike/dsh-probe/current-0.2.1
 npm install
-npm test          # 90 项回归测试 → 6 探针 → 2 门禁
-npm run gates     # 只跑受影响门禁，不消耗模型调用
+npm test          # 107 项回归测试 → 6 探针 → 3 道门禁（消耗真实模型调用）
+npm run gates     # 只跑依赖 / 状态一致性 / 脱敏门禁，不消耗模型调用
 ```
 
 脱敏门禁：

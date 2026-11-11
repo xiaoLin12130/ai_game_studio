@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url'
 import { setupProfiles } from './setup-profiles.mjs'
 import { REPO_ROOT } from '../src/lib/redact.mjs'
 import { scanTree } from '../src/lib/scrub.mjs'
+import { loadStateCheck, checkProjectState } from '../src/lib/gates.mjs'
 import { writeJsonFile } from '../src/lib/evidence.mjs'
 import { out, err } from '../src/lib/safe-output.mjs'
 
@@ -55,17 +56,28 @@ const leak = {
   errors: scanned.errors,
 }
 
+let state = { status: 'PASS', checked: null, errors: [] }
+try {
+  const check = checkProjectState(loadStateCheck(REPO_ROOT, process.env.CC_STATE_FILE ?? null))
+  state = { status: check.ok ? 'PASS' : 'FAIL', checked: check.checked, errors: check.errors }
+} catch (error) {
+  state = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
+}
+
 const result = {
   generatedAt: new Date().toISOString(),
-  purpose: 'R1.4.1 gate-only regression; the six real model probes were not repeated.',
+  purpose: 'PHASE 00 gate-only regression; the six real model probes were not repeated.',
   modelProbesRun: false,
   lastFullProbeRun: 'spike/dsh-probe/current-0.2.1/evidence/r14/summary.json',
-  gates: { dependency, leak },
-  overall: dependency.status === 'PASS' && leak.status === 'PASS' ? 'PASS' : 'FAIL',
+  gates: { dependency, state, leak },
+  overall: [dependency.status, state.status, leak.status].every((s) => s === 'PASS') ? 'PASS' : 'FAIL',
 }
 
 writeJsonFile(output, result)
-out(`[gates] dependency=${dependency.status} leak=${leak.status} scanned=${scanned.scanned}/${scanned.files} leaks=${scanned.leaks.length}\n`)
+out(`[gates] dependency=${dependency.status} state=${state.status} leak=${leak.status} scanned=${scanned.scanned}/${scanned.files} leaks=${scanned.leaks.length}\n`)
+if (state.status === 'FAIL') {
+  for (const problem of state.errors.slice(0, 12)) out(`[gates] state ${problem.code}: ${problem.message}\n`)
+}
 if (result.overall !== 'PASS') {
   err(`[gates] FAILED — see ${path.relative(probeRoot, output)}\n`)
   process.exit(1)

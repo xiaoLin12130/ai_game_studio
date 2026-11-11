@@ -52,7 +52,14 @@
     "findLeaks must build its RegExp with the g flag. Without it exec restarts at index 0 forever and an infinite loop exhausts the heap.",
     "Credential-shaped values need their own redaction rules and tests, even when no real key has leaked yet; otherwise the code cannot prove it protects credentials.",
     "Dependency integrity requires comparing tree.json integrity AND resolved against package-lock.json, not merely checking that the fields exist. Staging cache reuse must not bypass that comparison.",
-    "A failing test run must not overwrite published evidence. Use an explicit output path and publish only on a real zero exit code; prove it with fault injection."
+    "A failing test run must not overwrite published evidence. Use an explicit output path and publish only on a real zero exit code; prove it with fault injection.",
+    "A project state file may have exactly one current record. This repository once had three documents each declaring a different object as the only authority, and two historical objects still said the real-prompt and MCP-tool gates were BLOCKED while the report said PASS. state.phase_00_final plus authoritative_source.current_record now define the single source.",
+    "State consistency must be an executable pre-flight gate, not a documentation promise. checkProjectState() in src/lib/gates.mjs runs before any probe in run-all.mjs and as a third gate in scripts/run-gates.mjs; a broken state aborts with exit 1 and zero model calls.",
+    "Historical state objects are read-only evidence. Never delete them to make the current status look clean; label them historical and keep them. The gate explicitly fails if a historical round record disappears.",
+    "A DEFERRED item needs a target phase, a risk, and a verification condition; an UNKNOWN item needs why_unknown and condition_to_verify. UNKNOWN is not PASS, BLOCKED is not FAIL, NOT_SUPPORTED is not \"not observed\".",
+    "WorkBuddy being able to use HY4 on a free tier only proves the IDE side works. It does not prove DSH can call HY4 through an official interface, and PHASE 00 DeepSeek probes are not HY4 compatibility evidence. Record as an independent UNKNOWN, never as CONFIRMED or blocking.",
+    "A child process raw stderr can bypass the redacted output layer when it contains an uncaught exception stack trace. Even wrappers that forward child output must go through src/lib/safe-output.mjs.",
+    "A PHASE 00 gate set is defined in phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md. Items outside those ten gates are not automatically blockers; decide by scope, core-chain impact, verified alternatives and risk, then record DEFERRED with a target phase."
   ],
   "do_not_assume": [
     "Electron is not approved yet; ADR-0001 is PROPOSED / CONDITIONAL pending packaged smoke tests.",
@@ -67,6 +74,10 @@
     "Do not write to stdout/stderr directly in probe code; use src/lib/safe-output.mjs.",
     "Do not let a run auto-create a lockfile and then claim reproducibility.",
     "Do not put the delivery commit SHA into the delivery report.",
-    "Do not re-run the six real model probes for a change that only touches redaction, scanning, dependency metadata or docs."
+    "Do not re-run the six real model probes for a change that only touches redaction, scanning, dependency metadata or docs.",
+    "Do not cite phase_00.gate_results, phase_00_r1.gate_results or any r11..r141 object as current state; use state.phase_00_final.",
+    "Do not re-run the six real model probes for a change that touches only state, docs or gate orchestration; label the retained evidence as such instead of claiming a new test.",
+    "Do not invent a DSH/HY4 compatibility result, require a paid API key, or use WorkBuddy private interfaces as a product dependency.",
+    "Do not open another PHASE 00 remediation round after this finalisation; the remaining items belong to PHASE 01 or to a user decision."
   ]
 }

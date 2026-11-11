@@ -1,10 +1,10 @@
 {
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
-  "product_status": "PHASE_00_R1_4_1_COMPLETED_PENDING_REVIEW",
-  "current_phase": "PHASE_00-R1.4.1",
+  "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
+  "current_phase": "PHASE_00",
   "phase_status": {
-    "PHASE_00": "SUPERSEDED_BY_R1",
+    "PHASE_00": "PARTIALLY_VERIFIED",
     "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_02": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_03": "BLOCKED_BY_PREVIOUS_REVIEW",
@@ -12,9 +12,9 @@
     "PHASE_05": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
     "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_00-R1": "SUPERSEDED_BY_R1_4",
-    "PHASE_00-R1.4": "SUPERSEDED_BY_R1_4_1",
-    "PHASE_00-R1.4.1": "PARTIALLY_VERIFIED_PENDING_REVIEW"
+    "PHASE_00-R1": "HISTORICAL",
+    "PHASE_00-R1.4": "HISTORICAL",
+    "PHASE_00-R1.4.1": "HISTORICAL"
   },
   "product_scope": {
     "target_os": "Windows local single-user first",
@@ -32,8 +32,8 @@
   "github": {
     "remote_url": "https://github.com/xiaoLin12130/ai_game_studio.git",
     "current_branch": "phase/00-feasibility",
-    "last_reviewed_commit": null,
-    "last_review_result": null,
+    "last_reviewed_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
+    "last_review_result": "PARTIALLY_VERIFIED (external review of the fixed R1.4 commit)",
     "push_status": "PUSHED",
     "phase_commit": "91a44d861585c58dcb033265e84acfa5ebe11c73",
     "visibility": "public",
@@ -41,7 +41,7 @@
     "review_baseline_commit": "5658479016fda62989a52baaf257c174cc897e02",
     "pushed_at": "2026-11-10T10:13:00Z",
     "r1_commit": "852d234cec16ed75de2a40809be0fc1bd42bb47b",
-    "last_pushed_at": "2026-11-11T02:31:44.975Z",
+    "last_pushed_at": "2026-11-11T03:00:39.884Z",
     "r1_1_commit": "207feac5f8556494877fb478562381b108e953a3",
     "r1_2_commit": "052319aac2b6521b84c48b6f268cffa79f77cd99",
     "r1_3_commit": "1985fb010684de4abd2bb6b9ea54cf06360ffc1e",
@@ -103,8 +103,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "Await external review of PHASE 00-R1.4.1. Do NOT start PHASE 01 without explicit approval.",
-  "updated_at": "2026-11-11T02:31:44.976Z",
+  "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
+  "updated_at": "2026-11-11T03:10:58.224Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -509,6 +509,256 @@
       ],
       "report": "docs/review-handoff/PHASE_00_R1_WORK_REPORT.md",
       "evidence_dir": "spike/dsh-probe/current-0.2.1/evidence/r14/"
+    }
+  },
+  "authoritative_source": {
+    "current_record": "phase_00_final",
+    "declared_at": "2026-11-11T03:00:39.884Z",
+    "scope_definition": "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md",
+    "historical_records": [
+      "phase_00",
+      "phase_00_r1.gate_results",
+      "phase_00_r1.r11",
+      "phase_00_r1.r12",
+      "phase_00_r1.r13",
+      "phase_00_r1.r14",
+      "phase_00_r1.r141"
+    ],
+    "rule": "历史对象只读保留，不再作为当前状态；所有文档与脚本只引用 phase_00_final。此前存在三个互相竞争的权威指针，其中 phase_00.gate_results 仍把两条核心门禁标成 BLOCKED。"
+  },
+  "phase_00_final": {
+    "record": "PHASE_00_FINAL_CURRENT",
+    "authored_at": "2026-11-11T03:00:39.884Z",
+    "review_baseline_commit": "6230340071d6618d50d57832f6dff62b8dd8a735",
+    "scope_definition": "phases/PHASE_00_FEASIBILITY_DSH_VERTICAL_SLICE.md",
+    "verdict": "PARTIALLY_VERIFIED",
+    "verdict_reason": "冻结范围内 10 条门禁均有证据且为 PASS；但最近一次外部独立评审结论为 PARTIALLY_VERIFIED，R1.4.1 收尾尚未获得正式复审通过；本轮未重跑真实模型探针，六探针结论沿用已提交证据。按阶段定义「只有门禁全部满足才 PASS」，正式 PASS 留待外部评审，不自行宣布。",
+    "product_status": "PHASE_00_PARTIALLY_VERIFIED_PENDING_EXTERNAL_REVIEW",
+    "model_probes_rerun_this_round": false,
+    "gates": {
+      "01_environment_inventory": {
+        "status": "PASS",
+        "evidence": "docs/phase-reports/PHASE_00_EVIDENCE.md",
+        "note": "OS/Node/DSH/SDK 版本与命令输出"
+      },
+      "02_sdk_version_compatibility": {
+        "status": "PASS",
+        "evidence": "docs/phase-reports/PHASE_00_R1_EVIDENCE.md",
+        "note": "DSH 0.2.1-rc.3 + SDK 0.2.1-rc.3 + commandcode 0.15.4 实测"
+      },
+      "03_real_prompt_trackable_result": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-1-reply/summary.json",
+        "note": "随机标识回显，真实模型应答"
+      },
+      "04_events_visible": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-1-reply/records.jsonl",
+        "note": "事件时间序列 + CLI 输出"
+      },
+      "05_studio_readonly_tool_invoked": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-2-tools/summary.json",
+        "note": "模型真实调用 get_studio_health 且 Server 侧审计到执行"
+      },
+      "06_runtime_exit_code_recorded": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-3-resume/summary.json",
+        "note": "正常 close 后进程回收与退出码；强杀场景另列 DEFERRED U4"
+      },
+      "07_session_resume_approval_classified": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/cc-5-capability/summary.json",
+        "note": "resume 已验证；审批按门禁 7 明确标记未测/UNKNOWN"
+      },
+      "08_tech_selection_adr": {
+        "status": "PASS",
+        "evidence": "docs/decisions/ADR-0002-dsh-integration.md",
+        "note": "ADR-0001/0002 写明取舍与风险，仍为 PROPOSED / CONDITIONAL"
+      },
+      "09_no_secrets_in_git_or_logs": {
+        "status": "PASS",
+        "evidence": "spike/dsh-probe/current-0.2.1/evidence/r14/final-gates.json",
+        "note": "脱敏门禁 + 凭据规则 + 统一输出层"
+      },
+      "10_github_push_and_review_handoff": {
+        "status": "PASS",
+        "evidence": "docs/review-handoff/PHASE_00_REVIEW_HANDOFF.md",
+        "note": "已推送、public、复审交接文件"
+      }
+    },
+    "evidence": {
+      "last_full_probe_run": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r14/summary.json",
+        "at": "2026-11-10T12:43:44.987Z",
+        "note": "最后一次完整六探针真实模型运行；本轮未重跑、未覆盖、未伪造。"
+      },
+      "final_gate_regression": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r14/final-gates.json",
+        "at": "2026-11-11T03:10:09.681Z",
+        "dependency": "PASS",
+        "state": "PASS",
+        "leak": "PASS",
+        "scanned_files": 173,
+        "files_in_publish_set": 173,
+        "leaks": 0,
+        "overall": "PASS",
+        "model_probes_run": false
+      },
+      "regression_tests": {
+        "file": "spike/dsh-probe/current-0.2.1/evidence/r14/tests.json",
+        "total": 107,
+        "passed": 107,
+        "failed": 0,
+        "exit_code": 0
+      },
+      "negative_proofs": [
+        "evidence/r14/negative-leak-gate.json：六探针全 PASS 仍因泄漏判 OVERALL FAIL / exit 1",
+        "tests/run-tests.mjs：20+ 条反向断言（锁缺失/漂移/损坏、串线、空通知、凭据、状态门禁）"
+      ]
+    },
+    "blocking_items": [],
+    "deferred": {
+      "U1": {
+        "item": "Electron 打包后完整链路",
+        "status": "DEFERRED",
+        "phase": "PHASE 01（ADR-0001 §5 打包冒烟）",
+        "risk": "技术栈仍为 PROPOSED / CONDITIONAL；若打包失败需按 ADR 切到 Tauri，不影响当前 SDK 调用链",
+        "verify_when": "有可安装包并逐条执行 ADR-0001 §5 清单"
+      },
+      "U2": {
+        "item": "生产形态 DSH_HOME 策略",
+        "status": "DEFERRED",
+        "phase": "PHASE 01 前期产品决策",
+        "risk": "隔离更干净但要重配 provider；复用会改动用户日常 DSH 配置。属于产品决策，本轮不擅自定型",
+        "verify_when": "用户明确选择隔离 vs 复用后，实测隔离 home 加载 commandcode 的前置条件并更新 ADR-0002"
+      },
+      "U3": {
+        "item": "多 Runtime 资源占用",
+        "status": "DEFERRED",
+        "phase": "PHASE 05（开发编排）；PHASE 01 可先取基线",
+        "risk": "未知并发数下的内存/进程上限，影响调度器设计；CC-4 已证明 2 个会话隔离可用",
+        "verify_when": "有 N 个并发 Runtime 的资源曲线与上限数据"
+      },
+      "U4": {
+        "item": "崩溃瞬间外部进程（Shell/MCP）回收",
+        "status": "DEFERRED",
+        "phase": "PHASE 01 早期可靠性（ADR-0002 §6#7）",
+        "risk": "强杀后可能残留孤儿子进程；正常关闭回收已验证，不影响当前阶段",
+        "verify_when": "人为 kill Runtime 后观测进程树并确认无残留"
+      },
+      "U5": {
+        "item": "MCP Server 换官方 SDK 的兼容性",
+        "status": "DEFERRED",
+        "phase": "PHASE 01 首任务（ADR-0002 §3D）",
+        "risk": "手写 stdio JSON-RPC 原型会随 MCP 协议版本漂移；生产网关必须替换。当前工具调用链已通过 DSH 认可的 MCP bridge 验证",
+        "verify_when": "官方 @modelcontextprotocol/sdk server 起得来、工具进清单、能被 DSH 调用"
+      },
+      "U6": {
+        "item": "DSH 0.2.2 取消/审批能力",
+        "status": "DEFERRED",
+        "phase": "版本升级时（需用户决定是否升级）",
+        "risk": "当前无取消能力，只能靠「每任务一 Runtime + 关闭进程」隔离（ADR-0002 §3B）；不升级不影响本阶段",
+        "verify_when": "存在兼容的官方 0.2.2 与插件后做取消/审批冒烟"
+      },
+      "U7": {
+        "item": "中断中的最后一轮能否 resume",
+        "status": "DEFERRED",
+        "phase": "PHASE 01 早期可靠性",
+        "risk": "任务执行中被强杀可能丢失当前轮；CC-3 只覆盖完整轮次后的正常关闭恢复",
+        "verify_when": "在轮次执行中强杀 → resume → 检查最后一轮内容"
+      },
+      "U8": {
+        "item": "0.1.5 legacy 套件本机稳定复现",
+        "status": "BLOCKED",
+        "phase": "不解除（legacy 已冻结；冻结快照为权威记录）",
+        "risk": "仅影响历史对照；生产目标是 0.2.1-rc.3，无产品风险",
+        "verify_when": "换一台无 NODE_OPTIONS safe-delete 安全垫的机器；当前保留 spike/dsh-probe/legacy-0.1.5/evidence/ 冻结快照"
+      }
+    },
+    "unknown": {
+      "K1": {
+        "item": "DSH 原生可靠审批回调完整流程与 UI 映射",
+        "status": "UNKNOWN",
+        "why_unknown": "协议无 server→client 审批消息类型，实测运行期间未观察到任何审批请求；「未观察到」不等于「不存在」",
+        "condition_to_verify": "拿到官方审批请求样例或可触发审批的 DSH 版本，且 Studio 侧存在对应 UI 映射",
+        "phase": "PHASE 01 及以后"
+      },
+      "K2": {
+        "item": "多跳 request/header（工具调用后再次请求）实际行为",
+        "status": "UNKNOWN",
+        "why_unknown": "每次运行只观测到 1 个 request/header，含带工具调用的 CC-2；断言覆盖「已暴露的全部请求」，不代表多跳场景已验证",
+        "condition_to_verify": "构造出工具调用后再次发起模型请求的两跳场景，确认两跳 provider/model 均符合预期",
+        "phase": "PHASE 01"
+      },
+      "K3": {
+        "item": "DSH 0.2.2 及未来版本能力",
+        "status": "UNKNOWN",
+        "why_unknown": "未升级、未测试；插件声明不兼容",
+        "condition_to_verify": "官方发布兼容版本并安排专门验证轮次",
+        "phase": "版本升级时"
+      }
+    },
+    "independent_verification": {
+      "hy4_dsh_direct": {
+        "item": "HY4 能否由 DSH 通过官方接口直连调用",
+        "status": "UNKNOWN",
+        "blocking": false,
+        "why_unknown": "WorkBuddy 免费额度下可用 HY4 进行开发，但这只说明 IDE 侧可用，不能推出 DSH Runtime 已具备 HY4 官方 provider；PHASE 00 的探针用的是 DeepSeek/commandcode，不能当作 HY4 兼容性证据；目前没有可用的官方免费接入方式，也没有做过任何直连测试",
+        "condition_to_verify": "存在官方、公开、免费（或用户已授权）的 DSH→HY4 接入方式后，另立独立兼容性验证，不得反向工程、不得把 WorkBuddy 私有接口作为产品依赖",
+        "phase": "独立验证事项，不作为任何阶段门禁",
+        "note": "WorkBuddy 使用 HY4 开发 ≠ DSH 官方支持 HY4；不得因 PHASE 00 用 DeepSeek 跑通就认定 HY4 已验证；不得为此改动 DSH Runtime 核心架构。"
+      }
+    },
+    "user_decisions": [
+      "U2：生产 DSH_HOME 采用「每项目隔离」还是「复用用户 ~/.dsh」",
+      "U6：是否升级到 DSH 0.2.2 及兼容插件",
+      "ADR-0001 / ADR-0002 仍为 PROPOSED / CONDITIONAL，技术栈与多 Runtime 拓扑需用户正式批准",
+      "HY4 官方接入方式（如未来需要）由用户提供或确认，不在本阶段擅自引入"
+    ],
+    "environment_limited": [
+      "U8：本机 NODE_OPTIONS 注入的 safe-delete 安全垫会中止 DSH 0.1.5 的 profile 维护删除，legacy 套件无法稳定复跑"
+    ],
+    "next_phase": {
+      "phase": "PHASE 01",
+      "first_tasks": [
+        "按已验证的 DSH SDK 链路落地 Windows 本地应用基础与真实连接状态展示",
+        "官方 MCP SDK 兼容性冒烟（U5）并替换 PHASE 00 手写原型",
+        "ADR-0001 §5 Electron 打包冒烟（U1）以决定技术栈是否转正",
+        "崩溃恢复与中断轮次可靠性验证（U4/U7）",
+        "产品决策：DSH_HOME 策略（U2）"
+      ],
+      "precondition": "外部独立评审确认 PHASE 00；在此之前不进入 PHASE 01 业务功能开发"
+    },
+    "final_verification": {
+      "commands": [
+        {
+          "command": "node --check (all changed .mjs)",
+          "result": "SYNTAX_OK",
+          "exit_code": 0
+        },
+        {
+          "command": "npm run test:unit",
+          "result": "107/107 PASS",
+          "exit_code": 0
+        },
+        {
+          "command": "npm run gates",
+          "result": "dependency/state/leak all PASS, 173/173 files, 0 leaks",
+          "exit_code": 0
+        },
+        {
+          "command": "node scrub-evidence.mjs --check",
+          "result": "173/173 files, 0 residual",
+          "exit_code": 0
+        }
+      ],
+      "model_probes_rerun": false,
+      "retained_probe_evidence": "evidence/r14/summary.json at 2026-11-10T12:43:44.987Z, 6/6 PASS, exit 0",
+      "not_covered_this_round": [
+        "real model execution of the six DSH probes (retained evidence only)",
+        "real Session resume and tool-call runtime behaviour (retained evidence only)"
+      ]
     }
   }
 }

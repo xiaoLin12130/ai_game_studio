@@ -53,23 +53,24 @@
 
 ---
 
-## 当前状态（PHASE 00-R1.4.1 之后）
+## 当前状态（PHASE 00 最终收尾之后）
 
 | 项 | 值 |
 |---|---|
-| 阶段 | **PHASE 00-R1.4.1**（四项收口：输出安全、扫描覆盖、依赖完整性、交付统一） |
-| 六探针 | **6/6 PASS**（最后一次完整真实运行 `2026-11-10T12:43:44Z`；R1.4.1 按评审要求未重复模型调用） |
-| 最终门禁回归 | 依赖 PASS；脱敏 PASS，扫描 **173/173** 发布文件、泄漏 0，exit 0 |
-| 回归测试 | **90/90 PASS**，exit 0 |
+| 阶段结论 | **`PARTIALLY_VERIFIED`** — 冻结范围内 10 条门禁均有证据；正式 PASS 由外部独立评审决定 |
+| 六探针 | **6/6 PASS**（最后一次完整真实运行 `2026-11-10T12:43:44Z`；后续各轮按评审要求未重复模型调用） |
+| 门禁 | 依赖 PASS；脱敏 PASS（全部发布文件、0 泄漏）；项目状态一致性 PASS |
 | 运行组合 | DSH **0.2.1-rc.3**（桌面端自带）+ **commandcode** 插件 0.15.4 + `deepseek/deepseek-v4.1-flash` |
-| 分支 | `phase/00-feasibility` |
-| 仓库 | public（按用户要求保持公开） |
-| 下一阶段 | 未授权。PHASE 01 保持 `BLOCKED_BY_PREVIOUS_REVIEW` |
+| 分支 / 仓库 | `phase/00-feasibility`；public（按用户要求保持公开） |
+| 未解决事项 | 8 项全部非阻断，逐项带后续阶段；HY4 DSH 直连为独立 `UNKNOWN`，不阻塞 |
+| 下一阶段 | 未授权。等外部评审通过后再进入 PHASE 01 |
 
 > 注意：PATH 上的 `dsh` 是 0.1.5-rc.1，**不是**用户日常运行的版本。本项目的验证目标是 0.2.1-rc.3。
+> WorkBuddy 免费额度下用 HY4 开发，**不等于** DSH 已经能通过官方接口调用 HY4；此项单列待验证。
 
-权威事实源：`state/project_state.json` 的 `phase_00_r1.r141`。
-整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`（头部为「R1.4.1 当前状态」，其余章节为历史记录）。
+**唯一权威事实源**：`state/project_state.json` → **`phase_00_final`**（由 `authoritative_source.current_record` 声明）。
+`phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 均为历史快照，只读保留。
+整改报告：`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`（头部为「PHASE 00 最终结论」，其余为历史）。
 证据文件归属见 `spike/dsh-probe/current-0.2.1/evidence/r14/README.md`。
 
 ## 如何验证（真实命令）
@@ -84,14 +85,14 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test          # 90 项回归测试 + 六探针 + 两个门禁；期望 exit 0
+npm test          # 107 项回归测试 + 六探针 + 三道门禁；期望 exit 0
 ```
 
 只回归受影响的门禁（**不消耗真实模型调用**）：
 
 ```powershell
-npm run test:unit   # 90 项；只有退出 0 才发布 tests.json
-npm run gates       # 依赖 + 脱敏门禁，写 final-gates.json
+npm run test:unit   # 107 项；只有退出 0 才发布 tests.json
+npm run gates       # 依赖 + 状态一致性 + 脱敏三道门禁，写 final-gates.json
 ```
 
 Windows `cmd.exe`：

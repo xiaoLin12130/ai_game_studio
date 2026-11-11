@@ -8,7 +8,10 @@
 > 2. **「DSH 无 session resume」只对 0.1.5 成立。** 用户实际运行的 0.2.1-rc.3 有 `session/resume`，实测可恢复历史。
 > 3. **门禁 10（GitHub 推送）已 PASS**，本文件表格中的 BLOCKED 为当时状态。
 >
-> 当前权威事实以 `state/project_state.json` 的 `phase_00_r1.gate_results` 为准；
+> **当前权威事实只有一处**：`state/project_state.json` → `phase_00_final`（由
+> `authoritative_source.current_record` 显式声明）。本文件与 `phase_00.gate_results`、
+> `phase_00_r1.gate_results` 均为历史快照，**保留但不作为当前状态**——这两个旧对象里
+> 仍留有 `BLOCKED` / `PARTIALLY_VERIFIED` 的当时结论，不可引用。
 > 完整整改报告见 **`docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`**。
 >
 > 下表为 0.1.5 当时的状态，仅供追溯，**不要引用为当前结论**。

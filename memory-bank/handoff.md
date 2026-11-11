@@ -1,9 +1,13 @@
 # 当前交接
 
 - 当前项目：AI Game Studio。
-- 当前阶段：**PHASE 00-R1.4.1（四项收口）— 已完成，等待外部复审**。
-- 当前状态：六探针 **6/6 PASS**（最后一次完整真实运行 `2026-11-10T12:43:44Z`，R1.4.1 未重复模型调用）；
-  最终门禁回归 **PASS/PASS**（173/173 发布文件、0 泄漏）；回归测试 **90/90 PASS**。
+- 当前阶段：**PHASE 00 最终收尾 — `PARTIALLY_VERIFIED`，等待外部正式复审**。
+- **唯一事实源**：`state/project_state.json` → **`phase_00_final`**（`authoritative_source.current_record` 声明）。
+  `phase_00`、`phase_00_r1.gate_results`、`r11`…`r141` 全是历史快照，只读保留，勿引用为当前状态。
+- 当前状态：冻结范围内 10 条门禁均有证据；六探针 **6/6 PASS**（最后一次完整真实运行
+  `2026-11-10T12:43:44Z`，后续各轮未重复模型调用）；三道门禁（依赖 / 状态 / 脱敏）PASS。
+- 8 项未解决问题全部**非阻断**，逐项登记在 `phase_00_final.deferred`（含阶段、风险、验证条件）；
+  HY4 的 DSH 直连为独立 `UNKNOWN`，不阻塞、不伪造、不改架构。
 - 运行组合：**DSH 0.2.1-rc.3（桌面端自带）+ commandcode 插件 0.15.4 + `deepseek/deepseek-v4.1-flash`**。PATH 上的 `dsh` 0.1.5-rc.1 不是目标版本。
 - 阶段分支：`phase/00-feasibility`；**已推送**至 https://github.com/xiaoLin12130/ai_game_studio 。
 - 交付提交 SHA：见 `state/project_state.json` → `phase_00_r1.r141.delivery_commit`（由纯元数据提交回填）。
@@ -17,8 +21,8 @@ DSH + commandcode + MCP 的技术链路早已证明可用；R1.4.1 收掉了最�
 
 ## 下一会话先读什么
 
-1. `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md` — 头部「R1.4.1 当前状态」是唯一当前结论；其余章节是历史。
-2. `state/project_state.json` → `phase_00_r1.r141` — **唯一事实源**。
+1. `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md` — 头部「PHASE 00 最终结论」与末尾「最终验证与移交」是当前结论；其余章节是历史。
+2. `state/project_state.json` → **`phase_00_final`** — **唯一事实源**。
 3. `spike/dsh-probe/current-0.2.1/evidence/r14/README.md` — 每个证据文件属于哪次运行、数字为何不同。
 4. `docs/decisions/ADR-0001-tech-stack.md`、`ADR-0002-dsh-integration.md` — 两个 `PROPOSED / CONDITIONAL` 决策。
 
@@ -39,7 +43,7 @@ cd spike\dsh-probe
 node scrub-evidence.mjs --check   # 全部发布文件；残留/读失败/空范围 → 退出 1
 ```
 
-## 五个容易再犯的坑
+## 容易再犯的坑
 
 1. **不要再让报告内嵌自身 Commit SHA。** 回填会改报告，导致「评审打开的固定提交」与「交付版本」不同。
    SHA 只放 state，由纯元数据提交回填，且该提交不改报告。
@@ -47,6 +51,11 @@ node scrub-evidence.mjs --check   # 全部发布文件；残留/读失败/空范
 3. **门禁要可证伪。** 改规则后必须跑阳性/阴性对照：植入路径、改 integrity、删锁、注入失败。
 4. **脚本化改写会破坏代码。** 曾把换行写成 `//n` 注释掉断言；也曾丢掉正则的 `g` 标志导致无限循环 OOM。
 5. **不要在两个地方写同一份规则。** 唯一规则源 `src/lib/redact.mjs`；唯一输出层 `safe-output.mjs`；唯一扫描器 `scrub.mjs`。
+6. **状态只能有一个当前记录。** 曾同时有 3 个文档各自宣布不同的「唯一权威」，其中旧对象里两条核心门禁
+   仍标 `BLOCKED`（实际早已 PASS）。现在由 `authoritative_source.current_record` 指向 `phase_00_final`，
+   `checkProjectState()` 会在任何探针运行前检查，失败即 exit 1。历史对象只读保留，不要删。
+7. **WorkBuddy 能用 HY4 开发 ≠ DSH 能调 HY4。** 不得把 PHASE 00 的 DeepSeek 探针当成 HY4 兼容性证据，
+   不得用私有/逆向接口当产品依赖，也不要为验证它改动 DSH Runtime 架构。
 
 ## 不要做的事
 

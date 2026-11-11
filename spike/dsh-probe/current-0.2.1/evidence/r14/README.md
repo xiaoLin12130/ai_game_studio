@@ -1,7 +1,8 @@
 # evidence/r14 — 每个文件属于哪一次运行
 
 公开仓库里同时存在几次运行的结果。数字不同是**因为文件集在增长**，不是为了凑结论。
-当前状态请以 `state/project_state.json` → `phase_00_r1.r141` 为准；本目录只提供原始记录。
+当前状态请以 `state/project_state.json` → **`phase_00_final`** 为准（`authoritative_source.current_record` 声明）；
+`r141` 及更早的对象是历史快照。本目录只提供原始记录。
 
 | 文件 | 属于哪次运行 | 关键数字 |
 |---|---|---|
@@ -10,8 +11,8 @@
 | `scrub.json` | 同上一次完整运行，由 `run-all.mjs` 写出的脱敏门禁结果 | 167 文件 / 0 泄漏 |
 | `dependencies.json` | 同上一次完整运行，依赖门禁结果 | PASS |
 | `negative-leak-gate.json` | R1.4 负向证明：植入一条路径后**完整跑一遍六探针** | 六探针仍 6/6 PASS，脱敏门禁 FAIL，`OVERALL FAIL`，exit 1 |
-| `tests.json` | **R1.4.1** 回归测试，由 `npm run test:unit` 发布 | 90/90 PASS，exit 0 |
-| `final-gates.json` | **R1.4.1 门禁回归**，只跑依赖 + 脱敏门禁，**不跑模型探针**（评审明确要求不重复消耗真实模型调用） | 依赖 PASS，脱敏 PASS，扫描 173/173，泄漏 0，exit 0 |
+| `tests.json` | **PHASE 00 最终收尾**回归测试，由 `npm run test:unit` 发布（只覆盖成功运行） | 107/107 PASS，exit 0；R1.4.1 的 90/90 是历史值 |
+| `final-gates.json` | **PHASE 00 最终收尾门禁回归**：依赖 + 状态一致性 + 脱敏三道门，**不跑模型探针** | 三道门均 PASS，扫描 173/173，泄漏 0，exit 0；数字以文件内 `generatedAt` 为准 |
 
 ## 为什么 167 和 173 不一样
 

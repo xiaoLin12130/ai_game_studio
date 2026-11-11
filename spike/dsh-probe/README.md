@@ -22,7 +22,7 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install                                  # 探针依赖，精确钉版本
 $env:COMMANDCODE_API_KEY = "..."             # 只从环境变量读，绝不写进仓库
-npm test                                     # 90 项回归测试 + 六探针 + 两个门禁
+npm test                                     # 107 项回归测试 + 六探针 + 三道门禁
 ```
 
 Windows `cmd.exe`：
@@ -34,16 +34,18 @@ set COMMANDCODE_API_KEY=...
 npm test
 ```
 
-只跑套件（跳过回归测试）：`node run-all.mjs`，期望 `PASS 6/6  GATES PASS/PASS  exit 0`。
-只跑回归测试：`npm run test:unit`，期望 `90/90 tests passed  exit 0`；只有退出 0 才发布 `tests.json`。
-只跑受影响门禁（不消耗模型调用）：`npm run gates`。
+只跑套件（跳过回归测试）：`node run-all.mjs`，期望 `PASS 6/6  GATES PASS/PASS/PASS  exit 0`。
+只跑回归测试：`npm run test:unit`，期望 `107/107 tests passed  exit 0`；只有退出 0 才发布 `tests.json`。
+只跑受影响门禁（不消耗模型调用）：`npm run gates`（依赖 / 状态一致性 / 脱敏）。
 
-`run-all.mjs` 会**先校验依赖**，再跑探针，最后跑脱敏门禁：
+`run-all.mjs` 会**先校验依赖与项目状态**，再跑探针，最后跑脱敏门禁：
 
 1. 依赖门禁：profile 与 `profile-locks/` 比对（版本 + integrity + 安装树指纹 + bundle + 运行时兼容范围）；
-2. 六个探针；
-3. 脱敏门禁：扫描整个仓库的发布文件；
-4. 写 aggregate —— 只有门禁跑完才写，避免「结论先于检查」。
+2. 状态门禁：`state/project_state.json` 只有一个当前记录（`phase_00_final`），10 条范围门禁有证据、
+   DEFERRED/UNKNOWN 登记完整、历史记录未被删除；失败则**任何探针都不运行**；
+3. 六个探针；
+4. 脱敏门禁：扫描整个仓库的发布文件；
+5. 写 aggregate —— 只有门禁跑完才写，避免「结论先于检查」。
 
 任一门禁失败 → `OVERALL FAIL`、退出码 1，**六项探针全 PASS 也不能覆盖**。
 **不需要机器上预先存在任何 profile**，也不读写用户的 `~/.dsh`。
@@ -138,15 +140,16 @@ node scrub-evidence.mjs --check    # 有残留、扫描失败、或扫不到文�
 ## 4. 回归测试
 
 ```powershell
-npm run test:unit            # 90 项，夹具全部在临时目录里运行
+npm run test:unit            # 107 项，夹具全部在临时目录里运行
 ```
 
 覆盖：路径检测（含一般带空格目录）、凭据规则 7 阳性 / 4 阴性、扫描器边界（空目录、读失败、JSON 解码、无扩展名文件、二进制 NUL）、
-CLI 退出码、错误分类 6 例、路由断言 4 例、并发隔离 4 例、门禁判定 5 例、
-版本范围 5 例、依赖五场景、以及「依赖门禁失败 → 套件退出 1」的端到端用例。
+CLI 退出码、错误分类 6 例、路由断言 4 例、并发隔离 4 例、门禁判定 6 例、
+版本范围 5 例、依赖五场景、**项目状态门禁 15 例（含 11 条负向）**、输出层静态检查，
+以及「依赖门禁失败 / 状态门禁失败 → 套件退出 1 且零探针运行」两个端到端用例。
 
-测试通过 `CC_LOCK_ROOT` / `CC_DSH_HOME` / `CC_EVIDENCE_OUT` 指向临时目录，
-不会改动真实的锁、profile 或证据。
+测试通过 `CC_LOCK_ROOT` / `CC_DSH_HOME` / `CC_EVIDENCE_OUT` / `CC_STATE_FILE` 指向临时目录，
+不会改动真实的锁、profile、状态文件或证据。
 
 ---
 

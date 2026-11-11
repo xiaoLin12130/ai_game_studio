@@ -26,7 +26,7 @@ import { scanTree } from '../src/lib/scrub.mjs'
 import { out } from '../src/lib/safe-output.mjs'
 import { classifyRun } from '../src/lib/diagnostics.mjs'
 import { notificationsIsolated, routesAllMatch, summariseRoutes } from '../src/lib/assertions.mjs'
-import { decideOverall } from '../src/lib/gates.mjs'
+import { decideOverall, checkProjectState, loadStateCheck, STATE_DOC_POINTERS } from '../src/lib/gates.mjs'
 import { setupProfiles, compareVersions, satisfiesRange } from '../scripts/setup-profiles.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
@@ -393,6 +393,121 @@ await test('gate: all clear is PASS', () => {
   assert.equal(v.exitCode, 0)
 })
 
+await test('gate: state failure alone fails the suite', () => {
+  const v = decideOverall({ failed: 0, blocked: 0, dependency: 'PASS', leak: 'PASS', state: 'FAIL' })
+  assert.equal(v.overall, 'FAIL')
+  assert.equal(v.exitCode, 1)
+  assert.equal(v.gateFailures, 1)
+})
+
+// ---------------------------------------------------------------------------
+// Project-state gate: exactly one current record, complete, history preserved
+// ---------------------------------------------------------------------------
+
+const stateData = () => loadStateCheck(REPO_ROOT)
+
+/** Check a deep-cloned state with one deliberate defect, leaving the real file alone. */
+function withBrokenState(mutate, docs = null) {
+  const data = stateData()
+  const state = structuredClone(data.state)
+  mutate(state)
+  return checkProjectState({ state, docs: docs ?? data.docs, root: REPO_ROOT })
+}
+
+const expectCode = (result, code) => {
+  assert.equal(result.ok, false, `expected a failure, got PASS: ${JSON.stringify(result.checked)}`)
+  assert.ok(result.errors.some((e) => e.code === code), `expected ${code}, got ${JSON.stringify(result.errors)}`)
+}
+
+await test('state: the real repository has one complete current record', () => {
+  const result = checkProjectState(stateData())
+  assert.equal(result.ok, true, JSON.stringify(result.errors))
+  assert.equal(result.checked.gates, 10)
+  assert.equal(result.checked.deferred, 8)
+  assert.ok(result.checked.unknown >= 1)
+  assert.equal(result.checked.docs, STATE_DOC_POINTERS.length)
+})
+
+await test('state: missing authoritative pointer fails', () => {
+  expectCode(withBrokenState((s) => delete s.authoritative_source), 'authority-missing')
+})
+
+await test('state: deleting the current record fails', () => {
+  expectCode(withBrokenState((s) => delete s.phase_00_final), 'current-record-missing')
+})
+
+await test('state: a scope gate downgraded to BLOCKED fails', () => {
+  expectCode(withBrokenState((s) => { s.phase_00_final.gates['03_real_prompt_trackable_result'].status = 'BLOCKED' }), 'gate-not-pass')
+})
+
+await test('state: a gate pointing at a missing evidence file fails', () => {
+  expectCode(withBrokenState((s) => { s.phase_00_final.gates['05_studio_readonly_tool_invoked'].evidence = 'does/not/exist.json' }), 'gate-evidence-missing')
+})
+
+await test('state: a deferred item without a target phase fails', () => {
+  expectCode(withBrokenState((s) => { delete s.phase_00_final.deferred.U1.phase }), 'deferred-incomplete')
+})
+
+await test('state: a deferred item claimed as CONFIRMED fails', () => {
+  expectCode(withBrokenState((s) => { s.phase_00_final.deferred.U1.status = 'CONFIRMED' }), 'deferred-overclaimed')
+})
+
+await test('state: an UNKNOWN without a verification condition fails', () => {
+  expectCode(withBrokenState((s) => { delete s.phase_00_final.unknown.K1.condition_to_verify }), 'unknown-incomplete')
+})
+
+await test('state: HY4 direct claimed as CONFIRMED fails', () => {
+  expectCode(withBrokenState((s) => { s.phase_00_final.independent_verification.hy4_dsh_direct.status = 'CONFIRMED' }), 'hy4-status')
+})
+
+await test('state: HY4 direct marked as blocking fails', () => {
+  expectCode(withBrokenState((s) => { s.phase_00_final.independent_verification.hy4_dsh_direct.blocking = true }), 'hy4-blocking')
+})
+
+await test('state: deleting a historical round record fails', () => {
+  expectCode(withBrokenState((s) => { delete s.phase_00_r1.r141 }), 'history-lost')
+})
+
+await test('state: a document declaring a stale gate_results as current fails', () => {
+  const docs = { ...stateData().docs }
+  docs['docs/phase-reports/PHASE_00_REPORT.md'] = 'phase_00_final\n当前权威事实以 state/project_state.json 的 phase_00_r1.gate_results 为准；'
+  const data = stateData()
+  expectCode(checkProjectState({ state: data.state, docs, root: REPO_ROOT }), 'doc-stale-pointer')
+})
+
+await test('state: a document with no pointer to the current record fails', () => {
+  const docs = { ...stateData().docs }
+  docs['README.md'] = 'no pointer here'
+  const data = stateData()
+  expectCode(checkProjectState({ state: data.state, docs, root: REPO_ROOT }), 'doc-pointer-missing')
+})
+
+await test('state: an incomplete document set cannot pass by omission', () => {
+  const docs = { 'README.md': stateData().docs['README.md'] }
+  const data = stateData()
+  expectCode(checkProjectState({ state: data.state, docs, root: REPO_ROOT }), 'doc-set-incomplete')
+})
+
+// ---------------------------------------------------------------------------
+// Output layer: no raw stream writes outside the single writer
+// ---------------------------------------------------------------------------
+
+await test('output: no direct stream writes outside safe-output.mjs', () => {
+  const files = [
+    'run-all.mjs',
+    'src/lib/evidence.mjs',
+    'src/lib/gates.mjs',
+    'scripts/setup-profiles.mjs',
+    'scripts/run-gates.mjs',
+    'tests/run-tests.mjs',
+    'tests/record-tests.mjs',
+  ]
+  for (const rel of files) {
+    const source = fs.readFileSync(path.join(PROBE_ROOT, rel), 'utf8')
+    assert.equal(/process\.(stdout|stderr)\.write\(/.test(source), false, `${rel} bypasses the redacted output layer`)
+  }
+})
+
 // ---------------------------------------------------------------------------
 // Version range used by the dependency gate
 // ---------------------------------------------------------------------------
@@ -599,6 +714,32 @@ await test('suite: dependency gate failure exits 1', () => {  const evidenceOut 
   assert.equal(run.status, 1, `expected exit 1, got ${run.status}: ${String(run.stdout).slice(-400)}`)
   const aggregate = JSON.parse(fs.readFileSync(path.join(evidenceOut, '_aggregate', 'run-all.json'), 'utf8'))
   assert.equal(aggregate.gates.dependency.status, 'FAIL')
+  assert.equal(aggregate.overall, 'FAIL')
+  assert.equal(aggregate.total, 0, 'no probe should have run')
+})
+
+await test('suite: broken project state aborts before any probe (real exit code)', () => {
+  const stateRoot = made('state-gate')
+  const brokenStateFile = path.join(stateRoot, 'project_state.json')
+  const data = loadStateCheck(REPO_ROOT)
+  const broken = structuredClone(data.state)
+  broken.phase_00_final.gates['05_studio_readonly_tool_invoked'].status = 'BLOCKED'
+  fs.writeFileSync(brokenStateFile, `${JSON.stringify(broken, null, 2)}\n`)
+
+  const evidenceOut = path.join(stateRoot, 'evidence')
+  const run = spawnSync(process.execPath, [path.join(PROBE_ROOT, 'run-all.mjs')], {
+    cwd: PROBE_ROOT,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CC_STATE_FILE: brokenStateFile,
+      CC_EVIDENCE_OUT: evidenceOut,
+    },
+  })
+
+  assert.equal(run.status, 1, `expected exit 1, got ${run.status}: ${String(run.stdout).slice(-500)}`)
+  const aggregate = JSON.parse(fs.readFileSync(path.join(evidenceOut, '_aggregate', 'run-all.json'), 'utf8'))
+  assert.equal(aggregate.gates.state.status, 'FAIL')
   assert.equal(aggregate.overall, 'FAIL')
   assert.equal(aggregate.total, 0, 'no probe should have run')
 })

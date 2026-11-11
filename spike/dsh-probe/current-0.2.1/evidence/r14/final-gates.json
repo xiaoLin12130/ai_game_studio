@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-11T02:29:25.435Z",
-  "purpose": "R1.4.1 gate-only regression; the six real model probes were not repeated.",
+  "generatedAt": "2026-11-11T03:10:09.681Z",
+  "purpose": "PHASE 00 gate-only regression; the six real model probes were not repeated.",
   "modelProbesRun": false,
   "lastFullProbeRun": "spike/dsh-probe/current-0.2.1/evidence/r14/summary.json",
   "gates": {
@@ -49,6 +49,16 @@
           "resolved": "matches"
         }
       ]
+    },
+    "state": {
+      "status": "PASS",
+      "checked": {
+        "gates": 10,
+        "deferred": 8,
+        "unknown": 3,
+        "docs": 4
+      },
+      "errors": []
     },
     "leak": {
       "status": "PASS",

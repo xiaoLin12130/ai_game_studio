@@ -3,6 +3,7 @@
  *
  * Order is deliberate:
  *   1. dependency gate   — profiles must match the lockfile before anything runs;
+ *   1b. state gate       — the published project state must have one current record;
  *   2. probes            — six probes, each with its own verdict;
  *   3. leak gate         — the published tree is scanned after the run, because the run
  *                          itself writes evidence and that evidence is what leaks;
@@ -22,7 +23,7 @@ import { redact, REPO_ROOT } from './src/lib/redact.mjs'
 import { scanTree } from './src/lib/scrub.mjs'
 import { out, err, createForwarder } from './src/lib/safe-output.mjs'
 import { writeJsonFile } from './src/lib/evidence.mjs'
-import { decideOverall } from './src/lib/gates.mjs'
+import { decideOverall, loadStateCheck, checkProjectState } from './src/lib/gates.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 /**
@@ -97,6 +98,33 @@ if (setupFailure) {
 }
 
 // ---------------------------------------------------------------------------
+// Gate 1b: the published project state must have exactly one current record
+// ---------------------------------------------------------------------------
+// `CC_STATE_FILE` is a test seam: the negative test points it at a mutated copy so a
+// broken state can be proven to abort the suite without touching the real state file
+// or spending a single model call.
+let stateGate = { status: 'PASS', checked: null, errors: [] }
+try {
+  const loaded = loadStateCheck(REPO_ROOT, process.env.CC_STATE_FILE ?? null)
+  const check = checkProjectState(loaded)
+  stateGate = {
+    status: check.ok ? 'PASS' : 'FAIL',
+    checked: check.checked,
+    errors: check.errors,
+  }
+} catch (error) {
+  stateGate = { status: 'FAIL', checked: null, errors: [{ code: 'state-unreadable', message: String(error?.message ?? error).slice(0, 300) }] }
+}
+
+if (stateGate.status === 'FAIL') {
+  err(`\n[gate:state] FAILED — ${stateGate.errors.length} problem(s)\n`)
+  for (const problem of stateGate.errors.slice(0, 12)) err(`[gate:state] ${problem.code}: ${problem.message}\n`)
+  err('[gate:state] no probe was run.\n')
+} else {
+  out(`[gate:state] PASS (gates=${stateGate.checked?.gates} deferred=${stateGate.checked?.deferred} unknown=${stateGate.checked?.unknown} docs=${stateGate.checked?.docs})\n`)
+}
+
+// ---------------------------------------------------------------------------
 // Probes
 // ---------------------------------------------------------------------------
 function runProbe(name, script) {
@@ -143,7 +171,7 @@ function runProbe(name, script) {
   })
 }
 
-if (!setupFailure) {
+if (!setupFailure && stateGate.status !== 'FAIL') {
   for (const [name, script] of probes) {
     out(`\n===== ${name} =====\n`)
     await runProbe(name, script)
@@ -180,7 +208,13 @@ if (!scrub.ok) {
 // ---------------------------------------------------------------------------
 // Aggregate
 // ---------------------------------------------------------------------------
-const verdict = decideOverall({ failed: buckets.FAIL.length, blocked: buckets.BLOCKED.length, dependency: dependencyGate.status, leak: leakGate.status })
+const verdict = decideOverall({
+  failed: buckets.FAIL.length,
+  blocked: buckets.BLOCKED.length,
+  dependency: dependencyGate.status,
+  leak: leakGate.status,
+  state: stateGate.status,
+})
 
 const summary = {
   generatedAt: new Date().toISOString(),
@@ -191,6 +225,7 @@ const summary = {
   node: process.version,
   gates: {
     dependency: dependencyGate,
+    state: stateGate,
     leak: leakGate,
   },
   setup: setup
@@ -224,11 +259,12 @@ writeJsonFile(path.join(r14Dir, 'scrub.json'), { generatedAt: summary.generatedA
 writeJsonFile(path.join(r14Dir, 'dependencies.json'), { generatedAt: summary.generatedAt, gate: dependencyGate })
 
 out('\n===== SUMMARY (0.2.1-rc.3 + commandcode) =====\n')
-out(`${(dependencyGate.status === 'PASS' ? 'PASS' : 'FAIL').padEnd(8)}gate:dependency\n`)
+out(`${dependencyGate.status.padEnd(8)}gate:dependency\n`)
+out(`${stateGate.status.padEnd(8)}gate:state\n`)
 for (const item of results) out(`${item.outcome.padEnd(8)}${item.name}  (exit ${item.exitCode}, ${item.ms}ms)\n`)
 out(`${leakGate.status.padEnd(8)}gate:leak  (scanned ${scrub.scanned}, leaks ${scrub.leaks.length})\n`)
 out(
-  `\nPASS ${summary.passed}/${summary.total}  BLOCKED ${summary.blocked}  FAIL ${summary.failed}  GATES ${dependencyGate.status}/${leakGate.status}\n`,
+  `\nPASS ${summary.passed}/${summary.total}  BLOCKED ${summary.blocked}  FAIL ${summary.failed}  GATES ${dependencyGate.status}/${stateGate.status}/${leakGate.status}\n`,
 )
 out(`OVERALL ${summary.overall}\n`)
 

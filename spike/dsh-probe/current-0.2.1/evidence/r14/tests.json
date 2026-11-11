@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-11T02:28:34.234Z",
+  "generatedAt": "2026-11-11T03:11:34.588Z",
   "node": "v22.22.2",
-  "total": 90,
-  "passed": 90,
+  "total": 107,
+  "passed": 107,
   "failed": 0,
   "exitCode": 0,
   "results": [
@@ -14,7 +14,7 @@
     {
       "name": "detect: windows spaces (general)",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "detect: windows spaces (deep)",
@@ -44,7 +44,7 @@
     {
       "name": "detect: unc",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "detect: posix mnt",
@@ -84,12 +84,12 @@
     {
       "name": "detect: user home",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "ignore: placeholder repo",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "ignore: placeholder home",
@@ -174,7 +174,7 @@
     {
       "name": "credential: openai-style key is detected and redacted",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "credential: github token is detected and redacted",
@@ -209,12 +209,12 @@
     {
       "name": "scan: planted leak is found",
       "ok": true,
-      "ms": 5
+      "ms": 3
     },
     {
       "name": "scan: clean tree passes",
       "ok": true,
-      "ms": 3
+      "ms": 2
     },
     {
       "name": "scan: empty scope is an error, not a pass",
@@ -224,12 +224,12 @@
     {
       "name": "scan: unreadable file is an error, not a pass",
       "ok": true,
-      "ms": 128
+      "ms": 111
     },
     {
       "name": "scan: json is inspected after decoding",
       "ok": true,
-      "ms": 3
+      "ms": 2
     },
     {
       "name": "scan: extensionless and .orig files are in scope",
@@ -239,7 +239,7 @@
     {
       "name": "scan: binary content is skipped by NUL detection, not by suffix",
       "ok": true,
-      "ms": 5
+      "ms": 4
     },
     {
       "name": "scan: credential in a file is reported with its rule id",
@@ -249,17 +249,17 @@
     {
       "name": "cli: leak exits 1",
       "ok": true,
-      "ms": 75
+      "ms": 65
     },
     {
       "name": "cli: clean exits 0",
       "ok": true,
-      "ms": 74
+      "ms": 69
     },
     {
       "name": "cli: empty root exits 1",
       "ok": true,
-      "ms": 74
+      "ms": 66
     },
     {
       "name": "classify: quota on stderr",
@@ -289,7 +289,7 @@
     {
       "name": "classify: unknown text stays unclassified",
       "ok": true,
-      "ms": 1
+      "ms": 0
     },
     {
       "name": "routes: empty list is not a pass",
@@ -299,7 +299,7 @@
     {
       "name": "routes: single correct request passes",
       "ok": true,
-      "ms": 0
+      "ms": 1
     },
     {
       "name": "routes: fallback on the second hop fails",
@@ -362,9 +362,89 @@
       "ms": 0
     },
     {
-      "name": "range: required dsh line is accepted",
+      "name": "gate: state failure alone fails the suite",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "name": "state: the real repository has one complete current record",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "state: missing authoritative pointer fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: deleting the current record fails",
       "ok": true,
       "ms": 1
+    },
+    {
+      "name": "state: a scope gate downgraded to BLOCKED fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a gate pointing at a missing evidence file fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a deferred item without a target phase fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "state: a deferred item claimed as CONFIRMED fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: an UNKNOWN without a verification condition fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "state: HY4 direct claimed as CONFIRMED fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: HY4 direct marked as blocking fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "state: deleting a historical round record fails",
+      "ok": true,
+      "ms": 1
+    },
+    {
+      "name": "state: a document declaring a stale gate_results as current fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: a document with no pointer to the current record fails",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "state: an incomplete document set cannot pass by omission",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "output: no direct stream writes outside safe-output.mjs",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "name": "range: required dsh line is accepted",
+      "ok": true,
+      "ms": 0
     },
     {
       "name": "range: older runtime is rejected",
@@ -389,22 +469,22 @@
     {
       "name": "deps: fresh home builds both profiles",
       "ok": true,
-      "ms": 119
+      "ms": 102
     },
     {
       "name": "deps: second run is stable and repairs nothing",
       "ok": true,
-      "ms": 26
+      "ms": 27
     },
     {
       "name": "deps: tampered install is repaired, not accepted",
       "ok": true,
-      "ms": 96
+      "ms": 85
     },
     {
       "name": "deps: tampered profile manifest is repaired",
       "ok": true,
-      "ms": 32
+      "ms": 28
     },
     {
       "name": "deps: missing lockfile fails",
@@ -414,7 +494,7 @@
     {
       "name": "deps: lockfile version drift fails",
       "ok": true,
-      "ms": 16
+      "ms": 14
     },
     {
       "name": "deps: lockfile manifest drift fails",
@@ -429,32 +509,37 @@
     {
       "name": "deps: tree integrity drift fails",
       "ok": true,
-      "ms": 5
+      "ms": 4
     },
     {
       "name": "deps: tree resolved drift fails",
       "ok": true,
-      "ms": 16
+      "ms": 15
     },
     {
       "name": "deps: lockfile integrity drift fails even with a cached staging tree",
       "ok": true,
-      "ms": 4
+      "ms": 5
     },
     {
       "name": "deps: lockfile resolved drift fails",
       "ok": true,
-      "ms": 16
+      "ms": 14
     },
     {
       "name": "suite: dependency gate failure exits 1",
       "ok": true,
-      "ms": 327
+      "ms": 293
+    },
+    {
+      "name": "suite: broken project state aborts before any probe (real exit code)",
+      "ok": true,
+      "ms": 269
     },
     {
       "name": "evidence: a failing test run cannot overwrite the published result",
       "ok": true,
-      "ms": 160
+      "ms": 147
     }
   ]
 }
