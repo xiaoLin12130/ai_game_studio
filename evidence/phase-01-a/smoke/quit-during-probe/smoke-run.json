@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T06:19:14.482Z",
+  "generatedAt": "2026-11-11T06:34:57.180Z",
   "scenario": "quit-during-probe",
   "expected": null,
   "electronVersion": "44.7.0",
-  "wallClockMs": 3297,
+  "wallClockMs": 3222,
   "exitCode": 0,
   "stdoutTail": "\r\n[smoke] quitting during probe, state=CHECKING\n",
   "stderrTail": "",
   "smoke": {
-    "generatedAt": "2026-11-11T06:19:10.611Z",
+    "generatedAt": "2026-11-11T06:34:53.392Z",
     "mode": "quit-during-probe",
     "stateAtQuit": {
       "status": "CHECKING",
@@ -26,11 +26,11 @@
       "configRecovered": false,
       "configRecoveryNote": null
     },
-    "elapsedMs": 306
+    "elapsedMs": 302
   },
   "shutdown": [
     {
-      "ts": "2026-11-11T06:19:10.612Z",
+      "ts": "2026-11-11T06:34:53.392Z",
       "level": "warn",
       "event": "dsh.shutdown",
       "reason": "app-quit",
@@ -38,22 +38,25 @@
       "stopping": true
     },
     {
-      "ts": "2026-11-11T06:19:13.348Z",
+      "ts": "2026-11-11T06:34:56.065Z",
       "level": "info",
       "event": "dsh.shutdown.result",
       "reason": "app-quit",
       "completed": true,
+      "confirmedGone": true,
       "timedOut": false,
-      "teardown": {
-        "attempted": true,
-        "reason": "stopped",
-        "closed": true,
-        "exitCode": 0,
-        "processAbsent": true,
-        "error": null,
-        "durationMs": 2736
-      },
-      "durationMs": 2736
+      "teardownAttempted": true,
+      "closeSucceeded": true,
+      "closeError": null,
+      "processCheckStatus": "ABSENT",
+      "processAbsent": true,
+      "remainingPids": [],
+      "forcedTerminationAttempted": false,
+      "forcedTerminationSucceeded": false,
+      "exitCode": 0,
+      "error": null,
+      "teardownDurationMs": 2671,
+      "durationMs": 2673
     }
   ],
   "leftoversAfterExit": [],
@@ -65,7 +68,9 @@
     "wasProbingWhenQuit": true,
     "shutdownLogged": true,
     "runtimeConfirmedGone": true,
+    "closeSucceeded": true,
     "processAbsentConfirmed": true,
+    "noFallbackNeeded": true,
     "exitCodeObserved": true
   },
   "ok": true

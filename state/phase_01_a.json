@@ -53,13 +53,13 @@
       "id": "A1",
       "item": "应用在 Windows 上可启动，主窗口可见",
       "status": "PASS",
-      "evidence": "evidence/phase-01-a/desktop-smoke/smoke.json"
+      "evidence": "evidence/phase-01-a/smoke/ready/smoke-run.json"
     },
     {
       "id": "A2",
       "item": "显示 DSH 真实状态（无假数据/固定字符串/模拟延迟）",
       "status": "PASS",
-      "evidence": "evidence/phase-01-a/desktop-smoke/smoke.json"
+      "evidence": "evidence/phase-01-a/smoke/ready/smoke.json"
     },
     {
       "id": "A3",
@@ -77,7 +77,7 @@
       "id": "A5",
       "item": "应用可正常关闭，退出后不残留运行时进程",
       "status": "PASS",
-      "evidence": "evidence/phase-01-a/desktop-smoke/smoke-run.json"
+      "evidence": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
     },
     {
       "id": "A6",
@@ -154,13 +154,14 @@
   ],
   "verification": {
     "tsc": {
-      "command": "npm run build",
-      "exitCode": 0
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-a/build-typescript.txt"
     },
     "appTests": {
       "command": "node --test",
-      "tests": 45,
-      "pass": 45,
+      "tests": 53,
+      "pass": 53,
       "fail": 0,
       "skipped": 0,
       "exitCode": 0,
@@ -176,15 +177,15 @@
       },
       {
         "scenario": "failure",
-        "checks": 11,
-        "passed": 11,
+        "checks": 16,
+        "passed": 16,
         "exitCode": 0,
         "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json"
       },
       {
         "scenario": "quit-during-probe",
-        "checks": 9,
-        "passed": 9,
+        "checks": 11,
+        "passed": 11,
         "exitCode": 0,
         "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
       }
@@ -199,12 +200,14 @@
         "tests": 166,
         "pass": 166,
         "fail": 0,
-        "exitCode": 0
+        "exitCode": 0,
+        "artifact": "evidence/phase-01-a/phase00-regression-suite.txt"
       },
       "gates": {
         "command": "node scripts/run-gates.mjs",
         "overall": "PASS",
         "leaks": 0,
+        "scanned": 250,
         "exitCode": 0,
         "artifact": "evidence/phase-01-a/phase00-gates.json"
       },
@@ -212,7 +215,7 @@
     }
   },
   "model_probes_rerun": false,
-  "updated_at": "2026-11-11T06:17:38.494Z",
+  "updated_at": "2026-11-11T06:35:18.055Z",
   "review_rounds": [
     {
       "round": "R1",
@@ -257,6 +260,47 @@
           "what": "5 处 eXevidence/ 修正为 evidence/",
           "evidence": [
             "docs/review-handoff/PHASE_01_A_WORK_REPORT.md"
+          ]
+        }
+      }
+    },
+    {
+      "round": "R2",
+      "reviewed_commit": "c0cd5b95cd1f83ef7b2297dacbfb4186382ae089",
+      "external_verdict": "PARTIALLY_VERIFIED",
+      "findings": {
+        "P1-01": "processAbsent 为 null 时被当成清理成功；READY 未等待 teardown 结果；close 失败后无兜底回收；退出码被误列为一重确认",
+        "P2-01": "failure 冒烟未把重新检测按钮可用性纳入断言，也未实际触发一次重新检测",
+        "P2-03": "证据引用不一致：state 指向旧 desktop-smoke；verification.json 缺少 build 与 PHASE 00 命令；README 声称存在未提交的 .log"
+      },
+      "resolution": {
+        "P1-01": {
+          "fixed": true,
+          "what": "completed 改为严格判定（close 成功 且 OS 明确 ABSENT 且未超时）；READY 必须经过 teardown 且 completed=true，否则 UNKNOWN + TEARDOWN_UNCONFIRMED；新增按命令行验明归属的定向终止（taskkill /PID，先复核再杀，终止后重新查询），最大 6s；退出码改为只作诊断字段；shutdown 日志补齐 closeSucceeded/processCheckStatus/processAbsent/remainingPids/forcedTermination*/exitCode/error/durationMs；退出码由 confirmedGone 决定",
+          "evidence": [
+            "apps/studio/src/main/dsh/probe.ts",
+            "apps/studio/src/main/dsh/processes.ts",
+            "apps/studio/src/main/dsh/service.ts",
+            "apps/studio/test/lifecycle.test.js",
+            "apps/studio/test/processes.test.js",
+            "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
+          ]
+        },
+        "P2-01": {
+          "fixed": true,
+          "what": "failure 冒烟新增 recheckEnabled / recheckRanASecondProbe / recheckStayedInFailure / recheckUiConsistent / recheckButtonRestored，并真的点击按钮触发第二次探测",
+          "evidence": [
+            "apps/studio/scripts/smoke.mjs",
+            "evidence/phase-01-a/smoke/failure/smoke-run.json"
+          ]
+        },
+        "P2-03": {
+          "fixed": true,
+          "what": "state 的 A1/A2/A5 改指本轮 smoke 证据；verification.json 覆盖 7 条实际执行的命令；README 改为描述实际提交的 .txt 输出",
+          "evidence": [
+            "state/phase_01_a.json",
+            "evidence/phase-01-a/verification.json",
+            "evidence/phase-01-a/README.md"
           ]
         }
       }

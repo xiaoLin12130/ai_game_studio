@@ -1,0 +1,19 @@
+{
+  "scenario": "quit-during-probe",
+  "ok": true,
+  "checks": {
+    "exitCodeZero": true,
+    "producedSmokeJson": true,
+    "noLingeringRuntime": true,
+    "runtimeWasOwned": true,
+    "wasProbingWhenQuit": true,
+    "shutdownLogged": true,
+    "runtimeConfirmedGone": true,
+    "closeSucceeded": true,
+    "processAbsentConfirmed": true,
+    "noFallbackNeeded": true,
+    "exitCodeObserved": true
+  },
+  "wallMs": 3222,
+  "exitCode": 0
+}

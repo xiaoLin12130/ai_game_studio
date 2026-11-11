@@ -100,12 +100,12 @@ exitCode  ← TransportClosedError 消息里的 "exit code: <n>"
 - home 不存在时由 dsh 自动创建内置 `sdk` profile，无需联网、无需凭据。
 - 探测不读取、不修改用户的任何 DSH 配置。
 
-## 8. Runtime 生命周期与退出（P1-01 修复）
+## 8. Runtime 生命周期与退出
 
 ### 8.1 所有权
 
 一次探测只拥有它自己 spawn 的那个 runtime，并且负责到「确认退出」为止。没有全局的 Runtime
-管理器，也没有第二套清理路径——这避免了「谁来关」的歧义。
+管理器，也没有第二套清理路径。
 
 ### 8.2 退出时的顺序
 
@@ -116,38 +116,65 @@ service 标记为关闭 —— 之后新探测请求被拒绝
       ↓
 probe.stop()（幂等）—— 立刻开始 teardown，并打断等待握手的那一段
       ↓
-client.close()（有上界 15s）
+client.close()（上界 15s）
       ↓
-三重确认：close 已 resolve / 收到 exit code / 进程表里没有该 DSH home 的进程
+操作系统进程表查询（决定性判据）
+      ↓
+若仍存在：验明归属 → 定向终止 → 再次查询（上界 6s）
       ↓
 写 dsh.shutdown.result 日志
       ↓
-app.exit()
+app.exit()：confirmedGone 为 false 时用非零退出码
 ```
 
-### 8.3 为什么是三重确认
+### 8.3 什么才算「清理完成」
 
-| 信号 | 来源 | 能证明什么 |
+两个不同的概念，实现里分开：
+
+| 字段 | 含义 | 条件 |
 |---|---|---|
-| `close()` resolve | SDK | 文档保证「进程真正退出后才 resolve」 |
-| `exit code: <n>` 消息 | SDK 的 exit 事件 | 子进程确实收到了退出边沿，并给出退出码 |
-| 进程表 | 操作系统 | 没有进程仍挂在这个 DSH home 上 |
+| `completed` | **干净路径成功** | SDK `close()` 成功 **且** OS 明确 ABSENT **且** 没有 shutdown 超时 |
+| `confirmedGone` | **安全属性成立** | OS 明确 ABSENT（可以是 close 成功，也可以是兜底终止之后） |
 
-前两者来自同一侧；第三者来自另一侧。评审指出的问题正是「只凭 Promise 结束就认为进程没了」，
-因此第三条是必需的，而不是锦上添花。
+- 只有 `completed` 才允许探测返回 **READY**。握手成功但没能确认 runtime 已退出时，返回
+  `UNKNOWN` + `TEARDOWN_UNCONFIRMED`，界面不会显示健康状态。
+- 退出码由 `confirmedGone` 决定：进程可能还活着就绝不 exit 0。
 
-### 8.4 清理失败与超时
+### 8.4 三条证据，各自的作用
 
-- 关闭上界：`TEARDOWN_BOUND_MS = 15000`；shutdown 另有 `boundMs`（默认 20000）。
-- 超过上界：记录 `timedOut: true` 与 `completed: false`，日志 level=error，然后**照常退出**。
-  退出流程自身还有 +5s 的兜底定时器，保证即使清理卡死也不会永久阻塞应用退出。
-- ⚠️ 当 `completed=false` 时，**不能声称 runtime 一定已回收**；日志与状态会如实记录这一点。
+| 信号 | 来源 | 在判定中的作用 |
+|---|---|---|
+| `close()` resolve | SDK | 干净路径的必要条件 |
+| `exit code: <n>` 消息 | SDK 的 exit 事件 | **仅诊断**，记录进日志，不是成功判据 |
+| 进程表查询 | 操作系统 | **决定性判据**：只有 ABSENT 才算「没有残留」 |
 
-### 8.5 已知边界
+早期版本把退出码写成「第三重确认」，那是错的：退出码和 close 来自同一侧，而且第三方插件在
+Windows 上实测会出现 teardown 崩溃（`0xC0000409`）却仍然完成回收。退出码现在是诊断字段。
 
-- 进程确认只在 Windows 生效（`Win32_Process` 查询）。其它平台返回 FAILED，报告里记为未知，
-  不当作「已退出」。
-- 进程匹配用「命令行包含该 DSH home」，因此同机上另一个使用同一 home 的 Studio 实例也会被算作残留；
-  这是保守方向的误差。
-- 星号：SDK 没有运行时级取消协议（PHASE 00 已验证 `session/cancel` = NOT_SUPPORTED），
-  所以「停止探测」只能是「关闭本次探测拥有的 runtime」，而不是取消一次进行中的模型任务。
+**`null`（无法确定）与 `false`（确认存在）同样被当作未清理成功**，两者都不会被解释为 PASS。
+
+### 8.5 兜底回收
+
+当 OS 报告仍有进程（PRESENT）时：
+
+1. 逐个 PID 重新读取命令行，确认其中仍包含本次探测的 DSH home；不匹配则跳过、不杀。
+2. 用 `taskkill /F /T /PID <pid>` 定向终止（**绝不**用 `/IM node.exe` 这类广谱终止）。
+3. 轮询进程表直到 ABSENT 或 6 s 上界。
+4. 只有再次查询到 ABSENT，才记录 `forcedTerminationSucceeded` 与 `processAbsent: true`。
+
+如果进程检查本身失败（FAILED），**不会**触发终止——无法证明归属就不能杀。此时 `completed`
+与 `confirmedGone` 都为 false，日志保留错误原因。
+
+### 8.6 失败与超时的处理
+
+- close 上界 15 s；shutdown 上界 20 s；进程终止上界 6 s。
+- 超时或回收失败：`timedOut: true` / `completed: false` / `confirmedGone: false`，日志 level=error。
+- 退出流程另有 +5 s 兜底定时器：即使清理卡死，进程也会以非零码退出，并在日志中留下残留 PID 风险记录。
+- 绝不把 UNKNOWN 当作成功。
+
+### 8.7 已知边界
+
+- 进程查询与终止仅在 Windows 实现；其它平台返回 FAILED，记为未知，不当作已退出。
+- 归属判据是「命令行包含该 DSH home」，同机另一个使用同一 home 的 Studio 实例会被算作残留（保守方向）。
+- SDK 没有运行时级取消协议（PHASE 00 已验证 `session/cancel` = NOT_SUPPORTED），所以「停止探测」
+  只能是「关闭本次探测拥有的 runtime」。

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-11T06:19:14.505Z",
+  "generatedAt": "2026-11-11T06:34:59.602Z",
   "command": "node --test",
   "exitCode": 0,
-  "durationMs": 27309,
+  "durationMs": 29515,
   "counts": {
-    "tests": 45,
-    "pass": 45,
+    "tests": 53,
+    "pass": 53,
     "fail": 0,
     "skipped": 0
   },
@@ -14,6 +14,7 @@
     "lifecycle.test.js",
     "logger.test.js",
     "probe.integration.test.js",
+    "processes.test.js",
     "service.test.js",
     "status.test.js",
     "transitions.test.js"

@@ -1,26 +1,23 @@
 /**
  * The readiness probe, and the lifecycle of the runtime it owns.
  *
- * Ready means: the runtime process started, completed the SDK's `initialize` handshake
- * and answered with a server identity, then shut down. That is deliberately more than
- * "the binary exists" and less than "the model works":
+ * Ready means: the runtime started, completed the SDK handshake, AND the runtime this
+ * probe created was confirmed gone afterwards. A handshake whose process could not be
+ * reaped is not "ready" — the UI must not show a healthy state over a leaked process.
  *
- *   proves      the runtime boots with this profile and home, loads its plugins, speaks
- *               the SDK protocol and reports its identity;
- *   does not    prove the provider route is reachable or funded — that needs a prompt,
- *               which costs model quota and is out of scope for a status probe.
+ * Confirmation is three-way and only one of the three decides success:
  *
- * No prompt is ever sent here.
+ *   close() resolved                 → the SDK says the child exited
+ *   "exit code: N" observed          → diagnostic only, recorded, never a success gate
+ *   OS process table says ABSENT     → the deciding evidence
  *
- * Lifetime rule introduced after review: a probe is the *only* owner of the runtime it
- * spawned, and it stays responsible for that runtime until an exit is confirmed — even
- * when the user quits while `initialize` is still in flight. `close()` is never treated
- * as optional cleanup that happens "if the promise settles".
+ * If the SDK fails or times out, the probe attempts a bounded, ownership-verified
+ * termination of whatever is left, then asks the OS again. Only ABSENT counts.
  */
 import path from 'node:path'
 import { classifyProbeError, type DshServerInfo, type DshStatus, type DshStatusDetail } from '../../shared/status'
 import type { DshEntry } from './locate'
-import { createRuntimeProcessProbe, type RuntimeProcessFinding } from './processes'
+import { createProcessTable, createRuntimeProcessTerminator, type ProcessTable, type TerminationResult } from './processes'
 
 /** Import the ESM-only SDK from this CommonJS main process.
  *
@@ -70,20 +67,28 @@ export function childEnvironment(base: NodeJS.ProcessEnv = process.env): NodeJS.
 }
 
 export type TeardownReason = 'completed' | 'failed' | 'timeout' | 'stopped' | 'not-started'
+export type ProcessCheckStatus = 'ABSENT' | 'PRESENT' | 'FAILED' | 'SKIPPED'
 
-/** What actually happened to the runtime this probe owned. */
+/** Everything that happened to the runtime this probe owned. */
 export interface TeardownReport {
   /** Did a runtime process ever exist for this probe? */
   attempted: boolean
   reason: TeardownReason
-  /** The SDK's close() resolved — it documents that as "the process has exited". */
+  /** The SDK's close() resolved. */
   closed: boolean
-  /** Exit code the SDK reported for the runtime, when it reported one. */
+  closeError: string | null
+  /** Exit code the SDK reported — diagnostic only, never a success condition. */
   exitCode: number | null
-  /** Independent OS-level answer: is any process still attached to this DSH home? */
+  processCheckStatus: ProcessCheckStatus
+  /** true only when the OS table said ABSENT; null means "could not determine". */
   processAbsent: boolean | null
+  remainingPids: number[]
+  forcedTerminationAttempted: boolean
+  forcedTerminationSucceeded: boolean
   error: string | null
   durationMs: number
+  /** Strict: close succeeded AND the OS confirmed the process is gone. */
+  completed: boolean
 }
 
 export interface ProbeRequest {
@@ -94,10 +99,12 @@ export interface ProbeRequest {
   timeoutMs: number
   cwd: string
   entry: DshEntry
-  /** Test seams only; production always uses the real SDK and the OS probe. */
+  /** Test seams only; production uses the real SDK, the real table and the real killer. */
   deps?: {
     clientFactory?: (options: Record<string, unknown>) => HarnessClientLike
-    processProbe?: (dshHome: string) => RuntimeProcessFinding
+    processProbe?: (dshHome: string) => import('./processes').RuntimeProcessFinding
+    processTable?: ProcessTable
+    terminate?: (dshHome: string, boundMs?: number) => Promise<TerminationResult>
   }
 }
 
@@ -112,13 +119,12 @@ export interface ProbeOutcome {
 
 /** One probe, with the ability to stop it and wait for its runtime to be gone. */
 export interface ProbeHandle {
-  /** Settles only after the runtime is torn down. */
+  /** Settles only after teardown. */
   done: Promise<ProbeOutcome>
   /** Idempotent. Asking twice must not produce a second close. */
   stop(reason: string): void
   /** Resolves with the teardown report; never rejects. */
   stopped(): Promise<TeardownReport>
-  /** True once stop() was called. */
   readonly stoppedRequested: boolean
 }
 
@@ -128,10 +134,11 @@ const firstLine = (value: unknown): string | null => {
   return text.split(/\r?\n/).map((line) => line.trim()).find((line) => line.length > 0) ?? null
 }
 
-/** Upper bound for the whole teardown. The SDK's own ladder is bounded; this is the net. */
+/** Upper bound for the close. The SDK's own ladder is bounded; this is the net. */
 export const TEARDOWN_BOUND_MS = 15000
+/** Upper bound for the fallback termination and its verification. */
+export const FORCE_TERMINATION_BOUND_MS = 6000
 
-/** Explicit stop, as opposed to a failure that happens to end the promise. */
 class ProbeStopped extends Error {
   constructor() {
     super('probe stopped by caller')
@@ -155,15 +162,11 @@ export function exitCodeFromMessage(message: string | null | undefined): number 
   return Number.isSafeInteger(value) ? value : null
 }
 
-/**
- * Start a probe and return its handle immediately.
- *
- * The handle's `done` settles only after teardown, so a caller that awaits it never sees
- * a "finished" probe whose runtime is still alive.
- */
 export function runProbe(request: ProbeRequest): ProbeHandle {
   const started = Date.now()
-  const processProbe = request.deps?.processProbe ?? createRuntimeProcessProbe()
+  const table = request.deps?.processTable ?? createProcessTable()
+  const processProbe = request.deps?.processProbe ?? table.findRuntimeProcesses
+  const terminate = request.deps?.terminate ?? createRuntimeProcessTerminator({ table })
 
   let client: HarnessClientLike | null = null
   let subscription: ReturnType<HarnessClientLike['subscribe']> | null = null
@@ -177,7 +180,7 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
     rejectStop = reject
   })
   stopSignal.catch(() => {
-    /* the race below consumes the rejection */
+    /* consumed by the race below */
   })
 
   const finish = (
@@ -203,39 +206,67 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
         attempted: client !== null,
         reason,
         closed: false,
+        closeError: null,
         exitCode: null,
+        processCheckStatus: 'SKIPPED',
         processAbsent: null,
+        remainingPids: [],
+        forcedTerminationAttempted: false,
+        forcedTerminationSucceeded: false,
         error: null,
         durationMs: 0,
+        completed: false,
       }
+
       if (!client) {
-        // Nothing was spawned, so nothing can be left behind.
+        // Nothing was ever spawned, so nothing can be left behind.
+        report.processCheckStatus = 'ABSENT'
         report.processAbsent = true
-        report.closed = true
+        report.completed = true
         report.durationMs = Date.now() - t0
         return report
       }
+
       try {
         await bounded(client.close(), TEARDOWN_BOUND_MS, 'dsh close')
         report.closed = true
       } catch (error) {
-        report.error = firstLine(error)
+        report.closeError = firstLine(error)
+        report.error = report.closeError
       }
-      // The exit code arrives through the subscription rejection triggered by the child's
-      // exit event; wait for it briefly so the report can carry it.
+
+      // The exit code arrives through the subscription rejection; it is recorded for
+      // diagnostics and is deliberately not part of the success condition.
       await Promise.race([drain, sleep(3000)])
       report.exitCode = exitCodeFromMessage((subscriptionError as Error | null)?.message ?? null)
 
-      try {
-        const found = processProbe(request.dshHome)
-        report.processAbsent = found.status === 'ABSENT' ? true : found.status === 'PRESENT' ? false : null
-        if (found.status === 'FAILED') {
-          report.error = (report.error ? report.error + '; ' : '') + 'process check failed: ' + (found.error ?? 'unknown')
-        }
-      } catch (error) {
-        report.processAbsent = null
-        report.error = (report.error ? report.error + '; ' : '') + 'process check threw: ' + firstLine(error)
+      let found = processProbe(request.dshHome)
+      report.processCheckStatus = found.status
+      report.processAbsent = found.status === 'ABSENT' ? true : found.status === 'PRESENT' ? false : null
+      report.remainingPids = found.status === 'PRESENT' ? found.pids : []
+      if (found.status === 'FAILED') {
+        report.error = (report.error ? report.error + '; ' : '') + 'process check failed: ' + (found.error ?? 'unknown')
       }
+
+      // Only when the OS says the runtime may still be there do we reach for the
+      // fallback. A failed check is not a licence to kill: ownership cannot be proven.
+      if (found.status === 'PRESENT') {
+        const termination = await terminate(request.dshHome, FORCE_TERMINATION_BOUND_MS)
+        report.forcedTerminationAttempted = termination.attempted
+        report.forcedTerminationSucceeded = termination.succeeded
+        if (termination.error) report.error = (report.error ? report.error + '; ' : '') + termination.error
+
+        // Re-query: the fallback only counts if the OS agrees the process is gone.
+        const after = processProbe(request.dshHome)
+        report.processCheckStatus = after.status
+        report.processAbsent = after.status === 'ABSENT' ? true : after.status === 'PRESENT' ? false : null
+        report.remainingPids = after.status === 'PRESENT' ? after.pids : []
+        if (after.status === 'FAILED') {
+          report.error = (report.error ? report.error + '; ' : '') + 'process check after termination failed: ' + (after.error ?? 'unknown')
+        }
+      }
+
+      report.completed = report.closed && report.processAbsent === true
       report.durationMs = Date.now() - t0
       return report
     })()
@@ -243,7 +274,6 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
   }
 
   const done = (async (): Promise<ProbeOutcome> => {
-    // Nothing to spawn: the entry is already known to be unusable.
     if (request.entry.problem) {
       const report = await beginTeardown('not-started')
       return finish('UNAVAILABLE', { code: 'BINARY_MISSING', message: '找不到可用的 DSH 运行时。', raw: request.entry.problem }, null, null, report)
@@ -282,8 +312,6 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
 
       client.start()
 
-      // A stop can arrive at any await. Racing the handshake against the stop signal is
-      // what keeps "quit during initialize" from waiting out the whole timeout.
       const initialize = client.initialize({ cwd: request.cwd, provider: request.provider, model: request.model })
       initialize.catch(() => {
         /* the race below owns this rejection */
@@ -297,6 +325,22 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
       }
 
       const report = await beginTeardown('completed')
+      if (!report.completed) {
+        // The handshake worked, but the runtime it created is not confirmed gone. Show a
+        // non-healthy state and keep the diagnostics: a green card over a leaked process
+        // is exactly what this check exists to prevent.
+        return finish(
+          'UNKNOWN',
+          {
+            code: 'TEARDOWN_UNCONFIRMED',
+            message: 'DSH 握手成功，但未能确认运行时已退出。',
+            raw: report.error ?? report.closeError,
+          },
+          serverInfo,
+          report.exitCode,
+          report,
+        )
+      }
       return finish('READY', { code: 'HANDSHAKE_OK', message: 'DSH 运行时已启动并完成 SDK 握手。' }, serverInfo, report.exitCode, report)
     } catch (error) {
       const message = (error as Error)?.message ?? String(error)
@@ -339,7 +383,6 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
     stop(reason: string) {
       if (stopReason !== null) return
       stopReason = reason
-      // Start reaping immediately; the awaiting flow will settle on the same teardown.
       void beginTeardown('stopped')
       rejectStop?.(new ProbeStopped())
     },

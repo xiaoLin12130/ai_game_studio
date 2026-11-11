@@ -51,7 +51,9 @@ async function gracefulQuit(code: number): Promise<void> {
   let exitCode = code
   try {
     const result = await service?.shutdown('app-quit')
-    if (result && !result.completed) exitCode = 1
+    // The exit code follows the safety property, not the clean path: if a process from
+    // this probe could still be alive, the process must not exit 0.
+    if (result && !result.confirmedGone) exitCode = 1
   } catch (error) {
     console.error('[studio] shutdown failed:', error)
     exitCode = 1
@@ -107,6 +109,26 @@ async function runSmoke(): Promise<void> {
   }
   const state = service.getState()
   const dom = await readDom(window)
+
+  // The failure scenario must prove the app is still usable, not just visible: press the
+  // re-check button and require a second probe to actually run and settle.
+  let second = null
+  if (SMOKE === 'failure') {
+    const before = service.getState().lastCheckedAt
+    try {
+      await window.webContents.executeJavaScript("document.getElementById('recheck').click()", true)
+    } catch {
+      /* recorded as a failed check below */
+    }
+    const retryDeadline = Date.now() + 90000
+    while (Date.now() < retryDeadline) {
+      const current = service.getState()
+      if (!service.isChecking() && current.lastCheckedAt !== before) break
+      await new Promise((resolve) => setTimeout(resolve, 150))
+    }
+    second = { state: service.getState(), dom: await readDom(window) }
+  }
+
   const shot = await window.webContents.capturePage()
   fs.mkdirSync(SMOKE_OUT, { recursive: true })
   const image = nativeImage.createFromBuffer(shot.toPNG())
@@ -126,6 +148,7 @@ async function runSmoke(): Promise<void> {
     },
     state,
     dom,
+    second,
     totalMs: Date.now() - started,
   }
   fs.writeFileSync(path.join(SMOKE_OUT, 'smoke.json'), `${JSON.stringify(result, null, 2)}\n`)

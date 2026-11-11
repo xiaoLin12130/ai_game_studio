@@ -141,12 +141,14 @@ const checks = {
 
 if (scenario === 'quit-during-probe') {
   const result = shutdown.find((record) => record.event === 'dsh.shutdown.result')
-  checks.runtimeWasOwned = result?.teardown?.attempted === true
+  checks.runtimeWasOwned = result?.teardownAttempted === true
   checks.wasProbingWhenQuit = ['CHECKING', 'READY'].includes(String(smoke?.stateAtQuit?.status))
   checks.shutdownLogged = Boolean(result)
-  checks.runtimeConfirmedGone = Boolean(result?.completed) && Boolean(result?.teardown?.closed)
-  checks.processAbsentConfirmed = result?.teardown?.processAbsent === true
-  checks.exitCodeObserved = Number.isInteger(result?.teardown?.exitCode)
+  checks.runtimeConfirmedGone = result?.confirmedGone === true
+  checks.closeSucceeded = result?.closeSucceeded === true
+  checks.processAbsentConfirmed = result?.processAbsent === true
+  checks.noFallbackNeeded = result?.forcedTerminationAttempted === false
+  checks.exitCodeObserved = Number.isInteger(result?.exitCode)
 } else {
   checks.windowVisible = Boolean(smoke?.window?.visible)
   checks.singleWindow = smoke?.window?.count === 1
@@ -158,7 +160,11 @@ if (scenario === 'quit-during-probe') {
   if (scenario === 'ready') checks.handshakeIdentity = Boolean(smoke?.state?.serverInfo?.name)
   if (scenario === 'failure') {
     checks.failureReasonShown = /profile|不可用|DSH/i.test(String(smoke?.dom?.headline ?? ''))
-    checks.appStillUsable = smoke?.window?.visible === true
+    checks.recheckEnabled = smoke?.dom?.recheckDisabled === false
+    checks.recheckRanASecondProbe = smoke?.second?.state?.lastCheckedAt !== smoke?.state?.lastCheckedAt
+    checks.recheckStayedInFailure = smoke?.second?.state?.status === EXPECT
+    checks.recheckUiConsistent = smoke?.second?.dom?.headline === smoke?.second?.state?.detail?.message
+    checks.recheckButtonRestored = smoke?.second?.dom?.recheckDisabled === false
   }
   if (scenario === 'ready') checks.exitCodeObservedInUi = /\d/.test(String(smoke?.dom?.factExit ?? ''))
 }

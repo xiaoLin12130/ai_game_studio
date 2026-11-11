@@ -24,8 +24,16 @@ export type CheckReason = 'startup' | 'manual' | 'config-change'
 export const SHUTDOWN_BOUND_MS = 20000
 
 export interface ShutdownResult {
-  /** The runtime is confirmed gone (or none ever existed). */
+  /**
+   * The clean path succeeded: the SDK closed the runtime AND the OS confirmed it gone,
+   * within the bound. This is the strict flag; it is not the safety property.
+   */
   completed: boolean
+  /**
+   * The safety property: no process from this probe is left attached to its DSH home.
+   * A fallback termination can satisfy this even when `completed` is false.
+   */
+  confirmedGone: boolean
   /** True when shutdown had to give up waiting. */
   timedOut: boolean
   teardown: TeardownReport | null
@@ -203,8 +211,8 @@ export class DshConnectionService extends EventEmitter {
     this.shutdownPromise = (async (): Promise<ShutdownResult> => {
       const handle = this.handle
       if (!handle) {
-        this.deps.logger.info('dsh.shutdown', { reason, hadProbe: false, completed: true, durationMs: Date.now() - started })
-        return { completed: true, timedOut: false, teardown: null, durationMs: Date.now() - started }
+        this.deps.logger.info('dsh.shutdown', { reason, hadProbe: false, completed: true, confirmedGone: true, durationMs: Date.now() - started })
+        return { completed: true, confirmedGone: true, timedOut: false, teardown: null, durationMs: Date.now() - started }
       }
 
       this.deps.logger.warn('dsh.shutdown', { reason, hadProbe: true, stopping: true })
@@ -224,15 +232,29 @@ export class DshConnectionService extends EventEmitter {
         report = await Promise.race([handle.stopped(), Promise.resolve(null)]).catch(() => null)
       }
 
-      const completed = report !== null && report.closed && report.processAbsent !== false && !timedOut
-      this.deps.logger[completed ? 'info' : 'error']('dsh.shutdown.result', {
+      // Strict: a failed or unknown process check must never read as success.
+      // `null` means "could not determine" and is treated exactly like a leftover.
+      const completed = report !== null && report.completed === true && !timedOut
+      const confirmedGone = report !== null && report.processAbsent === true
+      this.deps.logger[confirmedGone ? 'info' : 'error']('dsh.shutdown.result', {
         reason,
         completed,
+        confirmedGone,
         timedOut,
-        teardown: report,
+        teardownAttempted: report?.attempted ?? false,
+        closeSucceeded: report?.closed ?? false,
+        closeError: report?.closeError ?? null,
+        processCheckStatus: report?.processCheckStatus ?? null,
+        processAbsent: report?.processAbsent ?? null,
+        remainingPids: report?.remainingPids ?? null,
+        forcedTerminationAttempted: report?.forcedTerminationAttempted ?? false,
+        forcedTerminationSucceeded: report?.forcedTerminationSucceeded ?? false,
+        exitCode: report?.exitCode ?? null,
+        error: report?.error ?? null,
+        teardownDurationMs: report?.durationMs ?? null,
         durationMs: Date.now() - started,
       })
-      return { completed, timedOut, teardown: report, durationMs: Date.now() - started }
+      return { completed, confirmedGone, timedOut, teardown: report, durationMs: Date.now() - started }
     })()
 
     return this.shutdownPromise

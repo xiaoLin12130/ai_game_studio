@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T06:19:07.350Z",
+  "generatedAt": "2026-11-11T06:34:49.051Z",
   "scenario": "ready",
   "expected": "READY",
   "electronVersion": "44.7.0",
-  "wallClockMs": 3542,
+  "wallClockMs": 3310,
   "exitCode": 0,
-  "stdoutTail": "\r\n[smoke] {\"ok\":true,\"expected\":\"READY\",\"status\":\"READY\",\"totalMs\":3258}\n",
+  "stdoutTail": "\r\n[smoke] {\"ok\":true,\"expected\":\"READY\",\"status\":\"READY\",\"totalMs\":3055}\n",
   "stderrTail": "",
   "smoke": {
-    "generatedAt": "2026-11-11T06:19:06.053Z",
+    "generatedAt": "2026-11-11T06:34:47.925Z",
     "mode": "ready",
     "appVersion": "0.1.0",
     "versions": {
@@ -38,8 +38,8 @@
         "code": "HANDSHAKE_OK",
         "message": "DSH 运行时已启动并完成 SDK 握手。"
       },
-      "lastCheckedAt": "2026-11-11T06:19:06.017Z",
-      "lastDurationMs": 3222,
+      "lastCheckedAt": "2026-11-11T06:34:47.891Z",
+      "lastDurationMs": 3022,
       "serverInfo": {
         "name": "deepseek-harness-sdk-runtime",
         "version": "0.0.1"
@@ -58,16 +58,18 @@
       "factServer": "deepseek-harness-sdk-runtime 0.0.1",
       "factExit": "0"
     },
-    "totalMs": 3258
+    "second": null,
+    "totalMs": 3055
   },
   "shutdown": [
     {
-      "ts": "2026-11-11T06:19:06.054Z",
+      "ts": "2026-11-11T06:34:47.926Z",
       "level": "info",
       "event": "dsh.shutdown",
       "reason": "app-quit",
       "hadProbe": false,
       "completed": true,
+      "confirmedGone": true,
       "durationMs": 0
     }
   ],

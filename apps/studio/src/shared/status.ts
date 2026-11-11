@@ -31,6 +31,7 @@ export type DshReasonCode =
   | 'TIMEOUT'
   | 'CANCELLED'
   | 'STOPPED'
+  | 'TEARDOWN_UNCONFIRMED'
   | 'INTERNAL_ERROR'
 
 export interface DshStatusDetail {

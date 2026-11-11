@@ -1,0 +1,24 @@
+{
+  "scenario": "failure",
+  "ok": true,
+  "checks": {
+    "exitCodeZero": true,
+    "producedSmokeJson": true,
+    "noLingeringRuntime": true,
+    "windowVisible": true,
+    "singleWindow": true,
+    "rendererLoaded": true,
+    "screenshotWritten": true,
+    "expectedStatus": true,
+    "domMatchesState": true,
+    "pillRendered": true,
+    "failureReasonShown": true,
+    "recheckEnabled": true,
+    "recheckRanASecondProbe": true,
+    "recheckStayedInFailure": true,
+    "recheckUiConsistent": true,
+    "recheckButtonRestored": true
+  },
+  "wallMs": 2665,
+  "exitCode": 0
+}

@@ -1,0 +1,169 @@
+PASS  detect: windows drive
+PASS  detect: windows spaces (general)
+PASS  detect: windows spaces (deep)
+PASS  detect: windows program files
+PASS  detect: windows deep drive
+PASS  detect: windows non-ascii
+PASS  detect: windows forward
+PASS  detect: unc
+PASS  detect: posix mnt
+PASS  detect: posix tmp
+PASS  detect: posix opt
+PASS  detect: posix home
+PASS  detect: posix root
+PASS  detect: posix workspace
+PASS  detect: repository root
+PASS  detect: user home
+PASS  ignore: placeholder repo
+PASS  ignore: placeholder home
+PASS  ignore: placeholder host
+PASS  ignore: placeholder abs
+PASS  ignore: placeholder credential
+PASS  ignore: relative path
+PASS  ignore: url
+PASS  ignore: url with port
+PASS  ignore: escape sequence
+PASS  ignore: time
+PASS  ignore: bare drive
+PASS  ignore: api path
+PASS  ignore: regex source
+PASS  ignore: credential env name only
+PASS  ignore: credential env indirection
+PASS  ignore: short sk prefix
+PASS  ignore: npm integrity hash
+PASS  credential: openai-style key is detected and redacted
+PASS  credential: github token is detected and redacted
+PASS  credential: aws key is detected and redacted
+PASS  credential: bearer token is detected and redacted
+PASS  credential: assigned api key is detected and redacted
+PASS  credential: jwt is detected and redacted
+PASS  credential: private key is detected and redacted
+PASS  scan: planted leak is found
+PASS  scan: clean tree passes
+PASS  scan: empty scope is an error, not a pass
+PASS  scan: unreadable file is an error, not a pass
+PASS  scan: json is inspected after decoding
+PASS  scan: extensionless and .orig files are in scope
+PASS  scan: binary content is skipped by NUL detection, not by suffix
+PASS  scan: credential in a file is reported with its rule id
+PASS  cli: leak exits 1
+PASS  cli: clean exits 0
+PASS  cli: empty root exits 1
+PASS  classify: quota on stderr
+PASS  classify: quota on stdout
+PASS  classify: both streams
+PASS  classify: plugin incompatibility outranks quota
+PASS  classify: healthy run has no kind
+PASS  classify: unknown text stays unclassified
+PASS  routes: empty list is not a pass
+PASS  routes: single correct request passes
+PASS  routes: fallback on the second hop fails
+PASS  routes: wrong model fails
+PASS  routes: shape records that only one hop was seen
+PASS  isolation: empty notification list fails
+PASS  isolation: foreign session id fails
+PASS  isolation: mixed list fails
+PASS  isolation: own session passes
+PASS  gate: leak failure alone fails the suite
+PASS  gate: dependency failure alone fails the suite
+PASS  gate: six passing probes cannot outvote a gate
+PASS  gate: blocked only is BLOCKED, not FAIL
+PASS  gate: all clear is PASS
+PASS  gate: state failure alone fails the suite
+PASS  state: the real repository has one complete current record
+PASS  state: missing authoritative pointer fails
+PASS  state: deleting the current record fails
+PASS  state: a scope gate downgraded to BLOCKED fails
+PASS  state: a gate pointing at a missing evidence file fails
+PASS  state: a deferred item without a target phase fails
+PASS  state: a deferred item claimed as CONFIRMED fails
+PASS  state: an UNKNOWN without a verification condition fails
+PASS  state: HY4 direct claimed as CONFIRMED fails
+PASS  state: HY4 direct marked as blocking fails
+PASS  state: deleting a historical round record fails
+PASS  state: a document declaring a stale gate_results as current fails
+PASS  state: a document with no pointer to the current record fails
+PASS  state: an incomplete document set cannot pass by omission
+PASS  gates: exactly the ten PHASE 00 scope ids are required
+PASS  state: swapping a real gate for an invented one keeps the count at ten and still fails
+PASS  state: a PASS verdict with a non-passing gate is rejected
+PASS  state: a PASS verdict with non-empty blocking items is rejected
+PASS  state: a verdict with no reason is rejected
+PASS  state: an extra invented gate on top of the real ten fails
+PASS  state: four wrong-named documents that all say phase_00_final fail
+PASS  state: dropping any one required pointer document fails and names it
+PASS  state: an empty pointer document fails
+PASS  evidence: a missing file fails
+PASS  evidence: an empty file fails
+PASS  evidence: a directory is not a file
+PASS  evidence: corrupt JSON fails
+PASS  evidence: corrupt JSONL fails on the offending line
+PASS  evidence: a valid JSONL file passes
+PASS  evidence: markdown is not parsed as JSON
+PASS  evidence: a path traversal is rejected
+PASS  evidence: staysInside resolves before comparing
+PASS  state: a gate whose evidence is empty fails
+PASS  state: a gate whose evidence path escapes the repository fails
+PASS  state: every declared evidence path really resolves
+PASS  evidence: gate 6 must actually carry the exit code it claims
+PASS  evidence: a gate with a content rule cannot be satisfied by a Markdown file
+PASS  evidence: a gate with a content rule rejects an extensionless and a .txt path
+PASS  evidence: the old cc-3 evidence cannot satisfy gate 6 any more
+PASS  evidence: a gate without a content rule is unaffected by content rules
+PASS  evidence: a junction that leaves the repository root is rejected
+PASS  evidence: a link that stays inside the repository root is allowed
+PASS  evidence: a junctioned path to a missing file still fails on the ancestor
+PASS  evidence: isInsideDirectory is not a string prefix test
+PASS  state: a gate is resolved through links, not just spelled correctly
+PASS  state: a state/ junction out of the repository is rejected
+PASS  state: an escaped state file is not read at all
+PASS  official: no override means "grade the repository state"
+PASS  official: an override without a test run is refused
+PASS  official: a test run may inject, and says so
+PASS  official: npm run gates refuses a repository-external CC_STATE_FILE (valid but wrong state)
+PASS  official: npm run gates refuses a repository-external CC_STATE_FILE (invalid state)
+PASS  official: without an override the gate grades the repository state
+PASS  official: an injected run marks the artifact as test-injected
+PASS  state: a docs/review-handoff junction out of the repository is rejected
+PASS  state: a junction that stays inside the repository still loads
+PASS  gate6: a structurally valid record passes
+PASS  gate6: an exitCode hidden in metadata does not satisfy the gate
+PASS  gate6: missing the forcedKill scenario fails
+PASS  gate6: a string exitCode fails
+PASS  gate6: a non-zero graceful exit code fails
+PASS  gate6: a forced code equal to the graceful one fails
+PASS  gate6: a missing PROCESS_ABSENT fails
+PASS  gate6: a CLI launcher as the source fails
+PASS  gate6: an unrecognised source fails
+PASS  gate6: the real CC-6 evidence satisfies the structured rule
+PASS  evidence: a noExitCodeReason cannot stand in for gate 6 exit code
+PASS  evidence: a structured record satisfies gate 6 content rule
+PASS  evidence: a string exitCode does not satisfy gate 6 content rule
+PASS  state: the phase definition output files must exist
+PASS  state: a missing state file is an error, not an empty pass
+PASS  exit code: the documented phrase is parsed
+PASS  exit code: a message without one yields null, never a guess
+PASS  output: no direct stream writes outside safe-output.mjs
+PASS  range: required dsh line is accepted
+PASS  range: older runtime is rejected
+PASS  range: newer runtime is rejected
+PASS  range: unsupported syntax is UNKNOWN, not pass
+PASS  range: prerelease ordering
+PASS  deps: fresh home builds both profiles
+PASS  deps: second run is stable and repairs nothing
+PASS  deps: tampered install is repaired, not accepted
+PASS  deps: tampered profile manifest is repaired
+PASS  deps: missing lockfile fails
+PASS  deps: lockfile version drift fails
+PASS  deps: lockfile manifest drift fails
+PASS  deps: corrupted lockfile fails with a code
+PASS  deps: tree integrity drift fails
+PASS  deps: tree resolved drift fails
+PASS  deps: lockfile integrity drift fails even with a cached staging tree
+PASS  deps: lockfile resolved drift fails
+PASS  suite: dependency gate failure exits 1
+PASS  suite: broken project state aborts before any probe (real exit code)
+PASS  evidence: a failing test run cannot overwrite the published result
+[tests] result: <abs-path>
+
+166/166 tests passed

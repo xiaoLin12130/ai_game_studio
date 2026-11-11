@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Run the PHASE 01-A verification matrix and write redacted evidence.
+ * Run the full PHASE 01-A acceptance matrix and write redacted evidence.
  *
- * Every number in the work report comes from here; nothing is transcribed by hand.
- * Each entry records the command, its exit code and the artefact it produced.
+ * One entry per command that was actually executed, with its real exit code. Nothing is
+ * recorded as PASS unless the process exited 0 in this run. Per-command output is written
+ * as .txt (committed) next to the JSON summary; .log is git-ignored, so evidence uses .txt.
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -14,6 +15,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(HERE, '..')
 const REPO = path.resolve(ROOT, '..', '..')
+const PROBE = path.join(REPO, 'spike', 'dsh-probe', 'current-0.2.1')
 const OUT = path.join(REPO, 'evidence', 'phase-01-a')
 fs.mkdirSync(OUT, { recursive: true })
 
@@ -25,51 +27,103 @@ const scrub = (text) =>
     .replace(/[A-Za-z]:\\[^"'\r\n]*/g, '<abs-path>')
     .replace(/[A-Za-z]:\/[^"'\r\n]*/g, '<abs-path>')
 
-const env = { ...process.env }
-delete env.ELECTRON_RUN_AS_NODE
+const baseEnv = { ...process.env }
+delete baseEnv.ELECTRON_RUN_AS_NODE
 
 const matrix = []
-const record = (name, command, argv, cwd, artifact) => {
+
+function run(name, command, argv, cwd, options = {}) {
   const started = Date.now()
-  const run = spawnSync(process.execPath, argv, { cwd, encoding: 'utf8', env, timeout: 600000 })
-  const stdout = String(run.stdout ?? '')
-  const stderr = String(run.stderr ?? '')
+  const runResult = spawnSync(process.execPath, argv, {
+    cwd,
+    encoding: 'utf8',
+    env: { ...baseEnv, ...(options.env ?? {}) },
+    timeout: 900000,
+  })
+  const stdout = String(runResult.stdout ?? '')
+  const stderr = String(runResult.stderr ?? '')
   const entry = {
     name,
     command,
-    exitCode: run.status,
+    cwd: path.relative(REPO, cwd).split(path.sep).join('/') || '.',
+    exitCode: runResult.status,
     durationMs: Date.now() - started,
-    artifact: artifact ?? null,
+    artifact: options.artifact ?? null,
   }
   const grab = (label) => {
     const match = new RegExp('ℹ ' + label + ' (\\d+)').exec(stdout)
     return match ? Number(match[1]) : null
   }
-  if (name === 'unit-and-integration-tests') {
+  if (options.parseTests) {
     entry.counts = { tests: grab('tests'), pass: grab('pass'), fail: grab('fail'), skipped: grab('skipped') }
   }
-  if (name.startsWith('desktop-smoke-')) {
-    const okLine = /"ok": (true|false)/.exec(stdout)
-    entry.ok = okLine ? okLine[1] === 'true' : false
+  if (options.parsePhase00) {
+    const match = /(\d+)\/(\d+) tests passed/.exec(stdout)
+    entry.counts = match ? { pass: Number(match[1]), total: Number(match[2]) } : null
   }
-  fs.writeFileSync(path.join(OUT, name + '.log'), scrub(stdout + (stderr ? '\n--- stderr ---\n' + stderr : '')))
+  if (options.readArtifact) {
+    const file = path.resolve(REPO, options.readArtifact)
+    try {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'))
+      entry.artifactStatus = options.artifactStatus(parsed)
+    } catch (error) {
+      entry.artifactStatus = { error: String(error?.message ?? error) }
+    }
+  }
+  fs.writeFileSync(path.join(OUT, name + '.txt'), scrub(stdout + (stderr ? '\n--- stderr ---\n' + stderr : '')))
   matrix.push(entry)
   console.log(JSON.stringify(entry))
   return entry
 }
 
-record('unit-and-integration-tests', 'node --test', ['--test'], ROOT, 'evidence/phase-01-a/app-tests.json')
-record('desktop-smoke-ready', 'node scripts/smoke.mjs ready', ['scripts/smoke.mjs', 'ready'], ROOT, 'evidence/phase-01-a/smoke/ready/smoke-run.json')
-record('desktop-smoke-failure', 'node scripts/smoke.mjs failure', ['scripts/smoke.mjs', 'failure'], ROOT, 'evidence/phase-01-a/smoke/failure/smoke-run.json')
-record(
-  'desktop-smoke-quit-during-probe',
-  'node scripts/smoke.mjs quit-during-probe',
-  ['scripts/smoke.mjs', 'quit-during-probe'],
+// 1. TypeScript build.
+run(
+  'build-typescript',
+  'node node_modules/typescript/bin/tsc -p tsconfig.json',
+  ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json'],
   ROOT,
-  'evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json',
 )
 
-const tests = matrix.find((entry) => entry.name === 'unit-and-integration-tests')
+// 2. Unit + integration + lifecycle + process reclamation tests.
+run('unit-and-integration-tests', 'node --test', ['--test'], ROOT, {
+  parseTests: true,
+  artifact: 'evidence/phase-01-a/app-tests.json',
+})
+
+// 3-5. The three desktop scenarios.
+for (const scenario of ['ready', 'failure', 'quit-during-probe']) {
+  run(
+    'desktop-smoke-' + scenario,
+    'node scripts/smoke.mjs ' + scenario,
+    ['scripts/smoke.mjs', scenario],
+    ROOT,
+    { artifact: 'evidence/phase-01-a/smoke/' + scenario + '/smoke-run.json' },
+  )
+}
+
+// 6. PHASE 00 regression suite. Its own evidence round (r154) is not republished.
+run(
+  'phase00-regression-suite',
+  'node tests/run-tests.mjs',
+  ['tests/run-tests.mjs'],
+  PROBE,
+  { parsePhase00: true },
+)
+
+// 7. PHASE 00 gates, written into this phase's evidence rather than a PHASE 00 round.
+run(
+  'phase00-gates',
+  'node scripts/run-gates.mjs (CC_GATE_OUT=evidence/phase-01-a/phase00-gates.json)',
+  ['scripts/run-gates.mjs'],
+  PROBE,
+  {
+    env: { CC_GATE_OUT: path.join(OUT, 'phase00-gates.json') },
+    artifact: 'evidence/phase-01-a/phase00-gates.json',
+    readArtifact: 'evidence/phase-01-a/phase00-gates.json',
+    artifactStatus: (parsed) => ({ overall: parsed.overall, leaks: parsed.gates?.leak?.leaks?.length ?? null, scanned: parsed.gates?.leak?.scanned ?? null }),
+  },
+)
+
 const failed = matrix.filter((entry) => entry.exitCode !== 0)
 const summary = {
   generatedAt: new Date().toISOString(),
@@ -78,8 +132,11 @@ const summary = {
   matrix,
   allPassed: failed.length === 0,
   failedEntries: failed.map((entry) => entry.name),
+  note: 'PHASE 00 的 r154 证据未被覆盖；第 6/7 项是 PHASE 01-A 侧的一次回归，结果只写在本目录。',
 }
 fs.writeFileSync(path.join(OUT, 'verification.json'), JSON.stringify(summary, null, 2) + '\n')
+
+const tests = matrix.find((entry) => entry.name === 'unit-and-integration-tests')
 fs.writeFileSync(path.join(OUT, 'app-tests.json'), JSON.stringify({
   generatedAt: new Date().toISOString(),
   command: 'node --test',

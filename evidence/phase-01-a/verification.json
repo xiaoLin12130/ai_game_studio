@@ -1,17 +1,26 @@
 {
-  "generatedAt": "2026-11-11T06:19:14.504Z",
+  "generatedAt": "2026-11-11T06:34:59.601Z",
   "node": "v24.19.0",
   "electron": "44.7.0",
   "matrix": [
     {
+      "name": "build-typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "durationMs": 870,
+      "artifact": null
+    },
+    {
       "name": "unit-and-integration-tests",
       "command": "node --test",
+      "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 27309,
+      "durationMs": 29515,
       "artifact": "evidence/phase-01-a/app-tests.json",
       "counts": {
-        "tests": 45,
-        "pass": 45,
+        "tests": 53,
+        "pass": 53,
         "fail": 0,
         "skipped": 0
       }
@@ -19,28 +28,54 @@
     {
       "name": "desktop-smoke-ready",
       "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 4839,
-      "artifact": "evidence/phase-01-a/smoke/ready/smoke-run.json",
-      "ok": true
+      "durationMs": 4424,
+      "artifact": "evidence/phase-01-a/smoke/ready/smoke-run.json"
     },
     {
       "name": "desktop-smoke-failure",
       "command": "node scripts/smoke.mjs failure",
+      "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 2691,
-      "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json",
-      "ok": true
+      "durationMs": 3789,
+      "artifact": "evidence/phase-01-a/smoke/failure/smoke-run.json"
     },
     {
       "name": "desktop-smoke-quit-during-probe",
       "command": "node scripts/smoke.mjs quit-during-probe",
+      "cwd": "apps/studio",
       "exitCode": 0,
-      "durationMs": 4426,
-      "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json",
-      "ok": true
+      "durationMs": 4338,
+      "artifact": "evidence/phase-01-a/smoke/quit-during-probe/smoke-run.json"
+    },
+    {
+      "name": "phase00-regression-suite",
+      "command": "node tests/run-tests.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "durationMs": 2130,
+      "artifact": null,
+      "counts": {
+        "pass": 166,
+        "total": 166
+      }
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs (CC_GATE_OUT=evidence/phase-01-a/phase00-gates.json)",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "durationMs": 267,
+      "artifact": "evidence/phase-01-a/phase00-gates.json",
+      "artifactStatus": {
+        "overall": "PASS",
+        "leaks": 0,
+        "scanned": 250
+      }
     }
   ],
   "allPassed": true,
-  "failedEntries": []
+  "failedEntries": [],
+  "note": "PHASE 00 的 r154 证据未被覆盖；第 6/7 项是 PHASE 01-A 侧的一次回归，结果只写在本目录。"
 }

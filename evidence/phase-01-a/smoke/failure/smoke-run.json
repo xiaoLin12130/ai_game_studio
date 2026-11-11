@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-11-11T06:19:10.057Z",
+  "generatedAt": "2026-11-11T06:34:52.822Z",
   "scenario": "failure",
   "expected": "UNAVAILABLE",
   "electronVersion": "44.7.0",
-  "wallClockMs": 1542,
+  "wallClockMs": 2665,
   "exitCode": 0,
-  "stdoutTail": "\r\n[smoke] {\"ok\":true,\"expected\":\"UNAVAILABLE\",\"status\":\"UNAVAILABLE\",\"totalMs\":1267}\n",
+  "stdoutTail": "\r\n[smoke] {\"ok\":true,\"expected\":\"UNAVAILABLE\",\"status\":\"UNAVAILABLE\",\"totalMs\":2416}\n",
   "stderrTail": "",
   "smoke": {
-    "generatedAt": "2026-11-11T06:19:08.918Z",
+    "generatedAt": "2026-11-11T06:34:51.712Z",
     "mode": "failure",
     "appVersion": "0.1.0",
     "versions": {
@@ -39,8 +39,8 @@
         "message": "DSH 缺少所需的 profile，运行时无法启动。",
         "raw": "dsh profile \"definitely-not-a-profile\": JSON-RPC input closed"
       },
-      "lastCheckedAt": "2026-11-11T06:19:08.884Z",
-      "lastDurationMs": 1232,
+      "lastCheckedAt": "2026-11-11T06:34:50.501Z",
+      "lastDurationMs": 1206,
       "serverInfo": null,
       "dshVersion": "0.2.1-rc.3",
       "entryKind": "bundled",
@@ -56,16 +56,43 @@
       "factServer": "—",
       "factExit": "1"
     },
-    "totalMs": 1267
+    "second": {
+      "state": {
+        "status": "UNAVAILABLE",
+        "detail": {
+          "code": "PROFILE_MISSING",
+          "message": "DSH 缺少所需的 profile，运行时无法启动。",
+          "raw": "dsh profile \"definitely-not-a-profile\": JSON-RPC input closed"
+        },
+        "lastCheckedAt": "2026-11-11T06:34:51.691Z",
+        "lastDurationMs": 1176,
+        "serverInfo": null,
+        "dshVersion": "0.2.1-rc.3",
+        "entryKind": "bundled",
+        "entryPath": "<repo>\\apps\\studio\\node_modules\\@deepseek-ai\\dsh\\lib\\bin.js",
+        "runtimeExitCode": 1,
+        "configRecovered": false,
+        "configRecoveryNote": null
+      },
+      "dom": {
+        "pill": "不可用",
+        "headline": "DSH 缺少所需的 profile，运行时无法启动。",
+        "recheckDisabled": false,
+        "factServer": "—",
+        "factExit": "1"
+      }
+    },
+    "totalMs": 2416
   },
   "shutdown": [
     {
-      "ts": "2026-11-11T06:19:08.919Z",
+      "ts": "2026-11-11T06:34:51.713Z",
       "level": "info",
       "event": "dsh.shutdown",
       "reason": "app-quit",
       "hadProbe": false,
       "completed": true,
+      "confirmedGone": true,
       "durationMs": 0
     }
   ],
@@ -82,7 +109,11 @@
     "domMatchesState": true,
     "pillRendered": true,
     "failureReasonShown": true,
-    "appStillUsable": true
+    "recheckEnabled": true,
+    "recheckRanASecondProbe": true,
+    "recheckStayedInFailure": true,
+    "recheckUiConsistent": true,
+    "recheckButtonRestored": true
   },
   "ok": true
 }
