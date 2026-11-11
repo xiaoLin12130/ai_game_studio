@@ -22,7 +22,7 @@ Windows PowerShell：
 cd spike\dsh-probe\current-0.2.1
 npm install                                  # 探针依赖，精确钉版本
 $env:COMMANDCODE_API_KEY = "..."             # 只从环境变量读，绝不写进仓库
-npm test                                     # 143 项回归测试 + 六探针 + 三道门禁
+npm test                                     # 156 项回归测试 + 六探针 + 三道门禁
 ```
 
 Windows `cmd.exe`：
@@ -35,7 +35,7 @@ npm test
 ```
 
 只跑套件（跳过回归测试）：`node run-all.mjs`，期望 `PASS 6/6  GATES PASS/PASS/PASS  exit 0`。
-只跑回归测试：`npm run test:unit`，期望 `143/143 tests passed  exit 0`；只有退出 0 才发布 `tests.json`。
+只跑回归测试：`npm run test:unit`，期望 `156/156 tests passed  exit 0`；只有退出 0 才发布 `tests.json`。
 只跑受影响门禁（不消耗模型调用）：`npm run gates`（依赖 / 状态一致性 / 脱敏）。
 
 `run-all.mjs` 会**先校验依赖与项目状态**，再跑探针，最后跑脱敏门禁：
@@ -140,7 +140,7 @@ node scrub-evidence.mjs --check    # 有残留、扫描失败、或扫不到文�
 ## 4. 回归测试
 
 ```powershell
-npm run test:unit            # 143 项，夹具全部在临时目录里运行
+npm run test:unit            # 156 项，夹具全部在临时目录里运行
 ```
 
 覆盖：路径检测（含一般带空格目录）、凭据规则 7 阳性 / 4 阴性、扫描器边界（空目录、读失败、JSON 解码、无扩展名文件、二进制 NUL）、

@@ -1,4 +1,4 @@
-# PHASE 00-R1.5｜收敛轮 + R15.1 修复轮 复审请求
+# PHASE 00-R1.5｜收敛轮 + R15.1 / R15.2 修复轮 复审请求
 
 > 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
@@ -6,8 +6,58 @@
 - 评审固定点：**该分支 HEAD**（`phase_00_final.delivery_point.policy = branch-head`）。本文件刻意不写提交 SHA——写进去就要再提交一次，新提交又让那个 SHA 失效。
 - 上一轮评审固定的提交：`6943618efa63b60193eda2749782b856ea54d58f`（R14 收尾）
 - 再上一轮评审固定的提交：`36d0cfe`（R15 收敛轮，评审结论 PARTIALLY_VERIFIED）
+- 再上一轮的上一轮：`89ee04c`（R15.1 修复轮，评审结论 PARTIALLY_VERIFIED）
 
-## 0. R15.1：评审在 R15 上发现的两个验证器缺陷（已修）
+## 0.0 R15.2：评审在 R15.1 上发现的三个问题（已修）
+
+### 0.0.1 状态入口没有做真实路径校验（最严重）
+
+R15.1 只把 containment 用在了 `checkEvidencePath()`，而 `loadStateCheck()` 仍在裸读：
+
+```
+repo/state               → (Junction) → <abs-path>/outside/
+repo/docs/review-handoff → (Junction) → <abs-path>/outside/
+```
+
+两条入口都能把"决定门禁看什么"的输入换成仓库外的文件。现在：
+
+- `state/project_state.json`：读取前经 `resolveContainedRealPath()`，逃逸记 `state-escape`；
+- 8 份 `STATE_DOC_POINTERS`：逐份校验，逃逸记 `doc-escape`，且该文档同时缺席（`doc-set-incomplete` 会点名）；
+- 读取一律用解析后的真实路径；
+- 违规经 `loadStateCheck().violations` 进入 `checkProjectState()`，参与判定，不静默通过。
+
+刻意例外：`CC_STATE_FILE` 是测试/运维注入口（回归测试要在仓库外注入坏状态），
+该路径会 `realpath` 但不做仓库内 confinement——能改这个进程环境变量的人不需要这个口子。这一条写在代码注释里，供评审判断。
+
+### 0.0.2 门禁 06 的证据规则仍然宽松
+
+旧规则递归搜索任意整数 `exitCode`，所以 `{"metadata":{"exitCode":0},"runtime":{"processAfterClose":"UNKNOWN"}}` 能通过。现在改为结构化：
+
+| 字段 | 要求 |
+|---|---|
+| `gracefulClose.exitCode` | 整数且为 0 |
+| `forcedKill.exitCode` | 整数且与 graceful 不等（不等即证明是测出来的） |
+| `gracefulClose.afterClose.status` | `PROCESS_ABSENT` |
+| `forcedKill.afterKill.status` | `PROCESS_ABSENT` |
+| 两个 `exitCodeSource` | 必须是 SDK 通道；出现 launcher/CLI 字样直接失败 |
+| `noExitCodeReason` | 不得与 PASS 并存 |
+
+`forcedKill` 要求"与 graceful 不同"而不是写死 1：1 是 Windows `TerminateProcess` 的表现，
+写死等于把平台细节当协议契约；"不同"同样能证明该数字来自观测而非常量。
+
+### 0.0.3 门禁 04 的状态表达
+
+按范围原文判定，**不改验收含义**：
+
+- 第 31 行：「事件/状态能够记录并在 UI 或 CLI 展示。」
+- 全文 grep「实时」= **0 次**。
+
+所以门禁 04 = **PASS**（记录 + 展示均已满足），实时事件流单独登记 `deferred.U9`（DEFERRED，`blocking:false`）。
+`blocking_items` 现为空；两条能力限制移到 `limitations`。
+
+回归测试：**143 → 156**（新增 13 项）。证据轮次：`evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（本轮）。
+
+## 0.1 R15.1：评审在 R15 上发现的两个验证器缺陷（已修）
 
 评审在 `36d0cfe` 上认定门禁 06 的取证方式可接受、状态门禁进步最大，但同时指出
 **验证器自身**还有两个边界问题。两处都属实，本轮已修，并各配一条能复现逃逸的负向测试。
@@ -50,7 +100,7 @@ junction 逃逸必须失败 / 仓库内链接必须放行 / 链接尾部缺失�
 **变异验证**：把两处修复人工回退后重跑，上述 3 条关键用例失败、其余全过；
 恢复后文件 sha256 一致。
 
-回归测试：**135 → 143**。证据轮次：`evidence/r15/`（R15，冻结）→ `evidence/r151/`（本轮）。
+回归测试：**135 → 143**。证据轮次：`evidence/r15/`（R15，冻结）→ `evidence/r151/`（R15.1，冻结）→ `evidence/r152/`（本轮的 R15.2 结果）。
 
 ## 1. R15 轮只做了四件事
 
@@ -105,7 +155,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 | 门禁 6 内容不校验 | 证据必须含整数 `exitCode`（旧的 cc-3 证据现在会判失败） |
 | 无判定一致性 | PASS 判定不得跑在门禁前面，也不得与 blocking_items 并存 |
 
-回归测试 **107 → 143**，每条新用例都是一个「以前能通过」的利用手法。
+回归测试 **107 → 143 → 156**，每条新用例都是一个「以前能通过」的利用手法。
 另做过一次变异验证：把门禁人工削弱回旧逻辑，**恰好 7 条目标用例失败**，恢复后文件 sha256 一致。
 
 ## 4. 怎么验（三条命令，尽量别跑第四条）
@@ -113,7 +163,7 @@ spawn 的那个子进程。**没有**用 CLI 启动器退出码，**没有**读�
 ```powershell
 cd spike\dsh-probe\current-0.2.1
 
-npm run test:unit    # 期望 143/143 PASS，exit 0；只有 exit 0 才发布 r151/tests.json
+npm run test:unit    # 期望 156/156 PASS，exit 0；只有 exit 0 才发布 r152/tests.json
 npm run gates        # 期望 dependency/state/leak 全 PASS，0 泄漏，exit 0
 npm run probe:exit   # 期望 graceful=0 / forced=1，均 PROCESS_ABSENT，exit 0（0 模型调用）
 

@@ -29,7 +29,7 @@ const probeRoot = path.resolve(root, '..')
  * produced it — the exact failure mode the r14 README exists to prevent. `CC_GATE_ROUND`
  * keeps the old behaviour available for a reproduction that really does want r14.
  */
-const round = process.env.CC_GATE_ROUND ?? 'r151'
+const round = process.env.CC_GATE_ROUND ?? 'r152'
 const output = path.join(probeRoot, 'evidence', round, 'final-gates.json')
 
 const steps = []

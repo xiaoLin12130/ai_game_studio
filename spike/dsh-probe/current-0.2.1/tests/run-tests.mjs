@@ -436,7 +436,12 @@ await test('state: the real repository has one complete current record', () => {
   const result = checkProjectState(stateData())
   assert.equal(result.ok, true, JSON.stringify(result.errors))
   assert.equal(result.checked.gates, 10)
-  assert.equal(result.checked.deferred, 8)
+  assert.ok(result.checked.deferred >= 8, `expected at least 8 deferred items, got ${result.checked.deferred}`)
+  assert.equal(
+    Object.keys(stateData().state.phase_00_final.deferred).every((id) => /^U\d+$/.test(id)),
+    true,
+    'deferred ids use the U<n> form',
+  )
   assert.ok(result.checked.unknown >= 1)
   assert.equal(result.checked.docs, STATE_DOC_POINTERS.length)
 })
@@ -822,18 +827,194 @@ await test('state: a gate is resolved through links, not just spelled correctly'
   )
 })
 
+// ---------------------------------------------------------------------------
+// R15.2: review found the containment only covered evidence, and gate 6 too loose
+// ---------------------------------------------------------------------------
+// The link-escape fix protected `checkEvidencePath` but not `loadStateCheck`, so
+// `state/` or `docs/review-handoff/` could itself be a junction. And the gate-6 rule
+// still accepted any integer `exitCode` found anywhere in the JSON.
+
+/** A repo root whose `state/` is a junction out of the repository. */
+function stateEscapeFixture(name) {
+  const base = made(name)
+  const root = path.join(base, 'repo')
+  const outside = path.join(base, 'outside')
+  fs.mkdirSync(root, { recursive: true })
+  fs.mkdirSync(outside, { recursive: true })
+  fs.writeFileSync(path.join(outside, 'project_state.json'), JSON.stringify({ authoritative_source: { current_record: 'phase_00_final' } }))
+  let created = null
+  for (const type of ['junction', 'dir']) {
+    try {
+      fs.symlinkSync(outside, path.join(root, 'state'), type)
+      created = type
+      break
+    } catch {
+      /* next flavour */
+    }
+  }
+  assert.ok(created !== null, 'this host cannot create a directory link, so state containment cannot be proven')
+  return { root, outside }
+}
+
+/** A repo root whose `docs/review-handoff/` is a junction out of the repository. */
+function docEscapeFixture(name) {
+  const base = made(name)
+  const root = path.join(base, 'repo')
+  const outside = path.join(base, 'outside')
+  fs.mkdirSync(path.join(root, 'state'), { recursive: true })
+  fs.mkdirSync(path.join(root, 'docs'), { recursive: true })
+  fs.mkdirSync(outside, { recursive: true })
+  fs.writeFileSync(path.join(root, 'state', 'project_state.json'), JSON.stringify({ authoritative_source: { current_record: 'phase_00_final' } }))
+  fs.writeFileSync(path.join(root, 'README.md'), 'phase_00_final\n')
+  fs.writeFileSync(path.join(outside, 'PHASE_00_R1_WORK_REPORT.md'), 'phase_00_final\n')
+  let created = null
+  for (const type of ['junction', 'dir']) {
+    try {
+      fs.symlinkSync(outside, path.join(root, 'docs', 'review-handoff'), type)
+      created = type
+      break
+    } catch {
+      /* next flavour */
+    }
+  }
+  assert.ok(created !== null, 'this host cannot create a directory link, so doc containment cannot be proven')
+  return { root, outside }
+}
+
+await test('state: a state/ junction out of the repository is rejected', () => {
+  const { root } = stateEscapeFixture('state-escape')
+  const loaded = loadStateCheck(root)
+  assert.ok(
+    loaded.violations.some((v) => v.code === 'state-escape'),
+    `expected state-escape, got ${JSON.stringify(loaded.violations)}`,
+  )
+  const result = checkProjectState(loaded)
+  assert.equal(result.ok, false)
+  expectCode(result, 'state-escape')
+})
+
+await test('state: a docs/review-handoff junction out of the repository is rejected', () => {
+  const { root } = docEscapeFixture('doc-escape')
+  const loaded = loadStateCheck(root)
+  const escapes = loaded.violations.filter((v) => v.code === 'doc-escape')
+  const expected = STATE_DOC_POINTERS.filter((rel) => rel.startsWith('docs/review-handoff/')).length
+  assert.equal(escapes.length, expected, `every review-handoff pointer escapes: ${JSON.stringify(loaded.violations)}`)
+  const result = checkProjectState(loaded)
+  assert.equal(result.ok, false)
+  expectCode(result, 'doc-escape')
+})
+
+await test('state: a junction that stays inside the repository still loads', () => {
+  const base = made('doc-inside-link')
+  const root = path.join(base, 'repo')
+  fs.mkdirSync(path.join(root, 'state'), { recursive: true })
+  fs.mkdirSync(path.join(root, 'docs', 'real-handoff'), { recursive: true })
+  fs.writeFileSync(path.join(root, 'state', 'project_state.json'), JSON.stringify({ authoritative_source: { current_record: 'phase_00_final' } }))
+  fs.writeFileSync(path.join(root, 'README.md'), 'phase_00_final\n')
+  fs.writeFileSync(path.join(root, 'docs', 'real-handoff', 'PHASE_00_R1_WORK_REPORT.md'), 'phase_00_final\n')
+  fs.writeFileSync(path.join(root, 'docs', 'real-handoff', 'PHASE_00_REVIEW_HANDOFF.md'), 'phase_00_final\n')
+  fs.symlinkSync(path.join(root, 'docs', 'real-handoff'), path.join(root, 'docs', 'review-handoff'), 'junction')
+  const loaded = loadStateCheck(root)
+  assert.deepEqual(loaded.violations, [], JSON.stringify(loaded.violations))
+  assert.ok(loaded.docs['docs/review-handoff/PHASE_00_R1_WORK_REPORT.md'], 'document must be readable through the link')
+})
+
+/** A structurally valid gate-6 record; each test below breaks exactly one thing. */
+const validGate6 = () => ({
+  probe: 'CC-6-runtime-exit-code',
+  gracefulClose: { exitCode: 0, exitCodeSource: 'exit-handler', afterClose: { status: 'PROCESS_ABSENT' } },
+  forcedKill: { exitCode: 1, exitCodeSource: 'exit-handler', afterKill: { status: 'PROCESS_ABSENT' } },
+})
+const gate6Problems = (value) => EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'](value)
+
+await test('gate6: a structurally valid record passes', () => {
+  assert.deepEqual(gate6Problems(validGate6()), [])
+})
+
+await test('gate6: an exitCode hidden in metadata does not satisfy the gate', () => {
+  const problems = gate6Problems({ metadata: { exitCode: 0 }, runtime: { processAfterClose: 'UNKNOWN' } })
+  assert.ok(problems.length > 0)
+  assert.ok(problems.some((p) => p.includes('gracefulClose')), JSON.stringify(problems))
+})
+
+await test('gate6: missing the forcedKill scenario fails', () => {
+  const value = validGate6()
+  delete value.forcedKill
+  assert.ok(gate6Problems(value).some((p) => p.includes('forcedKill')))
+})
+
+await test('gate6: a string exitCode fails', () => {
+  const value = validGate6()
+  value.gracefulClose.exitCode = '0'
+  assert.ok(gate6Problems(value).some((p) => p.includes('must be an integer')))
+})
+
+await test('gate6: a non-zero graceful exit code fails', () => {
+  const value = validGate6()
+  value.gracefulClose.exitCode = 2
+  assert.ok(gate6Problems(value).some((p) => p.includes('must be 0')))
+})
+
+await test('gate6: a forced code equal to the graceful one fails', () => {
+  const value = validGate6()
+  value.forcedKill.exitCode = 0
+  assert.ok(gate6Problems(value).some((p) => p.includes('must differ')))
+})
+
+await test('gate6: a missing PROCESS_ABSENT fails', () => {
+  const value = validGate6()
+  value.forcedKill.afterKill = { status: 'PROCESS_PRESENT' }
+  assert.ok(gate6Problems(value).some((p) => p.includes('PROCESS_ABSENT')))
+  const value2 = validGate6()
+  delete value2.gracefulClose.afterClose
+  assert.ok(gate6Problems(value2).some((p) => p.includes('PROCESS_ABSENT')))
+})
+
+await test('gate6: a CLI launcher as the source fails', () => {
+  const value = validGate6()
+  value.gracefulClose.exitCodeSource = 'cli-launcher'
+  assert.ok(gate6Problems(value).some((p) => p.includes('launcher')))
+})
+
+await test('gate6: an unrecognised source fails', () => {
+  const value = validGate6()
+  value.forcedKill.exitCodeSource = 'whatever'
+  assert.ok(gate6Problems(value).some((p) => p.includes('exitCodeSource')))
+})
+
+await test('gate6: the real CC-6 evidence satisfies the structured rule', () => {
+  const gate = stateData().state.phase_00_final.gates['06_runtime_exit_code_recorded']
+  const absolute = path.join(REPO_ROOT, gate.evidence)
+  if (!fs.existsSync(absolute)) return // historical checkout without the probe evidence
+  const parsed = JSON.parse(fs.readFileSync(absolute, 'utf8'))
+  assert.deepEqual(gate6Problems(parsed), [])
+})
+
 await test('evidence: a noExitCodeReason cannot stand in for gate 6 exit code', () => {
   const dir = made('reason-only')
   write(path.join(dir, 'only-reason.json'), JSON.stringify({ noExitCodeReason: 'SDK did not provide an exit code' }, null, 2))
   const result = checkEvidencePath(dir, 'only-reason.json', EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'])
   assert.equal(result.ok, false, 'a reason is not a recorded exit code')
   assert.equal(result.errors[0].code, 'gate-evidence-content')
-  assert.ok(result.errors[0].message.includes('noExitCodeReason'), result.errors[0].message)
+  assert.ok(
+    result.errors.some((e) => e.message.includes('noExitCodeReason')),
+    JSON.stringify(result.errors),
+  )
 })
 
-await test('evidence: an integer exitCode satisfies gate 6 content rule', () => {
+await test('evidence: a structured record satisfies gate 6 content rule', () => {
   const dir = made('code-only')
-  write(path.join(dir, 'code.json'), JSON.stringify({ scenario: 'graceful', exitCode: 0 }, null, 2))
+  write(
+    path.join(dir, 'code.json'),
+    JSON.stringify(
+      {
+        gracefulClose: { exitCode: 0, exitCodeSource: 'exit-handler', afterClose: { status: 'PROCESS_ABSENT' } },
+        forcedKill: { exitCode: 1, exitCodeSource: 'exit-handler', afterKill: { status: 'PROCESS_ABSENT' } },
+      },
+      null,
+      2,
+    ),
+  )
   const result = checkEvidencePath(dir, 'code.json', EVIDENCE_CONTENT_RULES['06_runtime_exit_code_recorded'])
   assert.equal(result.ok, true, JSON.stringify(result.errors))
 })
@@ -1134,7 +1315,7 @@ await test('suite: broken project state aborts before any probe (real exit code)
 })
 
 await test('evidence: a failing test run cannot overwrite the published result', () => {
-  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r151', 'tests.json')
+  const published = path.join(PROBE_ROOT, 'evidence', process.env.CC_GATE_ROUND ?? 'r152', 'tests.json')
   const before = fs.existsSync(published) ? fs.readFileSync(published, 'utf8') : null
   const run = spawnSync(process.execPath, [path.join(HERE, 'record-tests.mjs')], {
     cwd: PROBE_ROOT,

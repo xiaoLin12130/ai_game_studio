@@ -1,3 +1,3 @@
-{"ts":"2026-11-11T04:20:38.254Z","type":"scenario.graceful","exitCode":0,"afterClose":{"status":"PROCESS_ABSENT","waitedMs":1092,"remaining":0},"source":"exit-handler"}
-{"ts":"2026-11-11T04:20:43.895Z","type":"scenario.forced","exitCode":1,"afterKill":{"status":"PROCESS_ABSENT","waitedMs":1042,"remaining":0},"source":"exit-handler"}
-{"ts":"2026-11-11T04:20:43.896Z","type":"verdict","verdict":"PASS","conclusion":"SDK_REPORTS_MANAGED_PROCESS_EXIT_CODE","exitCodes":{"graceful":0,"forced":1}}
+{"ts":"2026-11-11T04:29:12.955Z","type":"scenario.graceful","exitCode":0,"afterClose":{"status":"PROCESS_ABSENT","waitedMs":998,"remaining":0},"source":"exit-handler"}
+{"ts":"2026-11-11T04:29:18.391Z","type":"scenario.forced","exitCode":1,"afterKill":{"status":"PROCESS_ABSENT","waitedMs":1014,"remaining":0},"source":"exit-handler"}
+{"ts":"2026-11-11T04:29:18.392Z","type":"verdict","verdict":"PASS","conclusion":"SDK_REPORTS_MANAGED_PROCESS_EXIT_CODE","exitCodes":{"graceful":0,"forced":1}}

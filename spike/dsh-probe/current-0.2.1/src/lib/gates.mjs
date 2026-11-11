@@ -210,30 +210,70 @@ export function resolveContainedRealPath(root, rel) {
  *
  * A rule returns an array of human-readable problems; empty means satisfied.
  */
+/**
+ * Where an exit code legitimately comes from: the SDK's own exit event on the child it
+ * spawned, surfaced through the documented `TransportClosedError` message. A CLI
+ * launcher's code is a different process and is never acceptable evidence here.
+ */
+export const SDK_EXIT_CODE_SOURCES = ['exit-handler', 'post-close-subscribe', 'transport-closed-error']
+
+/** Values that claim a launcher's exit code instead of the managed runtime's. */
+const LAUNCHER_SOURCE = /launcher|\bcli\b|shell-run|spawnSync|execFile/i
+
 export const EVIDENCE_CONTENT_RULES = {
+  /**
+   * Gate 6 demands structure, not a lucky match.
+   *
+   * Recursively searching for any integer `exitCode` made the rule pass on
+   * `{"metadata":{"exitCode":0},"runtime":{"processAfterClose":"UNKNOWN"}}` — a file that
+   * records nothing about a shutdown. The gate now reads the two scenarios it claims to
+   * have measured, and rejects a code that is not attributed to the SDK-managed process.
+   */
   '06_runtime_exit_code_recorded': (value) => {
-    // A recorded reason explains why a code is *missing*; it cannot stand in for a code.
-    // Accepting it let a future round satisfy "记录退出码" with prose saying there is no
-    // exit code — the same overclaim this gate exists to stop, one indirection later.
-    const codes = []
-    const reasons = []
-    const walk = (node) => {
-      if (node === null || typeof node !== 'object') return
-      for (const [key, child] of Object.entries(node)) {
-        if (key === 'exitCode' && Number.isInteger(child)) codes.push(child)
-        else if (key === 'noExitCodeReason' && typeof child === 'string' && child.trim().length > 0) reasons.push(child)
-        walk(child)
+    const problems = []
+    const record = value !== null && typeof value === 'object' && !Array.isArray(value) ? value : null
+    if (record === null) return ['gate 6 evidence must be a JSON object with a gracefulClose and a forcedKill scenario']
+
+    const scenarios = [
+      ['gracefulClose', 'afterClose'],
+      ['forcedKill', 'afterKill'],
+    ]
+    for (const [scenarioKey, processKey] of scenarios) {
+      const scenario = record[scenarioKey]
+      if (scenario === null || typeof scenario !== 'object') {
+        problems.push(`${scenarioKey} scenario is missing from the evidence`)
+        continue
+      }
+      if (!Number.isInteger(scenario.exitCode)) {
+        problems.push(`${scenarioKey}.exitCode must be an integer, got ${JSON.stringify(scenario.exitCode ?? null)}`)
+      }
+      const status = scenario[processKey]?.status
+      if (status !== 'PROCESS_ABSENT') {
+        problems.push(`${scenarioKey}.${processKey}.status must be PROCESS_ABSENT, got ${JSON.stringify(status ?? null)}`)
+      }
+      const source = String(scenario.exitCodeSource ?? '')
+      if (LAUNCHER_SOURCE.test(source)) {
+        problems.push(`${scenarioKey}.exitCodeSource names a CLI launcher ("${source}"), not the SDK-managed runtime`)
+      } else if (!SDK_EXIT_CODE_SOURCES.includes(source)) {
+        problems.push(
+          `${scenarioKey}.exitCodeSource must be one of ${SDK_EXIT_CODE_SOURCES.join(' / ')}, got ${JSON.stringify(source)}`,
+        )
       }
     }
-    walk(value)
-    if (codes.length === 0) {
-      const hint =
-        reasons.length > 0
-          ? `; the evidence only carries noExitCodeReason ("${reasons[0].slice(0, 80)}"), and a reason is not a recorded exit code`
-          : ''
-      return [`gate 6 requires an integer "exitCode" in its evidence${hint}`]
+
+    const graceful = record.gracefulClose?.exitCode
+    const forced = record.forcedKill?.exitCode
+    if (Number.isInteger(graceful) && graceful !== 0) {
+      problems.push(`gracefulClose.exitCode must be 0 for a normal shutdown, got ${graceful}`)
     }
-    return []
+    if (Number.isInteger(graceful) && Number.isInteger(forced) && forced === graceful) {
+      problems.push('forcedKill.exitCode must differ from gracefulClose.exitCode, otherwise the number is not being measured')
+    }
+
+    if (String(record.noExitCodeReason ?? '').trim().length > 0) {
+      problems.push('a noExitCodeReason explains a missing code; it cannot accompany a gate-6 PASS')
+    }
+    return problems.map((problem) => problem.replace(/^gate 6 /, ''))
   },
 }
 
@@ -356,17 +396,50 @@ export function checkEvidencePath(root, rel, contentRule = null) {
  * dying on an ENOENT with no useful message.
  */
 export function loadStateCheck(root, stateFile = null) {
-  const file = stateFile ? path.resolve(stateFile) : path.join(root, 'state', 'project_state.json')
+  const violations = []
+
+  // The evidence check was hardened first while the state inputs were not, which review
+  // caught: `state/` or `docs/review-handoff/` can be a junction pointing outside the
+  // repository, and the plain read here would follow it. The same containment rule now
+  // guards the two inputs that decide what the gates even get to look at.
+  let file
+  if (stateFile === null) {
+    const contained = resolveContainedRealPath(root, 'state/project_state.json')
+    if (!contained.ok) {
+      violations.push({
+        code: 'state-escape',
+        message: `the state file must live inside the repository: ${contained.message ?? 'state/project_state.json'}`,
+      })
+      file = path.resolve(root, 'state', 'project_state.json')
+    } else {
+      file = contained.real
+    }
+  } else {
+    // `CC_STATE_FILE` is a test/operator seam: the regression suite injects a mutated copy
+    // outside the repository. It is resolved for links but not confined to the root — an
+    // attacker who can set this process's environment does not need this seam.
+    file = realpathOrNull(path.resolve(stateFile)) ?? path.resolve(stateFile)
+  }
+
   const state = JSON.parse(fs.readFileSync(file, 'utf8'))
+
   const docs = {}
   for (const rel of STATE_DOC_POINTERS) {
+    const contained = resolveContainedRealPath(root, rel)
+    if (!contained.ok) {
+      violations.push({
+        code: 'doc-escape',
+        message: `pointer document must live inside the repository: ${contained.message ?? rel}`,
+      })
+      continue // left out of docs as well, so doc-set-incomplete names it
+    }
     try {
-      docs[rel] = fs.readFileSync(path.join(root, rel), 'utf8')
+      docs[rel] = fs.readFileSync(contained.real, 'utf8')
     } catch {
       /* left out so checkProjectState can name the missing document */
     }
   }
-  return { state, docs, root }
+  return { state, docs, root, violations }
 }
 
 /**
@@ -375,10 +448,15 @@ export function loadStateCheck(root, stateFile = null) {
  *
  * @returns {{ok: boolean, errors: Array<{code: string, message: string}>, checked: object}}
  */
-export function checkProjectState({ state, docs = {}, root = null }) {
+export function checkProjectState({ state, docs = {}, root = null, violations = [] }) {
   const errors = []
   const fail = (code, message) => errors.push({ code, message })
   const checked = { gates: 0, deferred: 0, unknown: 0, docs: 0, evidence: 0 }
+
+  // Containment failures found while loading are part of the verdict, not a side note.
+  for (const violation of Array.isArray(violations) ? violations : []) {
+    fail(violation?.code ?? 'load-violation', violation?.message ?? 'state input failed containment')
+  }
 
   if (!state || typeof state !== 'object') {
     return { ok: false, errors: [{ code: 'state-unreadable', message: 'project_state.json is not an object' }], checked }

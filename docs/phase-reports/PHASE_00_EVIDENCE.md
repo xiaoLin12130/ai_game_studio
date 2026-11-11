@@ -3,7 +3,7 @@
 权威状态：当前唯一权威记录为 `state/project_state.json` → `phase_00_final`（`authoritative_source.current_record`）。
 
 > **历史范围（2026-11-11 标注）**：本文件主体是 **DSH 0.1.5** 的证据快照（§1–§10、§12），数字与结论保留原样；§11 中带「0.2.1 补测」说明的行来自 0.2.1-rc.3。
-> 当前结论见 `phase_00_final` 与 `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`；当前门禁/测试结果见 `spike/dsh-probe/current-0.2.1/evidence/r151/`。
+> 当前结论见 `phase_00_final` 与 `docs/review-handoff/PHASE_00_R1_WORK_REPORT.md`；当前门禁/测试结果见 `spike/dsh-probe/current-0.2.1/evidence/r152/`。
 
 - 生成时间：2026-11-10
 - 生成环境：本机（非模拟），Windows 10.0.19045.6466

@@ -34,9 +34,9 @@ DSH + commandcode + MCP 的技术链路早已证明可用；R1.4.1 收掉了最�
 cd spike\dsh-probe\current-0.2.1
 npm install
 $env:COMMANDCODE_API_KEY = "..."
-npm test              # 143 项测试 + 六探针 + 三道门禁（消耗真实模型调用）
-npm run test:unit      # 只跑 143 项测试；退出 0 才发布 tests.json（当前发布到 evidence/r151/tests.json）
-npm run gates          # 只跑依赖/状态/脱敏三道门禁，写 evidence/r151/final-gates.json
+npm test              # 156 项测试 + 六探针 + 三道门禁（消耗真实模型调用）
+npm run test:unit      # 只跑 156 项测试；退出 0 才发布 tests.json（当前发布到 evidence/r152/tests.json）
+npm run gates          # 只跑依赖/状态/脱敏三道门禁，写 evidence/r152/final-gates.json
 npm run probe:exit     # CC-6：Runtime 退出码（close=0 / 强杀=1），不消耗模型额度
 npm run lock:update    # 仅有意升级依赖时；随后必须重跑 npm test
 ```
