@@ -1,22 +1,24 @@
-# evidence/phase-01-c — 索引（R2）
+# evidence/phase-01-c — 索引（R5 补正）
 
 所有原始日志是 `.txt`（`*.log` 被 `.gitignore` 忽略），已脱敏为 `<abs-path>`。
 
-| 路径 | 内容 | 结果 |
-|---|---|---|
-| `unit/tsc.txt` | TypeScript 检查 | 退出码 0 |
-| `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | **101/101，0 失败**（各一次） |
-| `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **9/9** |
-| `unit/process-identity.txt` | 进程身份判定四态 + `discoverRuntimeIdentities` 返回全部 Runtime | **11/11** |
-| `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **6/6** |
-| `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | 2/2 |
-| `real-dsh/isolated-1/2/3.txt` | 隔离连续三次 | 各 2/2 |
-| `packaged/summary.json` | **安装版 A/B/C 复验（补正轮）** | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） |
-| `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | `toolCalled: true` |
-| `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | 166/166，PASS，0 泄漏 |
-| `regression/phase01a-*.txt` | PHASE 01-A 三个冒烟 | 退出码 0 |
-| `regression/phase01b-mcp.txt` | PHASE 01-B MCP 握手（开发环境） | 退出码 0 |
-| `verification.json` | 本轮真实执行的命令总表 | — |
+"轮次"列标明每条证据的产生轮次：**R5 本轮**为本次实际执行；R2/R4 为历史轮次产物，本轮未重跑，结果保持原值。
+
+| 路径 | 内容 | 轮次 | 结果 |
+|---|---|---|---|
+| `unit/tsc.txt` | TypeScript 检查 | R4 历史 | 退出码 0 |
+| `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | R2 历史 | **101/101，0 失败**（各一次） |
+| `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **R5 本轮** | **9/9** |
+| `unit/process-identity.txt` | 进程身份判定四态 + `discoverRuntimeIdentities` 返回全部 Runtime | **R5 本轮** | **11/11** |
+| `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **R5 本轮** | **6/6** |
+| `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | R2 历史 | 2/2 |
+| `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` | 隔离连续三次 | R2 历史 | 各 2/2 |
+| `packaged/summary.json` | **安装版 A/B/C 复验** | R4 运行（本轮未重跑） | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） |
+| `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | R2 历史 | `toolCalled: true` |
+| `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | R2 历史 | 166/166，PASS，0 泄漏 |
+| `regression/phase01a-failure.txt`、`phase01a-quit.txt`、`phase01a-ready.txt` | PHASE 01-A 三个冒烟 | R2 历史 | 退出码 0 |
+| `regression/phase01b-mcp.txt` | PHASE 01-B MCP 握手（开发环境） | R2 历史 | 退出码 0 |
+| `verification.json` | 真实执行记录总表（本轮 matrix 仅 4 项） | **R5 本轮** | — |
 
 ## 安装版进程检查
 

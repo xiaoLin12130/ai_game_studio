@@ -2,67 +2,67 @@ TAP version 13
 # Subtest: a live runtime whose command line has no DSH home is still reported PRESENT
 ok 1 - a live runtime whose command line has no DSH home is still reported PRESENT
   ---
-  duration_ms: 2.4969
+  duration_ms: 2.4195
   type: 'test'
   ...
 # Subtest: the home string never appears in a running runtime command line
 ok 2 - the home string never appears in a running runtime command line
   ---
-  duration_ms: 0.1797
+  duration_ms: 0.1576
   type: 'test'
   ...
 # Subtest: an exited runtime is ABSENT
 ok 3 - an exited runtime is ABSENT
   ---
-  duration_ms: 0.1586
+  duration_ms: 0.1398
   type: 'test'
   ...
 # Subtest: a reused pid is ABSENT, and says so
 ok 4 - a reused pid is ABSENT, and says so
   ---
-  duration_ms: 0.3281
+  duration_ms: 0.277
   type: 'test'
   ...
 # Subtest: a failed query is FAILED, never ABSENT
 ok 5 - a failed query is FAILED, never ABSENT
   ---
-  duration_ms: 0.1818
+  duration_ms: 0.1621
   type: 'test'
   ...
 # Subtest: an incomparable creation time is UNKNOWN, never ABSENT
 ok 6 - an incomparable creation time is UNKNOWN, never ABSENT
   ---
-  duration_ms: 0.8095
+  duration_ms: 0.7094
   type: 'test'
   ...
 # Subtest: capture refuses to pick between two candidates in the same parent
 ok 7 - capture refuses to pick between two candidates in the same parent
   ---
-  duration_ms: 0.4105
+  duration_ms: 0.3819
   type: 'test'
   ...
 # Subtest: capture pins exactly one runtime and keeps its creation time
 ok 8 - capture pins exactly one runtime and keeps its creation time
   ---
-  duration_ms: 0.1511
+  duration_ms: 0.1641
   type: 'test'
   ...
 # Subtest: discovery returns every runtime, not just the first
 ok 9 - discovery returns every runtime, not just the first
   ---
-  duration_ms: 1.2568
+  duration_ms: 1.0168
   type: 'test'
   ...
 # Subtest: discovery reports a failed query instead of an empty list
 ok 10 - discovery reports a failed query instead of an empty list
   ---
-  duration_ms: 0.4144
+  duration_ms: 0.3687
   type: 'test'
   ...
 # Subtest: discovery finds nothing when the runtimes have exited
 ok 11 - discovery finds nothing when the runtimes have exited
   ---
-  duration_ms: 0.179
+  duration_ms: 0.1664
   type: 'test'
   ...
 1..11
@@ -73,4 +73,4 @@ ok 11 - discovery finds nothing when the runtimes have exited
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 93.2884
+# duration_ms 91.1635

@@ -1,8 +1,8 @@
 # PHASE 01-C 工作报告 — DSH Session 生命周期与 Studio Task 状态管理
 
-> **状态：`BLOCKED`（接管轮 / 第 3 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+> **状态：`BLOCKED`（补正轮 / 第 5 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
 >
-> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。
+> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。第 5 轮（记录修正）统一根因与范围表述、明确 A/B/C 属原始验收范围，并把历史测试与本轮测试分开记录。
 
 ## 1. 本阶段原始目标
 
@@ -120,6 +120,8 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `node scripts/smoke.mjs quit-during-probe`（01-A） | 0 | — | `regression/phase01a-quit.txt` |
 | `node scripts/mcp-probe.mjs`（01-B，开发环境握手） | 0 | — | `regression/phase01b-mcp.txt` |
 | `node scripts/mcp-packaged.mjs --prompt`（01-B，**安装版真实工具调用**，本轮补跑） | 0 | `toolCalled: true` | `packaged/mcp-tool-call.json` |
+
+> **轮次说明**：`runtime-supervisor`、`process-identity`、`identity-watcher` 为 **R5 本轮**重跑；`tsc` 为 R4 历史；`full-suite`(101)、`task-integration`(2)、`phase00`(166)、01-A/01-B 为 **R2 历史**，本轮未重跑；安装版为 **R4 真实失败运行**（ENVIRONMENT_BLOCKED）。
 
 关于上一轮"满套件不稳定"：本轮定位到**不是**模型或限流问题，而是我自己的断言取样太早（任务刚到 SUCCEEDED 就检查 runtime 是否已回收，而 `release()` 在下一拍才关完）。改成等待回收后，满套件连续通过。
 

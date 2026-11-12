@@ -2,6 +2,7 @@
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
   "status": "BLOCKED",
+  "current_round": "R5-record-correction-env-prep",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
   "note": "B 场景第二个 Runtime 的 OS 进程退出验证代码已补齐并由单元测试覆盖（process-identity 11/11、identity-watcher 6/6）。安装版 A/B/C 属 PHASE 01-C 原始验收范围，但被环境阻断：首跑 out-g 为陈旧构建（缺任务 smoke 分支）而回落启动探测（ROUTE_UNKNOWN）；改用当前正确构建后，TaskService.ensureProfile() 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时内部 pnpm add 因当前沙箱 pnpm store 删除操作 EPERM 失败，任务停在 PROFILE_NOT_READY。本阶段不自行判定通过。",
@@ -127,7 +128,7 @@
       "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
     }
   ],
-  "updated_at": "2026-11-12T03:52:00.000Z",
+  "updated_at": "2026-11-12T03:58:00.000Z",
   "acceptance": [
     {
       "id": "C1",
