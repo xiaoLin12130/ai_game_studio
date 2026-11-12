@@ -1,0 +1,54 @@
+{
+  "phase": "PHASE_02",
+  "title": "AI 顾问、需求讨论与正式需求基线",
+  "status": "IN_PROGRESS",
+  "note": "本轮完成 M0–M8 的主要实现与真实链路验证；M9 回归与 M10 交付尚未完成，故未标记 READY_FOR_EXTERNAL_REVIEW。",
+  "branch": "phase/02-advisor-requirements-baseline",
+  "base_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
+  "base_branch": "phase/01-d-project-workspace",
+  "precondition_note": "state/phase_01_d.json 仍为 READY_FOR_EXTERNAL_REVIEW（verdict 为 null）。仓库内无法自证该阶段已通过外部评审；本轮按用户明确指令继续，此事实记录在 M0 审计中。",
+  "completed_milestones": {
+    "M0": "只读审计 + 实施计划；真实探针修正了联网能力的静态推断",
+    "M1": "顾问对话、Session 映射、消息持久化、项目隔离",
+    "M2": "附件（图片内联 / 文本与 PDF/DOCX 提取）与上下文编译（预算 + 来源记录）",
+    "M3": "研究请求与报告（章节分离解析，来源记录）",
+    "M4": "设计草稿 / GDD 与版本历史",
+    "M5": "正式需求基线：预览、确认、冻结、规范化哈希、数据库触发器强制不可覆盖",
+    "M6": "变更提案与影响分析（明示未分析范围）",
+    "M7": "SQLite v3 迁移，11 张新表，v2→v3 升级保留旧数据",
+    "M8": "UI：顾问三栏布局、草稿页、基线冻结确认页、变更提案页"
+  },
+  "pending": {
+    "M9": "回归（PHASE 00 门禁、PHASE 01 冒烟、桌面运行、截图证据）",
+    "M10": "阶段报告、证据索引、state 收尾、推送"
+  },
+  "verified": {
+    "full_suite": {
+      "command": "node --test",
+      "result": "291/291 pass",
+      "artifact": "evidence/phase-02/"
+    },
+    "advisor_real_chain": {
+      "command": "node scripts/advisor-probe.mjs",
+      "result": "11/11 steps OK",
+      "artifact": "evidence/phase-02/advisor/advisor-chain.json"
+    },
+    "web_capability": {
+      "result": "web_fetch 与 web_search 均实测可用",
+      "artifact": "evidence/phase-02/capability/web-capability.json"
+    }
+  },
+  "key_findings": [
+    "DSH SDK 支持 text 与 inline image 块；PDF/DOCX 必须本地提取文本，已标注信息损失",
+    "联网搜索与抓取实测可用（走 commandcode provider，不依赖 DEEPSEEK_API_KEY）——推翻了静态配置的推断",
+    "没有 wire-level cancel，顾问停止 = 关闭 Runtime",
+    "冻结基线不可覆盖由数据库触发器强制，不只是 UI 禁用"
+  ],
+  "next_actions": [
+    "M9：跑 PHASE 00 门禁、PHASE 01-A/01-B/01-C/01-D 回归、桌面冒烟",
+    "M9：补 UI 截图证据（区分真实运行与夹具）",
+    "M10：写 PHASE_02_REPORT.md、evidence 索引、verification.json",
+    "M10：更新 handoff / decisions / state，推送分支"
+  ],
+  "updated_at": "2026-11-12T16:40:27.078Z"
+}

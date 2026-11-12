@@ -9,6 +9,11 @@ import type { DshConnectionService } from './dsh/service'
 import type { TaskService, CreateTaskRequest } from './tasks/service'
 import type { ProjectService } from './projects/service'
 import type { RulesService } from './projects/rules'
+import type { AdvisorService } from './requirements/advisor'
+import type { AttachmentService } from './requirements/attachments'
+import type { BaselineService, BaselineContent } from './requirements/baseline'
+import type { ResearchService } from './requirements/research'
+import type { RequirementStore } from './requirements/store'
 import type { CreateProjectInput } from './projects/types'
 import type { TaskAction } from './tasks/types'
 import type { Logger } from './logger'
@@ -37,6 +42,31 @@ export const CHANNELS = {
   rulesRead: 'studio:rules:read',
   rulesState: 'studio:rules:state',
   projectsChanged: 'studio:projects:changed',
+  advisorConversations: 'studio:advisor:conversations',
+  advisorCreate: 'studio:advisor:create',
+  advisorMessages: 'studio:advisor:messages',
+  advisorSend: 'studio:advisor:send',
+  advisorAttach: 'studio:advisor:attach',
+  advisorAttachments: 'studio:advisor:attachments',
+  advisorRemoveAttachment: 'studio:advisor:attachment-remove',
+  draftsList: 'studio:drafts:list',
+  draftCreate: 'studio:drafts:create',
+  draftGet: 'studio:drafts:get',
+  draftAddVersion: 'studio:drafts:version',
+  draftSetStatus: 'studio:drafts:status',
+  researchList: 'studio:research:list',
+  researchCreate: 'studio:research:create',
+  researchRun: 'studio:research:run',
+  researchReports: 'studio:research:reports',
+  baselinePreview: 'studio:baseline:preview',
+  baselineFreeze: 'studio:baseline:freeze',
+  baselineList: 'studio:baseline:list',
+  baselineGet: 'studio:baseline:get',
+  baselineCompare: 'studio:baseline:compare',
+  proposalList: 'studio:proposals:list',
+  proposalCreate: 'studio:proposals:create',
+  proposalDecide: 'studio:proposals:decide',
+  requirementsChanged: 'studio:requirements:changed',
 } as const
 
 export interface IpcDeps {
@@ -44,6 +74,11 @@ export interface IpcDeps {
   tasks: TaskService
   projects: ProjectService
   rules: RulesService
+  requirements: RequirementStore
+  advisor: AdvisorService
+  attachments: AttachmentService
+  baselines: BaselineService
+  research: ResearchService
   logger: Logger
   logDir: string
   configPath: string
@@ -144,6 +179,148 @@ export function registerIpc(deps: IpcDeps): void {
     deps.logger.info('ui.project.restore', { projectId: String(payload?.id), file: String(payload?.file) })
     return deps.projects.restoreBackup(String(payload.id), String(payload.file))
   })
+
+  // ---- advisor -------------------------------------------------------------------
+
+  ipcMain.handle(CHANNELS.advisorConversations, (_event, projectId: string) => deps.advisor.listConversations(String(projectId)))
+
+  ipcMain.handle(CHANNELS.advisorCreate, (_event, payload: { projectId: string; title: string }) => {
+    if (!payload || typeof payload.title !== 'string') throw new Error('a conversation needs a title')
+    return deps.advisor.createConversation(String(payload.projectId), payload.title)
+  })
+
+  ipcMain.handle(CHANNELS.advisorMessages, (_event, payload: { projectId: string; conversationId: string }) =>
+    deps.advisor.listMessages(String(payload.projectId), String(payload.conversationId)),
+  )
+
+  ipcMain.handle(CHANNELS.advisorSend, async (_event, payload: { projectId: string; conversationId: string; text: string; attachmentIds?: string[] }) => {
+    if (!payload || typeof payload.text !== 'string') throw new Error('a message needs text')
+    return deps.advisor.send({
+      projectId: String(payload.projectId),
+      conversationId: String(payload.conversationId),
+      text: payload.text,
+      attachmentIds: Array.isArray(payload.attachmentIds) ? payload.attachmentIds.map(String) : [],
+    })
+  })
+
+  ipcMain.handle(CHANNELS.advisorAttach, (_event, payload: { projectId: string; conversationId?: string | null; filename: string; mime: string; base64: string }) => {
+    if (!payload || typeof payload.base64 !== 'string') throw new Error('an attachment needs bytes')
+    const buffer = Buffer.from(payload.base64, 'base64')
+    return deps.attachments.add({
+      projectId: String(payload.projectId),
+      conversationId: payload.conversationId ?? null,
+      filename: String(payload.filename),
+      mime: String(payload.mime),
+      buffer,
+    })
+  })
+
+  ipcMain.handle(CHANNELS.advisorAttachments, (_event, payload: { projectId: string; conversationId?: string | null }) =>
+    deps.requirements.listAttachments(String(payload.projectId), payload.conversationId ?? null),
+  )
+
+  ipcMain.handle(CHANNELS.advisorRemoveAttachment, (_event, payload: { projectId: string; attachmentId: string }) =>
+    deps.attachments.remove(String(payload.projectId), String(payload.attachmentId)),
+  )
+
+  // ---- drafts --------------------------------------------------------------------
+
+  ipcMain.handle(CHANNELS.draftsList, (_event, payload: { projectId: string; kind?: string }) =>
+    deps.requirements.listDrafts(String(payload.projectId), payload.kind as never),
+  )
+
+  ipcMain.handle(CHANNELS.draftCreate, (_event, payload: { projectId: string; kind: string; title: string; content: string }) =>
+    deps.requirements.createDraft({
+      projectId: String(payload.projectId),
+      kind: payload.kind as never,
+      title: String(payload.title),
+      content: String(payload.content),
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.draftGet, (_event, payload: { projectId: string; draftId: string }) => {
+    const draft = deps.requirements.getDraft(String(payload.projectId), String(payload.draftId))
+    if (!draft) return null
+    return { draft, versions: deps.requirements.listDraftVersions(draft.id) }
+  })
+
+  ipcMain.handle(CHANNELS.draftAddVersion, (_event, payload: { projectId: string; draftId: string; content: string; note?: string }) =>
+    deps.requirements.addDraftVersion({
+      projectId: String(payload.projectId),
+      draftId: String(payload.draftId),
+      content: String(payload.content),
+      note: payload.note ?? null,
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.draftSetStatus, (_event, payload: { projectId: string; draftId: string; status: string }) =>
+    deps.requirements.setDraftStatus(String(payload.projectId), String(payload.draftId), payload.status as never),
+  )
+
+  // ---- research ------------------------------------------------------------------
+
+  ipcMain.handle(CHANNELS.researchList, (_event, projectId: string) => deps.research.listRequests(String(projectId)))
+  ipcMain.handle(CHANNELS.researchReports, (_event, projectId: string) => deps.research.listReports(String(projectId)))
+
+  ipcMain.handle(CHANNELS.researchCreate, (_event, payload: { projectId: string; conversationId?: string | null; question: string; scope?: string | null }) =>
+    deps.research.createRequest({
+      projectId: String(payload.projectId),
+      conversationId: payload.conversationId ?? null,
+      question: String(payload.question),
+      scope: payload.scope ?? null,
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.researchRun, async (_event, payload: { projectId: string; requestId: string }) =>
+    deps.research.run(String(payload.projectId), String(payload.requestId)),
+  )
+
+  // ---- baselines -----------------------------------------------------------------
+
+  ipcMain.handle(CHANNELS.baselinePreview, (_event, payload: { projectId: string; content: BaselineContent }) =>
+    deps.baselines.preview(String(payload.projectId), payload.content),
+  )
+
+  ipcMain.handle(CHANNELS.baselineFreeze, (_event, payload: { projectId: string; content: BaselineContent; confirmedBy: string; sourceDraftId?: string | null }) =>
+    deps.baselines.freeze({
+      projectId: String(payload.projectId),
+      content: payload.content,
+      confirmedBy: String(payload.confirmedBy),
+      sourceDraftId: payload.sourceDraftId ?? null,
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.baselineList, (_event, projectId: string) => deps.baselines.list(String(projectId)))
+  ipcMain.handle(CHANNELS.baselineGet, (_event, payload: { projectId: string; baselineId: string }) =>
+    deps.baselines.get(String(payload.projectId), String(payload.baselineId)),
+  )
+  ipcMain.handle(CHANNELS.baselineCompare, (_event, payload: { projectId: string; leftId: string; rightId: string }) =>
+    deps.baselines.compare(String(payload.projectId), String(payload.leftId), String(payload.rightId)),
+  )
+
+  // ---- change proposals ----------------------------------------------------------
+
+  ipcMain.handle(CHANNELS.proposalList, (_event, projectId: string) => deps.baselines.listProposals(String(projectId)))
+
+  ipcMain.handle(CHANNELS.proposalCreate, (_event, payload: { projectId: string; baselineId: string; title: string; description: string }) =>
+    deps.baselines.proposeChange({
+      projectId: String(payload.projectId),
+      baselineId: String(payload.baselineId),
+      title: String(payload.title),
+      description: String(payload.description),
+      drafts: deps.requirements.listDrafts(String(payload.projectId)),
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.proposalDecide, (_event, payload: { projectId: string; proposalId: string; status: string; decidedBy: string; note?: string | null }) =>
+    deps.baselines.decide({
+      projectId: String(payload.projectId),
+      proposalId: String(payload.proposalId),
+      status: payload.status as never,
+      decidedBy: String(payload.decidedBy),
+      note: payload.note ?? null,
+    }),
+  )
 
   ipcMain.handle(CHANNELS.rulesList, () => deps.rules.list())
   ipcMain.handle(CHANNELS.rulesRead, (_event, id: string) => deps.rules.read(String(id)))

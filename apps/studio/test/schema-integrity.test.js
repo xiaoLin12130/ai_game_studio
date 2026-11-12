@@ -58,7 +58,7 @@ test('the required list matches the migrations exactly', (t) => {
   db.close()
 
   assert.deepEqual([...REQUIRED_TABLES].sort(), actual.sort(), 'the list must not drift from the schema')
-  assert.equal(REQUIRED_TABLES.length, 13)
+  assert.equal(REQUIRED_TABLES.length, 24)
 })
 
 test('a complete v2 database passes verification', (t) => {
@@ -67,11 +67,11 @@ test('a complete v2 database passes verification', (t) => {
   assert.equal(report.ok, true, JSON.stringify(report))
   assert.equal(report.integrity, 'ok')
   assert.equal(report.foreignKeyViolations, 0)
-  assert.equal(report.schemaVersion, 2)
+  assert.equal(report.schemaVersion, 3)
   assert.deepEqual(report.missingTables, [])
 })
 
-for (const table of ['project_configs', 'project_events', 'approvals', 'project_locks', 'task_transitions', 'runtimes', 'verifications', 'events']) {
+for (const table of ['project_configs', 'project_events', 'approvals', 'project_locks', 'task_transitions', 'runtimes', 'verifications', 'events', 'advisor_conversations', 'advisor_messages', 'drafts', 'draft_versions', 'requirement_baselines', 'change_proposals', 'attachments', 'research_reports']) {
   test('verification fails when ' + table + ' is missing', (t) => {
     const { dir, dbPath } = setup(t)
     const staging = fs.mkdtempSync(path.join(dir, 'staging-'))
@@ -94,7 +94,8 @@ test('verification fails when a task link table is missing', (t) => {
 
 test('verification fails on an older schema version', (t) => {
   const { dbPath } = setup(t)
-  const report = verifyDatabase(dbPath, REQUIRED_TABLES, SCHEMA_VERSION_MAX, 3)
+  // The database is at v3; demanding v4 as the minimum is what "too old" means.
+  const report = verifyDatabase(dbPath, REQUIRED_TABLES, SCHEMA_VERSION_MAX, 4)
   assert.equal(report.ok, false, 'a version below the minimum must be refused')
 })
 

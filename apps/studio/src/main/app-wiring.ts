@@ -10,6 +10,12 @@
  * rather than guessing while the project service does not exist yet.
  */
 import { ProjectLocks } from './projects/locks'
+import { AdvisorService } from './requirements/advisor'
+import { AttachmentService } from './requirements/attachments'
+import { BaselineService } from './requirements/baseline'
+import { ContextCompiler } from './requirements/context'
+import { ResearchService } from './requirements/research'
+import { RequirementStore } from './requirements/store'
 import { ProjectService } from './projects/service'
 import { TaskService } from './tasks/service'
 import { TaskStore } from './tasks/store'
@@ -46,6 +52,11 @@ export interface WiredApp {
   tasks: TaskService
   projects: ProjectService
   locks: ProjectLocks
+  requirements: RequirementStore
+  advisor: AdvisorService
+  attachments: AttachmentService
+  baselines: BaselineService
+  research: ResearchService
   ready(): boolean
   dispose(reason: string): Promise<{ closed: string[]; failed: string[]; ok: boolean }>
 }
@@ -106,11 +117,48 @@ export function wireServices(options: WiringOptions): WiredApp {
     }),
   })
 
+  // The requirement system shares the same connection and the same project boundary. It is
+  // built after the project service because every one of its reads is project-scoped.
+  const requirements = new RequirementStore(store.db)
+  const compiler = new ContextCompiler()
+  const attachments = new AttachmentService({ store: requirements, dataDir: options.userDataDir + '/attachments' })
+  const advisor = new AdvisorService({
+    store: requirements,
+    supervisor: tasks.supervisor,
+    compiler,
+    attachments,
+    logger: options.logger,
+    projectExists: (projectId: string) => Boolean(projects!.store.get(projectId)),
+    projectContext: (projectId: string) => {
+      const project = projects!.store.get(projectId)
+      const config = project ? projects!.store.getConfig(projectId) : null
+      const settings = (config?.settings ?? {}) as Record<string, unknown>
+      const facts = Array.isArray(settings.facts) ? (settings.facts as string[]) : []
+      const openQuestions = Array.isArray(settings.openQuestions) ? (settings.openQuestions as string[]) : []
+      return {
+        facts,
+        openQuestions,
+        rules: project ? [{ title: '项目规则', content: '项目：' + project.name + '\n引擎：' + project.engine + '\n平台：' + project.platform }] : [],
+      }
+    },
+  })
+  const baselines = new BaselineService(requirements)
+  const research = new ResearchService({
+    store: requirements,
+    logger: options.logger,
+    runResearch: async () => ({ ok: false, markdown: '', sources: [], error: '研究执行器尚未接入。' }),
+  })
+
   return {
     store,
     tasks,
     projects,
     locks,
+    requirements,
+    advisor,
+    attachments,
+    baselines,
+    research,
     ready: () => projects !== null,
     async dispose(reason: string) {
       if (disposed) return { closed: [], failed: [], ok: true }

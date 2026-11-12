@@ -49,11 +49,23 @@ export const REQUIRED_TABLES: readonly string[] = [
   'project_events',
   'approvals',
   'project_locks',
+  // v3 — the requirement system
+  'advisor_conversations',
+  'advisor_messages',
+  'advisor_session_links',
+  'context_snapshots',
+  'attachments',
+  'drafts',
+  'draft_versions',
+  'research_requests',
+  'research_reports',
+  'requirement_baselines',
+  'change_proposals',
 ]
 
 /** The schema version this build writes and can read back. */
 export const SCHEMA_VERSION_MIN = 1
-export const SCHEMA_VERSION_MAX = 2
+export const SCHEMA_VERSION_MAX = 3
 
 /** Copy the database and prove the copy is readable. */
 export function createBackup(dbPath: string, targetPath: string): BackupResult {

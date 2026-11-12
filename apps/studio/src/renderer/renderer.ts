@@ -146,6 +146,30 @@ interface StudioApi {
   readRule(id: string): Promise<Record<string, unknown>>
   getProjectState(): Promise<{ phase: string | null; status: string | null; error: string | null }>
   onProjectsChanged(callback: () => void): () => void
+  listConversations(projectId: string): Promise<ReqConversation[]>
+  createConversation(projectId: string, title: string): Promise<ReqConversation>
+  listMessages(projectId: string, conversationId: string): Promise<ReqMessage[]>
+  sendMessage(projectId: string, conversationId: string, text: string, attachmentIds?: string[]): Promise<{ ok: boolean; reply: string; error: string | null; timedOut: boolean }>
+  attachFile(projectId: string, conversationId: string | null, filename: string, mime: string, base64: string): Promise<{ ok: boolean; attachment?: ReqAttachment; code?: string; detail?: string }>
+  listAttachments(projectId: string, conversationId?: string | null): Promise<ReqAttachment[]>
+  removeAttachment(projectId: string, attachmentId: string): Promise<boolean>
+  listDrafts(projectId: string, kind?: string): Promise<ReqDraft[]>
+  createDraft(projectId: string, kind: string, title: string, content: string): Promise<ReqDraft>
+  getDraft(projectId: string, draftId: string): Promise<{ draft: ReqDraft; versions: ReqDraftVersion[] } | null>
+  addDraftVersion(projectId: string, draftId: string, content: string, note?: string): Promise<ReqDraftVersion>
+  setDraftStatus(projectId: string, draftId: string, status: string): Promise<ReqDraft>
+  listResearch(projectId: string): Promise<{ id: string; question: string; status: string }[]>
+  listReports(projectId: string): Promise<ReqReport[]>
+  createResearch(projectId: string, question: string, scope?: string | null): Promise<{ id: string; question: string; status: string }>
+  runResearch(projectId: string, requestId: string): Promise<{ ok: boolean; report: ReqReport | null; error: string | null; incomplete: string[] }>
+  previewBaseline(projectId: string, content: unknown): Promise<{ content: string; unconfirmed: string[]; openQuestions: string[]; consequences: string[]; diff: { added: string[]; removed: string[]; changed: string[] } | null }>
+  freezeBaseline(projectId: string, content: unknown, confirmedBy: string, sourceDraftId?: string | null): Promise<ReqBaseline>
+  listBaselines(projectId: string): Promise<ReqBaseline[]>
+  getBaseline(projectId: string, baselineId: string): Promise<ReqBaseline | null>
+  compareBaselines(projectId: string, leftId: string, rightId: string): Promise<{ added: string[]; removed: string[]; changed: string[] } | null>
+  listProposals(projectId: string): Promise<ReqProposal[]>
+  createProposal(projectId: string, baselineId: string, title: string, description: string): Promise<ReqProposal>
+  decideProposal(projectId: string, proposalId: string, status: string, decidedBy: string, note?: string | null): Promise<ReqProposal>
   backupProject(id: string): Promise<{ ok: boolean; file: string | null; bytes: number; error: string | null }>
   listProjectBackups(id: string): Promise<{ file: string; bytes: number; createdAt: string }[]>
   restoreProject(id: string, file: string): Promise<{ ok: boolean; verified: boolean; safetyCopy: string | null; error: string | null }>
@@ -1156,6 +1180,8 @@ async function main(): Promise<void> {
 
   await initTasks()
   await initProjects()
+  initRequirementsUi()
+  await refreshRequirements()
 }
 
 
@@ -1264,6 +1290,7 @@ async function refreshProjects(): Promise<void> {
   }
 
   updateTaskProjectHint()
+  void refreshRequirements()
 
   const current = byId('workbench-current')
   if (currentProjectId) {
@@ -1487,6 +1514,103 @@ async function renderBackups(projectId: string): Promise<void> {
       restoreButton.textContent = '从备份恢复'
     }
   }
+}
+
+let requirementsUi: RequirementsUi | null = null
+
+/** Build the requirement UI once, then keep it in sync with the open project. */
+function initRequirementsUi(): RequirementsUi {
+  if (requirementsUi) return requirementsUi
+  requirementsUi = new RequirementsUi({
+    api: window.studio,
+    byId,
+    setText,
+    describeError,
+    formatWhen,
+    currentProjectId: () => currentProjectId,
+    onChanged: () => { void refreshRequirements() },
+  })
+
+  byId('advisor-new').addEventListener('click', () => {
+    const input = byId('composer-input') as HTMLTextAreaElement
+    input.focus()
+  })
+  byId('composer').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const input = byId('composer-input') as HTMLTextAreaElement
+    const text = input.value
+    input.value = ''
+    void requirementsUi!.send(text)
+  })
+  byId('composer-input').addEventListener('keydown', (event) => {
+    const keyboard = event as KeyboardEvent
+    if (keyboard.key === 'Enter' && !keyboard.shiftKey) {
+      keyboard.preventDefault()
+      const input = byId('composer-input') as HTMLTextAreaElement
+      const text = input.value
+      input.value = ''
+      void requirementsUi!.send(text)
+    }
+  })
+  byId('composer-file').addEventListener('change', (event) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (file) void requirementsUi!.attach(file)
+    input.value = ''
+  })
+  for (const chip of Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'))) {
+    chip.addEventListener('click', () => {
+      const input = byId('composer-input') as HTMLTextAreaElement
+      input.value = chip.dataset.starter ?? ''
+      input.focus()
+    })
+  }
+  byId('context-toggle').addEventListener('click', () => {
+    const body = byId('context-body')
+    const button = byId('context-toggle')
+    const collapsed = body.hidden
+    body.hidden = !collapsed
+    button.textContent = collapsed ? '收起' : '展开'
+  })
+
+  byId('draft-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const kind = (byId('draft-kind') as HTMLSelectElement).value
+    const title = (byId('draft-title') as HTMLInputElement).value
+    ;(byId('draft-title') as HTMLInputElement).value = ''
+    void requirementsUi!.createDraft(kind, title)
+  })
+  byId('drafts-refresh').addEventListener('click', () => { void requirementsUi!.refreshDrafts() })
+
+  byId('research-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const input = byId('research-question') as HTMLInputElement
+    const question = input.value
+    input.value = ''
+    void requirementsUi!.runResearch(question)
+  })
+
+  byId('baseline-refresh').addEventListener('click', () => { void requirementsUi!.refreshBaselines() })
+  byId('baseline-prepare').addEventListener('click', () => { void requirementsUi!.prepareBaseline() })
+  byId('preview-cancel').addEventListener('click', () => { requirementsUi!.cancelPreview() })
+  byId('preview-confirm').addEventListener('click', () => { void requirementsUi!.confirmFreeze() })
+
+  byId('proposal-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const title = (byId('proposal-title') as HTMLInputElement).value
+    const description = (byId('proposal-description') as HTMLTextAreaElement).value
+    ;(byId('proposal-title') as HTMLInputElement).value = ''
+    ;(byId('proposal-description') as HTMLTextAreaElement).value = ''
+    void requirementsUi!.createProposal(title, description)
+  })
+
+  return requirementsUi
+}
+
+/** Refresh every requirement panel; called when the open project changes. */
+async function refreshRequirements(): Promise<void> {
+  if (!requirementsUi) return
+  await requirementsUi.refreshAll()
 }
 
 async function initProjects(): Promise<void> {

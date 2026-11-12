@@ -29,7 +29,7 @@ import type {
   VerificationRecord,
 } from './types'
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 const MIGRATIONS: string[] = [
   // v1
@@ -192,6 +192,160 @@ const MIGRATIONS: string[] = [
     heartbeat_at TEXT NOT NULL,
     PRIMARY KEY (project_id, kind)
   );
+  `,
+  // v3 — the requirement system. Everything here hangs off a project, and nothing here is
+  // a requirement until a user freezes a baseline: conversations, drafts and research are
+  // all things the user can still change their mind about.
+  `
+  CREATE TABLE IF NOT EXISTS advisor_conversations (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('OPEN','ARCHIVED')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    last_message_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_conversations_project ON advisor_conversations(project_id, updated_at DESC);
+
+  CREATE TABLE IF NOT EXISTS advisor_messages (
+    id TEXT PRIMARY KEY,
+    conversation_id TEXT NOT NULL REFERENCES advisor_conversations(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('user','assistant','tool','system')),
+    kind TEXT NOT NULL,
+    content TEXT NOT NULL,
+    session_id TEXT,
+    seq INTEGER NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  -- Ordering is by seq, never by timestamp: two messages can share a millisecond.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_seq ON advisor_messages(conversation_id, seq);
+
+  CREATE TABLE IF NOT EXISTS advisor_session_links (
+    conversation_id TEXT NOT NULL REFERENCES advisor_conversations(id) ON DELETE CASCADE,
+    session_id TEXT NOT NULL,
+    runtime_id TEXT,
+    state TEXT NOT NULL CHECK (state IN ('ACTIVE','ENDED','FAILED')),
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (conversation_id, session_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS context_snapshots (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    conversation_id TEXT,
+    purpose TEXT NOT NULL,
+    sources TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_context_project ON context_snapshots(project_id, created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS attachments (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    conversation_id TEXT,
+    filename TEXT NOT NULL,
+    mime TEXT NOT NULL,
+    bytes INTEGER NOT NULL,
+    sha256 TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('image','text','document','unsupported')),
+    extracted_text TEXT,
+    stored_path TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_attachments_project ON attachments(project_id, created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS drafts (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('idea','design','gdd')),
+    title TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('DRAFT','CONFIRMED','REJECTED')),
+    current_version INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_drafts_project ON drafts(project_id, kind, updated_at DESC);
+
+  CREATE TABLE IF NOT EXISTS draft_versions (
+    id TEXT PRIMARY KEY,
+    draft_id TEXT NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_draft_version ON draft_versions(draft_id, version);
+
+  CREATE TABLE IF NOT EXISTS research_requests (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    conversation_id TEXT,
+    question TEXT NOT NULL,
+    scope TEXT,
+    status TEXT NOT NULL CHECK (status IN ('REQUESTED','IN_PROGRESS','COMPLETED','FAILED')),
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_research_project ON research_requests(project_id, created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS research_reports (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    request_id TEXT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    sources TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('REQUESTED','IN_PROGRESS','COMPLETED','FAILED')),
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_reports_project ON research_reports(project_id, created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS requirement_baselines (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('FROZEN')),
+    created_at TEXT NOT NULL,
+    frozen_at TEXT NOT NULL,
+    confirmed_by TEXT NOT NULL,
+    source_draft_id TEXT,
+    previous_baseline_id TEXT
+  );
+  -- One version number per project, and a frozen baseline is never rewritten.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_baseline_version ON requirement_baselines(project_id, version);
+
+  CREATE TABLE IF NOT EXISTS change_proposals (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    baseline_id TEXT NOT NULL REFERENCES requirement_baselines(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    impact TEXT,
+    status TEXT NOT NULL CHECK (status IN ('PENDING','APPROVED','REJECTED','NEEDS_REVISION')),
+    created_at TEXT NOT NULL,
+    decided_at TEXT,
+    decided_by TEXT,
+    note TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_proposals_project ON change_proposals(project_id, created_at DESC);
+
+  -- A frozen baseline is immutable at the storage layer, not just in the UI. The trigger is
+  -- the enforcement; the service check is the readable error message.
+  CREATE TRIGGER IF NOT EXISTS trg_baseline_frozen_update
+  BEFORE UPDATE ON requirement_baselines
+  BEGIN
+    SELECT RAISE(ABORT, 'a frozen requirement baseline cannot be modified');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_baseline_frozen_delete
+  BEFORE DELETE ON requirement_baselines
+  BEGIN
+    SELECT RAISE(ABORT, 'a frozen requirement baseline cannot be deleted');
+  END;
   `,
 ]
 

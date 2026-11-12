@@ -208,32 +208,182 @@
       </section>
 
       <section class="view" id="view-advisor" data-view="advisor" hidden>
-        <div class="card">
-          <div class="card-head"><h2>AI 顾问</h2></div>
-          <div class="placeholder-state">
-            <p class="placeholder-title">尚未开发</p>
-            <p class="placeholder-body">AI 顾问会在 PHASE 02 提供需求讨论与正式基线。当前版本不会显示任何模拟对话。</p>
-          </div>
+        <div class="advisor-layout">
+          <aside class="advisor-side" aria-label="讨论列表">
+            <div class="advisor-side-head">
+              <h2 class="advisor-side-title">讨论</h2>
+              <button class="button button-small" type="button" id="advisor-new">新建</button>
+            </div>
+            <p class="advisor-project" id="advisor-project">未打开项目</p>
+            <ul class="conversation-list" id="conversation-list"></ul>
+          </aside>
+
+          <section class="advisor-main" aria-label="对话">
+            <div class="advisor-main-head">
+              <h2 class="advisor-title" id="advisor-title">AI 顾问</h2>
+              <span class="advisor-status" id="advisor-status"></span>
+            </div>
+
+            <div class="advisor-empty" id="advisor-empty">
+              <p class="empty-title">从一个想法开始</p>
+              <p class="empty-body">用一句话描述你想做的游戏，顾问会逐步追问，而不是让你先填一张表单。</p>
+              <div class="starter-chips" id="starter-chips">
+                <button class="chip" type="button" data-starter="我想做一个像素风格的微信小游戏，玩法类似吸血鬼幸存者，但角色是鸽子。">像素风幸存者</button>
+                <button class="chip" type="button" data-starter="我想做一个适合碎片时间的休闲解谜小游戏。">休闲解谜</button>
+                <button class="chip" type="button" data-starter="我想做一个经营类小游戏，玩家经营一家深夜食堂。">经营模拟</button>
+              </div>
+            </div>
+
+            <div class="message-list" id="message-list" hidden></div>
+
+            <div class="advisor-alert" id="advisor-alert" role="alert" hidden></div>
+
+            <form class="composer" id="composer" autocomplete="off">
+              <div class="composer-attachments" id="composer-attachments"></div>
+              <textarea id="composer-input" class="composer-input" rows="3" placeholder="描述你的想法，或回答顾问的问题…"></textarea>
+              <div class="composer-actions">
+                <label class="attach-button">
+                  附件
+                  <input type="file" id="composer-file" accept=".png,.jpg,.jpeg,.webp,.gif,.txt,.md,.json,.csv,.pdf,.docx" hidden />
+                </label>
+                <span class="composer-hint" id="composer-hint">Enter 发送，Shift+Enter 换行</span>
+                <button class="button" type="submit" id="composer-send">发送</button>
+              </div>
+            </form>
+          </section>
+
+          <aside class="advisor-context" id="advisor-context" aria-label="项目上下文">
+            <div class="advisor-context-head">
+              <h2 class="advisor-side-title">项目上下文</h2>
+              <button class="button button-ghost button-small" type="button" id="context-toggle">收起</button>
+            </div>
+            <div class="advisor-context-body" id="context-body">
+              <h3 class="context-section-title">当前方向</h3>
+              <p class="context-text" id="context-direction">尚未确定</p>
+              <h3 class="context-section-title">已确认事实</h3>
+              <ul class="context-list" id="context-facts"></ul>
+              <h3 class="context-section-title">待确认问题</h3>
+              <ul class="context-list" id="context-questions"></ul>
+              <h3 class="context-section-title">草稿</h3>
+              <ul class="context-list" id="context-drafts"></ul>
+              <h3 class="context-section-title">正式基线</h3>
+              <p class="context-text" id="context-baseline">尚未冻结</p>
+            </div>
+          </aside>
         </div>
       </section>
 
       <section class="view" id="view-assets" data-view="assets" hidden>
         <div class="card">
-          <div class="card-head"><h2>设计与素材</h2></div>
-          <div class="placeholder-state">
-            <p class="placeholder-title">尚未开发</p>
-            <p class="placeholder-body">素材库、素材识别与导入属于 PHASE 03。当前版本不提供素材管理功能。</p>
+          <div class="card-head">
+            <h2>设计草稿与 GDD</h2>
+            <button class="button button-ghost button-small" type="button" id="drafts-refresh">刷新</button>
           </div>
+          <div class="notice" id="drafts-alert" role="alert" hidden></div>
+          <div class="drafts-layout">
+            <aside class="drafts-pane">
+              <ul class="draft-list" id="draft-list"></ul>
+              <form class="draft-form" id="draft-form" autocomplete="off">
+                <h3 class="form-title">新建草稿</h3>
+                <label class="field">
+                  <span class="field-label">类型</span>
+                  <select id="draft-kind" class="input">
+                    <option value="idea">想法草稿</option>
+                    <option value="design">设计草稿</option>
+                    <option value="gdd">GDD 初稿</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field-label">标题</span>
+                  <input id="draft-title" class="input" type="text" placeholder="例如：核心玩法" />
+                </label>
+                <button class="button button-small" type="submit" id="draft-create">创建</button>
+              </form>
+            </aside>
+
+            <div class="draft-detail" id="draft-detail">
+              <p class="task-detail-placeholder">选择左侧草稿查看内容。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>研究报告</h2></div>
+          <div class="notice" id="research-alert" role="alert" hidden></div>
+          <form class="research-form" id="research-form" autocomplete="off">
+            <label class="field">
+              <span class="field-label">研究问题</span>
+              <input id="research-question" class="input" type="text" placeholder="例如：吸血鬼幸存者的核心循环是什么" />
+            </label>
+            <button class="button button-small" type="submit" id="research-submit">发起研究</button>
+          </form>
+          <ul class="research-list" id="research-list"></ul>
         </div>
       </section>
 
       <section class="view" id="view-decisions" data-view="decisions" hidden>
         <div class="card">
-          <div class="card-head"><h2>决策中心</h2></div>
-          <div class="placeholder-state">
-            <p class="placeholder-title">尚未开发</p>
-            <p class="placeholder-body">需求冻结与审批流程属于 PHASE 02。当前版本只保存审批的数据结构，不提供审批操作。</p>
+          <div class="card-head">
+            <h2>需求基线</h2>
+            <button class="button button-ghost button-small" type="button" id="baseline-refresh">刷新</button>
           </div>
+          <div class="notice" id="baseline-alert" role="alert" hidden></div>
+          <p class="headline" id="baseline-headline">尚未冻结任何基线。</p>
+          <ul class="baseline-list" id="baseline-list"></ul>
+          <div class="baseline-actions">
+            <button class="button" type="button" id="baseline-prepare">准备冻结新基线</button>
+          </div>
+        </div>
+
+        <div class="card" id="baseline-preview-card" hidden>
+          <div class="card-head">
+            <h2>冻结确认</h2>
+            <span class="baseline-version" id="preview-version"></span>
+          </div>
+          <div class="freeze-warning">
+            <p class="freeze-warning-title">冻结后内容不可修改</p>
+            <p class="freeze-warning-body">冻结会生成一个正式需求版本。之后任何修改都必须通过变更提案，并生成新的版本。</p>
+          </div>
+          <div class="notice" id="preview-unconfirmed" hidden></div>
+          <h3 class="section-title">需求摘要</h3>
+          <p class="context-text" id="preview-summary"></p>
+          <h3 class="section-title">章节</h3>
+          <div class="preview-sections" id="preview-sections"></div>
+          <h3 class="section-title">开发范围</h3>
+          <ul class="context-list" id="preview-scope"></ul>
+          <h3 class="section-title">明确不做</h3>
+          <ul class="context-list" id="preview-outofscope"></ul>
+          <h3 class="section-title">未决问题</h3>
+          <ul class="context-list" id="preview-questions"></ul>
+          <h3 class="section-title">风险</h3>
+          <ul class="context-list" id="preview-risks"></ul>
+          <h3 class="section-title">与上一版本的差异</h3>
+          <div class="diff-block" id="preview-diff"></div>
+          <h3 class="section-title">冻结影响</h3>
+          <ul class="context-list" id="preview-consequences"></ul>
+          <div class="freeze-actions">
+            <button class="button button-ghost" type="button" id="preview-cancel">返回继续编辑</button>
+            <button class="button button-danger" type="button" id="preview-confirm">确认冻结</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>变更提案</h2></div>
+          <div class="notice" id="proposal-alert" role="alert" hidden></div>
+          <ul class="proposal-list" id="proposal-list"></ul>
+          <form class="proposal-form" id="proposal-form" autocomplete="off">
+            <h3 class="form-title">提出变更</h3>
+            <label class="field">
+              <span class="field-label">变更标题</span>
+              <input id="proposal-title" class="input" type="text" placeholder="例如：加入 Boss 战" />
+            </label>
+            <label class="field">
+              <span class="field-label">变更说明</span>
+              <textarea id="proposal-description" class="input" rows="3" placeholder="描述你想改什么，以及为什么"></textarea>
+            </label>
+            <p class="form-hint">变更会先生成影响分析，未经你批准不会修改任何已冻结内容。</p>
+            <button class="button" type="submit" id="proposal-submit">生成影响分析</button>
+          </form>
         </div>
       </section>
 
@@ -244,6 +394,7 @@
       <span class="footer-note">DSH 负责 AI 执行，Studio 负责应用与状态管理。</span>
     </footer>
 
+    <script src="./requirements-ui.js"></script>
     <script src="./renderer.js"></script>
   </body>
 </html>

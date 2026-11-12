@@ -57,7 +57,7 @@ test('the safety copy is a valid database, not a byte copy of the main file', (t
   const safety = path.join(dir, 'safety.db')
   restoreBackup(dbPath, path.join(dir, 'missing.db'), safety)
 
-  const report = verifyDatabase(safety, ['schema_version', 'tasks', 'projects'], 2)
+  const report = verifyDatabase(safety, ['schema_version', 'tasks', 'projects'], 3)
   assert.equal(report.ok, true, JSON.stringify(report))
   assert.equal(report.integrity, 'ok')
   assert.equal(report.foreignKeyViolations, 0)
@@ -85,7 +85,7 @@ test('verification rejects a database that is missing a required table', (t) => 
   db.exec('CREATE TABLE schema_version (version INTEGER NOT NULL); INSERT INTO schema_version VALUES (2);')
   db.close()
 
-  const report = verifyDatabase(dbPath, ['schema_version', 'tasks', 'projects'], 2)
+  const report = verifyDatabase(dbPath, ['schema_version', 'tasks', 'projects'], 3)
   assert.equal(report.ok, false)
   assert.deepEqual(report.missingTables.sort(), ['projects', 'tasks'])
 })
@@ -94,14 +94,14 @@ test('verification rejects a database whose schema version is too new', (t) => {
   const { dir, dbPath } = setup(t)
   const report = verifyDatabase(dbPath, ['schema_version', 'tasks', 'projects'], 1)
   assert.equal(report.ok, false, 'a version above what this build supports must be refused')
-  assert.equal(report.schemaVersion, 2)
+  assert.equal(report.schemaVersion, 3)
 })
 
 test('verification rejects a file that is not a database', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-verify2-'))
   const file = path.join(dir, 'x.db')
   fs.writeFileSync(file, 'not a database')
-  const report = verifyDatabase(file, ['schema_version'], 2)
+  const report = verifyDatabase(file, ['schema_version'], 3)
   assert.equal(report.ok, false)
   assert.ok(report.error)
 })
@@ -116,7 +116,7 @@ test('verification catches a broken foreign key', (t) => {
     .run()
   store.db.exec('PRAGMA foreign_keys = ON;')
 
-  const report = verifyDatabase(dbPath, ['schema_version', 'tasks', 'projects'], 2)
+  const report = verifyDatabase(dbPath, ['schema_version', 'tasks', 'projects'], 3)
   assert.equal(report.ok, false, 'a dangling project_id must fail verification')
   assert.ok(report.foreignKeyViolations > 0, 'foreign_key_check must report it')
 })
