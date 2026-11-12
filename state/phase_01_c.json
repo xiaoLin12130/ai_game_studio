@@ -123,7 +123,7 @@
     }
   ],
   "blocked": [],
-  "updated_at": "2026-11-12T07:40:07.157Z",
+  "updated_at": "2026-11-12T07:40:26.687Z",
   "acceptance": [
     {
       "id": "C1",
@@ -204,8 +204,8 @@
     "initial_implementation_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
     "first_review_baseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
     "r2_review_baseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
-    "record_commit": "76d4b47f288641c7b5798856714a4c6e3933ddab",
-    "record_commit_note": "R6 环境解阻塞 + 真实 A/B/C + watcher 修复提交 SHA（fix(phase-01-c): unblock provider install via %TEMP% pnpm store; exclude plugin CLI from runtime discovery）。状态文件不内嵌自身 SHA；评审方以分支 HEAD 为准。"
+    "record_commit": "bb31c44b67aa6012623fc39dc2b846ce558eb1e5",
+    "record_commit_note": "R7 安装版 A/B/C 验收提交 SHA（test(phase-01-c): pass installed A/B/C end-to-end and close the R7 acceptance）。状态文件不内嵌自身 SHA；评审方以分支 HEAD 为准。R6 提交为 76d4b47。"
   },
   "review_round": {
     "round": "R2",
