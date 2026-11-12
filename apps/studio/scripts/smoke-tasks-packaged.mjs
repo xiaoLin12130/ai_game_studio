@@ -212,7 +212,8 @@ fs.mkdirSync(OUT, { recursive: true })
     producedSmoke: Boolean(result.smoke),
     wasInterrupted: result.smoke?.atInterrupt?.status === 'INTERRUPTED',
     interruptedIsRecorded: (result.smoke?.atInterrupt?.transitions ?? []).includes('INTERRUPTING'),
-    resumedToTerminal: ['SUCCEEDED', 'FAILED'].includes(result.smoke?.finalStatus),
+    // A resume that ends in FAILED is not a successful resume. Only SUCCEEDED counts.
+    taskSucceeded: result.smoke?.finalStatus === 'SUCCEEDED',
     sessionReused: (result.smoke?.task?.sessions ?? 0) === 1,
     twoAttempts: (result.smoke?.task?.attempts ?? 0) === 2,
     runtimeClosedInLog: runtimesAllClosed(result.logAll),
@@ -247,7 +248,8 @@ fs.mkdirSync(OUT, { recursive: true })
     crashLeftTaskRunning: crash.smoke?.isRunning === true,
     recoveryProducedSmoke: Boolean(recover.smoke),
     sawInterruptedState: recover.smoke?.before?.status === 'INTERRUPTED',
-    resumedToTerminal: ['SUCCEEDED', 'FAILED'].includes(recover.smoke?.finalStatus),
+    // Recovery that ends in FAILED is not a successful recovery. Only SUCCEEDED counts.
+    taskSucceeded: recover.smoke?.finalStatus === 'SUCCEEDED',
     recordedNewAttempt: (recover.smoke?.task?.attempts ?? 0) >= 2,
     appExited: recover.exitCode === 0,
     noLingeringApp: lingering().length === 0,

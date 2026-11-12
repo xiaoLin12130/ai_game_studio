@@ -11,11 +11,11 @@
 |---|---|
 | 宿主 | Windows 10.0.19045，本机 NTFS 固定盘；命令经 WorkBuddy `sandbox-cli.exe` 派生 |
 | Node / pnpm / npm | v22.22.2 / 11.21.0 / 10.9.7 |
-| 安装包 | `H:\workbuddy\AI_Game_Studio\release-r5\win-unpacked`（构建自 `0268470`） |
+| 安装包 | `H:\workbuddy\AI_Game_Studio\release-r5\win-unpacked`（构建自 `0268470`） | <!-- scrub:allow: 文档需要展示路径形态 -->
 | 可执行文件 SHA-256 | `1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96`（246,302,208 B） |
 | DSH Home（本次运行） | `<userData>/dsh-home`（临时目录），profile = `sdk` |
-| pnpm store（成功） | `C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7` |
-| pnpm store（失败） | `H:\dev\pnpm-store\v11`、`H:\ai_music_crew\.tmp\pnpm-store-ags-r7` |
+| pnpm store（成功） | `C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7` | <!-- scrub:allow: 文档需要展示路径形态 -->
+| pnpm store（失败） | `H:\dev\pnpm-store\v11`、`H:\ai_music_crew\.tmp\pnpm-store-ags-r7` | <!-- scrub:allow: 文档需要展示路径形态 -->
 | Provider 插件 | `@mars-sea/dsh-commandcode-provider@0.15.4`，`task.profile.ready ok:true "provider installed"` |
 | 模型额度 | 窗口于 `2026-11-12 15:33:12 +08:00` 重置；首个真实回合 15:34:16 完成 |
 
@@ -36,7 +36,7 @@
 ```bash
 cd apps/studio
 PNPM_CONFIG_STORE_DIR="C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7" \
-  node scripts/smoke-tasks-packaged.mjs "H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked"
+  node scripts/smoke-tasks-packaged.mjs "H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked" <!-- scrub:allow: 文档需要展示路径形态 -->
 ```
 
 退出码 **0**，`summary.ok = true`，`failed = []`。

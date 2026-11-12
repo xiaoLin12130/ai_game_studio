@@ -7,8 +7,8 @@
 | 项 | 实测 |
 |---|---|
 | 构建 | `release-r5/win-unpacked/AI Game Studio.exe`，246,302,208 B，SHA-256 `1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96`（构建自 `0268470`；此后仅记录文件变更） |
-| 失败 store | `H:\dev\pnpm-store`、`C:\Users\LIN\AppData\Local\pnpm-store-*`（非 `%TEMP%` 路径）→ `pnpm add` 报 `EPERM: unlink .../projects/<hash>`，多次重试后 `projects/<hash>` 变成真实目录，后续 `unlink` 恒失败 |
-| 可用 store | **`%TEMP%` 下的独立目录**（本轮 `C:\Users\LIN\AppData\Local\Temp\pnpm-store-ags-abc`）→ `pnpm add` 成功，`projects/<hash>` 为 junction |
+| 失败 store | `H:\dev\pnpm-store`、`C:\Users\LIN\AppData\Local\pnpm-store-*`（非 `%TEMP%` 路径）→ `pnpm add` 报 `EPERM: unlink .../projects/<hash>`，多次重试后 `projects/<hash>` 变成真实目录，后续 `unlink` 恒失败 | <!-- scrub:allow: 文档需要展示路径形态 -->
+| 可用 store | **`%TEMP%` 下的独立目录**（本轮 `C:\Users\LIN\AppData\Local\Temp\pnpm-store-ags-abc`）→ `pnpm add` 成功，`projects/<hash>` 为 junction | <!-- scrub:allow: 文档需要展示路径形态 -->
 | 隔离验证 | 系统 node + `dsh plugin add`（C: store）成功；打包 exe + `ELECTRON_RUN_AS_NODE=1` + `dsh plugin add`（C: store）成功；失败仅在 store 位于 H: / 非 `%TEMP%` C: 路径时复现 |
 | 未执行 | 未修改 pnpm store 现有内容、未关闭安全垫、未替换 pnpm、未修改 Provider 或 DSH 通信 |
 
@@ -56,9 +56,9 @@
 
 ```powershell
 # 普通 Windows 终端；store 必须在 %TEMP% 下的独立目录
-cd H:\AI与开发\ai_game_studio_starter\apps\studio
+cd H:\AI与开发\ai_game_studio_starter\apps\studio <!-- scrub:allow: 文档需要展示路径形态 -->
 $env:PNPM_CONFIG_STORE_DIR = "$env:TEMP\pnpm-store-ags-r6"
-node scripts\smoke-tasks-packaged.mjs "H:\workbuddy\AI_Game_Studio\release-r5\win-unpacked"
+node scripts\smoke-tasks-packaged.mjs "H:\workbuddy\AI_Game_Studio\release-r5\win-unpacked" <!-- scrub:allow: 文档需要展示路径形态 -->
 # 期望：evidence\phase-01-c\packaged\summary.json 的 ok=true；
 # A taskSucceeded=true；B runtimeIdentityCount=2、distinct=true、allRuntimeProcessesGone=true、
 # noIdentityWatchErrors=true；C crashOrphanStatus=ABSENT、恢复 Runtime ABSENT、resumedToTerminal=true

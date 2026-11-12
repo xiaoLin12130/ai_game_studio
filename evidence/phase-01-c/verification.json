@@ -1,9 +1,9 @@
 {
   "generatedAt": "2026-11-12T07:37:57.735Z",
   "phase": "PHASE_01_C",
-  "round": "R7-acceptance",
+  "round": "R7",
   "branch": "phase/01-c-session-task-lifecycle",
-  "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
+  "reviewBaseline": "514f27d4a1f18d81912206064f5b6096a51bf15a",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
   "previousDeliveryBaseline": "51d81dbb4a4b7cdebeb1261e4a3bff7a2676fb12",
   "note": "R7：环境已解阻塞（C: 盘 %TEMP% 下独立 pnpm store），provider 插件真实安装，安装版 A/B/C 全部真实通过（ok:true，0 失败）。",
@@ -50,7 +50,7 @@
     "failed": [],
     "artifact": "evidence/phase-01-c/packaged/summary-r7.json",
     "alsoAt": "evidence/phase-01-c/packaged/summary.json",
-    "command": "PNPM_CONFIG_STORE_DIR=C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7 node scripts/smoke-tasks-packaged.mjs \"H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked\"",
+    "command": "PNPM_CONFIG_STORE_DIR=<store-path>\"<install-dir>\"",
     "exitCode": 0
   },
   "packagedStatus": "PASS — 安装版 A/B/C 全部通过（ok:true，0 失败）",
@@ -62,7 +62,10 @@
       "第一层原因：首跑 out-g 是陈旧打包，其 asar 不含 task-interrupt-resume 分支，runtime 回落到启动探测并 ROUTE_UNKNOWN，只捕获到探测 runtime（这也是 B 只有 1 个 runtime 的直接原因）。",
       "第二层原因：当前 HEAD 构建（release/win-unpacked）asar 含任务场景与 task-* 探测门控，但 dsh plugin add 的 pnpm add 在本沙箱因 pnpm store unlink EPERM（沙箱文件删除保护）失败，任务在 provider 引导处 PROFILE_NOT_READY。"
     ],
-    "conclusion": "陈旧打包已定位并可修正；剩余 provider 引导失败是沙箱 pnpm 限制，非产品代码或 DSH 通信缺陷。未改 Provider、未重写 DSH 通信。A/B/C 仍属 PHASE 01-C 原始验收范围，只是当前环境无法执行。"
+    "conclusion": "陈旧打包已定位并可修正；剩余 provider 引导失败是沙箱 pnpm 限制，非产品代码或 DSH 通信缺陷。未改 Provider、未重写 DSH 通信。A/B/C 仍属 PHASE 01-C 原始验收范围，只是当前环境无法执行。",
+    "status": "SUPERSEDED — 历史假设，已被 R7 对照实验修正",
+    "supersededBy": "rootCauseR7",
+    "supersededNote": "本节的 conclusion 把 provider 安装失败归因于『沙箱 pnpm 限制』，那是 R4/R5 阶段基于当时可见现象的假设。R7 用真实对照实验证明：失败与沙箱删除保护无关，而是 pnpm store 所在磁盘（H:）上 projects/<hash> 形成真实目录而非 junction，随后 fs.unlink(dir) 触发 Windows 原生 EPERM。原始记录保留在此，不再作为当前结论。"
   },
   "buildArtifact": {
     "electronBuilderConfig": "apps/studio/electron-builder.yml（asar: true；asarUnpack 含 *.node/dll/exe、node-pty、ripgrep 等；files 显式映射 node_modules 以保留 @deepseek-ai 依赖树；output: release）",
@@ -173,7 +176,7 @@
       "providerInstall": "OK — task.profile.ready ok:true \"provider installed\"；@mars-sea/dsh-commandcode-provider 0.15.4 位于本次运行 profile",
       "modelCall": "OK — 真实模型回合完成（turn/end reason.kind=completed），A/B/C 均到达终态",
       "abcStatus": "EXECUTED_PASSED",
-      "reason": "C: 盘 %TEMP% 下的独立 store 可正常 registerProject；H: 盘上的 store（H:\\dev、H:\\ai_music_crew\\.tmp）仍会在 projects/<hash> 上失败",
+      "reason": "C: 盘 %TEMP% 下的独立 store 可正常 registerProject；H: 盘上的 store（<abs-path>",
       "pnpmStoreDeleteProbe": "n/a — 本轮 store 位于 C: 盘 %TEMP%，registerProject 正常形成 junction，未触碰旧 store"
     },
     "normalWindowsPrerequisites": {
@@ -217,10 +220,10 @@
       "note": "targetProfilePluginInstalled 反映 R7 运行 profile 的真实状态（本次运行已安装成功）"
     },
     "pnpmStore": {
-      "usedInR7": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+      "usedInR7": "<store-path>",
       "failed": [
-        "H:/dev/pnpm-store/v11（R6 前）",
-        "H:/ai_music_crew/.tmp/pnpm-store-ags-r7（R7 首次尝试，见 summary-r7-installfail.json）"
+        "<store-path>",
+        "<store-path>"
       ],
       "note": "H: 盘 store 会在 projects/<hash> 上以真实目录落盘并导致 fs.unlink(dir) EPERM；C: 盘 %TEMP% store 正常形成 junction"
     },
@@ -364,9 +367,9 @@
   ],
   "realRunR7": {
     "generatedAt": "2026-11-12T07:37:02.017Z",
-    "appPath": "H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked",
+    "appPath": "<install-dir>",
     "appSha256": "1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96",
-    "storeDir": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+    "storeDir": "<store-path>",
     "quotaWindowResetAt": "2026-11-12T15:33:12+08:00",
     "quotaVerifiedBy": "首个真实模型回合于 15:34:16 (+08:00) 完成（turn/end reason.kind=completed）",
     "A": {
@@ -520,5 +523,93 @@
       ],
       "rationale": "smoke.json 在任务终态即写入，早于 app-quit 的 dispose，快照里 runtime 仍是 closing；退出证明以 OS 身份 ABSENT 为准，另以日志 runtime.closed 做补充强校验"
     }
+  },
+  "rootCauseR7": {
+    "status": "CURRENT — 以 R7 真实对照实验为准",
+    "question": "为什么 dsh plugin add 在 H: 盘失败、在 C: 盘 %TEMP% 成功",
+    "method": "同一台机器、同一版本 pnpm 11.21.0 / dsh 0.2.1-rc.3 / provider 0.15.4，只改变 pnpm store 所在磁盘，做对照实验",
+    "observations": [
+      "H: 盘 store（<store-path>",
+      "C: 盘 %TEMP% 下的独立 store 安装成功，provider 0.15.4 真实落盘。",
+      "成功路径：projects/<hash> 形成 junction（目录联接）。",
+      "失败路径：projects/<hash> 出现真实目录，随后 fs.unlink(dir) 触发 Windows 原生 EPERM。"
+    ],
+    "conclusion": "根因是 pnpm 在 H: 盘上未能建立 junction 而退化为真实目录，导致后续 unlink 目录时被 Windows 拒绝（EPERM）。这不是 WorkBuddy safe-delete 策略拦截，也不是 DSH 通信或产品代码缺陷。",
+    "notTheCause": [
+      "WorkBuddy safe-delete 拦截（已排除：失败发生在 Windows 原生 unlink 层，与沙箱删除策略无关）",
+      "DSH 版本或 provider 版本不匹配（两者全程未变）",
+      "产品代码缺陷（未改 Provider、未改 DSH 通信）"
+    ],
+    "workaround": "把 pnpm store 放在 C: 盘 %TEMP% 独立目录后，安装与 A/B/C 全部真实通过。",
+    "evidence": [
+      "evidence/phase-01-c/real-run-r6.md",
+      "evidence/phase-01-c/real-run-r7.md",
+      "evidence/phase-01-c/packaged/summary-r7.json"
+    ]
+  },
+  "strictSuccessRule": {
+    "rule": "finalStatus === 'SUCCEEDED'",
+    "appliesTo": [
+      "A",
+      "B",
+      "C"
+    ],
+    "changedIn": "R7 补正",
+    "why": "此前 B/C 使用 ['SUCCEEDED','FAILED'].includes(...)，把恢复后失败也算作通过",
+    "recheck": "evidence/phase-01-c/packaged/strict-recheck-r7.json",
+    "test": "apps/studio/test/packaged-assertions.test.js"
+  },
+  "r7Correction": {
+    "generatedAt": "2026-11-12T07:53:40.646Z",
+    "strictSuccessAssertions": {
+      "change": "B/C 的 resumedToTerminal 改为 taskSucceeded: finalStatus === 'SUCCEEDED'",
+      "test": "apps/studio/test/packaged-assertions.test.js",
+      "testResult": "4/4 通过",
+      "recheck": "evidence/phase-01-c/packaged/strict-recheck-r7.json",
+      "recheckResult": "A/B/C 的 finalStatus 均为 SUCCEEDED；未修改原始 summary-r7.json"
+    },
+    "rootCauseCalibration": {
+      "historical": "commandcodeInvestigation 标注 SUPERSEDED（R4/R5 假设：沙箱 pnpm 限制）",
+      "current": "rootCauseR7：H: 盘 pnpm store 的 projects/<hash> 为真实目录，fs.unlink(dir) 触发 Windows 原生 EPERM；C: 盘 %TEMP% store 正常形成 junction",
+      "notTheCause": [
+        "WorkBuddy safe-delete 拦截",
+        "DSH/provider 版本不匹配",
+        "产品代码缺陷"
+      ]
+    },
+    "leakGateCorrection": {
+      "finding": "R7 声称的门禁 PASS 是陈旧结果（2026-11-11 扫描 308 文件，R6/R7 证据 2026-11-12 才提交）",
+      "action": "真实重跑门禁；文档行使用 scrub:allow，JSON 证据脱敏",
+      "result": "PASS，0 泄漏，扫描 325/328",
+      "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
+    },
+    "commandsRun": [
+      {
+        "command": "node --test test/packaged-assertions.test.js",
+        "cwd": "apps/studio",
+        "exitCode": 0,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0
+        }
+      },
+      {
+        "command": "node --check scripts/smoke-tasks-packaged.mjs",
+        "cwd": "apps/studio",
+        "exitCode": 0
+      },
+      {
+        "command": "node scripts/run-gates.mjs",
+        "cwd": "spike/dsh-probe/current-0.2.1",
+        "exitCode": 0,
+        "note": "PASS，0 泄漏，扫描 325/328"
+      }
+    ],
+    "notRun": [
+      "未重跑完整应用测试套件（本轮只改断言与记录，未触及产品代码）",
+      "未重跑 PHASE 00/01-A/01-B",
+      "未重新构建安装包或重跑 A/B/C（R7 原始数据已足以复核严格条件）"
+    ]
   }
 }

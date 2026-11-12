@@ -72,6 +72,19 @@
 
 ## 6. 安装版验证
 
+**进程检查方式（当前实现）**：Runtime 运行时用 `discoverRuntimeIdentities` 持续发现该 Studio 进程创建的所有 DSH Runtime，
+每个 Runtime 记录 `(pid, creationMs, capturedAt, source='parent-and-bin')`；退出后用 `verifyRuntimeIdentity` 逐个复核，
+判定四态 `PRESENT / ABSENT / FAILED / UNKNOWN`，**只有 ABSENT 算没有残留**。
+
+不使用 DSH home 字符串匹配（home 是环境变量，运行中的 Runtime 命令行不含它，该判据恒返回 ABSENT，已在 `INVALID-1` 标记为无效）。
+
+**B 场景有两个 Runtime**：`rt-001`（首次执行后中断）与 `rt-002`（恢复执行后完成），两者必须分别捕获、分别复核，
+`runtimeIdentityCount` 必须为 2，`allRuntimeProcessesGone` 仅在两个检查均为 ABSENT 时为 true。
+
+**成功判据（R7 补正）**：A/B/C 统一为 `finalStatus === 'SUCCEEDED'`。此前 B/C 使用
+`['SUCCEEDED','FAILED'].includes(...)`，把恢复后失败也算作通过，已修正；定向测试见
+`apps/studio/test/packaged-assertions.test.js`，对既有 R7 数据的独立复核见 `packaged/strict-recheck-r7.json`。
+
 ### 6.1 本轮对 B 场景第二个 Runtime 的修复（代码 + 单元验证）
 
 第 2 轮引入的"按 `(pid, creationMs)` 身份复核"解决了 `INVALID-1`（home 字符串匹配），但 B 场景只**单次**捕获一个 Runtime 身份，无法证明"中断→恢复"产生的**第二个** Runtime（rt-002）已退出。本轮补齐：
@@ -90,14 +103,14 @@
 
 评审要求查清"R2 通过的安装包用了哪个 DSH 构建、为什么当前不支持 commandcode"。结论是**两层原因，均非 Provider 代码缺陷、也非依赖版本变化**：
 
-1. **首跑 exe 是陈旧打包（主因）**：第 3 轮使用的 `out-g`（`/tmp/pkg-exp/out-g/win-unpacked`）asar **不含 `task-interrupt-resume` 分支**（grep `task-interrupt-resume` = 0、`interrupt-failed` = 0），该分支由 `d523346` 引入。因此 `runSmoke()` 未进入任务场景，回落到通用启动探测；探测在 `sdk` profile 上直接跑，而 `ensureProfile()`（负责安装 commandcode 插件）只在任务创建时调用，于是探测 `ROUTE_UNKNOWN`、App 在 `probe` 后即 `app-quit`。B 只捕获到 **1 个探测 runtime**（teardown 记录 `runtimePid` 与捕获 pid 一致，已验证 `ABSENT`），并非任务 runtime。
+1. **首跑 exe 是陈旧打包（主因）**：第 3 轮使用的 `out-g`（`/tmp/pkg-exp/out-g/win-unpacked`）asar **不含 `task-interrupt-resume` 分支**（grep `task-interrupt-resume` = 0、`interrupt-failed` = 0），该分支由 `d523346` 引入。因此 `runSmoke()` 未进入任务场景，回落到通用启动探测；探测在 `sdk` profile 上直接跑，而 `ensureProfile()`（负责安装 commandcode 插件）只在任务创建时调用，于是探测 `ROUTE_UNKNOWN`、App 在 `probe` 后即 `app-quit`。B 只捕获到 **1 个探测 runtime**（teardown 记录 `runtimePid` 与捕获 pid 一致，已验证 `ABSENT`），并非任务 runtime。 <!-- scrub:allow: 文档需要展示路径形态 -->
 2. **沙箱内 provider 插件装不上（环境）**：改用当前 HEAD 构建（`apps/studio/release/win-unpacked`，asar 含 `startsWith('task-')` 门控与 `task-interrupt-resume`）后，App 确实进入任务场景（日志出现 `task.create`），`ensureProfile()` 调用 `dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4`，其内部 `pnpm add` 在本机因 pnpm store 的 `unlink` **`EPERM`**（沙箱文件删除保护）失败，任务停在 `PROFILE_NOT_READY`，仍未创建第二个 Runtime。
 
 补充事实：`commandcode` 不是 DSH 内置 provider，而是外部插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，由 `TaskService.ensureProfile()` 在任务创建时安装并在 `task-runtime.cordis.yml` 注册；`dsh-sdk-client` 与 `@deepseek-ai/dsh` 自 PHASE 01-A 起一直是 `0.2.1-rc.3`，**依赖版本未变**。
 
 **因此 A/B/C 仍为 `BLOCKED`（环境层）；但 A/B/C 属 PHASE 01-C 原始验收范围，不因环境阻断而移出范围。** 未伪造通过、未改 Provider、未重写 DSH 通信。 `evidence/phase-01-c/packaged/summary.json` 是 **R4 对正确构建的真实失败运行结果**（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）；**R5 本轮未重跑**。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
 
-**R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（`~/.dsh/.credentials.yaml`，smoke 脚本读取，未打印内容）。**路径澄清**：`~/.dsh/profiles/{desktop,headless,web}` 的插件属于其他 DSH Home，与 Studio 目标 profile 无关；Studio 实际 `dshHome=<userData>/dsh-home`、`profile=sdk`，其 `<userData>/dsh-home/profiles/sdk` **没有 `node_modules`，插件未安装**（仅 `.plugin-manager`、`cordis.patch.yml`、`package.json`、`pnpm-workspace.yaml`）。pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 正常）。故 R5 未执行 A/B/C，未采用任何绕过方式。详见 `verification.json` 的 `environmentCheck`（环境状态的唯一权威来源；`currentSession` / `normalWindowsPrerequisites.{checked,notVerified}` / `abcStatus=NOT_RUN` / `pluginPaths`）。
+**R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（`~/.dsh/.credentials.yaml`，smoke 脚本读取，未打印内容）。**路径澄清**：`~/.dsh/profiles/{desktop,headless,web}` 的插件属于其他 DSH Home，与 Studio 目标 profile 无关；Studio 实际 `dshHome=<userData>/dsh-home`、`profile=sdk`，其 `<userData>/dsh-home/profiles/sdk` **没有 `node_modules`，插件未安装**（仅 `.plugin-manager`、`cordis.patch.yml`、`package.json`、`pnpm-workspace.yaml`）。pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 正常）。故 R5 未执行 A/B/C，未采用任何绕过方式。详见 `verification.json` 的 `environmentCheck`（环境状态的唯一权威来源；`currentSession` / `normalWindowsPrerequisites.{checked,notVerified}` / `abcStatus=NOT_RUN` / `pluginPaths`）。 <!-- scrub:allow: 文档需要展示路径形态 -->
 
 ### 6.3 第 2 轮历史结果（保留，仅供审计）
 
@@ -107,7 +120,7 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 
 ### 6.4 R6：环境解阻塞与安装版真实运行
 
-**根因与修复**：provider 安装失败的根因不是 DSH 版本、不是依赖漂移、不是 Provider 代码缺陷，而是 **pnpm store 路径**——当 store 位于 `H:\dev\pnpm-store`（或非 `%TEMP%` 的 C: 路径）时，pnpm 的 `registerProject` 会把 `projects/<hash>` 落成真实目录，后续 `unlink` 恒报 `EPERM`。把 store 指向 `%TEMP%` 下的独立目录后，`pnpm add` 成功，`projects/<hash>` 为 junction。未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm。
+**根因与修复**：provider 安装失败的根因不是 DSH 版本、不是依赖漂移、不是 Provider 代码缺陷，而是 **pnpm store 路径**——当 store 位于 `H:\dev\pnpm-store`（或非 `%TEMP%` 的 C: 路径）时，pnpm 的 `registerProject` 会把 `projects/<hash>` 落成真实目录，后续 `unlink` 恒报 `EPERM`。把 store 指向 `%TEMP%` 下的独立目录后，`pnpm add` 成功，`projects/<hash>` 为 junction。未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm。 <!-- scrub:allow: 文档需要展示路径形态 -->
 
 **插件安装（真实）**：`TaskService.ensureProfile()` 执行 `dsh plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4`，日志 `task.profile.ready ok:true "provider installed"`；目标 `<userData>/dsh-home/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider` 版本 `0.15.4`（不是 `~/.dsh` 下的其他 profile）。
 
@@ -122,7 +135,7 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 
 ### 6.5 R7：安装版 A/B/C 最终验收 —— 全部通过
 
-额度窗口于 `2026-11-12 15:33:12 (+08:00)` 重置后，用 C: 盘 `%TEMP%` 独立 store 重跑（`PNPM_CONFIG_STORE_DIR=C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7`），退出码 **0**，`summary.ok = true`，**43 项检查 / 0 失败**（`packaged/summary-r7.json`）。
+额度窗口于 `2026-11-12 15:33:12 (+08:00)` 重置后，用 C: 盘 `%TEMP%` 独立 store 重跑（`PNPM_CONFIG_STORE_DIR=C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7`），退出码 **0**，`summary.ok = true`，**43 项检查 / 0 失败**（`packaged/summary-r7.json`）。 <!-- scrub:allow: 文档需要展示路径形态 -->
 
 | 场景 | Task | 结果 | Runtime 身份（`pid` / `creationMs`） | OS 复核 |
 |---|---|---|---|---|
@@ -135,6 +148,36 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 - **store 位置是决定性变量**：H: 盘 store 会让 `projects/<hash>` 落成真实目录，`fs.unlink(dir)` 触发 Windows 原生 `EPERM`（非 safe-delete 策略）；首次 R7 尝试即因此失败，留档 `packaged/summary-r7-installfail.json`。
 - **断言修正**：`noRuntimeLeft` 读取的是 app 退出前写入的 `smoke.json` 快照，此时 runtime 合法状态为 `closing`（53 ms 后才 `runtime.closed`），该断言结构上不可满足，此前只是时序偶然；改为 `runtimeClosedInLog`（每个 `runtime.start` 必须在完整日志中有对应 `runtime.closed`），比原断言更强。OS 退出的权威判据仍是 `verifyRuntimeIdentity` 的 `ABSENT`，未变。
 
+### 6.6 R7 补正：严格成功断言与根因记录校准
+
+**严格成功断言**：B/C 的 `resumedToTerminal: ['SUCCEEDED','FAILED'].includes(...)` 改为
+`taskSucceeded: finalStatus === 'SUCCEEDED'`。恢复后失败不再算通过。
+
+用新规则独立复核既有 `summary-r7.json`（未修改原始文件）：
+
+| 场景 | finalStatus | 严格判定 | 其他 |
+|---|---|---|---|
+| A | SUCCEEDED | PASS | attempts=1，sessions=1，身份 1 个，ABSENT |
+| B | SUCCEEDED | PASS | attempts=2，sessions=1，身份 2 个，ABSENT/ABSENT |
+| C | SUCCEEDED | PASS | attempts=2，sessions=1，崩溃后 ABSENT，恢复后 ABSENT |
+
+复核结果：`evidence/phase-01-c/packaged/strict-recheck-r7.json`。
+
+**门禁记录校准**：R7 声称的门禁 PASS 是**陈旧结果**——`regression/phase00-gates.json` 生成于 2026-11-11（扫描 308 文件），
+而 R6/R7 的证据文件在 2026-11-12 才提交，从未被那次扫描覆盖。本轮真实重跑门禁：**PASS，0 泄漏，扫描 325/328 文件**。
+必须展示路径形态的文档行使用仓库自带的 `scrub:allow` 标记，JSON 证据做路径脱敏。
+
+**根因记录校准**：`verification.json` 的 `commandcodeInvestigation` 把 provider 安装失败归因于
+"沙箱 pnpm 限制"，那是 R4/R5 的假设。R7 对照实验证明真实根因是：
+
+- pnpm store 在 **H: 盘**时，`projects/<hash>` 形成**真实目录**而非 junction，随后 `fs.unlink(dir)` 触发 **Windows 原生 EPERM**；
+- pnpm store 在 **C: 盘 %TEMP%** 时，`projects/<hash>` 正常形成 junction，安装成功。
+
+**不是** WorkBuddy safe-delete 拦截，**不是** DSH/provider 版本问题，**不是**产品代码缺陷。
+
+处理方式：历史记录原样保留并标注 **SUPERSEDED**，新增 `rootCauseR7` 作为当前结论。R4/R5 的失败证据
+（`summary-r4/r6/r6-preinstall/r7-installfail.json`、`real-run-r6.md`、`real-run-r7.md`）全部保留，未覆盖。
+
 ## 7. 测试与回归
 
 | 命令 | 退出码 | 结果 | 证据 |
@@ -144,7 +187,7 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
 | `node --test test/process-identity.test.js` | 0 | **12/12**（四态 + `discoverRuntimeIdentities` 返回全部/查询失败/全退出 + 排除 `dsh plugin` CLI） | `unit/process-identity.txt` |
 | `node --test test/identity-watcher.test.mjs` | 0 | **6/6**（stop() 排空在途查询；watchErrors 计入 allGone；四态/空集不算通过） | `unit/identity-watcher.txt` |
-| `node scripts/smoke-tasks-packaged.mjs <installed>`（`PNPM_CONFIG_STORE_DIR=C:\…\Temp\pnpm-store-ags-r7`） | **0** | **PASS**：安装版 A/B/C 全部通过，**43 项检查 / 0 失败**（A SUCCEEDED；B 双 Runtime 均 ABSENT；C 崩溃+恢复均 ABSENT） | `packaged/summary-r7.json`、`real-run-r7.md` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>`（`PNPM_CONFIG_STORE_DIR=C:\…\Temp\pnpm-store-ags-r7`） | **0** | **PASS**：安装版 A/B/C 全部通过，**43 项检查 / 0 失败**（A SUCCEEDED；B 双 Runtime 均 ABSENT；C 崩溃+恢复均 ABSENT） | `packaged/summary-r7.json`、`real-run-r7.md` | <!-- scrub:allow: 文档需要展示路径形态 -->
 | `node scripts/smoke-tasks-packaged.mjs <installed>`（R6，历史） | 1 | **BLOCKED（历史）**：插件已安装、runtime 已启动，但模型回合 `RATE_LIMIT`；42 项 / 20 失败 | `packaged/summary-r6.json` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |

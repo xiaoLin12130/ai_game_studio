@@ -77,3 +77,20 @@ node scripts\smoke-tasks-packaged.mjs "release\win-unpacked"
 
 前置：Node ≥ 22.12、可访问 npm registry、pnpm store 可写、`~/.dsh/.credentials.yaml` 含 `COMMANDCODE_API_KEY`。
 构建产物：`release/AI-Game-Studio-0.1.0-x64.exe`（237,548,789 B，`415c5003…`）、`release/win-unpacked/AI Game Studio.exe`（246,302,208 B，`1255d65a…`）。
+
+
+## 严格成功断言（R7 补正）
+
+A/B/C 三个场景的成功判据统一为 `finalStatus === 'SUCCEEDED'`。
+
+此前 B/C 使用 `['SUCCEEDED','FAILED'].includes(...)`，把"恢复后失败"也算作通过——那是不合格的成功断言。
+定向测试见 `apps/studio/test/packaged-assertions.test.js`；对既有 R7 数据的独立复核见
+`packaged/strict-recheck-r7.json`（A/B/C 均为 SUCCEEDED，原始 `summary-r7.json` 未被修改）。
+
+## 根因记录（R7 校准）
+
+`verification.json` 的 `commandcodeInvestigation` 是 R4/R5 的历史假设（沙箱 pnpm 限制），已标注 **SUPERSEDED**。
+当前结论见 `rootCauseR7`：pnpm store 位于 H: 盘时 `projects/<hash>` 形成真实目录而非 junction，
+随后 `fs.unlink(dir)` 触发 **Windows 原生 EPERM**；C: 盘 `%TEMP%` 独立 store 正常形成 junction 并安装成功。
+
+这不是 WorkBuddy safe-delete 拦截，也不是 DSH 通信或产品代码缺陷。历史失败证据全部保留。

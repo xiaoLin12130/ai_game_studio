@@ -2,7 +2,7 @@
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
   "status": "READY_FOR_EXTERNAL_REVIEW",
-  "current_round": "R7-acceptance",
+  "current_round": "R7",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
   "note": "R7：环境已解阻塞（C: 盘 %TEMP% 独立 pnpm store），provider 插件真实安装；额度窗口重置后安装版 A/B/C 全部真实通过（ok:true，43 项检查 / 0 失败），B 两个 Runtime 与 C 崩溃/恢复 Runtime 均经 OS 身份复核为 ABSENT。本阶段不自行判定通过。",
@@ -123,7 +123,7 @@
     }
   ],
   "blocked": [],
-  "updated_at": "2026-11-12T07:40:26.687Z",
+  "updated_at": "2026-11-12T07:53:24.225Z",
   "acceptance": [
     {
       "id": "C1",
@@ -285,7 +285,7 @@
       "verified_this_round 仅保留本轮真实执行；fullSuite/realDsh/phase00/tsc 移入 verified_previous_round 并标 historical",
       "确认正确构建产物与 4 个标记；记录产物 SHA-256/大小/时间；给出正常 Windows A/B/C 命令"
     ],
-    "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（H:\\\\dev\\\\pnpm-store\\\\v11）删除仍被安全垫 SAFE_DELETE_FAIL_CLOSED 拒绝（%TEMP% 正常）；未重试 pnpm add、未改 store 目录、未绕过安全垫",
+    "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（<store-path>",
     "r5_env_recheck": "Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（~/.dsh/.credentials.yaml，仅存在性）；Studio 目标 profile <userData>/dsh-home/profiles/sdk 无 node_modules、插件未安装；A/B/C NOT_RUN",
     "plugin_profile_check": {
       "dsh_home": "<userData>/dsh-home（默认；config.dsh.dshHome 可覆盖）",
@@ -320,8 +320,8 @@
     "round": "R6-normal-windows-unblock",
     "goal": "解决 commandcode 插件安装并完成安装版 A/B/C",
     "environmentFix": {
-      "rootCause": "pnpm store 位于 H:\\dev\\pnpm-store（或 C:\\Users\\LIN\\AppData\\Local 非 %TEMP% 路径）时，registerProject 的 projects/<hash> 变成真实目录，后续 unlink 报 EPERM",
-      "fix": "pnpm store 指向 %TEMP% 下的独立目录（本轮 C:\\Users\\LIN\\AppData\\Local\\Temp\\pnpm-store-ags-abc）",
+      "rootCause": "pnpm store 位于 <store-path>",
+      "fix": "pnpm store 指向 %TEMP% 下的独立目录（本轮 <store-path>",
       "notDone": "未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm，未改 Provider 或 DSH 通信"
     },
     "pluginInstall": {
@@ -449,10 +449,10 @@
     "round": "R7-acceptance",
     "goal": "在正常环境完成安装版 A/B/C 最终验收",
     "store": {
-      "used": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+      "used": "<store-path>",
       "failed": [
-        "H:/dev/pnpm-store/v11",
-        "H:/ai_music_crew/.tmp/pnpm-store-ags-r7（首次尝试，留档 summary-r7-installfail.json）"
+        "<store-path>",
+        "<store-path>"
       ],
       "finding": "H: 盘 store 会让 projects/<hash> 落成真实目录，fs.unlink(dir) 触发 Windows 原生 EPERM；C: 盘 %TEMP% store 正常形成 junction"
     },
@@ -532,6 +532,37 @@
       "added": "runtimeClosedInLog",
       "reason": "noRuntimeLeft 读取 app 退出前的 smoke 快照，此时 runtime 合法为 closing，结构上不可满足；新断言要求每个 runtime.start 都有 runtime.closed，更强"
     },
-    "evidence": "evidence/phase-01-c/real-run-r7.md"
+    "evidence": "evidence/phase-01-c/real-run-r7.md",
+    "strictSuccessAssertions": {
+      "changed": true,
+      "what": "B/C 的 resumedToTerminal 由 ['SUCCEEDED','FAILED'].includes(...) 改为 finalStatus === 'SUCCEEDED'；A 原本已是严格判断",
+      "why": "恢复后失败仍被计为通过，是不合格的成功断言",
+      "test": "apps/studio/test/packaged-assertions.test.js",
+      "recheck": "evidence/phase-01-c/packaged/strict-recheck-r7.json",
+      "recheckResult": "A/B/C 的 finalStatus 均为 SUCCEEDED，严格规则下全部通过；未修改原始 summary-r7.json"
+    },
+    "rootCauseCalibration": {
+      "changed": true,
+      "what": "verification.json 的 commandcodeInvestigation 标注为 SUPERSEDED（历史假设），新增 rootCauseR7 作为当前结论",
+      "historicalClaim": "provider 安装失败是沙箱 pnpm 限制",
+      "correctedCause": "pnpm store 在 H: 盘时 projects/<hash> 形成真实目录而非 junction，随后 fs.unlink(dir) 触发 Windows 原生 EPERM；C: 盘 %TEMP% 独立 store 正常形成 junction 并安装成功",
+      "explicitlyNot": [
+        "WorkBuddy safe-delete 拦截",
+        "DSH/provider 版本不匹配",
+        "产品代码缺陷"
+      ],
+      "preserved": [
+        "R4/R5 原始调查记录",
+        "real-run-r6.md",
+        "real-run-r7.md",
+        "summary-r4/r6/r6-preinstall/r7-installfail/r7.json"
+      ]
+    },
+    "leakGateCorrection": {
+      "found": "R7 声称的门禁 PASS 是陈旧的：evidence/phase-01-c/regression/phase00-gates.json 生成于 2026-11-11（扫描 308 文件），而 real-run-r6.md / real-run-r7.md / verification.json 的 R6/R7 内容在 2026-11-12 才提交，从未被该次扫描覆盖",
+      "action": "本轮真实重跑门禁；对必须展示路径形态的文档行使用仓库自带的 scrub:allow 标记，对 JSON 证据做路径脱敏",
+      "result": "PASS，0 泄漏，扫描 325/328 文件",
+      "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
+    }
   }
 }

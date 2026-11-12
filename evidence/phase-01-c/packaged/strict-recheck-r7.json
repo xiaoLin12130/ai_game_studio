@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2026-11-12T07:48:30.633Z",
+  "purpose": "用 R7 的严格成功断言（仅 SUCCEEDED）独立复核既有 summary-r7.json；不修改原始文件",
+  "source": "evidence/phase-01-c/packaged/summary-r7.json",
+  "rule": "finalStatus === 'SUCCEEDED'",
+  "results": {
+    "A": {
+      "finalStatus": "SUCCEEDED",
+      "pass": true
+    },
+    "B": {
+      "finalStatus": "SUCCEEDED",
+      "pass": true,
+      "attempts": 2,
+      "sessions": 1,
+      "runtimeIdentityCount": 2,
+      "runtimeCheckStatus": [
+        "ABSENT",
+        "ABSENT"
+      ]
+    },
+    "C": {
+      "finalStatus": "SUCCEEDED",
+      "pass": true,
+      "attempts": 2,
+      "sessions": 1,
+      "crashOrphanStatus": [
+        "ABSENT"
+      ],
+      "recoveryCheckStatus": [
+        "ABSENT"
+      ]
+    }
+  },
+  "allPassed": true
+}
