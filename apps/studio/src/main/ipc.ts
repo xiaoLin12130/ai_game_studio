@@ -78,6 +78,16 @@ export function registerIpc(deps: IpcDeps): void {
     if (!request || typeof request.title !== 'string' || typeof request.goal !== 'string') {
       throw new Error('a task needs a title and a goal')
     }
+    // The renderer may propose a project, but the main process decides whether it exists:
+    // a forged id must not become a task that holds a lock on a row that is not there.
+    if (request.projectId !== undefined && request.projectId !== null) {
+      if (typeof request.projectId !== 'string' || request.projectId.trim().length === 0) {
+        throw new Error('invalid project id')
+      }
+      if (!deps.projects.store.get(request.projectId)) {
+        throw new Error('unknown project: ' + request.projectId)
+      }
+    }
     if (request.title.trim().length === 0 || request.goal.trim().length === 0) {
       throw new Error('a task needs a non-empty title and goal')
     }

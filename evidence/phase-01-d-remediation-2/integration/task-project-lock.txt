@@ -1,0 +1,17 @@
+✔ a writable task with a project takes the write lock (2993.6597ms)
+✔ a second writable task on the same project is refused before a runtime starts (3148.0201ms)
+✔ writable tasks on different projects run in parallel (3052.0281ms)
+✔ read-only tasks do not take the write lock and may run together (3018.3172ms)
+✔ the lock is released when the task is stopped (3034.1256ms)
+✔ the lock is released when the task fails (1491.6996ms)
+✔ a task with no project keeps the PHASE 01-C behaviour (3022.6526ms)
+✔ an unknown project is refused at creation (41.3248ms)
+✔ dispose releases every project lock the runner holds (3098.5866ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22992.3371

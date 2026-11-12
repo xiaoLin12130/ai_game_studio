@@ -1,0 +1,15 @@
+✔ a backup is written to a stable, recognisable location (46.1591ms)
+✔ a backup can be reopened as a database (41.2227ms)
+✔ restoring brings back a project deleted after the backup, with the connection live (56.9367ms)
+✔ a restore keeps task and session links (66.3189ms)
+✔ a corrupt backup is refused and the live database keeps working (26.5265ms)
+✔ a restore is refused while work is in flight (39.851ms)
+✔ a missing backup file is reported (27.8969ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 396.6515

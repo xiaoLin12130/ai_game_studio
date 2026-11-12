@@ -84,6 +84,11 @@ export class ProjectLocks {
     }
   }
 
+  /** How long a lock may go without a heartbeat before it is reclaimable. */
+  get staleAfterMs(): number {
+    return this.#options.staleAfterMs
+  }
+
   #read(projectId: string, kind: LockKind): LockRecord | null {
     const row = this.#db
       .prepare('SELECT * FROM project_locks WHERE project_id = ? AND kind = ?')

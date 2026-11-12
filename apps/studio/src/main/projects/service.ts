@@ -14,7 +14,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
-import { createBackup as writeBackupFile, restoreBackup as replaceDatabase, readTables } from './backup'
+import { createBackup as writeBackupFile, restoreBackup as replaceDatabase, readTables, verifyDatabase } from './backup'
 import { ProjectLocks } from './locks'
 import { ProjectStore } from './store'
 import { assertInsideProject, inspectProjectRoot, realPathOf } from './paths'
@@ -328,21 +328,31 @@ export class ProjectService {
       return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: result.error ?? '恢复失败。' }
     }
 
-    // The old connection points at a file that no longer exists; reopen before anything
-    // else touches the store.
+    // The rows were copied inside a transaction, so the connection is still valid; the
+    // check below reads the live database rather than trusting the copy.
     let verified = false
+    let detail = ''
     try {
       const reopened = this.#reopenDatabase()
       verified = reopened.verify()
+      if (!verified) detail = '数据校验未通过'
     } catch (error) {
       this.#logger.error('project.restore.reopen-failed', { projectId, error: String((error as Error)?.message ?? error) })
       return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: '恢复后无法重新打开数据库：' + String((error as Error)?.message ?? error) }
     }
     if (!verified) {
-      return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: '恢复后的数据校验未通过。' }
+      return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: '恢复后的数据校验未通过：' + detail }
     }
     this.#logger.info('project.restore.completed', { projectId, file: path.basename(backupFile), safety: path.basename(safety) })
     return { ok: true, file: backupFile, safetyCopy: result.safetyCopy, verified: true, error: null }
+  }
+
+  /** Verify the live database the way a restore must: tables, integrity, foreign keys, version. */
+  verifyLiveDatabase(): ReturnType<typeof verifyDatabase> {
+    if (!this.#dbPath) {
+      return { ok: false, tables: [], missingTables: [], integrity: 'no database path', foreignKeyViolations: -1, schemaVersion: -1, error: 'no database path' }
+    }
+    return verifyDatabase(this.#dbPath, ['schema_version', 'tasks', 'projects', 'attempts', 'sessions'], 2)
   }
 
   /** Absolute path of the app's own metadata directory for a project. */

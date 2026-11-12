@@ -1,0 +1,200 @@
+{
+  "generatedAt": "2026-11-12T13:21:16.390Z",
+  "phase": "PHASE_01_D_REMEDIATION_2",
+  "branch": "phase/01-d-project-workspace",
+  "baseCommit": "53334cfef9e28fffb3867db1779dcd3f28cc8da4",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-2/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 227,
+        "pass": 227,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/unit/full-suite.txt"
+    },
+    {
+      "name": "production-wiring",
+      "command": "node --test test/app-wiring.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/app-wiring.txt",
+      "note": "调用 wireServices()，与 main.ts 同一装配函数"
+    },
+    {
+      "name": "lock-heartbeat",
+      "command": "node --test test/lock-heartbeat.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/lock-heartbeat.txt",
+      "note": "staleAfterMs=400ms，任务运行超过该窗口仍持锁"
+    },
+    {
+      "name": "backup-wal",
+      "command": "node --test test/backup-wal.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/backup-wal.txt",
+      "note": "不关闭数据库、不手动 checkpoint"
+    },
+    {
+      "name": "task-project-lock",
+      "command": "node --test test/task-project-lock.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/task-project-lock.txt"
+    },
+    {
+      "name": "backup-app",
+      "command": "node --test test/project-backup-app.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/backup-app.txt"
+    },
+    {
+      "name": "resolve-path",
+      "command": "node --test test/project-resolve-path.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/integration/resolve-path.txt"
+    },
+    {
+      "name": "phase01c-lifecycle",
+      "command": "node --test test/task-machine.test.js test/task-runner.test.js test/task-store.test.js test/lifecycle.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 36,
+        "pass": 36,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-2/regression/phase01c-lifecycle.txt"
+    },
+    {
+      "name": "phase01a-smoke",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-2/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "desktop-projects",
+      "command": "node scripts/smoke-projects.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-2/regression/desktop-projects.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-2/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏"
+    }
+  ],
+  "findings": {
+    "P1-PROD-WIRING": {
+      "status": "FIXED",
+      "what": "main.ts 未传 projectLocks/projectExists，生产环境从不取项目锁、任何 projectId 都被接受",
+      "fix": "抽出 wireServices()，main.ts 与测试共用同一装配函数",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/app-wiring.txt"
+    },
+    "P1-PROJECT-ID": {
+      "status": "FIXED",
+      "what": "Preload/Renderer 不传 projectId",
+      "fix": "全链路打通；打开项目时新任务默认归属该项目，Main Process 校验存在性",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/app-wiring.txt"
+    },
+    "P1-HEARTBEAT": {
+      "status": "FIXED",
+      "what": "TaskRunner 从不调用 heartbeat()，超过 staleAfterMs 的合法任务锁会被回收",
+      "fix": "取锁后启动心跳，间隔为 staleAfterMs/4；释放时停止；心跳失败记日志并停止假装持锁",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/lock-heartbeat.txt"
+    },
+    "P1-INFLIGHT": {
+      "status": "FIXED",
+      "what": "恢复检查用 #active，而它在最终写库前已清空",
+      "fix": "暴露 hasInFlightWork（基于 #inflight），恢复改用它",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/app-wiring.txt"
+    },
+    "P1-SAFETY-COPY": {
+      "status": "FIXED",
+      "what": "安全副本用 fs.copyFileSync，WAL 中未 checkpoint 的数据会丢失",
+      "fix": "改用 VACUUM INTO 一致性快照；且在任何校验之前先取副本",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/backup-wal.txt"
+    },
+    "P1-VERIFY": {
+      "status": "FIXED",
+      "what": "恢复后校验是 length >= 0，恒真",
+      "fix": "verifyDatabase：必需表 + PRAGMA integrity_check + PRAGMA foreign_key_check + schema 版本范围",
+      "evidence": "evidence/phase-01-d-remediation-2/integration/backup-wal.txt"
+    }
+  },
+  "defects_found_during_fix": [
+    "心跳间隔被 Math.max(1000, ...) 卡在 1 秒，stale 窗口更短时心跳比窗口还慢",
+    "resume 失败路径没有释放项目锁",
+    "安全副本在备份文件不存在时提前返回，用户最需要副本时反而没有"
+  ],
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后项目链路",
+      "reason": "本轮未改打包配置"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ import { createLogger } from './logger'
 import { DshConnectionService, SHUTDOWN_BOUND_MS } from './dsh/service'
 import { TaskService } from './tasks/service'
 import { ProjectService } from './projects/service'
+import { wireServices } from './app-wiring'
 import { ProjectStore } from './projects/store'
 import { TaskStore } from './tasks/store'
 import { RulesService } from './projects/rules'
@@ -333,10 +334,12 @@ async function bootstrap(): Promise<void> {
   })
   service.on('state', () => pushState())
 
-  // Task state outlives any single probe, so it is created here and disposed on quit.
-  tasks = new TaskService({
+  // Task and project services are assembled by wireServices so the production wiring is
+  // the same code the tests exercise: one database, one lock table, one connection owner.
+  const wired = wireServices({
     logger,
     userDataDir,
+    dbPath: path.join(userDataDir, 'studio.db'),
     dshHome: path.join(userDataDir, 'dsh-home'),
     profile: config.dsh.profile,
     provider: config.dsh.provider,
@@ -344,6 +347,8 @@ async function bootstrap(): Promise<void> {
     cwd: app.getPath('documents') || userDataDir,
     entryPath: config.dsh.entryPath ?? null,
   })
+  tasks = wired.tasks
+  projects = wired.projects
   tasks.on('changed', () => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(CHANNELS.tasksChanged)
   })
@@ -354,37 +359,6 @@ async function bootstrap(): Promise<void> {
     })
     .catch((error) => logger.error('task.recovery.failed', { error: String(error) }))
 
-  // Projects share the task database: a project owns tasks, and the foreign key is what
-  // makes that ownership real. The rules service reads through a fixed source list.
-  const dbPath = path.join(userDataDir, 'studio.db')
-  projects = new ProjectService({
-    db: tasks.store.db,
-    logger,
-    dataDir: path.join(userDataDir, 'project-data'),
-    dbPath,
-    // A restore replaces the database file, so the connection has to be closed first and
-    // reopened after. The owner of the connection supplies that, and verification reads
-    // back through the normal store rather than trusting the copy.
-    closeDatabase: () => {
-      tasks!.store.close()
-    },
-    reopenDatabase: () => {
-      const reopened = new TaskStore(dbPath)
-      tasks!.store.adopt(reopened.db)
-      return {
-        db: reopened.db,
-        verify: () => {
-          try {
-            const projects = new ProjectStore({ db: reopened.db })
-            return projects.list().length >= 0 && reopened.schemaVersion >= 1
-          } catch {
-            return false
-          }
-        },
-      }
-    },
-    hasActiveWork: () => (tasks ? tasks.runner.activeTasks.length > 0 : false),
-  })
   rules = new RulesService({ repoRoot: app.getAppPath(), projectRoot: null })
 
   mainWindow = createMainWindow()

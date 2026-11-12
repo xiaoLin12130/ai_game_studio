@@ -131,6 +131,7 @@ interface StudioApi {
     goal: string
     type?: string
     isolation?: TaskIsolation
+    projectId?: string | null
   }): Promise<TaskSummary>
   getTask(id: string): Promise<TaskDetail | null>
   actOnTask(id: string, action: TaskAction): Promise<{ task: TaskSummary; runtimes: RuntimeSnapshot[] }>
@@ -1071,7 +1072,14 @@ async function submitTaskForm(event: Event): Promise<void> {
   submit.textContent = '创建中…'
 
   try {
-    const created = await window.studio.createTask({ title, goal, isolation })
+    // A task created while a project is open belongs to it; with no project open it stays a
+    // global task, which is the PHASE 01-C behaviour.
+    const created = await window.studio.createTask({
+      title,
+      goal,
+      isolation,
+      projectId: currentProjectId,
+    })
     titleInput.value = ''
     goalInput.value = ''
     await refreshTaskList('create')
@@ -1230,6 +1238,15 @@ function projectRow(project: ProjectSummary, onSelect: () => void): HTMLLIElemen
   return li
 }
 
+/** Tell the user which project a new task will belong to. */
+function updateTaskProjectHint(): void {
+  const hint = document.getElementById('task-project-hint')
+  if (!hint) return
+  hint.textContent = currentProjectId
+    ? '新任务将归属于当前项目。'
+    : '未打开项目：将创建全局任务。'
+}
+
 async function refreshProjects(): Promise<void> {
   const list = (await window.studio.listProjects()) as ProjectSummary[]
   const workbenchList = byId('workbench-projects')
@@ -1245,6 +1262,8 @@ async function refreshProjects(): Promise<void> {
     workbenchList.append(projectRow(project, () => { void selectProject(project.id) }))
     projectsList.append(projectRow(project, () => { void selectProject(project.id) }))
   }
+
+  updateTaskProjectHint()
 
   const current = byId('workbench-current')
   if (currentProjectId) {

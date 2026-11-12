@@ -65,6 +65,8 @@ export class TaskRunner {
   readonly #active = new Map<string, ActiveRun>()
   /** Which project lock each running task holds, so release is exact. */
   readonly #heldLocks = new Map<string, { projectId: string; ownerId: string }>()
+  /** Heartbeat timers, one per held lock. */
+  readonly #heartbeats = new Map<string, NodeJS.Timeout>()
   /**
    * Every execution still in flight.
    *
@@ -91,6 +93,20 @@ export class TaskRunner {
 
   get activeTasks(): string[] {
     return [...this.#active.keys()]
+  }
+
+  /**
+   * True while any execution is still running, including its final database writes.
+   *
+   * This is the check a restore must use. #active is cleared before those writes, so
+   * waiting on it alone lets a restore start while the database is still being written.
+   */
+  get hasInFlightWork(): boolean {
+    return this.#inflight.size > 0
+  }
+
+  get inflightCount(): number {
+    return this.#inflight.size
   }
 
   active(taskId: string): ActiveRun | undefined {
@@ -214,6 +230,7 @@ export class TaskRunner {
       // A failed resume is recorded as such; it never silently becomes a new session.
       this.#store.upsertSession({ id: this.#latestSession(taskId)?.id ?? 'unknown', taskId, attemptId: 'unknown', state: 'RESUME_FAILED', lastError: String((error as Error)?.message ?? error) })
       await lease.release('resume-failed')
+      this.#releaseProjectLock(taskId)
       this.#fail(taskId, mode === 'resume' ? 'RESUME_FAILED' : 'PREPARE_FAILED', String((error as Error)?.message ?? error))
       return
     }
@@ -306,6 +323,7 @@ export class TaskRunner {
     try {
       this.#projectLocks.acquireWrite(task.projectId, task.id)
       this.#heldLocks.set(task.id, { projectId: task.projectId, ownerId: task.id })
+      this.#startHeartbeat(task.id, task.projectId)
       this.#logger.info('task.project-lock.acquired', { taskId: task.id, projectId: task.projectId })
       return { ok: true }
     } catch (error) {
@@ -315,8 +333,46 @@ export class TaskRunner {
     }
   }
 
+  /**
+   * Keep the lock alive while the task runs.
+   *
+   * Without this a task that legitimately runs longer than staleAfterMs would have its lock
+   * reclaimed and a second writer let in. The interval is a quarter of the stale window, so
+   * two consecutive failures still leave time before the lock is considered abandoned.
+   */
+  #startHeartbeat(taskId: string, projectId: string): void {
+    if (!this.#projectLocks) return
+    // A quarter of the stale window, with a floor that only guards against a pathological
+    // configuration. A fixed 1s floor would be slower than the window itself when the
+    // window is short, which is exactly when the heartbeat matters.
+    const interval = Math.max(50, Math.floor(this.#projectLocks.staleAfterMs / 4))
+    const timer = setInterval(() => {
+      try {
+        this.#projectLocks!.heartbeat(projectId, 'write', taskId)
+      } catch (error) {
+        // Losing the lock is not something to paper over: stop pretending we hold it.
+        this.#logger.error('task.project-lock.heartbeat-failed', {
+          taskId,
+          projectId,
+          error: String((error as Error)?.message ?? error),
+        })
+        this.#stopHeartbeat(taskId)
+      }
+    }, interval)
+    timer.unref?.()
+    this.#heartbeats.set(taskId, timer)
+  }
+
+  #stopHeartbeat(taskId: string): void {
+    const timer = this.#heartbeats.get(taskId)
+    if (!timer) return
+    clearInterval(timer)
+    this.#heartbeats.delete(taskId)
+  }
+
   /** Release the project lock this task holds, if any. Safe to call more than once. */
   #releaseProjectLock(taskId: string): void {
+    this.#stopHeartbeat(taskId)
     const held = this.#heldLocks.get(taskId)
     if (!held || !this.#projectLocks) return
     this.#heldLocks.delete(taskId)
@@ -357,6 +413,7 @@ export class TaskRunner {
 
   /** Release every project lock this runner holds; used on shutdown. */
   releaseAllProjectLocks(): void {
+    for (const taskId of [...this.#heartbeats.keys()]) this.#stopHeartbeat(taskId)
     for (const taskId of [...this.#heldLocks.keys()]) this.#releaseProjectLock(taskId)
   }
 

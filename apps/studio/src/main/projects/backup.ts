@@ -57,6 +57,60 @@ export function createBackup(dbPath: string, targetPath: string): BackupResult {
   }
 }
 
+export interface IntegrityReport {
+  ok: boolean
+  tables: string[]
+  missingTables: string[]
+  integrity: string
+  foreignKeyViolations: number
+  schemaVersion: number
+  error: string | null
+}
+
+/**
+ * Prove a database is usable, not merely openable.
+ *
+ * "It opened" says nothing about whether the rows survived. This checks the tables the app
+ * needs, SQLite's own integrity and foreign-key checks, and the schema version, so a restore
+ * that produced a structurally broken file is reported as a failure.
+ */
+export function verifyDatabase(dbPath: string, requiredTables: string[], maxSchemaVersion: number): IntegrityReport {
+  const report: IntegrityReport = {
+    ok: false,
+    tables: [],
+    missingTables: [],
+    integrity: 'not checked',
+    foreignKeyViolations: -1,
+    schemaVersion: -1,
+    error: null,
+  }
+  try {
+    const db = new DatabaseSync(dbPath, { readOnly: true })
+    try {
+      report.tables = (db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[]).map((r) => r.name)
+      report.missingTables = requiredTables.filter((name) => !report.tables.includes(name))
+      const integrity = db.prepare('PRAGMA integrity_check').all() as { integrity_check?: string }[]
+      report.integrity = integrity.map((row) => String(row.integrity_check ?? '')).join('; ') || 'empty'
+      const fk = db.prepare('PRAGMA foreign_key_check').all() as unknown[]
+      report.foreignKeyViolations = fk.length
+      const version = db.prepare('SELECT version FROM schema_version LIMIT 1').get() as { version?: number } | undefined
+      report.schemaVersion = Number(version?.version ?? -1)
+      report.ok =
+        report.missingTables.length === 0 &&
+        report.integrity === 'ok' &&
+        report.foreignKeyViolations === 0 &&
+        report.schemaVersion >= 1 &&
+        report.schemaVersion <= maxSchemaVersion
+      return report
+    } finally {
+      db.close()
+    }
+  } catch (error) {
+    report.error = String((error as Error)?.message ?? error)
+    return report
+  }
+}
+
 /** Open a database file and list its tables; throws when it is not a database. */
 export function readTables(dbPath: string): string[] {
   const db = new DatabaseSync(dbPath, { readOnly: true })
@@ -77,6 +131,22 @@ export function readTables(dbPath: string): string[] {
 export function restoreBackup(dbPath: string, backupPath: string, safetyPath: string): RestoreResult {
   const result: RestoreResult = { ok: false, safetyCopy: null, tables: [], error: null }
   try {
+    // The safety copy is taken first, before anything is validated. A restore that is
+    // refused because the backup is missing or unusable is exactly the moment the user
+    // most needs a snapshot of what they still have.
+    if (fs.existsSync(dbPath)) {
+      fs.mkdirSync(path.dirname(safetyPath), { recursive: true })
+      // A plain file copy misses transactions still in the WAL. VACUUM INTO produces a
+      // consistent snapshot of the live database, which is what a safety copy has to be:
+      // if the restore goes wrong, this file is the only way back.
+      const snapshot = createBackup(dbPath, safetyPath)
+      if (!snapshot.ok) {
+        result.error = 'could not take a safety copy: ' + (snapshot.error ?? 'unknown')
+        return result
+      }
+      result.safetyCopy = safetyPath
+    }
+
     if (!fs.existsSync(backupPath)) {
       result.error = 'backup file does not exist'
       return result
@@ -85,12 +155,6 @@ export function restoreBackup(dbPath: string, backupPath: string, safetyPath: st
     if (!REQUIRED_TABLES.every((name) => backupTables.includes(name))) {
       result.error = 'the backup is not a usable studio database'
       return result
-    }
-
-    if (fs.existsSync(dbPath)) {
-      fs.mkdirSync(path.dirname(safetyPath), { recursive: true })
-      fs.copyFileSync(dbPath, safetyPath)
-      result.safetyCopy = safetyPath
     }
 
     // Replacing the file directly is not reliable under WAL: the -wal and -shm handles can

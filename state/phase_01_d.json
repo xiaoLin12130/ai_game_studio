@@ -162,7 +162,7 @@
     "安装包重建与安装后项目链路",
     "npm audit / 静态吊销检查"
   ],
-  "updated_at": "2026-11-12T09:28:40.139Z",
+  "updated_at": "2026-11-12T13:21:48.320Z",
   "remediation": {
     "round": "R1",
     "base_commit": "bacd0eb0587d3d288b928209c383b6204b21c8d6",
@@ -188,5 +188,26 @@
     ],
     "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_REPORT.md",
     "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_AUDIT.md"
+  },
+  "remediation_2": {
+    "round": "R2",
+    "base_commit": "53334cfef9e28fffb3867db1779dcd3f28cc8da4",
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "findings": {
+      "P1-PROD-WIRING": "FIXED",
+      "P1-PROJECT-ID": "FIXED",
+      "P1-HEARTBEAT": "FIXED",
+      "P1-INFLIGHT": "FIXED",
+      "P1-SAFETY-COPY": "FIXED",
+      "P1-VERIFY": "FIXED"
+    },
+    "defects_found_during_fix": [
+      "心跳间隔被 Math.max(1000, ...) 卡住，stale 窗口更短时心跳比窗口还慢",
+      "resume 失败路径没有释放项目锁",
+      "安全副本在备份文件不存在时提前返回"
+    ],
+    "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_2_REPORT.md",
+    "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_2_AUDIT.md",
+    "evidence": "evidence/phase-01-d-remediation-2/"
   }
 }

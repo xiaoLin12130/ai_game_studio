@@ -1,3 +1,11 @@
+## PHASE 01-D 第二轮补正（READY_FOR_EXTERNAL_REVIEW）
+
+- 基线 `53334cf`，分支 `phase/01-d-project-workspace`。
+- 修复：生产装配未启用项目锁、projectId 未打通、锁心跳缺失、恢复检查用错集合、安全副本非快照、恢复校验恒真。
+- 关键改动：抽出 `wireServices()` 供 main 与测试共用；心跳间隔 = staleAfterMs/4；安全副本改用 VACUUM INTO 且提前到校验之前；新增 `verifyDatabase()`。
+- 测试：应用 227/227；装配 8/8、心跳 7/7、WAL 7/7、项目锁 9/9、在线备份 7/7、路径 8/8；PHASE 01-C 36/36；PHASE 00 门禁 PASS。
+- 报告：`docs/review-handoff/PHASE_01_D_REMEDIATION_2_REPORT.md`；证据：`evidence/phase-01-d-remediation-2/`。
+
 ## PHASE 01-D 补正（READY_FOR_EXTERNAL_REVIEW）
 
 - 基线 `bacd0eb`，分支 `phase/01-d-project-workspace`。

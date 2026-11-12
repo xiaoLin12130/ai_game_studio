@@ -38,7 +38,7 @@ const api = {
   openLogs: () => ipcRenderer.invoke(CHANNELS.openLogs),
   getDiagnostics: () => ipcRenderer.invoke(CHANNELS.getDiagnostics),
   listTasks: () => ipcRenderer.invoke(CHANNELS.tasksList),
-  createTask: (request: { title: string; goal: string; type?: string; isolation?: string }) =>
+  createTask: (request: { title: string; goal: string; type?: string; isolation?: string; projectId?: string | null }) =>
     ipcRenderer.invoke(CHANNELS.taskCreate, request),
   getTask: (id: string) => ipcRenderer.invoke(CHANNELS.taskGet, id),
   actOnTask: (id: string, action: string) => ipcRenderer.invoke(CHANNELS.taskAct, { id, action }),
