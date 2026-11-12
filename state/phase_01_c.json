@@ -209,8 +209,8 @@
     "initial_implementation_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
     "first_review_baseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
     "r2_review_baseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
-    "record_commit": "8b492de2f7883a781915726a82807c8bd4614312",
-    "record_commit_note": "R5 记录修正实现提交 SHA（docs(phase-01-c): correct root cause, scope and historical-test labelling）。状态文件不内嵌自身 SHA；评审方以分支 HEAD 为准。上一轮补正提交为 e04bdfc。"
+    "record_commit": "5de126a7966073e4445a02462cd48aea73205f1c",
+    "record_commit_note": "R5 记录标记对齐提交 SHA（docs(phase-01-c): align round markers and evidence index with R5）。状态文件不内嵌自身 SHA；评审方以分支 HEAD 为准。R5 根因修正提交为 8b492de。"
   },
   "review_round": {
     "round": "R2",
