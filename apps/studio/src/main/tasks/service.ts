@@ -281,6 +281,7 @@ export class TaskService extends EventEmitter {
     //      database (attempt rows, transitions) and closing it underneath them throws;
     //   3. release the locks, since a task that was still unwinding could have re-taken one;
     //   4. close the database.
+    this.runner.beginShutdown()
     const summary = await this.supervisor.shutdownAll(reason)
     await this.runner.waitForIdle(10000)
     this.runner.releaseAllProjectLocks()

@@ -68,6 +68,19 @@ export class TaskRunner {
   /** Heartbeat timers, one per held lock. */
   readonly #heartbeats = new Map<string, NodeJS.Timeout>()
   /**
+   * Tasks that lost their project write lock while running.
+   *
+   * A lost lock is not a logging event: another task may hold the project now, so the run
+   * has to stop and the task must never be accepted as SUCCEEDED. Recorded here because the
+   * failure surfaces on a timer, far from the await the run is sitting on.
+   */
+  readonly #lockLost = new Set<string>()
+  /**
+   * Set while the runner is shutting down. Deferred callbacks (a lock loss that resolves
+   * after dispose) must not write to a store that has already been closed.
+   */
+  #shuttingDown = false
+  /**
    * Every execution still in flight.
    *
    * #active is removed before the final database writes, so waiting on it alone lets
@@ -286,6 +299,22 @@ export class TaskRunner {
         return
       }
 
+      // A task that lost its project lock must not be accepted, however clean the run
+      // looked: another writer may hold the project by now.
+      if (this.#lockLost.has(taskId)) {
+        try {
+          recordStream.close()
+        } catch {
+          /* already closed */
+        }
+        this.#store.endAttempt({ attemptId: attempt.id, status: 'FAILED', errorCode: 'PROJECT_LOCK_LOST', errorMessage: 'the project write lock was lost during the run' })
+        this.#store.upsertSession({ id: sessionId, taskId, attemptId: attempt.id, state: 'ENDED', lastError: 'PROJECT_LOCK_LOST' })
+        this.#fail(taskId, 'PROJECT_LOCK_LOST', 'the project write lock was lost during the run', { sessionId, attemptId: attempt.id })
+        await lease.release('lock-lost')
+        this.#releaseProjectLock(taskId)
+        return
+      }
+
       // A run that ended is not a task that succeeded.
       this.#move(taskId, 'VERIFYING', { reason: 'run finished, verifying', source: 'runtime', sessionId, attemptId: attempt.id })
       const verdict = await Promise.resolve(this.#verify(taskId, attempt.id, observed.events))
@@ -350,17 +379,65 @@ export class TaskRunner {
       try {
         this.#projectLocks!.heartbeat(projectId, 'write', taskId)
       } catch (error) {
-        // Losing the lock is not something to paper over: stop pretending we hold it.
+        // Losing the lock means the project is no longer ours to write. Stop the run rather
+        // than let it keep editing files underneath whoever holds the lock now.
         this.#logger.error('task.project-lock.heartbeat-failed', {
           taskId,
           projectId,
           error: String((error as Error)?.message ?? error),
         })
-        this.#stopHeartbeat(taskId)
+        this.#abandonOnLockLoss(taskId, projectId, String((error as Error)?.message ?? error))
       }
     }, interval)
     timer.unref?.()
     this.#heartbeats.set(taskId, timer)
+  }
+
+  /**
+   * The project write lock is gone: stop the task without pretending it finished.
+   *
+   * Reuses the existing stop path — #stopActive is already single-flight through
+   * active.stopping, so a user stop or a runtime exit racing with this collapses into one
+   * close instead of three. The task is recorded as PROJECT_LOCK_LOST rather than as a
+   * run timeout, because the two mean different things to whoever reads the history.
+   */
+  #abandonOnLockLoss(taskId: string, projectId: string, detail: string): void {
+    this.#stopHeartbeat(taskId)
+    if (this.#shuttingDown) return
+    if (this.#lockLost.has(taskId)) return
+    this.#lockLost.add(taskId)
+    this.#logger.warn('task.project-lock.lost', { taskId, projectId, error: detail })
+
+    const active = this.#active.get(taskId)
+    if (!active) {
+      // The run already ended (user stop, runtime exit, or the terminal path below). Only
+      // make sure it is not left looking successful.
+      this.#failIfUnsettled(taskId, 'PROJECT_LOCK_LOST', 'the project write lock was lost: ' + detail)
+      return
+    }
+    void this.#stopActive(active, 'cancelled')
+      .catch((error) => {
+        this.#logger.error('task.project-lock.stop-failed', { taskId, error: String((error as Error)?.message ?? error) })
+      })
+      .finally(() => {
+        this.#failIfUnsettled(taskId, 'PROJECT_LOCK_LOST', 'the project write lock was lost: ' + detail)
+      })
+  }
+
+  /** Fail a task only if it has not already reached a terminal state of its own. */
+  #failIfUnsettled(taskId: string, code: string, message: string): void {
+    if (this.#shuttingDown) return
+    let task: TaskRecord | null = null
+    try {
+      task = this.#store.getTask(taskId)
+    } catch {
+      // The store is gone: shutdown won the race. Nothing to record.
+      return
+    }
+    if (!task) return
+    const settled: TaskStatus[] = ['FAILED', 'CANCELLED', 'SUCCEEDED', 'INTERRUPTED']
+    if (settled.includes(task.status)) return
+    this.#fail(taskId, code, message)
   }
 
   #stopHeartbeat(taskId: string): void {
@@ -373,6 +450,7 @@ export class TaskRunner {
   /** Release the project lock this task holds, if any. Safe to call more than once. */
   #releaseProjectLock(taskId: string): void {
     this.#stopHeartbeat(taskId)
+    this.#lockLost.delete(taskId)
     const held = this.#heldLocks.get(taskId)
     if (!held || !this.#projectLocks) return
     this.#heldLocks.delete(taskId)
@@ -390,6 +468,12 @@ export class TaskRunner {
    * Shutdown needs this: a run that is still unwinding writes attempt rows and transitions,
    * and closing the database underneath it turns a clean exit into a stream of errors.
    */
+  /** Stop accepting deferred work; called before the store is closed. */
+  beginShutdown(): void {
+    this.#shuttingDown = true
+    for (const taskId of [...this.#heartbeats.keys()]) this.#stopHeartbeat(taskId)
+  }
+
   async waitForIdle(timeoutMs = 10000): Promise<boolean> {
     const deadline = Date.now() + timeoutMs
     while (this.#inflight.size > 0 && Date.now() < deadline) {

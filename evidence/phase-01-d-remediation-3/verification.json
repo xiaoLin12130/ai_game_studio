@@ -1,0 +1,186 @@
+{
+  "generatedAt": "2026-11-12T14:13:48.544Z",
+  "phase": "PHASE_01_D_REMEDIATION_3",
+  "branch": "phase/01-d-project-workspace",
+  "baseCommit": "2e061d8c4ababc98bc3e8f33b8e01b633ac0a2f9",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-3/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 248,
+        "pass": 248,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/unit/full-suite.txt",
+      "note": "首次运行 247/248，失败项为 PHASE 01-A 进程终止测试在并发负载下的时序抖动；单独复跑 2 次均 6/6，全量重跑 248/248"
+    },
+    {
+      "name": "lock-loss",
+      "command": "node --test test/lock-heartbeat.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/lock-loss.txt",
+      "note": "含 5 项锁丢失专项"
+    },
+    {
+      "name": "schema-integrity",
+      "command": "node --test test/schema-integrity.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/schema-integrity.txt",
+      "note": "含清单与真实 schema 的一致性断言"
+    },
+    {
+      "name": "backup-wal",
+      "command": "node --test test/backup-wal.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/backup-wal.txt"
+    },
+    {
+      "name": "task-project-lock",
+      "command": "node --test test/task-project-lock.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/task-project-lock.txt"
+    },
+    {
+      "name": "backup-app",
+      "command": "node --test test/project-backup-app.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/backup-app.txt"
+    },
+    {
+      "name": "app-wiring",
+      "command": "node --test test/app-wiring.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/integration/app-wiring.txt"
+    },
+    {
+      "name": "phase01c-lifecycle",
+      "command": "node --test test/task-machine.test.js test/task-runner.test.js test/task-store.test.js test/lifecycle.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 36,
+        "pass": 36,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/regression/phase01c-lifecycle.txt"
+    },
+    {
+      "name": "phase01a-smoke",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-3/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "phase01a-processes",
+      "command": "node --test test/processes.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation-3/regression/phase01a-processes.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation-3/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏"
+    }
+  ],
+  "findings": {
+    "P1-LOCK-LOSS": {
+      "status": "FIXED",
+      "what": "心跳失败只记日志并停定时器，任务继续执行并可能被验收为 SUCCEEDED",
+      "fix": "心跳失败视为写入权限丢失：复用 #stopActive 停止 Runtime，任务记为 PROJECT_LOCK_LOST；VERIFYING 前设闸门，锁丢失的任务不得通过验收；不释放他人已取得的锁",
+      "evidence": "evidence/phase-01-d-remediation-3/integration/lock-loss.txt"
+    },
+    "P1-SCHEMA": {
+      "status": "FIXED",
+      "what": "恢复校验只查 5 张表，实际 schema 有 13 张；备份检查与恢复校验两套清单不一致",
+      "fix": "从迁移代码提取 13 张必需表，备份检查与恢复校验共用同一常量；缺表备份在恢复前被拒绝，避免逐表复制保留目标库旧数据",
+      "evidence": "evidence/phase-01-d-remediation-3/integration/schema-integrity.txt"
+    }
+  },
+  "defects_found_during_fix": [
+    "dispose 关库后，延迟的锁丢失回调仍会写库（database is not open）",
+    "缺表备份会通过前置检查进入逐表复制，目标库旧表数据被保留，形成半新半旧的数据库"
+  ],
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后项目链路",
+      "reason": "本轮未改打包配置"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    },
+    {
+      "id": "NOT_RUN-3",
+      "item": "真实 DSH 模型探针",
+      "reason": "本轮改动不涉及模型调用链路"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+✔ the required list matches the migrations exactly (32.21ms)
+✔ a complete v2 database passes verification (27.4385ms)
+✔ verification fails when project_configs is missing (46.1844ms)
+✔ verification fails when project_events is missing (48.3101ms)
+✔ verification fails when approvals is missing (47.3297ms)
+✔ verification fails when project_locks is missing (47.8854ms)
+✔ verification fails when task_transitions is missing (47.7869ms)
+✔ verification fails when runtimes is missing (46.0088ms)
+✔ verification fails when verifications is missing (48.0523ms)
+✔ verification fails when events is missing (47.9034ms)
+✔ verification fails when a task link table is missing (47.9019ms)
+✔ verification fails on an older schema version (27.8149ms)
+✔ verification fails on a newer schema version (24.1067ms)
+✔ restoring an incomplete backup is refused and reports what is missing (47.9359ms)
+✔ a refused restore leaves the live database and its rows intact (49.9488ms)
+✔ a failed restore leaves a safety copy that can be used (67.8997ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 791.3852

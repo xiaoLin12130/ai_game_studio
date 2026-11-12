@@ -14,7 +14,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
-import { createBackup as writeBackupFile, restoreBackup as replaceDatabase, readTables, verifyDatabase } from './backup'
+import { createBackup as writeBackupFile, restoreBackup as replaceDatabase, readTables, verifyDatabase, REQUIRED_TABLES, SCHEMA_VERSION_MIN, SCHEMA_VERSION_MAX } from './backup'
 import { ProjectLocks } from './locks'
 import { ProjectStore } from './store'
 import { assertInsideProject, inspectProjectRoot, realPathOf } from './paths'
@@ -315,10 +315,18 @@ export class ProjectService {
     if (!fs.existsSync(backupFile)) {
       return { ok: false, file: null, safetyCopy: null, verified: false, error: '备份文件不存在。' }
     }
+    // Pre-flight. Nothing has been touched yet, so no safety copy is needed; a backup that
+    // cannot even be opened, or that is missing tables, is refused here rather than after
+    // the current data has been partly overwritten.
+    let backupTables: string[]
     try {
-      readTables(backupFile)
+      backupTables = readTables(backupFile)
     } catch {
       return { ok: false, file: null, safetyCopy: null, verified: false, error: '该文件不是可用的数据库备份。' }
+    }
+    const absent = REQUIRED_TABLES.filter((name) => !backupTables.includes(name))
+    if (absent.length > 0) {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '该备份不完整，缺少表：' + absent.join(', ') }
     }
 
     const safety = path.join(this.backupDirFor(projectId), `pre-restore-${this.#now().toISOString().replace(/[:.]/g, '-')}.db`)
@@ -352,7 +360,7 @@ export class ProjectService {
     if (!this.#dbPath) {
       return { ok: false, tables: [], missingTables: [], integrity: 'no database path', foreignKeyViolations: -1, schemaVersion: -1, error: 'no database path' }
     }
-    return verifyDatabase(this.#dbPath, ['schema_version', 'tasks', 'projects', 'attempts', 'sessions'], 2)
+    return verifyDatabase(this.#dbPath, [...REQUIRED_TABLES], SCHEMA_VERSION_MAX)
   }
 
   /** Absolute path of the app's own metadata directory for a project. */

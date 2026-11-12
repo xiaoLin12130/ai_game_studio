@@ -1,0 +1,20 @@
+✔ the heartbeat updates while a task runs (4517.2647ms)
+✔ a task running longer than staleAfterMs keeps its lock (3947.6322ms)
+✔ the heartbeat stops when the task is stopped (5087.6692ms)
+✔ the lock is released after success (1499.6322ms)
+✔ the lock is released when the runtime cannot be acquired (1465.2321ms)
+✔ the lock is released when the session cannot be resumed (4576.1043ms)
+✔ a lost lock stops the run and the task is not SUCCEEDED (11625.7567ms)
+✔ the heartbeat timer stops after a lost lock (12301.0287ms)
+✔ a lost lock does not release the lock another task now holds (11612.6143ms)
+✔ a user stop racing a lost lock closes the runtime once (11599.2529ms)
+✔ dispose during a lost lock leaves nothing behind (11495.5441ms)
+✔ dispose leaves no lock and no heartbeat behind (4502.3549ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89778.0958

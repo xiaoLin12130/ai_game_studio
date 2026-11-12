@@ -1,0 +1,14 @@
+✔ A. the runtime this probe owns is captured, terminated and confirmed gone (4201.9575ms)
+✔ B. another instance sharing the same DSH home is never touched (5264.9131ms)
+✔ C. a recycled PID is refused instead of killed (2997.8039ms)
+✔ D. the fallback shares one deadline instead of per-process budgets (1409.027ms)
+✔ E. an unrelated process is never captured by the dsh marker (3172.0467ms)
+✔ F. the terminator reports failure instead of claiming success when the table cannot answer (0.4772ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17124.8461

@@ -1,0 +1,15 @@
+✔ the safety copy contains writes that are still only in the WAL (45.8351ms)
+✔ the safety copy is a valid database, not a byte copy of the main file (41.3038ms)
+✔ a failed restore leaves the safety copy usable for a later restore (50.7569ms)
+✔ verification rejects a database that is missing a required table (17.8652ms)
+✔ verification rejects a database whose schema version is too new (25.9575ms)
+✔ verification rejects a file that is not a database (0.9003ms)
+✔ verification catches a broken foreign key (26.2091ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 293.8775

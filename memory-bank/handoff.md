@@ -1,3 +1,12 @@
+## PHASE 01-D 第三轮补正（READY_FOR_EXTERNAL_REVIEW）
+
+- 基线 `2e061d8`，分支 `phase/01-d-project-workspace`。
+- 修复：心跳失败后写任务不停止（现记 `PROJECT_LOCK_LOST` 并复用 `#stopActive` 关闭 Runtime，VERIFYING 前设闸门）；恢复校验只查 5 张表（现为 13 张，从迁移代码提取，备份检查与恢复校验共用同一常量）。
+- 缺表备份在恢复前置检查阶段即被拒绝，避免逐表复制保留目标库旧数据。
+- 测试：应用 248/248；锁丢失 12/12、数据库完整性 16/16、WAL 7/7、项目锁 9/9、在线备份 7/7、装配 8/8；PHASE 01-C 36/36；PHASE 00 门禁 PASS。
+- 已知抖动：`processes.test.js` 的进程终止测试在并发负载下偶发失败，单独复跑与全量重跑均通过，已如实记录。
+- 报告：`docs/review-handoff/PHASE_01_D_REMEDIATION_3_REPORT.md`；证据：`evidence/phase-01-d-remediation-3/`。
+
 ## PHASE 01-D 第二轮补正（READY_FOR_EXTERNAL_REVIEW）
 
 - 基线 `53334cf`，分支 `phase/01-d-project-workspace`。

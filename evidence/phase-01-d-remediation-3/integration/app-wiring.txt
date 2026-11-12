@@ -1,0 +1,16 @@
+✔ the production wiring gives TaskService a real lock table (32.9231ms)
+✔ projectExists rejects an unknown project in the production wiring (29.4477ms)
+✔ a project id from the caller is stored and reaches the database (27.8901ms)
+✔ a writable project task takes the write lock before the runtime starts (3009.2626ms)
+✔ a second writer on the same project is refused before a runtime starts (2942.4377ms)
+✔ writers on different projects run in parallel (2989.6233ms)
+✔ a global task keeps the PHASE 01-C behaviour (2953.1355ms)
+✔ the restore guard uses in-flight work, not the active map (2967.7588ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15038.5655

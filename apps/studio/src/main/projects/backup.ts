@@ -27,7 +27,33 @@ export interface RestoreResult {
   error: string | null
 }
 
-const REQUIRED_TABLES = ['schema_version', 'tasks', 'projects']
+/**
+ * Every table the current schema version defines.
+ *
+ * Taken from the CREATE TABLE statements in tasks/store.ts, not from a report: if a
+ * migration adds a table, this list has to grow with it or a restore would accept a backup
+ * that silently omits it. One list, used by the backup check and by the post-restore check,
+ * so the two cannot drift apart.
+ */
+export const REQUIRED_TABLES: readonly string[] = [
+  'schema_version',
+  'tasks',
+  'task_transitions',
+  'attempts',
+  'sessions',
+  'runtimes',
+  'verifications',
+  'events',
+  'projects',
+  'project_configs',
+  'project_events',
+  'approvals',
+  'project_locks',
+]
+
+/** The schema version this build writes and can read back. */
+export const SCHEMA_VERSION_MIN = 1
+export const SCHEMA_VERSION_MAX = 2
 
 /** Copy the database and prove the copy is readable. */
 export function createBackup(dbPath: string, targetPath: string): BackupResult {
@@ -44,8 +70,9 @@ export function createBackup(dbPath: string, targetPath: string): BackupResult {
     }
     result.bytes = fs.statSync(targetPath).size
     result.tables = readTables(targetPath)
-    if (!REQUIRED_TABLES.every((name) => result.tables.includes(name))) {
-      result.error = 'the backup is missing required tables: ' + REQUIRED_TABLES.filter((n) => !result.tables.includes(n)).join(', ')
+    const missing = REQUIRED_TABLES.filter((name) => !result.tables.includes(name))
+    if (missing.length > 0) {
+      result.error = 'the backup is missing required tables: ' + missing.join(', ')
       return result
     }
     result.ok = true
@@ -74,7 +101,12 @@ export interface IntegrityReport {
  * needs, SQLite's own integrity and foreign-key checks, and the schema version, so a restore
  * that produced a structurally broken file is reported as a failure.
  */
-export function verifyDatabase(dbPath: string, requiredTables: string[], maxSchemaVersion: number): IntegrityReport {
+export function verifyDatabase(
+  dbPath: string,
+  requiredTables: readonly string[],
+  maxSchemaVersion: number,
+  minSchemaVersion = SCHEMA_VERSION_MIN,
+): IntegrityReport {
   const report: IntegrityReport = {
     ok: false,
     tables: [],
@@ -99,7 +131,7 @@ export function verifyDatabase(dbPath: string, requiredTables: string[], maxSche
         report.missingTables.length === 0 &&
         report.integrity === 'ok' &&
         report.foreignKeyViolations === 0 &&
-        report.schemaVersion >= 1 &&
+        report.schemaVersion >= minSchemaVersion &&
         report.schemaVersion <= maxSchemaVersion
       return report
     } finally {
@@ -152,8 +184,12 @@ export function restoreBackup(dbPath: string, backupPath: string, safetyPath: st
       return result
     }
     const backupTables = readTables(backupPath)
-    if (!REQUIRED_TABLES.every((name) => backupTables.includes(name))) {
-      result.error = 'the backup is not a usable studio database'
+    const absent = REQUIRED_TABLES.filter((name) => !backupTables.includes(name))
+    if (absent.length > 0) {
+      // Copying table by table would leave the target's rows for the absent tables in
+      // place, producing a database that is half backup and half current data while
+      // looking like a clean restore. Refuse instead.
+      result.error = 'the backup is incomplete; it is missing: ' + absent.join(', ')
       return result
     }
 

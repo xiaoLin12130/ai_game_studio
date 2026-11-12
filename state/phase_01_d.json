@@ -162,7 +162,7 @@
     "安装包重建与安装后项目链路",
     "npm audit / 静态吊销检查"
   ],
-  "updated_at": "2026-11-12T13:21:48.320Z",
+  "updated_at": "2026-11-12T14:14:28.534Z",
   "remediation": {
     "round": "R1",
     "base_commit": "bacd0eb0587d3d288b928209c383b6204b21c8d6",
@@ -209,5 +209,33 @@
     "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_2_REPORT.md",
     "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_2_AUDIT.md",
     "evidence": "evidence/phase-01-d-remediation-2/"
+  },
+  "remediation_3": {
+    "round": "R3",
+    "base_commit": "2e061d8c4ababc98bc3e8f33b8e01b633ac0a2f9",
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "findings": {
+      "P1-LOCK-LOSS": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-01-d-remediation-3/integration/lock-loss.txt"
+      },
+      "P1-SCHEMA": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-01-d-remediation-3/integration/schema-integrity.txt"
+      }
+    },
+    "required_tables": 13,
+    "defects_found_during_fix": [
+      "dispose 关库后，延迟的锁丢失回调仍会写库",
+      "缺表备份会通过前置检查进入逐表复制，目标库旧表数据被保留"
+    ],
+    "known_flake": {
+      "test": "test/processes.test.js A. the runtime this probe owns is captured, terminated and confirmed gone",
+      "observed": "首次全量 247/248；单独复跑 2 次 6/6；全量重跑 248/248",
+      "assessment": "并发负载下进程退出与 OS 进程表刷新的时序抖动，与本轮改动无关"
+    },
+    "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_3_REPORT.md",
+    "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_3_AUDIT.md",
+    "evidence": "evidence/phase-01-d-remediation-3/"
   }
 }
