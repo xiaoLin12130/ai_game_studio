@@ -133,6 +133,24 @@ test('discovery returns every runtime, not just the first', async () => {
   assert.equal(found.identities.every((i) => i.source === 'parent-and-bin'), true)
 })
 
+test('discovery ignores the dsh plugin CLI, which is not a runtime', async () => {
+  const table = tableWith({
+    children: [
+      { pid: 11, parentPid: 4242, name: 'node.exe', creationMs: 111, commandLine: MARKER },
+      {
+        pid: 12,
+        parentPid: 4242,
+        name: 'node.exe',
+        creationMs: 222,
+        commandLine: MARKER + ' plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4',
+      },
+    ],
+  })
+  const found = await discoverRuntimeIdentities(table, { parentPid: 4242, binMarker: MARKER })
+  assert.equal(found.ok, true)
+  assert.deepEqual(found.identities.map((i) => i.pid), [11], 'the plugin CLI must not count as a runtime')
+})
+
 test('discovery reports a failed query instead of an empty list', async () => {
   const table = tableWith({ childrenError: 'wmi unavailable' })
   const found = await discoverRuntimeIdentities(table, { parentPid: 4242, binMarker: MARKER })

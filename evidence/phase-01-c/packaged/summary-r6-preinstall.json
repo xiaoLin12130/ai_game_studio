@@ -1,0 +1,341 @@
+{
+  "generatedAt": "2026-11-12T06:31:29.754Z",
+  "exe": "<abs-path>",
+  "checks": {
+    "A.exitZero": false,
+    "A.disposeHadNoFailure": true,
+    "A.runtimeIdentityCaptured": true,
+    "A.runtimeProcessGone": true,
+    "A.runtimeCheckStatus": "ABSENT",
+    "A.noIdentityWatchErrors": true,
+    "A.producedSmoke": true,
+    "A.taskSucceeded": false,
+    "A.hadSession": false,
+    "A.verified": false,
+    "A.transitionsOk": false,
+    "A.noRuntimeLeft": true,
+    "A.noLingeringApp": true,
+    "B.exitZero": false,
+    "B.disposeHadNoFailure": true,
+    "B.runtimeIdentityCount": false,
+    "B.runtimeIdentitiesDistinct": false,
+    "B.allRuntimeProcessesGone": true,
+    "B.runtimeCheckStatus": "ABSENT",
+    "B.noIdentityWatchErrors": true,
+    "B.producedSmoke": true,
+    "B.wasInterrupted": false,
+    "B.interruptedIsRecorded": false,
+    "B.resumedToTerminal": false,
+    "B.sessionReused": false,
+    "B.twoAttempts": false,
+    "B.noLingeringApp": true,
+    "C.crashedAsExpected": false,
+    "C.crashLeftTaskRunning": false,
+    "C.recoveryProducedSmoke": true,
+    "C.sawInterruptedState": false,
+    "C.resumedToTerminal": false,
+    "C.recordedNewAttempt": false,
+    "C.appExited": true,
+    "C.noLingeringApp": false,
+    "C.disposeHadNoFailure": true,
+    "C.runtimeProcessGone": false,
+    "C.runtimeCheckStatus": "",
+    "C.crashCapturedIdentity": true,
+    "C.crashOrphanStatus": "ABSENT",
+    "C.crashLeftNoOrphan": true,
+    "C.noIdentityWatchErrors": true
+  },
+  "failed": [
+    "A.exitZero",
+    "A.taskSucceeded",
+    "A.hadSession",
+    "A.verified",
+    "A.transitionsOk",
+    "B.exitZero",
+    "B.runtimeIdentityCount",
+    "B.runtimeIdentitiesDistinct",
+    "B.wasInterrupted",
+    "B.interruptedIsRecorded",
+    "B.resumedToTerminal",
+    "B.sessionReused",
+    "B.twoAttempts",
+    "C.crashedAsExpected",
+    "C.crashLeftTaskRunning",
+    "C.sawInterruptedState",
+    "C.resumedToTerminal",
+    "C.recordedNewAttempt",
+    "C.noLingeringApp",
+    "C.runtimeProcessGone",
+    "C.runtimeCheckStatus"
+  ],
+  "ok": false,
+  "scenarios": {
+    "A": {
+      "mode": "task-run",
+      "wallMs": 3937,
+      "exitCode": 1,
+      "timedOut": false,
+      "smoke": {
+        "generatedAt": "2026-11-12T06:31:12.196Z",
+        "mode": "task-run",
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+      },
+      "logTail": [
+        "{\"ts\":\"2026-11-12T06:31:08.683Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
+        "{\"ts\":\"2026-11-12T06:31:08.866Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-1db6ba5a\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T06:31:12.193Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+      ],
+      "runtimeIdentities": [
+        {
+          "pid": 9260,
+          "creationMs": 1794465068886,
+          "capturedAt": "2026-11-12T06:31:09.624Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeIdentityCount": 1,
+      "identityWatchErrors": [],
+      "runtimeIdentitiesCaptured": [
+        {
+          "pid": 9260,
+          "creationMs": 1794465068886,
+          "capturedAt": "2026-11-12T06:31:09.624Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeChecks": {
+        "count": 1,
+        "checks": [
+          {
+            "identity": {
+              "pid": 9260,
+              "creationMs": 1794465068886,
+              "capturedAt": "2026-11-12T06:31:09.624Z",
+              "source": "parent-and-bin"
+            },
+            "verdict": {
+              "status": "ABSENT",
+              "pid": 9260,
+              "creationMs": 1794465068886,
+              "observedCreationMs": null,
+              "reason": "the pid no longer exists"
+            }
+          }
+        ],
+        "statuses": [
+          "ABSENT"
+        ],
+        "watchErrors": [],
+        "allGone": true
+      },
+      "checks": {
+        "exitZero": false,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCaptured": true,
+        "runtimeProcessGone": true,
+        "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "taskSucceeded": false,
+        "hadSession": false,
+        "verified": false,
+        "transitionsOk": false,
+        "noRuntimeLeft": true,
+        "noLingeringApp": true
+      }
+    },
+    "B": {
+      "mode": "task-interrupt-resume",
+      "wallMs": 3831,
+      "exitCode": 1,
+      "timedOut": false,
+      "smoke": {
+        "generatedAt": "2026-11-12T06:31:17.982Z",
+        "mode": "task-interrupt-resume",
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+      },
+      "logTail": [
+        "{\"ts\":\"2026-11-12T06:31:14.978Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
+        "{\"ts\":\"2026-11-12T06:31:15.154Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-2a90c55a\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T06:31:17.978Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+      ],
+      "runtimeIdentities": [
+        {
+          "pid": 25384,
+          "creationMs": 1794465075171,
+          "capturedAt": "2026-11-12T06:31:15.603Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeIdentityCount": 1,
+      "identityWatchErrors": [],
+      "runtimeIdentitiesCaptured": [
+        {
+          "pid": 25384,
+          "creationMs": 1794465075171,
+          "capturedAt": "2026-11-12T06:31:15.603Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeChecks": {
+        "count": 1,
+        "checks": [
+          {
+            "identity": {
+              "pid": 25384,
+              "creationMs": 1794465075171,
+              "capturedAt": "2026-11-12T06:31:15.603Z",
+              "source": "parent-and-bin"
+            },
+            "verdict": {
+              "status": "ABSENT",
+              "pid": 25384,
+              "creationMs": 1794465075171,
+              "observedCreationMs": null,
+              "reason": "the pid no longer exists"
+            }
+          }
+        ],
+        "statuses": [
+          "ABSENT"
+        ],
+        "watchErrors": [],
+        "allGone": true
+      },
+      "checks": {
+        "exitZero": false,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCount": false,
+        "runtimeIdentitiesDistinct": false,
+        "allRuntimeProcessesGone": true,
+        "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "wasInterrupted": false,
+        "interruptedIsRecorded": false,
+        "resumedToTerminal": false,
+        "sessionReused": false,
+        "twoAttempts": false,
+        "noLingeringApp": true
+      }
+    },
+    "C": {
+      "crash": {
+        "mode": "task-start-and-crash",
+        "wallMs": 5190,
+        "exitCode": 1,
+        "timedOut": false,
+        "smoke": {
+          "generatedAt": "2026-11-12T06:31:24.482Z",
+          "mode": "task-start-and-crash",
+          "phase": "error",
+          "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+        },
+        "logTail": [
+          "{\"ts\":\"2026-11-12T06:31:20.596Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T06:31:20.783Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-2b2f9cd6\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T06:31:24.478Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+        ],
+        "runtimeIdentities": [
+          {
+            "pid": 17612,
+            "creationMs": 1794465080798,
+            "capturedAt": "2026-11-12T06:31:21.584Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "runtimeIdentityCount": 1,
+        "identityWatchErrors": []
+      },
+      "recover": {
+        "mode": "task-recover",
+        "wallMs": 1133,
+        "exitCode": 0,
+        "timedOut": false,
+        "smoke": {
+          "generatedAt": "2026-11-12T06:31:27.921Z",
+          "mode": "task-recover",
+          "phase": "nothing-to-recover",
+          "tasks": [
+            {
+              "id": "task-2b2f9cd6",
+              "status": "CREATED"
+            }
+          ]
+        },
+        "logTail": [
+          "{\"ts\":\"2026-11-12T06:31:20.596Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T06:31:20.783Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-2b2f9cd6\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T06:31:24.478Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}",
+          "{\"ts\":\"2026-11-12T06:31:27.778Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
+          "{\"ts\":\"2026-11-12T06:31:27.923Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+          "{\"ts\":\"2026-11-12T06:31:27.929Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+        ],
+        "runtimeIdentities": [],
+        "runtimeIdentityCount": 0,
+        "identityWatchErrors": []
+      },
+      "orphanPidsAfterCrash": [],
+      "crashRuntimeIdentities": [
+        {
+          "pid": 17612,
+          "creationMs": 1794465080798,
+          "capturedAt": "2026-11-12T06:31:21.584Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "crashRuntimeChecks": {
+        "count": 1,
+        "checks": [
+          {
+            "identity": {
+              "pid": 17612,
+              "creationMs": 1794465080798,
+              "capturedAt": "2026-11-12T06:31:21.584Z",
+              "source": "parent-and-bin"
+            },
+            "verdict": {
+              "status": "ABSENT",
+              "pid": 17612,
+              "creationMs": 1794465080798,
+              "observedCreationMs": null,
+              "reason": "the pid no longer exists"
+            }
+          }
+        ],
+        "statuses": [
+          "ABSENT"
+        ],
+        "watchErrors": [],
+        "allGone": true
+      },
+      "recoveryRuntimeIdentities": [],
+      "recoveryRuntimeChecks": {
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
+      },
+      "checks": {
+        "crashedAsExpected": false,
+        "crashLeftTaskRunning": false,
+        "recoveryProducedSmoke": true,
+        "sawInterruptedState": false,
+        "resumedToTerminal": false,
+        "recordedNewAttempt": false,
+        "appExited": true,
+        "noLingeringApp": false,
+        "disposeHadNoFailure": true,
+        "runtimeProcessGone": false,
+        "runtimeCheckStatus": "",
+        "crashCapturedIdentity": true,
+        "crashOrphanStatus": "ABSENT",
+        "crashLeftNoOrphan": true,
+        "noIdentityWatchErrors": true
+      }
+    }
+  }
+}

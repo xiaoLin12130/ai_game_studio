@@ -2,10 +2,10 @@
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
   "status": "BLOCKED",
-  "current_round": "R5-record-correction-env-prep",
+  "current_round": "R6-normal-windows-unblock",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
-  "note": "B 场景第二个 Runtime 的 OS 进程退出验证代码已补齐并由单元测试覆盖（process-identity 11/11、identity-watcher 6/6）。安装版 A/B/C 属 PHASE 01-C 原始验收范围，但被环境阻断：首跑 out-g 为陈旧构建（缺任务 smoke 分支）而回落启动探测（ROUTE_UNKNOWN）；改用当前正确构建后，TaskService.ensureProfile() 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时内部 pnpm add 因当前沙箱 pnpm store 删除操作 EPERM 失败，任务停在 PROFILE_NOT_READY。本阶段不自行判定通过。",
+  "note": "R6：provider 安装问题已定位并解阻塞——pnpm store 放到 %TEMP% 独立目录后，TaskService.ensureProfile() 真实安装 @mars-sea/dsh-commandcode-provider 0.15.4 成功；A/B/C 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002），但模型回合被 Command Code 账户用量窗口限流（RATE_LIMIT，2026-11-12 15:33:12 重置），未到终态。阶段保持 BLOCKED。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
     "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
@@ -17,7 +17,12 @@
   "verified_this_round": {
     "jsonAndConsistency": {
       "result": "PASS",
-      "note": "state / verification.json / README / WORK_REPORT 四者对根因描述一致；JSON 均可解析"
+      "note": "state / verification.json / README / report 一致"
+    },
+    "tsc": {
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/unit/tsc.txt",
+      "note": "本轮修改 processes.ts，已重跑"
     },
     "supervisorRaces": {
       "tests": 9,
@@ -25,28 +30,27 @@
       "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     "processIdentity": {
-      "tests": 11,
-      "pass": 11,
+      "tests": 12,
+      "pass": 12,
       "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "含 discoverRuntimeIdentities 返回全部 Runtime / 查询失败 / 全退出 3 个用例"
+      "note": "新增 plugin CLI 排除用例"
     },
     "identityWatcher": {
       "tests": 6,
       "pass": 6,
-      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt",
-      "note": "stop() 排空在途查询；watchErrors 计入 allGone；PRESENT/FAILED/UNKNOWN/空集不算通过"
+      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt"
     },
     "packagedStatus": {
-      "status": "ENVIRONMENT_BLOCKED",
-      "thisRoundRun": false,
-      "runRound": "R4",
+      "status": "BLOCKED_BY_MODEL_QUOTA",
+      "thisRoundRun": true,
+      "runRound": "R6",
       "checks": 42,
       "failed": 20,
       "ok": false,
       "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "本轮未重跑（沙箱 pnpm store EPERM，按任务要求不反复尝试 pnpm add）。引用的是 R4 对正确构建的真实失败运行：任务进入 task.create 后 ensureProfile 的 dsh plugin add → pnpm add 失败，PROFILE_NOT_READY，B 未产生第二个任务 Runtime。"
+      "note": "插件真实安装成功；A/B/C runtime 均启动；模型 RATE_LIMIT 至 2026-11-12 15:33:12"
     },
-    "historicalNote": "fullSuite(101/101)、realDsh(2/2)、phase00(166/166)、tsc(exit 0) 均为历史轮次（R2/R4）证据，已移入 verified_previous_round 并标记 historical，不是本轮重跑结果。"
+    "historicalNote": "R4/R5 失败记录保留在 git 历史、packaged/summary-r4.json 与 review_correction_r4/r5。"
   },
   "verified_previous_round": {
     "unitTests": {
@@ -120,17 +124,15 @@
   ],
   "blocked": [
     {
-      "id": "B-INSTALL-1",
-      "run_round": "R4",
-      "r5_rerun": false,
-      "item": "安装版 A/B/C 复验（B 场景两个 Runtime 均 ABSENT）",
-      "why": "两层原因：(1) 首跑使用的 out-g 是陈旧打包（asar 不含 task-interrupt-resume 分支），回落启动探测 → ROUTE_UNKNOWN，只捕获探测 runtime；(2) 改用当前 HEAD 构建（release/win-unpacked，asar 含任务场景与 task-* 探测门控）后，ensureProfile 通过 dsh plugin add 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时，pnpm add 因本机 pnpm store 的 unlink EPERM（沙箱文件删除保护）失败，任务在 profile 引导处 PROFILE_NOT_READY，仍未产生第二个 Runtime。非依赖版本变化（全程 dsh-sdk-client/@deepseek-ai/dsh 0.2.1-rc.3），非 Provider 注册代码缺陷。",
-      "scope": "属于 PHASE 01-C 原始验收范围，但当前执行环境因 pnpm 文件操作限制而阻断，等待正常 Windows 环境复验。",
-      "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink pnpm store)",
-      "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
+      "id": "B-MODEL-QUOTA",
+      "item": "安装版 A/B/C 真实模型回合",
+      "scope": "属于 PHASE 01-C 原始验收范围",
+      "why": "Command Code 账户用量窗口耗尽（RATE_LIMIT），最早 2026-11-12 15:33:12 重置",
+      "evidence": "evidence/phase-01-c/real-run-r6.md",
+      "status": "WAITING_FOR_QUOTA_RESET"
     }
   ],
-  "updated_at": "2026-11-12T05:58:00.000Z",
+  "updated_at": "2026-11-12T06:44:14.660Z",
   "acceptance": [
     {
       "id": "C1",
@@ -143,7 +145,7 @@
       "item": "Session 生命周期（创建/中断/原生 resume/失败记录）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "代码实现完成。安装版证据来自 R4 对正确构建的真实运行：summary.json 为 ok:false，失败原因是 PROFILE_NOT_READY（provider 插件安装被沙箱 pnpm 限制阻断）。R5 本轮未重跑安装版 A/B/C。该结果不能作为 PASS 依据。历史 R2 曾通过，但其进程判据已被 INVALID-1 判定无效。"
+      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
     },
     {
       "id": "C3",
@@ -162,14 +164,14 @@
       "item": "中断与恢复（安装版验证）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "安装版 B 场景仅在 R4 对正确构建运行过：在 provider 引导处失败（PROFILE_NOT_READY），只捕获 1 个 Runtime，未产生第二个，不能作为 PASS。R5 本轮未重跑。B 双 Runtime 捕获/复核代码已由 identity-watcher 6/6 单测覆盖。"
+      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
     },
     {
       "id": "C6",
       "item": "持久化与崩溃恢复（SQLite + app.exit(9) 实测）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "安装版 C 场景仅在 R4 对正确构建运行过：在 provider 引导处失败，未完成崩溃恢复链路，不能作为 PASS。R5 本轮未重跑。代码保留；历史 R2 结果不可用（INVALID-1）。"
+      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
     },
     {
       "id": "C7",
@@ -182,7 +184,7 @@
       "item": "测试与真实运行证据",
       "status": "PARTIALLY_VERIFIED",
       "evidence": "evidence/phase-01-c/verification.json",
-      "note": "分项：TypeScript 检查为 R4 历史结果（exit 0，R5 未改 TS、未重跑）；process-identity 为 R5 本轮 11/11；runtime-supervisor 为 R5 本轮 9/9；identity-watcher 为 R5 本轮 6/6；安装版 A/B/C 为 R4 真实失败结果（ok:false），R5 未重跑。不得把历史 tsc 描述为 R5 执行。"
+      "note": "单元证据通过（tsc / process-identity 12 / supervisor 9 / identity-watcher 6）；安装版 provider 安装与 runtime 生命周期真实发生，但模型回合被 RATE_LIMIT 阻断，未达终态。"
     }
   ],
   "defects_found_and_fixed": [
@@ -321,6 +323,129 @@
       "what": "上一轮 A/B/C 的进程检查",
       "why": "home 字符串匹配对运行中的 Runtime 恒为 ABSENT",
       "status": "INVALID — 不作为通过依据"
+    }
+  ],
+  "review_correction_r6": {
+    "round": "R6-normal-windows-unblock",
+    "goal": "解决 commandcode 插件安装并完成安装版 A/B/C",
+    "environmentFix": {
+      "rootCause": "pnpm store 位于 H:\\dev\\pnpm-store（或 C:\\Users\\LIN\\AppData\\Local 非 %TEMP% 路径）时，registerProject 的 projects/<hash> 变成真实目录，后续 unlink 报 EPERM",
+      "fix": "pnpm store 指向 %TEMP% 下的独立目录（本轮 C:\\Users\\LIN\\AppData\\Local\\Temp\\pnpm-store-ags-abc）",
+      "notDone": "未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm，未改 Provider 或 DSH 通信"
+    },
+    "pluginInstall": {
+      "package": "@mars-sea/dsh-commandcode-provider",
+      "version": "0.15.4",
+      "command": "dsh plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4",
+      "targetProfile": "<userData>/dsh-home/profiles/sdk",
+      "log": "task.profile.ready ok:true detail:\"provider installed\"",
+      "installed": true
+    },
+    "realRun": {
+      "summaryGeneratedAt": "2026-11-12T06:41:51.506Z",
+      "ok": false,
+      "A": {
+        "runtimeIdentityCount": 2,
+        "identities": [
+          {
+            "pid": 25824,
+            "creationMs": 1794465151013,
+            "capturedAt": "2026-11-12T06:32:31.764Z",
+            "source": "parent-and-bin"
+          },
+          {
+            "pid": 22640,
+            "creationMs": 1794465164825,
+            "capturedAt": "2026-11-12T06:32:46.087Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "verdicts": [
+          "ABSENT",
+          "ABSENT"
+        ],
+        "taskSucceeded": false
+      },
+      "B": {
+        "runtimeIdentityCount": 3,
+        "identities": [
+          {
+            "pid": 19648,
+            "creationMs": 1794465335229,
+            "capturedAt": "2026-11-12T06:35:35.825Z",
+            "source": "parent-and-bin"
+          },
+          {
+            "pid": 23808,
+            "creationMs": 1794465340027,
+            "capturedAt": "2026-11-12T06:35:41.131Z",
+            "source": "parent-and-bin"
+          },
+          {
+            "pid": 8864,
+            "creationMs": 1794465345237,
+            "capturedAt": "2026-11-12T06:35:46.418Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "verdicts": [
+          "ABSENT",
+          "ABSENT",
+          "ABSENT"
+        ],
+        "allGone": true,
+        "logEvidence": "rt-001 → INTERRUPTED（stop requested）→ resume → rt-002；task.resumed sessionId=studio-task-d28c3fca-a1 attemptId=att-task-d28c3fca-2"
+      },
+      "C": {
+        "crashIdentities": [
+          {
+            "pid": 9400,
+            "creationMs": 1794465519526,
+            "capturedAt": "2026-11-12T06:38:40.255Z",
+            "source": "parent-and-bin"
+          },
+          {
+            "pid": 21312,
+            "creationMs": 1794465522940,
+            "capturedAt": "2026-11-12T06:38:44.196Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "crashVerdicts": [
+          "ABSENT",
+          "ABSENT"
+        ],
+        "recoveryIdentities": [
+          {
+            "pid": 25572,
+            "creationMs": 1794465528967,
+            "capturedAt": "2026-11-12T06:38:49.779Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "recoveryVerdicts": [
+          "ABSENT"
+        ],
+        "logEvidence": "rt-001 → app.exit(9) → 重启 → INTERRUPTED（recovery）→ resume；模型 RATE_LIMIT"
+      },
+      "watcherNote": "R6 使用修复前 watcher，dsh plugin CLI 被计入；已在本轮修复并加单测"
+    },
+    "modelQuota": {
+      "code": "RATE_LIMIT",
+      "resetsAt": "2026-11-12T15:33:12+08:00"
+    },
+    "watcherFix": {
+      "what": "discoverRuntimeIdentities 排除 dsh plugin CLI",
+      "tests": "process-identity 12/12"
+    },
+    "evidence": "evidence/phase-01-c/real-run-r6.md"
+  },
+  "resolved": [
+    {
+      "id": "B-INSTALL-1",
+      "what": "provider 安装失败",
+      "resolution": "pnpm store 移到 %TEMP% 后 dsh plugin add 真实成功",
+      "evidence": "evidence/phase-01-c/real-run-r6.md"
     }
   ]
 }

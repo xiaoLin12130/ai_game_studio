@@ -1,6 +1,6 @@
 # PHASE 01-C 工作报告 — DSH Session 生命周期与 Studio Task 状态管理
 
-> **状态：`BLOCKED`（补正轮 / 第 5 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+> **状态：`BLOCKED`（R6 / 环境解阻塞轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
 >
 > 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。第 5 轮（记录修正）统一根因与范围表述、明确 A/B/C 属原始验收范围，并把历史测试与本轮测试分开记录。
 
@@ -103,6 +103,21 @@
 
 C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、无 runtime close），崩溃后立即用崩溃前捕获的身份查进程表。该机制代码已就绪，待环境具备 `commandcode` provider 后可复验。
 
+### 6.4 R6：环境解阻塞与安装版真实运行
+
+**根因与修复**：provider 安装失败的根因不是 DSH 版本、不是依赖漂移、不是 Provider 代码缺陷，而是 **pnpm store 路径**——当 store 位于 `H:\dev\pnpm-store`（或非 `%TEMP%` 的 C: 路径）时，pnpm 的 `registerProject` 会把 `projects/<hash>` 落成真实目录，后续 `unlink` 恒报 `EPERM`。把 store 指向 `%TEMP%` 下的独立目录后，`pnpm add` 成功，`projects/<hash>` 为 junction。未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm。
+
+**插件安装（真实）**：`TaskService.ensureProfile()` 执行 `dsh plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4`，日志 `task.profile.ready ok:true "provider installed"`；目标 `<userData>/dsh-home/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider` 版本 `0.15.4`（不是 `~/.dsh` 下的其他 profile）。
+
+**A/B/C 真实运行**（`packaged/summary.json`，run `2026-11-12T06:41:51Z`）：
+- A：插件安装成功，`runtime.start` → `RUNNING`；捕获 2 个身份（含 `dsh plugin` CLI），均 `ABSENT`。
+- B：`rt-001 → INTERRUPTED（stop requested）→ resume → rt-002`；`task.resumed sessionId=studio-task-d28c3fca-a1`、`attemptId=…-2`（原生 `resumeSession` 复用原 session）；捕获 3 个身份（插件 CLI + rt-001 + rt-002），均 `ABSENT`。
+- C：`rt-001 → app.exit(9) → 重启 → INTERRUPTED（recovery）→ resume`；崩溃前 2 个、恢复 1 个身份，均 `ABSENT`。
+
+**剩余阻断**：真实模型调用返回 `RATE_LIMIT`——Command Code 账户用量窗口耗尽，最早 `2026-11-12 15:33:12` 重置；A/B/C 未到终态，阶段 `BLOCKED`。复验命令见 `evidence/phase-01-c/real-run-r6.md`。
+
+**watcher 修复**：R6 暴露 `dsh plugin` CLI 被计入任务 Runtime（A=2、B=3）。已在 `discoverRuntimeIdentities` 排除 `bin.js plugin`，新增单测，`process-identity` 12/12。
+
 ## 7. 测试与回归
 
 | 命令 | 退出码 | 结果 | 证据 |
@@ -110,9 +125,9 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `tsc -p tsconfig.json` | 0 | — | `unit/tsc.txt` |
 | `node --test`（应用全量，连续两次） | 0 / 0 | **101/101**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
 | `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
-| `node --test test/process-identity.test.js` | 0 | **11/11**（PRESENT/ABSENT/FAILED/UNKNOWN + `discoverRuntimeIdentities` 返回全部/查询失败/全退出） | `unit/process-identity.txt` |
+| `node --test test/process-identity.test.js` | 0 | **12/12**（四态 + `discoverRuntimeIdentities` 返回全部/查询失败/全退出 + 排除 `dsh plugin` CLI） | `unit/process-identity.txt` |
 | `node --test test/identity-watcher.test.mjs` | 0 | **6/6**（stop() 排空在途查询；watchErrors 计入 allGone；四态/空集不算通过） | `unit/identity-watcher.txt` |
-| `node scripts/smoke-tasks-packaged.mjs <installed>` | 1 | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） | `packaged/summary.json` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>`（`PNPM_CONFIG_STORE_DIR=%TEMP%\…`） | 1 | **BLOCKED**：插件已真实安装、A/B/C runtime 已启动（B 复用原 session，C 崩溃后恢复），但模型回合 `RATE_LIMIT`（15:33:12 重置）；42 项检查 / 20 失败 | `packaged/summary.json`、`real-run-r6.md` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |
@@ -148,6 +163,6 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 
 ## 10. 结论
 
-原始目标 1–8 代码已实现；B 场景第二个 Runtime 的 OS 进程退出验证**代码已补齐并由单元测试覆盖**（`process-identity` 11/11、`identity-watcher` 6/6）。补正轮修掉 watcher 的排空与错误缺口，并把 `commandcode` 不匹配定位为**陈旧打包（out-g 缺任务场景）+ 沙箱 pnpm 限制（provider 插件装不上）**，非依赖版本变化、非 Provider 代码缺陷。**安装版 A/B/C 复验仍被环境阻断**（B-INSTALL-1），无法交付"两个 Runtime 均 ABSENT"的安装版实证。状态文件 C2/C5/C6 已据实改为 `BLOCKED`。
+R6 定位并解阻塞了 provider 安装：**pnpm store 必须在 `%TEMP%` 的独立目录**；随后 `dsh plugin add` 真实安装 `@mars-sea/dsh-commandcode-provider 0.15.4`，A/B/C 真实执行到 runtime/中断/恢复阶段（B 用原生 `resumeSession` 复用原 session 并启动 rt-002；C 崩溃后重启恢复），所有捕获 runtime 均 `ABSENT`。**唯一剩余阻断是模型账户用量窗口**（`RATE_LIMIT`，`2026-11-12 15:33:12` 重置），A/B/C 未到终态。
 
-状态：**`BLOCKED`**（代码完成 + 单元验证；安装版复验被沙箱环境阻断），等待外部独立评审与可正常 `pnpm add` 的环境复验。
+状态：**`BLOCKED`**（环境已解阻塞；等待用量窗口重置后复跑 A/B/C 至终态）。未自行批准关闭。

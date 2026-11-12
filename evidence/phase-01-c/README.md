@@ -13,7 +13,10 @@
 | `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **R5 本轮** | **6/6** |
 | `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | R2 历史 | 2/2 |
 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` | 隔离连续三次 | R2 历史 | 各 2/2 |
-| `packaged/summary.json` | **安装版 A/B/C 复验** | R4 运行（本轮未重跑） | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） |
+| `packaged/summary.json` | **安装版 A/B/C 复验** | **R6 本轮** | **BLOCKED**：插件已真实安装、A/B/C runtime 已启动，但模型回合 `RATE_LIMIT`（15:33:12 重置）；42 项检查 / 20 失败 |
+| `packaged/summary-r4.json` | R4 真实失败运行（`PROFILE_NOT_READY`） | R4 历史 | `ok:false`，保留审计 |
+| `packaged/summary-r6-preinstall.json` | R6 修复前真实失败运行（pnpm store 污染 → `PROFILE_NOT_READY`） | R6 修复前 | `ok:false`，保留审计 |
+| `real-run-r6.md` | R6 环境修复与真实运行记录 | **R6 本轮** | — |
 | `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | R2 历史 | `toolCalled: true` |
 | `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | R2 历史 | 166/166，PASS，0 泄漏 |
 | `regression/phase01a-failure.txt`、`phase01a-quit.txt`、`phase01a-ready.txt` | PHASE 01-A 三个冒烟 | R2 历史 | 退出码 0 |
@@ -51,6 +54,15 @@
 本轮未改 Provider、未重写 DSH 通信、未伪造成功；`packaged/summary.json` 保留为真实实跑结果（`ok:false`）。
 
 **R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（`~/.dsh/.credentials.yaml`，仅检查存在性）。**路径澄清**：Studio 实际 `dshHome=<userData>/dsh-home`、`profile=sdk`，目标 `<userData>/dsh-home/profiles/sdk` **无 `node_modules`、插件未安装**（`~/.dsh/profiles/{desktop,headless,web,sdk}` 均属其他 DSH Home，不能作为证据）。pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 正常），故 R5 未执行 A/B/C，未采用改 store 目录/关闭安全垫等绕过方式。详见 `verification.json` 的 `environmentCheck`（环境状态的唯一权威来源；`currentSession` / `normalWindowsPrerequisites.{checked,notVerified}` / `abcStatus=NOT_RUN` / `pluginPaths`）。
+
+### R6 环境解阻塞与真实运行
+
+- **根因**：pnpm store 位于 `H:\dev\pnpm-store`（或非 `%TEMP%` 的 C: 路径）时，`registerProject` 的 `projects/<hash>` 变成真实目录，后续 `unlink` 报 `EPERM`。
+- **修复**：store 指向 `%TEMP%` 下的独立目录（本轮 `C:\Users\LIN\AppData\Local\Temp\pnpm-store-ags-abc`）。未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm。
+- **插件安装**：`task.profile.ready ok:true "provider installed"`；目标 `<userData>/dsh-home/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider` 版本 `0.15.4`。
+- **A/B/C**：A 启动 runtime；B `rt-001 → INTERRUPTED → resume → rt-002`（`sessionId=studio-task-d28c3fca-a1`、`attemptId=…-2`）；C `rt-001 → app.exit(9) → 重启 → INTERRUPTED → resume`。所有捕获 runtime 均 `ABSENT`。
+- **剩余阻断**：模型调用 `RATE_LIMIT`，账户用量窗口 `2026-11-12 15:33:12` 重置；A/B/C 未到终态，阶段 `BLOCKED`。
+- **watcher 修复**：R6 暴露 `dsh plugin` CLI 被计入 Runtime（A=2、B=3）；已在 `discoverRuntimeIdentities` 排除，`process-identity` 12/12。
 
 **A/B/C 属 PHASE 01-C 原始验收范围**，不因环境阻断而移出范围。正常 Windows 环境复验：
 

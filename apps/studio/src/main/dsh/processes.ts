@@ -379,6 +379,17 @@ export async function captureRuntimeIdentity(
  * two runtimes over its lifetime, and both have to be proven gone. This returns all of them
  * so the caller can check each one, and reports ambiguity as a count rather than a guess.
  */
+/**
+ * `dsh plugin ...` is the package-manager entry, not a task runtime: it exists only while
+ * `ensureProfile()` installs the provider. Counting it as a runtime makes a scenario that
+ * owns two runtimes look like it owns three, so it is excluded from discovery.
+ */
+const PLUGIN_CLI = /\bbin\.js["']?\s+plugin\b/
+
+function isPluginCli(proc: ProcessInfo): boolean {
+  return PLUGIN_CLI.test(proc.commandLine)
+}
+
 export async function discoverRuntimeIdentities(
   table: ProcessTable,
   options: { parentPid: number; binMarker: string; boundMs?: number },
@@ -386,7 +397,7 @@ export async function discoverRuntimeIdentities(
   const listing = await table.listChildren(options.parentPid, options.boundMs ?? 8000)
   if (!listing.ok) return { ok: false, identities: [], error: listing.error ?? 'process query failed' }
   const matches = listing.processes.filter(
-    (proc) => proc.parentPid === options.parentPid && proc.commandLine.includes(options.binMarker),
+    (proc) => proc.parentPid === options.parentPid && proc.commandLine.includes(options.binMarker) && !isPluginCli(proc),
   )
   return {
     ok: true,
