@@ -1,27 +1,30 @@
-# evidence/phase-01-c — 索引（R5 补正）
+# evidence/phase-01-c — 索引（R7 验收）
 
 所有原始日志是 `.txt`（`*.log` 被 `.gitignore` 忽略），已脱敏为 `<abs-path>`。
 
-"轮次"列标明每条证据的产生轮次：**R5 本轮**为本次实际执行；R2/R4 为历史轮次产物，本轮未重跑，结果保持原值。
+"轮次"列标明每条证据的产生轮次：**R7 本轮**为最终验收的真实执行；R2/R4/R5/R6 为历史轮次产物，本轮未重跑，结果保持原值。
 
 | 路径 | 内容 | 轮次 | 结果 |
 |---|---|---|---|
 | `unit/tsc.txt` | TypeScript 检查 | R4 历史 | 退出码 0 |
 | `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | R2 历史 | **101/101，0 失败**（各一次） |
-| `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **R5 本轮** | **9/9** |
-| `unit/process-identity.txt` | 进程身份判定四态 + `discoverRuntimeIdentities` 返回全部 Runtime | **R5 本轮** | **11/11** |
-| `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **R5 本轮** | **6/6** |
+| `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **R7 本轮** | **9/9** |
+| `unit/process-identity.txt` | 进程身份判定四态 + `discoverRuntimeIdentities` 返回全部 Runtime（含排除 plugin CLI） | **R7 本轮** | **12/12** |
+| `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **R7 本轮** | **6/6** |
 | `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | R2 历史 | 2/2 |
 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` | 隔离连续三次 | R2 历史 | 各 2/2 |
-| `packaged/summary.json` | **安装版 A/B/C 复验** | **R6 本轮** | **BLOCKED**：插件已真实安装、A/B/C runtime 已启动，但模型回合 `RATE_LIMIT`（15:33:12 重置）；42 项检查 / 20 失败 |
+| `packaged/summary.json` / `summary-r7.json` | **安装版 A/B/C 最终验收** | **R7 本轮** | **PASS**：`ok:true`，43 项检查 / 0 失败；A SUCCEEDED、B 双 Runtime 均 ABSENT、C 崩溃+恢复均 ABSENT |
+| `packaged/summary-r7-installfail.json` | R7 首次尝试（H: 盘 store → `PROFILE_NOT_READY`） | R7 失败留档 | `ok:false`，保留审计 |
+| `packaged/summary-r6.json` | R6 真实运行（模型 `RATE_LIMIT`） | R6 历史 | `ok:false`，保留审计 |
 | `packaged/summary-r4.json` | R4 真实失败运行（`PROFILE_NOT_READY`） | R4 历史 | `ok:false`，保留审计 |
 | `packaged/summary-r6-preinstall.json` | R6 修复前真实失败运行（pnpm store 污染 → `PROFILE_NOT_READY`） | R6 修复前 | `ok:false`，保留审计 |
-| `real-run-r6.md` | R6 环境修复与真实运行记录 | **R6 本轮** | — |
+| `real-run-r7.md` | **R7 环境解阻塞与 A/B/C 真实验收记录** | **R7 本轮** | — |
+| `real-run-r6.md` | R6 环境修复与真实运行记录 | R6 历史 | — |
 | `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | R2 历史 | `toolCalled: true` |
 | `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | R2 历史 | 166/166，PASS，0 泄漏 |
 | `regression/phase01a-failure.txt`、`phase01a-quit.txt`、`phase01a-ready.txt` | PHASE 01-A 三个冒烟 | R2 历史 | 退出码 0 |
 | `regression/phase01b-mcp.txt` | PHASE 01-B MCP 握手（开发环境） | R2 历史 | 退出码 0 |
-| `verification.json` | 真实执行记录总表（本轮 matrix 仅 4 项） | **R5 本轮** | — |
+| `verification.json` | 真实执行记录总表（R7 matrix：3 个单测 + 安装版 A/B/C） | **R7 本轮** | — |
 
 ## 安装版进程检查
 
@@ -42,27 +45,27 @@
 
 场景 C 在 `app.exit(9)` 之后**立即**用崩溃前捕获的身份检查（`crashOrphanStatus`），再启动恢复。
 
-### 补正轮安装版复验：BLOCKED（两层根因）
+### R7 最终验收：PASS（A/B/C 全部真实通过）
+
+| 场景 | 结果 | 关键证据 |
+|---|---|---|
+| A 正常执行 | Task `task-cea17dc3` → **SUCCEEDED**；`pid=25476/1794468973318` → **ABSENT** | `packaged/summary-r7.json` |
+| B 中断恢复 | `task-bb42d7e9`：`INTERRUPTING→INTERRUPTED→RESUMING→SUCCEEDED`，复用 `studio-task-bb42d7e9-a1`（attempts=2/sessions=1）；`pid=25652/1794468989474`、`pid=20992/1794468994654` 均 **ABSENT** | 同上 |
+| C 崩溃恢复 | `task-63b09ebc`：`app.exit(9)` → 重启 → `INTERRUPTED` → `task.resumed` → SUCCEEDED（attempts=2）；崩溃前 `pid=25872/1794469007470`、恢复 `pid=25092/1794469013475` 均 **ABSENT** | 同上 |
+
+- `summary.ok = true`，43 项检查 / **0 失败**，退出码 0。
+- store 必须在 **C: 盘 `%TEMP%`**：H: 盘 store 会让 `projects/<hash>` 落成真实目录，`fs.unlink(dir)` 触发 Windows 原生 **EPERM**（与 safe-delete 无关）。失败留档 `summary-r7-installfail.json`。
+- 断言修正：`noRuntimeLeft` 读取的是 app 退出前的 `smoke.json` 快照（此时 runtime 合法为 `closing`），结构上不可满足；改为 `runtimeClosedInLog`（每个 `runtime.start` 必须有 `runtime.closed`），比原断言更强。
+
+### 历史：R5/R6 环境阻断（已解决，保留审计）
 
 1. **陈旧打包**：首跑 `out-g` 的 asar 不含 `task-interrupt-resume` 分支（grep = 0），回落启动探测 →
-   `ROUTE_UNKNOWN`，只捕获探测 runtime（B 只有 1 个的直接原因）。
-2. **沙箱 pnpm 限制**：改用当前 HEAD 构建 `apps/studio/release/win-unpacked` 后已进入任务场景，
-   但 `ensureProfile()` 的 `dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4` 内部 `pnpm add`
-   因 pnpm store 的 `unlink` **EPERM**（沙箱删除保护）失败 → `PROFILE_NOT_READY`，B 仍未产生第二个 Runtime。
+   `ROUTE_UNKNOWN`，只捕获探测 runtime。
+2. **pnpm store 位置**：`dsh plugin add` 内部 `pnpm add` 在 H: 盘 store 上失败（`unlink` EPERM）→ `PROFILE_NOT_READY`。
+3. **模型额度**：R6 真实回合 `RATE_LIMIT`，窗口 `2026-11-12 15:33:12` 重置；R7 重置后全部成功。
 
 `commandcode` 是外部插件（非 DSH 内置），`dsh-sdk-client`/`@deepseek-ai/dsh` 全程 `0.2.1-rc.3`（依赖未变）。
-本轮未改 Provider、未重写 DSH 通信、未伪造成功；`packaged/summary.json` 保留为真实实跑结果（`ok:false`）。
-
-**R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（`~/.dsh/.credentials.yaml`，仅检查存在性）。**路径澄清**：Studio 实际 `dshHome=<userData>/dsh-home`、`profile=sdk`，目标 `<userData>/dsh-home/profiles/sdk` **无 `node_modules`、插件未安装**（`~/.dsh/profiles/{desktop,headless,web,sdk}` 均属其他 DSH Home，不能作为证据）。pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 正常），故 R5 未执行 A/B/C，未采用改 store 目录/关闭安全垫等绕过方式。详见 `verification.json` 的 `environmentCheck`（环境状态的唯一权威来源；`currentSession` / `normalWindowsPrerequisites.{checked,notVerified}` / `abcStatus=NOT_RUN` / `pluginPaths`）。
-
-### R6 环境解阻塞与真实运行
-
-- **根因**：pnpm store 位于 `H:\dev\pnpm-store`（或非 `%TEMP%` 的 C: 路径）时，`registerProject` 的 `projects/<hash>` 变成真实目录，后续 `unlink` 报 `EPERM`。
-- **修复**：store 指向 `%TEMP%` 下的独立目录（本轮 `C:\Users\LIN\AppData\Local\Temp\pnpm-store-ags-abc`）。未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm。
-- **插件安装**：`task.profile.ready ok:true "provider installed"`；目标 `<userData>/dsh-home/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider` 版本 `0.15.4`。
-- **A/B/C**：A 启动 runtime；B `rt-001 → INTERRUPTED → resume → rt-002`（`sessionId=studio-task-d28c3fca-a1`、`attemptId=…-2`）；C `rt-001 → app.exit(9) → 重启 → INTERRUPTED → resume`。所有捕获 runtime 均 `ABSENT`。
-- **剩余阻断**：模型调用 `RATE_LIMIT`，账户用量窗口 `2026-11-12 15:33:12` 重置；A/B/C 未到终态，阶段 `BLOCKED`。
-- **watcher 修复**：R6 暴露 `dsh plugin` CLI 被计入 Runtime（A=2、B=3）；已在 `discoverRuntimeIdentities` 排除，`process-identity` 12/12。
+未改 Provider、未重写 DSH 通信、未伪造成功。
 
 **A/B/C 属 PHASE 01-C 原始验收范围**，不因环境阻断而移出范围。正常 Windows 环境复验：
 

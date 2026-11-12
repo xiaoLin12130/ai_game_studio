@@ -93,7 +93,8 @@ async function run(mode, userData, timeoutMs = 420000) {
   const smokePath = path.join(outDir, 'smoke.json')
   const smoke = fs.existsSync(smokePath) ? JSON.parse(fs.readFileSync(smokePath, 'utf8')) : null
   const logPath = path.join(userData, 'logs', 'studio.log')
-  const log = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8').split(/\r?\n/).filter(Boolean).slice(-40) : []
+  const logAll = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8').split(/\r?\n/).filter(Boolean) : []
+  const log = logAll.slice(-40)
   return {
     mode,
     wallMs: Date.now() - started,
@@ -101,6 +102,7 @@ async function run(mode, userData, timeoutMs = 420000) {
     timedOut: exit.timedOut,
     smoke,
     logTail: log,
+    logAll,
     runtimeIdentities: identities,
     runtimeIdentityCount: identities.length,
     identityWatchErrors: watcherErrors,
@@ -133,6 +135,26 @@ const checkAllIdentities = (identities, watchErrors = []) =>
 
 const disposeFailed = (logTail) => (logTail ?? []).some((line) => line.includes('task.service.dispose.failed') || line.includes('runtime.close.failed'))
 
+/**
+ * Every runtime the app started must also be seen closing.
+ *
+ * The in-app smoke snapshot is written when the task reaches its terminal state, which is
+ * before app-quit disposes the runtime — so the snapshot legitimately still lists the runtime
+ * as `closing`. The log is the only place that records the close itself, so the assertion is
+ * made against it; the authoritative exit proof remains the OS identity check (ABSENT).
+ */
+function runtimesAllClosed(logLines) {
+  const started = new Set()
+  const closed = new Set()
+  for (const line of logLines ?? []) {
+    const start = line.match(/"event":\s*"runtime\.start"\s*,\s*"runtimeId":\s*"([^"]+)"/)
+    if (start) started.add(start[1])
+    const end = line.match(/"event":\s*"runtime\.closed"\s*,\s*"runtimeId":\s*"([^"]+)"/)
+    if (end) closed.add(end[1])
+  }
+  return started.size > 0 && [...started].every((id) => closed.has(id))
+}
+
 function lingering() {
   const result = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command',
     "Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like '*AI Game Studio*' } | Select-Object -ExpandProperty ProcessId"],
@@ -164,7 +186,7 @@ fs.mkdirSync(OUT, { recursive: true })
     hadSession: (result.smoke?.task?.sessions ?? 0) >= 1,
     verified: (result.smoke?.task?.verifications ?? []).includes(true),
     transitionsOk: (result.smoke?.task?.transitions ?? []).includes('VERIFYING'),
-    noRuntimeLeft: (result.smoke?.runtimes ?? []).length === 0,
+    runtimeClosedInLog: runtimesAllClosed(result.logAll),
     noLingeringApp: lingering().length === 0,
   }
 }
@@ -193,6 +215,7 @@ fs.mkdirSync(OUT, { recursive: true })
     resumedToTerminal: ['SUCCEEDED', 'FAILED'].includes(result.smoke?.finalStatus),
     sessionReused: (result.smoke?.task?.sessions ?? 0) === 1,
     twoAttempts: (result.smoke?.task?.attempts ?? 0) === 2,
+    runtimeClosedInLog: runtimesAllClosed(result.logAll),
     noLingeringApp: lingering().length === 0,
   }
 }

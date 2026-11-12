@@ -2,37 +2,37 @@ TAP version 13
 # Subtest: stop waits for the discovery still in flight and keeps what it found
 ok 1 - stop waits for the discovery still in flight and keeps what it found
   ---
-  duration_ms: 4.0438
+  duration_ms: 3.84
   type: 'test'
   ...
 # Subtest: a discovery error is recorded, and doubt never reads as a clean check
 ok 2 - a discovery error is recorded, and doubt never reads as a clean check
   ---
-  duration_ms: 0.8077
+  duration_ms: 0.7544
   type: 'test'
   ...
 # Subtest: the watcher keeps one entry per (pid, creationMs)
 ok 3 - the watcher keeps one entry per (pid, creationMs)
   ---
-  duration_ms: 0.1629
+  duration_ms: 0.164
   type: 'test'
   ...
 # Subtest: verifyIdentities passes only when every captured runtime is ABSENT and nothing failed
 ok 4 - verifyIdentities passes only when every captured runtime is ABSENT and nothing failed
   ---
-  duration_ms: 0.2167
+  duration_ms: 0.1946
   type: 'test'
   ...
 # Subtest: PRESENT, FAILED and UNKNOWN are never a pass
 ok 5 - PRESENT, FAILED and UNKNOWN are never a pass
   ---
-  duration_ms: 0.2811
+  duration_ms: 0.2752
   type: 'test'
   ...
 # Subtest: an empty result cannot prove that nothing leaked
 ok 6 - an empty result cannot prove that nothing leaked
   ---
-  duration_ms: 0.1924
+  duration_ms: 0.1945
   type: 'test'
   ...
 1..6
@@ -43,4 +43,4 @@ ok 6 - an empty result cannot prove that nothing leaked
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 86.9593
+# duration_ms 84.5516

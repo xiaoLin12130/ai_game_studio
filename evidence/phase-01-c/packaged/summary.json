@@ -1,103 +1,356 @@
 {
-  "generatedAt": "2026-11-12T06:41:51.506Z",
+  "generatedAt": "2026-11-12T07:37:02.017Z",
   "exe": "<abs-path>",
   "checks": {
-    "A.exitZero": false,
+    "A.exitZero": true,
     "A.disposeHadNoFailure": true,
     "A.runtimeIdentityCaptured": true,
     "A.runtimeProcessGone": true,
-    "A.runtimeCheckStatus": "ABSENT,ABSENT",
+    "A.runtimeCheckStatus": "ABSENT",
     "A.noIdentityWatchErrors": true,
-    "A.producedSmoke": false,
-    "A.taskSucceeded": false,
-    "A.hadSession": false,
-    "A.verified": false,
-    "A.transitionsOk": false,
-    "A.noRuntimeLeft": true,
+    "A.producedSmoke": true,
+    "A.taskSucceeded": true,
+    "A.hadSession": true,
+    "A.verified": true,
+    "A.transitionsOk": true,
+    "A.runtimeClosedInLog": true,
     "A.noLingeringApp": true,
-    "B.exitZero": false,
+    "B.exitZero": true,
     "B.disposeHadNoFailure": true,
-    "B.runtimeIdentityCount": false,
-    "B.runtimeIdentitiesDistinct": false,
+    "B.runtimeIdentityCount": true,
+    "B.runtimeIdentitiesDistinct": true,
     "B.allRuntimeProcessesGone": true,
-    "B.runtimeCheckStatus": "ABSENT,ABSENT,ABSENT",
+    "B.runtimeCheckStatus": "ABSENT,ABSENT",
     "B.noIdentityWatchErrors": true,
-    "B.producedSmoke": false,
-    "B.wasInterrupted": false,
-    "B.interruptedIsRecorded": false,
-    "B.resumedToTerminal": false,
-    "B.sessionReused": false,
-    "B.twoAttempts": false,
+    "B.producedSmoke": true,
+    "B.wasInterrupted": true,
+    "B.interruptedIsRecorded": true,
+    "B.resumedToTerminal": true,
+    "B.sessionReused": true,
+    "B.twoAttempts": true,
+    "B.runtimeClosedInLog": true,
     "B.noLingeringApp": true,
     "C.crashedAsExpected": true,
     "C.crashLeftTaskRunning": true,
-    "C.recoveryProducedSmoke": false,
-    "C.sawInterruptedState": false,
-    "C.resumedToTerminal": false,
-    "C.recordedNewAttempt": false,
-    "C.appExited": false,
+    "C.recoveryProducedSmoke": true,
+    "C.sawInterruptedState": true,
+    "C.resumedToTerminal": true,
+    "C.recordedNewAttempt": true,
+    "C.appExited": true,
     "C.noLingeringApp": true,
     "C.disposeHadNoFailure": true,
     "C.runtimeProcessGone": true,
     "C.runtimeCheckStatus": "ABSENT",
     "C.crashCapturedIdentity": true,
-    "C.crashOrphanStatus": "ABSENT,ABSENT",
+    "C.crashOrphanStatus": "ABSENT",
     "C.crashLeftNoOrphan": true,
     "C.noIdentityWatchErrors": true
   },
-  "failed": [
-    "A.exitZero",
-    "A.producedSmoke",
-    "A.taskSucceeded",
-    "A.hadSession",
-    "A.verified",
-    "A.transitionsOk",
-    "B.exitZero",
-    "B.runtimeIdentityCount",
-    "B.runtimeIdentitiesDistinct",
-    "B.producedSmoke",
-    "B.wasInterrupted",
-    "B.interruptedIsRecorded",
-    "B.resumedToTerminal",
-    "B.sessionReused",
-    "B.twoAttempts",
-    "C.recoveryProducedSmoke",
-    "C.sawInterruptedState",
-    "C.resumedToTerminal",
-    "C.recordedNewAttempt",
-    "C.appExited"
-  ],
-  "ok": false,
+  "failed": [],
+  "ok": true,
   "scenarios": {
     "A": {
       "mode": "task-run",
-      "wallMs": 181109,
-      "exitCode": 4,
+      "wallMs": 13427,
+      "exitCode": 0,
       "timedOut": false,
-      "smoke": null,
+      "smoke": {
+        "generatedAt": "2026-11-12T07:36:21.700Z",
+        "mode": "task-run",
+        "task": {
+          "id": "task-cea17dc3",
+          "status": "SUCCEEDED",
+          "attempts": 1,
+          "sessions": 1,
+          "transitions": [
+            "CREATED",
+            "QUEUED",
+            "PREPARING",
+            "RUNNING",
+            "VERIFYING",
+            "SUCCEEDED"
+          ],
+          "verifications": [
+            true
+          ],
+          "error": null,
+          "events": [
+            {
+              "id": 2,
+              "kind": "run.observed",
+              "summary": "events=17 idle=true error= types=[\"permission/preset\",\"sandbox/mode\",\"approval/policy\",\"agent/inbox/spliced\",\"turn/start\",\"agent/inbox/spliced\",\"step/start\",\"system/message\",\"user/message\",\"user/message\",\"user/message\",\"request/header\",\"request/context\",\"session/title\",\"assistant/message\",\"step/end\",\"turn/end\"] last={\"type\":\"turn/end\",\"seq\":16,\"time\":1794468981451,\"data\":{\"turn\":1,\"reason\":{\"kind\":\"completed\"}}}",
+              "at": "2026-11-12T07:36:21.452Z"
+            },
+            {
+              "id": 1,
+              "kind": "run.started",
+              "summary": "session studio-task-cea17dc3-a1",
+              "at": "2026-11-12T07:36:18.938Z"
+            }
+          ]
+        },
+        "finalStatus": "SUCCEEDED",
+        "runtimes": []
+      },
       "logTail": [
-        "{\"ts\":\"2026-11-12T06:32:30.811Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
-        "{\"ts\":\"2026-11-12T06:32:30.993Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-1779795d\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:32:44.800Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
-        "{\"ts\":\"2026-11-12T06:32:44.801Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-1779795d\",\"action\":\"start\",\"status\":\"CREATED\"}",
-        "{\"ts\":\"2026-11-12T06:32:44.805Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-1779795d\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
-        "{\"ts\":\"2026-11-12T06:32:44.809Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-1779795d\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
-        "{\"ts\":\"2026-11-12T06:32:44.818Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:32:47.532Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:32:47.533Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-1779795d\",\"isolation\":\"writable\",\"label\":\"packaged task run\"}",
-        "{\"ts\":\"2026-11-12T06:32:47.542Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-1779795d\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
+        "{\"ts\":\"2026-11-12T07:36:09.468Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
+        "{\"ts\":\"2026-11-12T07:36:09.642Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-cea17dc3\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.292Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.293Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-cea17dc3\",\"action\":\"start\",\"status\":\"CREATED\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.296Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.300Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.310Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.926Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.927Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-cea17dc3\",\"isolation\":\"writable\",\"label\":\"packaged task run\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.936Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.462Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.468Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.529Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"completed\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.701Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+        "{\"ts\":\"2026-11-12T07:36:21.708Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+      ],
+      "logAll": [
+        "{\"ts\":\"2026-11-12T07:36:09.468Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
+        "{\"ts\":\"2026-11-12T07:36:09.642Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-cea17dc3\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.292Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.293Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-cea17dc3\",\"action\":\"start\",\"status\":\"CREATED\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.296Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.300Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:13.310Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.926Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.927Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-cea17dc3\",\"isolation\":\"writable\",\"label\":\"packaged task run\"}",
+        "{\"ts\":\"2026-11-12T07:36:18.936Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.462Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.468Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-cea17dc3\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.529Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"completed\"}",
+        "{\"ts\":\"2026-11-12T07:36:21.701Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+        "{\"ts\":\"2026-11-12T07:36:21.708Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
       ],
       "runtimeIdentities": [
         {
-          "pid": 25824,
-          "creationMs": 1794465151013,
-          "capturedAt": "2026-11-12T06:32:31.764Z",
+          "pid": 25476,
+          "creationMs": 1794468973318,
+          "capturedAt": "2026-11-12T07:36:14.539Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeIdentityCount": 1,
+      "identityWatchErrors": [],
+      "runtimeIdentitiesCaptured": [
+        {
+          "pid": 25476,
+          "creationMs": 1794468973318,
+          "capturedAt": "2026-11-12T07:36:14.539Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "runtimeChecks": {
+        "count": 1,
+        "checks": [
+          {
+            "identity": {
+              "pid": 25476,
+              "creationMs": 1794468973318,
+              "capturedAt": "2026-11-12T07:36:14.539Z",
+              "source": "parent-and-bin"
+            },
+            "verdict": {
+              "status": "ABSENT",
+              "pid": 25476,
+              "creationMs": 1794468973318,
+              "observedCreationMs": null,
+              "reason": "the pid no longer exists"
+            }
+          }
+        ],
+        "statuses": [
+          "ABSENT"
+        ],
+        "watchErrors": [],
+        "allGone": true
+      },
+      "checks": {
+        "exitZero": true,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCaptured": true,
+        "runtimeProcessGone": true,
+        "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "taskSucceeded": true,
+        "hadSession": true,
+        "verified": true,
+        "transitionsOk": true,
+        "runtimeClosedInLog": true,
+        "noLingeringApp": true
+      }
+    },
+    "B": {
+      "mode": "task-interrupt-resume",
+      "wallMs": 16325,
+      "exitCode": 0,
+      "timedOut": false,
+      "smoke": {
+        "generatedAt": "2026-11-12T07:36:40.262Z",
+        "mode": "task-interrupt-resume",
+        "phase": "done",
+        "atInterrupt": {
+          "id": "task-bb42d7e9",
+          "status": "INTERRUPTED",
+          "attempts": 1,
+          "sessions": 1,
+          "transitions": [
+            "CREATED",
+            "QUEUED",
+            "PREPARING",
+            "RUNNING",
+            "INTERRUPTING",
+            "INTERRUPTED"
+          ],
+          "verifications": [],
+          "error": null,
+          "events": [
+            {
+              "id": 2,
+              "kind": "run.observed",
+              "summary": "events=14 idle=false error=dsh profile \"sdk\": DeepSeek Harness runtime exited\nexit code: 0 types=[\"permission/preset\",\"sandbox/mode\",\"approval/policy\",\"agent/inbox/spliced\",\"turn/start\",\"agent/inbox/spliced\",\"step/start\",\"system/message\",\"user/message\",\"user/message\",\"user/message\",\"request/header\",\"request/context\",\"session/title\"] last={\"type\":\"session/title\",\"seq\":13,\"time\":1794468992916,\"data\":{\"title\":\"Count slowly from 1 to\",\"messageSeqs\":[8],\"source\":{\"kind\":\"fallback\"}}}",
+              "at": "2026-11-12T07:36:34.629Z"
+            },
+            {
+              "id": 1,
+              "kind": "run.started",
+              "summary": "session studio-task-bb42d7e9-a1",
+              "at": "2026-11-12T07:36:32.842Z"
+            }
+          ]
+        },
+        "task": {
+          "id": "task-bb42d7e9",
+          "status": "SUCCEEDED",
+          "attempts": 2,
+          "sessions": 1,
+          "transitions": [
+            "CREATED",
+            "QUEUED",
+            "PREPARING",
+            "RUNNING",
+            "INTERRUPTING",
+            "INTERRUPTED",
+            "RESUMING",
+            "RUNNING",
+            "VERIFYING",
+            "SUCCEEDED"
+          ],
+          "verifications": [
+            true
+          ],
+          "error": null,
+          "events": [
+            {
+              "id": 4,
+              "kind": "run.observed",
+              "summary": "events=9 idle=true error= types=[\"agent/inbox/spliced\",\"turn/start\",\"agent/inbox/spliced\",\"step/start\",\"user/message\",\"request/header\",\"assistant/message\",\"step/end\",\"turn/end\"] last={\"type\":\"turn/end\",\"seq\":26,\"time\":1794469000209,\"data\":{\"turn\":2,\"reason\":{\"kind\":\"completed\"}}}",
+              "at": "2026-11-12T07:36:40.210Z"
+            },
+            {
+              "id": 3,
+              "kind": "run.started",
+              "summary": "session studio-task-bb42d7e9-a1",
+              "at": "2026-11-12T07:36:37.462Z"
+            },
+            {
+              "id": 2,
+              "kind": "run.observed",
+              "summary": "events=14 idle=false error=dsh profile \"sdk\": DeepSeek Harness runtime exited\nexit code: 0 types=[\"permission/preset\",\"sandbox/mode\",\"approval/policy\",\"agent/inbox/spliced\",\"turn/start\",\"agent/inbox/spliced\",\"step/start\",\"system/message\",\"user/message\",\"user/message\",\"user/message\",\"request/header\",\"request/context\",\"session/title\"] last={\"type\":\"session/title\",\"seq\":13,\"time\":1794468992916,\"data\":{\"title\":\"Count slowly from 1 to\",\"messageSeqs\":[8],\"source\":{\"kind\":\"fallback\"}}}",
+              "at": "2026-11-12T07:36:34.629Z"
+            },
+            {
+              "id": 1,
+              "kind": "run.started",
+              "summary": "session studio-task-bb42d7e9-a1",
+              "at": "2026-11-12T07:36:32.842Z"
+            }
+          ]
+        },
+        "finalStatus": "SUCCEEDED",
+        "runtimes": [
+          {
+            "id": "rt-002",
+            "isolation": "writable",
+            "state": "closing",
+            "pid": null,
+            "sessions": 1,
+            "leases": 0
+          }
+        ]
+      },
+      "logTail": [
+        "{\"ts\":\"2026-11-12T07:36:24.968Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:25.146Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.446Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.448Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"start\",\"status\":\"CREATED\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.452Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.456Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.465Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.831Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.833Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.841Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.550Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"stop\",\"status\":\"RUNNING\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.553Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"INTERRUPTING\",\"reason\":\"user stopped the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.635Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"INTERRUPTED\",\"reason\":\"stop requested\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.637Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"interrupted\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.639Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.641Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.646Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.418Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.420Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-002\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.458Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-bb42d7e9\",\"sessionId\":\"studio-task-bb42d7e9-a1\",\"attemptId\":\"att-task-bb42d7e9-2\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.461Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.216Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.223Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.304Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-002\",\"reason\":\"completed\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.306Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[\"rt-002\"],\"failed\":[]}",
+        "{\"ts\":\"2026-11-12T07:36:40.317Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+      ],
+      "logAll": [
+        "{\"ts\":\"2026-11-12T07:36:24.968Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:25.146Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.446Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.448Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"start\",\"status\":\"CREATED\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.452Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.456Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:29.465Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.831Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.833Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:32.841Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.550Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"stop\",\"status\":\"RUNNING\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.553Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"INTERRUPTING\",\"reason\":\"user stopped the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.635Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"INTERRUPTED\",\"reason\":\"stop requested\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.637Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"interrupted\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.639Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-bb42d7e9\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.641Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
+        "{\"ts\":\"2026-11-12T07:36:34.646Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.418Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.420Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-002\",\"taskId\":\"task-bb42d7e9\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.458Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-bb42d7e9\",\"sessionId\":\"studio-task-bb42d7e9-a1\",\"attemptId\":\"att-task-bb42d7e9-2\"}",
+        "{\"ts\":\"2026-11-12T07:36:37.461Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.216Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.223Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-bb42d7e9\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.304Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-002\",\"reason\":\"completed\"}",
+        "{\"ts\":\"2026-11-12T07:36:40.306Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[\"rt-002\"],\"failed\":[]}",
+        "{\"ts\":\"2026-11-12T07:36:40.317Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+      ],
+      "runtimeIdentities": [
+        {
+          "pid": 25652,
+          "creationMs": 1794468989474,
+          "capturedAt": "2026-11-12T07:36:30.084Z",
           "source": "parent-and-bin"
         },
         {
-          "pid": 22640,
-          "creationMs": 1794465164825,
-          "capturedAt": "2026-11-12T06:32:46.087Z",
+          "pid": 20992,
+          "creationMs": 1794468994654,
+          "capturedAt": "2026-11-12T07:36:35.703Z",
           "source": "parent-and-bin"
         }
       ],
@@ -105,15 +358,15 @@
       "identityWatchErrors": [],
       "runtimeIdentitiesCaptured": [
         {
-          "pid": 25824,
-          "creationMs": 1794465151013,
-          "capturedAt": "2026-11-12T06:32:31.764Z",
+          "pid": 25652,
+          "creationMs": 1794468989474,
+          "capturedAt": "2026-11-12T07:36:30.084Z",
           "source": "parent-and-bin"
         },
         {
-          "pid": 22640,
-          "creationMs": 1794465164825,
-          "capturedAt": "2026-11-12T06:32:46.087Z",
+          "pid": 20992,
+          "creationMs": 1794468994654,
+          "capturedAt": "2026-11-12T07:36:35.703Z",
           "source": "parent-and-bin"
         }
       ],
@@ -122,30 +375,30 @@
         "checks": [
           {
             "identity": {
-              "pid": 25824,
-              "creationMs": 1794465151013,
-              "capturedAt": "2026-11-12T06:32:31.764Z",
+              "pid": 25652,
+              "creationMs": 1794468989474,
+              "capturedAt": "2026-11-12T07:36:30.084Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 25824,
-              "creationMs": 1794465151013,
+              "pid": 25652,
+              "creationMs": 1794468989474,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
           },
           {
             "identity": {
-              "pid": 22640,
-              "creationMs": 1794465164825,
-              "capturedAt": "2026-11-12T06:32:46.087Z",
+              "pid": 20992,
+              "creationMs": 1794468994654,
+              "capturedAt": "2026-11-12T07:36:35.703Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 22640,
-              "creationMs": 1794465164825,
+              "pid": 20992,
+              "creationMs": 1794468994654,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
@@ -159,178 +412,35 @@
         "allGone": true
       },
       "checks": {
-        "exitZero": false,
+        "exitZero": true,
         "disposeHadNoFailure": true,
-        "runtimeIdentityCaptured": true,
-        "runtimeProcessGone": true,
+        "runtimeIdentityCount": true,
+        "runtimeIdentitiesDistinct": true,
+        "allRuntimeProcessesGone": true,
         "runtimeCheckStatus": "ABSENT,ABSENT",
         "noIdentityWatchErrors": true,
-        "producedSmoke": false,
-        "taskSucceeded": false,
-        "hadSession": false,
-        "verified": false,
-        "transitionsOk": false,
-        "noRuntimeLeft": true,
-        "noLingeringApp": true
-      }
-    },
-    "B": {
-      "mode": "task-interrupt-resume",
-      "wallMs": 180452,
-      "exitCode": 4,
-      "timedOut": false,
-      "smoke": null,
-      "logTail": [
-        "{\"ts\":\"2026-11-12T06:35:35.052Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
-        "{\"ts\":\"2026-11-12T06:35:35.215Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-d28c3fca\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:35:40.000Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
-        "{\"ts\":\"2026-11-12T06:35:40.002Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-d28c3fca\",\"action\":\"start\",\"status\":\"CREATED\"}",
-        "{\"ts\":\"2026-11-12T06:35:40.006Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
-        "{\"ts\":\"2026-11-12T06:35:40.010Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
-        "{\"ts\":\"2026-11-12T06:35:40.019Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:35:42.660Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:35:42.661Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-d28c3fca\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
-        "{\"ts\":\"2026-11-12T06:35:42.670Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
-        "{\"ts\":\"2026-11-12T06:35:44.322Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-d28c3fca\",\"action\":\"stop\",\"status\":\"RUNNING\"}",
-        "{\"ts\":\"2026-11-12T06:35:44.327Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"INTERRUPTING\",\"reason\":\"user stopped the task\",\"source\":\"user\"}",
-        "{\"ts\":\"2026-11-12T06:35:45.217Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"INTERRUPTED\",\"reason\":\"stop requested\",\"source\":\"runtime\"}",
-        "{\"ts\":\"2026-11-12T06:35:45.221Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"interrupted\"}",
-        "{\"ts\":\"2026-11-12T06:35:45.222Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-d28c3fca\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
-        "{\"ts\":\"2026-11-12T06:35:45.225Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
-        "{\"ts\":\"2026-11-12T06:35:45.230Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:35:47.822Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-002\",\"isolation\":\"writable\"}",
-        "{\"ts\":\"2026-11-12T06:35:47.823Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-002\",\"taskId\":\"task-d28c3fca\",\"isolation\":\"writable\",\"label\":\"packaged interrupt and resume\"}",
-        "{\"ts\":\"2026-11-12T06:35:47.852Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-d28c3fca\",\"sessionId\":\"studio-task-d28c3fca-a1\",\"attemptId\":\"att-task-d28c3fca-2\"}",
-        "{\"ts\":\"2026-11-12T06:35:47.854Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-d28c3fca\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
-      ],
-      "runtimeIdentities": [
-        {
-          "pid": 19648,
-          "creationMs": 1794465335229,
-          "capturedAt": "2026-11-12T06:35:35.825Z",
-          "source": "parent-and-bin"
-        },
-        {
-          "pid": 23808,
-          "creationMs": 1794465340027,
-          "capturedAt": "2026-11-12T06:35:41.131Z",
-          "source": "parent-and-bin"
-        },
-        {
-          "pid": 8864,
-          "creationMs": 1794465345237,
-          "capturedAt": "2026-11-12T06:35:46.418Z",
-          "source": "parent-and-bin"
-        }
-      ],
-      "runtimeIdentityCount": 3,
-      "identityWatchErrors": [],
-      "runtimeIdentitiesCaptured": [
-        {
-          "pid": 19648,
-          "creationMs": 1794465335229,
-          "capturedAt": "2026-11-12T06:35:35.825Z",
-          "source": "parent-and-bin"
-        },
-        {
-          "pid": 23808,
-          "creationMs": 1794465340027,
-          "capturedAt": "2026-11-12T06:35:41.131Z",
-          "source": "parent-and-bin"
-        },
-        {
-          "pid": 8864,
-          "creationMs": 1794465345237,
-          "capturedAt": "2026-11-12T06:35:46.418Z",
-          "source": "parent-and-bin"
-        }
-      ],
-      "runtimeChecks": {
-        "count": 3,
-        "checks": [
-          {
-            "identity": {
-              "pid": 19648,
-              "creationMs": 1794465335229,
-              "capturedAt": "2026-11-12T06:35:35.825Z",
-              "source": "parent-and-bin"
-            },
-            "verdict": {
-              "status": "ABSENT",
-              "pid": 19648,
-              "creationMs": 1794465335229,
-              "observedCreationMs": null,
-              "reason": "the pid no longer exists"
-            }
-          },
-          {
-            "identity": {
-              "pid": 23808,
-              "creationMs": 1794465340027,
-              "capturedAt": "2026-11-12T06:35:41.131Z",
-              "source": "parent-and-bin"
-            },
-            "verdict": {
-              "status": "ABSENT",
-              "pid": 23808,
-              "creationMs": 1794465340027,
-              "observedCreationMs": null,
-              "reason": "the pid no longer exists"
-            }
-          },
-          {
-            "identity": {
-              "pid": 8864,
-              "creationMs": 1794465345237,
-              "capturedAt": "2026-11-12T06:35:46.418Z",
-              "source": "parent-and-bin"
-            },
-            "verdict": {
-              "status": "ABSENT",
-              "pid": 8864,
-              "creationMs": 1794465345237,
-              "observedCreationMs": null,
-              "reason": "the pid no longer exists"
-            }
-          }
-        ],
-        "statuses": [
-          "ABSENT",
-          "ABSENT",
-          "ABSENT"
-        ],
-        "watchErrors": [],
-        "allGone": true
-      },
-      "checks": {
-        "exitZero": false,
-        "disposeHadNoFailure": true,
-        "runtimeIdentityCount": false,
-        "runtimeIdentitiesDistinct": false,
-        "allRuntimeProcessesGone": true,
-        "runtimeCheckStatus": "ABSENT,ABSENT,ABSENT",
-        "noIdentityWatchErrors": true,
-        "producedSmoke": false,
-        "wasInterrupted": false,
-        "interruptedIsRecorded": false,
-        "resumedToTerminal": false,
-        "sessionReused": false,
-        "twoAttempts": false,
+        "producedSmoke": true,
+        "wasInterrupted": true,
+        "interruptedIsRecorded": true,
+        "resumedToTerminal": true,
+        "sessionReused": true,
+        "twoAttempts": true,
+        "runtimeClosedInLog": true,
         "noLingeringApp": true
       }
     },
     "C": {
       "crash": {
         "mode": "task-start-and-crash",
-        "wallMs": 6498,
+        "wallMs": 6753,
         "exitCode": 9,
         "timedOut": false,
         "smoke": {
-          "generatedAt": "2026-11-12T06:38:45.479Z",
+          "generatedAt": "2026-11-12T07:36:50.001Z",
           "mode": "task-start-and-crash",
           "phase": "crashing",
           "task": {
-            "id": "task-e9cff5b0",
+            "id": "task-63b09ebc",
             "status": "RUNNING",
             "attempts": 1,
             "sessions": 1,
@@ -346,76 +456,185 @@
               {
                 "id": 1,
                 "kind": "run.started",
-                "summary": "session studio-task-e9cff5b0-a1",
-                "at": "2026-11-12T06:38:45.374Z"
+                "summary": "session studio-task-63b09ebc-a1",
+                "at": "2026-11-12T07:36:49.942Z"
               }
             ]
           },
           "isRunning": true
         },
         "logTail": [
-          "{\"ts\":\"2026-11-12T06:38:39.323Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
-          "{\"ts\":\"2026-11-12T06:38:39.508Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-e9cff5b0\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.913Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.914Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-e9cff5b0\",\"action\":\"start\",\"status\":\"CREATED\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.918Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.922Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.931Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.361Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.363Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-e9cff5b0\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.372Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
+          "{\"ts\":\"2026-11-12T07:36:44.425Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:36:44.602Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.441Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.443Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"start\",\"status\":\"CREATED\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.446Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.451Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.460Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.930Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.932Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.940Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
+        ],
+        "logAll": [
+          "{\"ts\":\"2026-11-12T07:36:44.425Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:36:44.602Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.441Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.443Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"start\",\"status\":\"CREATED\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.446Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.451Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.460Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.930Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.932Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.940Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
         ],
         "runtimeIdentities": [
           {
-            "pid": 9400,
-            "creationMs": 1794465519526,
-            "capturedAt": "2026-11-12T06:38:40.255Z",
-            "source": "parent-and-bin"
-          },
-          {
-            "pid": 21312,
-            "creationMs": 1794465522940,
-            "capturedAt": "2026-11-12T06:38:44.196Z",
+            "pid": 25872,
+            "creationMs": 1794469007470,
+            "capturedAt": "2026-11-12T07:36:48.138Z",
             "source": "parent-and-bin"
           }
         ],
-        "runtimeIdentityCount": 2,
+        "runtimeIdentityCount": 1,
         "identityWatchErrors": []
       },
       "recover": {
         "mode": "task-recover",
-        "wallMs": 180872,
-        "exitCode": 4,
+        "wallMs": 6921,
+        "exitCode": 0,
         "timedOut": false,
-        "smoke": null,
+        "smoke": {
+          "generatedAt": "2026-11-12T07:36:59.604Z",
+          "mode": "task-recover",
+          "phase": "done",
+          "before": {
+            "id": "task-63b09ebc",
+            "status": "INTERRUPTED",
+            "attempts": 1,
+            "sessions": 1,
+            "transitions": [
+              "CREATED",
+              "QUEUED",
+              "PREPARING",
+              "RUNNING",
+              "INTERRUPTED"
+            ],
+            "verifications": [],
+            "error": null,
+            "events": [
+              {
+                "id": 1,
+                "kind": "run.started",
+                "summary": "session studio-task-63b09ebc-a1",
+                "at": "2026-11-12T07:36:49.942Z"
+              }
+            ]
+          },
+          "task": {
+            "id": "task-63b09ebc",
+            "status": "SUCCEEDED",
+            "attempts": 2,
+            "sessions": 1,
+            "transitions": [
+              "CREATED",
+              "QUEUED",
+              "PREPARING",
+              "RUNNING",
+              "INTERRUPTED",
+              "RESUMING",
+              "RUNNING",
+              "VERIFYING",
+              "SUCCEEDED"
+            ],
+            "verifications": [
+              true
+            ],
+            "error": null,
+            "events": [
+              {
+                "id": 3,
+                "kind": "run.observed",
+                "summary": "events=9 idle=true error= types=[\"agent/inbox/spliced\",\"turn/start\",\"agent/inbox/spliced\",\"step/start\",\"user/message\",\"request/header\",\"assistant/message\",\"step/end\",\"turn/end\"] last={\"type\":\"turn/end\",\"seq\":25,\"time\":1794469019390,\"data\":{\"turn\":2,\"reason\":{\"kind\":\"completed\"}}}",
+                "at": "2026-11-12T07:36:59.391Z"
+              },
+              {
+                "id": 2,
+                "kind": "run.started",
+                "summary": "session studio-task-63b09ebc-a1",
+                "at": "2026-11-12T07:36:56.140Z"
+              },
+              {
+                "id": 1,
+                "kind": "run.started",
+                "summary": "session studio-task-63b09ebc-a1",
+                "at": "2026-11-12T07:36:49.942Z"
+              }
+            ]
+          },
+          "finalStatus": "SUCCEEDED",
+          "recovered": true
+        },
         "logTail": [
-          "{\"ts\":\"2026-11-12T06:38:39.323Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
-          "{\"ts\":\"2026-11-12T06:38:39.508Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-e9cff5b0\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.913Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.914Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-e9cff5b0\",\"action\":\"start\",\"status\":\"CREATED\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.918Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.922Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
-          "{\"ts\":\"2026-11-12T06:38:42.931Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.361Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.363Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-e9cff5b0\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
-          "{\"ts\":\"2026-11-12T06:38:45.372Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
-          "{\"ts\":\"2026-11-12T06:38:48.799Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
-          "{\"ts\":\"2026-11-12T06:38:48.818Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"INTERRUPTED\",\"reason\":\"application restarted while the task was RUNNING\",\"source\":\"recovery\"}",
-          "{\"ts\":\"2026-11-12T06:38:48.820Z\",\"level\":\"info\",\"event\":\"task.recovery\",\"recovered\":[\"task-e9cff5b0\"]}",
-          "{\"ts\":\"2026-11-12T06:38:48.854Z\",\"level\":\"warn\",\"event\":\"task.recovered.interrupted\",\"tasks\":[\"task-e9cff5b0\"]}",
-          "{\"ts\":\"2026-11-12T06:38:48.942Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-e9cff5b0\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
-          "{\"ts\":\"2026-11-12T06:38:48.946Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
-          "{\"ts\":\"2026-11-12T06:38:48.956Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:51.621Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
-          "{\"ts\":\"2026-11-12T06:38:51.623Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-e9cff5b0\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
-          "{\"ts\":\"2026-11-12T06:38:51.653Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-e9cff5b0\",\"sessionId\":\"studio-task-e9cff5b0-a1\",\"attemptId\":\"att-task-e9cff5b0-2\"}",
-          "{\"ts\":\"2026-11-12T06:38:51.657Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-e9cff5b0\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}"
+          "{\"ts\":\"2026-11-12T07:36:44.425Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:36:44.602Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.441Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.443Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"start\",\"status\":\"CREATED\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.446Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.451Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.460Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.930Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.932Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.940Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.298Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.319Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"INTERRUPTED\",\"reason\":\"application restarted while the task was RUNNING\",\"source\":\"recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.321Z\",\"level\":\"info\",\"event\":\"task.recovery\",\"recovered\":[\"task-63b09ebc\"]}",
+          "{\"ts\":\"2026-11-12T07:36:53.356Z\",\"level\":\"warn\",\"event\":\"task.recovered.interrupted\",\"tasks\":[\"task-63b09ebc\"]}",
+          "{\"ts\":\"2026-11-12T07:36:53.445Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.449Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.463Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.097Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.099Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.135Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-63b09ebc\",\"sessionId\":\"studio-task-63b09ebc-a1\",\"attemptId\":\"att-task-63b09ebc-2\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.139Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.402Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.408Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.483Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"completed\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.605Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+          "{\"ts\":\"2026-11-12T07:36:59.614Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+        ],
+        "logAll": [
+          "{\"ts\":\"2026-11-12T07:36:44.425Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:36:44.602Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.441Z\",\"level\":\"info\",\"event\":\"task.profile.ready\",\"ok\":true,\"detail\":\"provider installed\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.443Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"start\",\"status\":\"CREATED\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.446Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"QUEUED\",\"reason\":\"user started the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.451Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"PREPARING\",\"reason\":\"preparing to run\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:47.460Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.930Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.932Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:49.940Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.298Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.319Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"INTERRUPTED\",\"reason\":\"application restarted while the task was RUNNING\",\"source\":\"recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.321Z\",\"level\":\"info\",\"event\":\"task.recovery\",\"recovered\":[\"task-63b09ebc\"]}",
+          "{\"ts\":\"2026-11-12T07:36:53.356Z\",\"level\":\"warn\",\"event\":\"task.recovered.interrupted\",\"tasks\":[\"task-63b09ebc\"]}",
+          "{\"ts\":\"2026-11-12T07:36:53.445Z\",\"level\":\"info\",\"event\":\"task.action\",\"taskId\":\"task-63b09ebc\",\"action\":\"resume\",\"status\":\"INTERRUPTED\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.449Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RESUMING\",\"reason\":\"user resumed the task\",\"source\":\"user\"}",
+          "{\"ts\":\"2026-11-12T07:36:53.463Z\",\"level\":\"info\",\"event\":\"runtime.start\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.097Z\",\"level\":\"info\",\"event\":\"runtime.ready\",\"runtimeId\":\"rt-001\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.099Z\",\"level\":\"info\",\"event\":\"runtime.lease\",\"runtimeId\":\"rt-001\",\"taskId\":\"task-63b09ebc\",\"isolation\":\"writable\",\"label\":\"packaged crash recovery\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.135Z\",\"level\":\"info\",\"event\":\"task.resumed\",\"taskId\":\"task-63b09ebc\",\"sessionId\":\"studio-task-63b09ebc-a1\",\"attemptId\":\"att-task-63b09ebc-2\"}",
+          "{\"ts\":\"2026-11-12T07:36:56.139Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"RUNNING\",\"reason\":\"runtime ready, prompt queued\",\"source\":\"scheduler\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.402Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"VERIFYING\",\"reason\":\"run finished, verifying\",\"source\":\"runtime\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.408Z\",\"level\":\"info\",\"event\":\"task.transition\",\"taskId\":\"task-63b09ebc\",\"to\":\"SUCCEEDED\",\"reason\":\"acceptance passed\",\"source\":\"verifier\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.483Z\",\"level\":\"info\",\"event\":\"runtime.closed\",\"runtimeId\":\"rt-001\",\"reason\":\"completed\"}",
+          "{\"ts\":\"2026-11-12T07:36:59.605Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+          "{\"ts\":\"2026-11-12T07:36:59.614Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
         ],
         "runtimeIdentities": [
           {
-            "pid": 25572,
-            "creationMs": 1794465528967,
-            "capturedAt": "2026-11-12T06:38:49.779Z",
+            "pid": 25092,
+            "creationMs": 1794469013475,
+            "capturedAt": "2026-11-12T07:36:54.372Z",
             "source": "parent-and-bin"
           }
         ],
@@ -425,54 +644,32 @@
       "orphanPidsAfterCrash": [],
       "crashRuntimeIdentities": [
         {
-          "pid": 9400,
-          "creationMs": 1794465519526,
-          "capturedAt": "2026-11-12T06:38:40.255Z",
-          "source": "parent-and-bin"
-        },
-        {
-          "pid": 21312,
-          "creationMs": 1794465522940,
-          "capturedAt": "2026-11-12T06:38:44.196Z",
+          "pid": 25872,
+          "creationMs": 1794469007470,
+          "capturedAt": "2026-11-12T07:36:48.138Z",
           "source": "parent-and-bin"
         }
       ],
       "crashRuntimeChecks": {
-        "count": 2,
+        "count": 1,
         "checks": [
           {
             "identity": {
-              "pid": 9400,
-              "creationMs": 1794465519526,
-              "capturedAt": "2026-11-12T06:38:40.255Z",
+              "pid": 25872,
+              "creationMs": 1794469007470,
+              "capturedAt": "2026-11-12T07:36:48.138Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 9400,
-              "creationMs": 1794465519526,
-              "observedCreationMs": null,
-              "reason": "the pid no longer exists"
-            }
-          },
-          {
-            "identity": {
-              "pid": 21312,
-              "creationMs": 1794465522940,
-              "capturedAt": "2026-11-12T06:38:44.196Z",
-              "source": "parent-and-bin"
-            },
-            "verdict": {
-              "status": "ABSENT",
-              "pid": 21312,
-              "creationMs": 1794465522940,
+              "pid": 25872,
+              "creationMs": 1794469007470,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
           }
         ],
         "statuses": [
-          "ABSENT",
           "ABSENT"
         ],
         "watchErrors": [],
@@ -480,9 +677,9 @@
       },
       "recoveryRuntimeIdentities": [
         {
-          "pid": 25572,
-          "creationMs": 1794465528967,
-          "capturedAt": "2026-11-12T06:38:49.779Z",
+          "pid": 25092,
+          "creationMs": 1794469013475,
+          "capturedAt": "2026-11-12T07:36:54.372Z",
           "source": "parent-and-bin"
         }
       ],
@@ -491,15 +688,15 @@
         "checks": [
           {
             "identity": {
-              "pid": 25572,
-              "creationMs": 1794465528967,
-              "capturedAt": "2026-11-12T06:38:49.779Z",
+              "pid": 25092,
+              "creationMs": 1794469013475,
+              "capturedAt": "2026-11-12T07:36:54.372Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 25572,
-              "creationMs": 1794465528967,
+              "pid": 25092,
+              "creationMs": 1794469013475,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
@@ -514,17 +711,17 @@
       "checks": {
         "crashedAsExpected": true,
         "crashLeftTaskRunning": true,
-        "recoveryProducedSmoke": false,
-        "sawInterruptedState": false,
-        "resumedToTerminal": false,
-        "recordedNewAttempt": false,
-        "appExited": false,
+        "recoveryProducedSmoke": true,
+        "sawInterruptedState": true,
+        "resumedToTerminal": true,
+        "recordedNewAttempt": true,
+        "appExited": true,
         "noLingeringApp": true,
         "disposeHadNoFailure": true,
         "runtimeProcessGone": true,
         "runtimeCheckStatus": "ABSENT",
         "crashCapturedIdentity": true,
-        "crashOrphanStatus": "ABSENT,ABSENT",
+        "crashOrphanStatus": "ABSENT",
         "crashLeftNoOrphan": true,
         "noIdentityWatchErrors": true
       }

@@ -1,8 +1,8 @@
 # PHASE 01-C 工作报告 — DSH Session 生命周期与 Studio Task 状态管理
 
-> **状态：`BLOCKED`（R6 / 环境解阻塞轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+> **状态：`READY_FOR_EXTERNAL_REVIEW`（R7 / 安装版 A/B/C 最终验收）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
 >
-> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。第 5 轮（记录修正）统一根因与范围表述、明确 A/B/C 属原始验收范围，并把历史测试与本轮测试分开记录。
+> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。第 5 轮（记录修正）统一根因与范围表述、明确 A/B/C 属原始验收范围，并把历史测试与本轮测试分开记录。第 6 轮（R6）用 `%TEMP%` 独立 pnpm store 解阻塞 provider 安装并真实跑通 runtime/中断/恢复阶段，受阻于模型额度窗口。**第 7 轮（R7）额度窗口重置后，安装版 A/B/C 全部真实通过（`ok:true`，43 项检查 / 0 失败）。**
 
 ## 1. 本阶段原始目标
 
@@ -84,7 +84,9 @@
 
 该机制由**配额无关**的单元测试覆盖：`test/process-identity.test.js` 含 `discoverRuntimeIdentities` 返回全部 / 查询失败 / 全退出的用例，本轮 **11/11 通过**（见 §7）。
 
-### 6.2 安装版 A/B/C 复验 —— 阻断根因的两层定位（BLOCKED）
+### 6.2 安装版 A/B/C 复验 —— 阻断根因的两层定位（历史：R4/R5，已在 R7 解除）
+
+> 本节保留 R4/R5 的失败根因调查，作为审计记录；R7 已在正常环境完成 A/B/C 真实通过（见 §6.5）。
 
 评审要求查清"R2 通过的安装包用了哪个 DSH 构建、为什么当前不支持 commandcode"。结论是**两层原因，均非 Provider 代码缺陷、也非依赖版本变化**：
 
@@ -114,9 +116,24 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 - B：`rt-001 → INTERRUPTED（stop requested）→ resume → rt-002`；`task.resumed sessionId=studio-task-d28c3fca-a1`、`attemptId=…-2`（原生 `resumeSession` 复用原 session）；捕获 3 个身份（插件 CLI + rt-001 + rt-002），均 `ABSENT`。
 - C：`rt-001 → app.exit(9) → 重启 → INTERRUPTED（recovery）→ resume`；崩溃前 2 个、恢复 1 个身份，均 `ABSENT`。
 
-**剩余阻断**：真实模型调用返回 `RATE_LIMIT`——Command Code 账户用量窗口耗尽，最早 `2026-11-12 15:33:12` 重置；A/B/C 未到终态，阶段 `BLOCKED`。复验命令见 `evidence/phase-01-c/real-run-r6.md`。
+**剩余阻断（R6 时）**：真实模型调用返回 `RATE_LIMIT`——Command Code 账户用量窗口耗尽，最早 `2026-11-12 15:33:12` 重置；A/B/C 未到终态。**该阻断已在 R7 解除**（见 §6.5）。复验命令见 `evidence/phase-01-c/real-run-r6.md`。
 
 **watcher 修复**：R6 暴露 `dsh plugin` CLI 被计入任务 Runtime（A=2、B=3）。已在 `discoverRuntimeIdentities` 排除 `bin.js plugin`，新增单测，`process-identity` 12/12。
+
+### 6.5 R7：安装版 A/B/C 最终验收 —— 全部通过
+
+额度窗口于 `2026-11-12 15:33:12 (+08:00)` 重置后，用 C: 盘 `%TEMP%` 独立 store 重跑（`PNPM_CONFIG_STORE_DIR=C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7`），退出码 **0**，`summary.ok = true`，**43 项检查 / 0 失败**（`packaged/summary-r7.json`）。
+
+| 场景 | Task | 结果 | Runtime 身份（`pid` / `creationMs`） | OS 复核 |
+|---|---|---|---|---|
+| A 正常执行 | `task-cea17dc3` | **SUCCEEDED**（attempts=1，sessions=1） | 25476 / 1794468973318 | **ABSENT** |
+| B 中断恢复 | `task-bb42d7e9` | `INTERRUPTING→INTERRUPTED→RESUMING→SUCCEEDED`，复用 `studio-task-bb42d7e9-a1`（attempts=2，sessions=1） | 25652 / 1794468989474；20992 / 1794468994654 | **ABSENT / ABSENT** |
+| C 崩溃恢复 | `task-63b09ebc` | `app.exit(9)` → 重启 → `INTERRUPTED` → `task.resumed` → **SUCCEEDED**（attempts=2） | 崩溃前 25872 / 1794469007470；恢复 25092 / 1794469013475 | **ABSENT / ABSENT** |
+
+- B 满足 `runtimeIdentityCount === 2`、`runtimeIdentitiesDistinct === 2`、`allRuntimeProcessesGone`、`noIdentityWatchErrors`；`dsh plugin` CLI 未被计入 Runtime。
+- C 的崩溃前身份与恢复期身份分别捕获、分别复核，均 `ABSENT`，无孤儿进程。
+- **store 位置是决定性变量**：H: 盘 store 会让 `projects/<hash>` 落成真实目录，`fs.unlink(dir)` 触发 Windows 原生 `EPERM`（非 safe-delete 策略）；首次 R7 尝试即因此失败，留档 `packaged/summary-r7-installfail.json`。
+- **断言修正**：`noRuntimeLeft` 读取的是 app 退出前写入的 `smoke.json` 快照，此时 runtime 合法状态为 `closing`（53 ms 后才 `runtime.closed`），该断言结构上不可满足，此前只是时序偶然；改为 `runtimeClosedInLog`（每个 `runtime.start` 必须在完整日志中有对应 `runtime.closed`），比原断言更强。OS 退出的权威判据仍是 `verifyRuntimeIdentity` 的 `ABSENT`，未变。
 
 ## 7. 测试与回归
 
@@ -127,7 +144,8 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
 | `node --test test/process-identity.test.js` | 0 | **12/12**（四态 + `discoverRuntimeIdentities` 返回全部/查询失败/全退出 + 排除 `dsh plugin` CLI） | `unit/process-identity.txt` |
 | `node --test test/identity-watcher.test.mjs` | 0 | **6/6**（stop() 排空在途查询；watchErrors 计入 allGone；四态/空集不算通过） | `unit/identity-watcher.txt` |
-| `node scripts/smoke-tasks-packaged.mjs <installed>`（`PNPM_CONFIG_STORE_DIR=%TEMP%\…`） | 1 | **BLOCKED**：插件已真实安装、A/B/C runtime 已启动（B 复用原 session，C 崩溃后恢复），但模型回合 `RATE_LIMIT`（15:33:12 重置）；42 项检查 / 20 失败 | `packaged/summary.json`、`real-run-r6.md` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>`（`PNPM_CONFIG_STORE_DIR=C:\…\Temp\pnpm-store-ags-r7`） | **0** | **PASS**：安装版 A/B/C 全部通过，**43 项检查 / 0 失败**（A SUCCEEDED；B 双 Runtime 均 ABSENT；C 崩溃+恢复均 ABSENT） | `packaged/summary-r7.json`、`real-run-r7.md` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>`（R6，历史） | 1 | **BLOCKED（历史）**：插件已安装、runtime 已启动，但模型回合 `RATE_LIMIT`；42 项 / 20 失败 | `packaged/summary-r6.json` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |
@@ -138,7 +156,7 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `node scripts/mcp-probe.mjs`（01-B，开发环境握手） | 0 | — | `regression/phase01b-mcp.txt` |
 | `node scripts/mcp-packaged.mjs --prompt`（01-B，**安装版真实工具调用**，本轮补跑） | 0 | `toolCalled: true` | `packaged/mcp-tool-call.json` |
 
-> **轮次说明**：`runtime-supervisor`、`process-identity`、`identity-watcher` 为 **R5 本轮**重跑；`tsc` 为 R4 历史；`full-suite`(101)、`task-integration`(2)、`phase00`(166)、01-A/01-B 为 **R2 历史**，本轮未重跑；安装版为 **R4 真实失败运行**（ENVIRONMENT_BLOCKED）。
+> **轮次说明**：`runtime-supervisor`、`process-identity`、`identity-watcher` 与安装版 A/B/C 为 **R7 本轮**真实执行；`tsc` 为 R4 历史；`full-suite`(101)、`task-integration`(2)、`phase00`(166)、01-A/01-B 为 **R2 历史**，本轮未重跑。
 
 关于上一轮"满套件不稳定"：本轮定位到**不是**模型或限流问题，而是我自己的断言取样太早（任务刚到 SUCCEEDED 就检查 runtime 是否已回收，而 `release()` 在下一拍才关完）。改成等待回收后，满套件连续通过。
 
@@ -159,10 +177,17 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | UNKNOWN | U-01C-1 第三方 Provider 限流/额度波动对长回合任务的影响 |
 | DEFERRED | D-01C-1 任务面板之外的会话事件流可视化 |
 | NOT_RUN | 静态吊销检查（未引入签名/OEM）；`npm audit` 依赖审计（本轮未改依赖树） |
-| BLOCKED | B-INSTALL-1 安装版 A/B/C 复验：**属 PHASE 01-C 原始验收范围**。两层根因：(1) 首跑 out-g 为陈旧构建（缺 task-interrupt-resume 分支）→ 回落启动探测 `ROUTE_UNKNOWN`，只捕获探测 runtime；(2) 当前正确构建已进入任务场景，但 `TaskService.ensureProfile()` 安装 `@mars-sea/dsh-commandcode-provider@0.15.4` 时内部 `pnpm add` 因当前沙箱 pnpm store 删除操作 `EPERM` 失败 → `PROFILE_NOT_READY`。等待正常 Windows 环境复验。 |
+| RESOLVED | B-INSTALL-1 安装版 A/B/C 复验：**属 PHASE 01-C 原始验收范围**，已在 R7 完成。两层历史根因：(1) 首跑 out-g 为陈旧构建（缺 `task-interrupt-resume` 分支）→ 回落启动探测 `ROUTE_UNKNOWN`；(2) `TaskService.ensureProfile()` 的 `pnpm add` 在 H: 盘 store 上失败（`projects/<hash>` 落成真实目录 → `unlink` 原生 `EPERM`）→ `PROFILE_NOT_READY`。R7 改用 C: 盘 `%TEMP%` 独立 store 后安装成功，A/B/C 全部通过。 |
+| RESOLVED | B-MODEL-QUOTA 模型账户用量窗口（`RATE_LIMIT`）：窗口 `2026-11-12 15:33:12` 重置后，R7 真实回合全部成功。 |
 
 ## 10. 结论
 
-R6 定位并解阻塞了 provider 安装：**pnpm store 必须在 `%TEMP%` 的独立目录**；随后 `dsh plugin add` 真实安装 `@mars-sea/dsh-commandcode-provider 0.15.4`，A/B/C 真实执行到 runtime/中断/恢复阶段（B 用原生 `resumeSession` 复用原 session 并启动 rt-002；C 崩溃后重启恢复），所有捕获 runtime 均 `ABSENT`。**唯一剩余阻断是模型账户用量窗口**（`RATE_LIMIT`，`2026-11-12 15:33:12` 重置），A/B/C 未到终态。
+R7 在正常 Windows 环境完成安装版最终验收：C: 盘 `%TEMP%` 独立 pnpm store 使 `dsh plugin add` 真实安装 `@mars-sea/dsh-commandcode-provider 0.15.4`；额度窗口重置后，**A/B/C 全部真实通过**（`ok:true`，43 项检查 / 0 失败）：
 
-状态：**`BLOCKED`**（环境已解阻塞；等待用量窗口重置后复跑 A/B/C 至终态）。未自行批准关闭。
+- **A**：`task-cea17dc3` → SUCCEEDED，session 1 个，runtime `pid=25476/1794468973318` → **ABSENT**；
+- **B**：`task-bb42d7e9` 中断→原生 `resumeSession` 复用 `studio-task-bb42d7e9-a1`→ rt-002 → SUCCEEDED（attempts=2，sessions=1），两个不同 `(pid, creationMs)` 均 **ABSENT**；
+- **C**：`task-63b09ebc` 运行中 `app.exit(9)` → 重启识别 `INTERRUPTED` → `task.resumed` → SUCCEEDED，崩溃前与恢复期身份均 **ABSENT**，无孤儿进程。
+
+定向测试：`process-identity` 12/12、`runtime-supervisor` 9/9、`identity-watcher` 6/6。历史证据（R2/R4/R5/R6）原样保留。
+
+状态：**`READY_FOR_EXTERNAL_REVIEW`**。本报告不宣告通过，PHASE 01-C 是否关闭由外部独立评审决定。

@@ -1,157 +1,59 @@
 {
-  "generatedAt": "2026-11-12T06:43:54.821Z",
+  "generatedAt": "2026-11-12T07:37:57.735Z",
   "phase": "PHASE_01_C",
-  "round": "R6-normal-windows-unblock",
+  "round": "R7-acceptance",
   "branch": "phase/01-c-session-task-lifecycle",
   "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
   "previousDeliveryBaseline": "51d81dbb4a4b7cdebeb1261e4a3bff7a2676fb12",
-  "note": "R6: provider install unblocked by moving the pnpm store under %TEMP%; real A/B/C executed but model turns blocked by the Command Code account usage window (RATE_LIMIT, resets 2026-11-12 15:33:12). R4/R5 history preserved.",
+  "note": "R7：环境已解阻塞（C: 盘 %TEMP% 下独立 pnpm store），provider 插件真实安装，安装版 A/B/C 全部真实通过（ok:true，0 失败）。",
   "matrix": [
-    {
-      "name": "typescript",
-      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/unit/tsc.txt"
-    },
     {
       "name": "process-identity",
       "command": "node --test test/process-identity.test.js",
-      "cwd": "apps/studio",
       "exitCode": 0,
-      "counts": {
-        "tests": 12,
-        "pass": 12,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "新增 plugin CLI 排除用例"
+      "pass": 12,
+      "fail": 0,
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt"
     },
     {
       "name": "runtime-supervisor-races",
       "command": "node --test test/runtime-supervisor.test.js",
-      "cwd": "apps/studio",
       "exitCode": 0,
-      "counts": {
-        "tests": 9,
-        "pass": 9,
-        "fail": 0
-      },
+      "pass": 9,
+      "fail": 0,
       "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     {
       "name": "identity-watcher",
       "command": "node --test test/identity-watcher.test.mjs",
-      "cwd": "apps/studio",
       "exitCode": 0,
-      "counts": {
-        "tests": 6,
-        "pass": 6,
-        "fail": 0
-      },
+      "pass": 6,
+      "fail": 0,
       "artifact": "evidence/phase-01-c/unit/identity-watcher.txt"
     },
     {
       "name": "packaged-task-scenarios",
-      "command": "node scripts/smoke-tasks-packaged.mjs H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked（PNPM_CONFIG_STORE_DIR=…/Temp/pnpm-store-ags-abc）",
-      "cwd": "apps/studio",
-      "exitCode": 1,
-      "counts": {
-        "checks": 42,
-        "failed": 20
-      },
-      "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "status": "BLOCKED_RATE_LIMIT",
-      "note": "插件已真实安装；A/B/C runtime 已启动；模型回合 RATE_LIMIT"
+      "command": "node scripts/smoke-tasks-packaged.mjs release-r5/win-unpacked",
+      "exitCode": 0,
+      "checks": 43,
+      "failed": 0,
+      "artifact": "evidence/phase-01-c/packaged/summary-r7.json"
     }
   ],
   "packagedScenarios": {
     "thisRound": true,
-    "runRound": "R6",
-    "command": "node scripts/smoke-tasks-packaged.mjs H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked",
-    "generatedAt": "2026-11-12T06:41:51.506Z",
-    "exitCode": 1,
-    "ok": false,
-    "failed": [
-      "A.exitZero",
-      "A.producedSmoke",
-      "A.taskSucceeded",
-      "A.hadSession",
-      "A.verified",
-      "A.transitionsOk",
-      "B.exitZero",
-      "B.runtimeIdentityCount",
-      "B.runtimeIdentitiesDistinct",
-      "B.producedSmoke",
-      "B.wasInterrupted",
-      "B.interruptedIsRecorded",
-      "B.resumedToTerminal",
-      "B.sessionReused",
-      "B.twoAttempts",
-      "C.recoveryProducedSmoke",
-      "C.sawInterruptedState",
-      "C.resumedToTerminal",
-      "C.recordedNewAttempt",
-      "C.appExited"
-    ],
-    "checks": {
-      "A.exitZero": false,
-      "A.disposeHadNoFailure": true,
-      "A.runtimeIdentityCaptured": true,
-      "A.runtimeProcessGone": true,
-      "A.runtimeCheckStatus": "ABSENT,ABSENT",
-      "A.noIdentityWatchErrors": true,
-      "A.producedSmoke": false,
-      "A.taskSucceeded": false,
-      "A.hadSession": false,
-      "A.verified": false,
-      "A.transitionsOk": false,
-      "A.noRuntimeLeft": true,
-      "A.noLingeringApp": true,
-      "B.exitZero": false,
-      "B.disposeHadNoFailure": true,
-      "B.runtimeIdentityCount": false,
-      "B.runtimeIdentitiesDistinct": false,
-      "B.allRuntimeProcessesGone": true,
-      "B.runtimeCheckStatus": "ABSENT,ABSENT,ABSENT",
-      "B.noIdentityWatchErrors": true,
-      "B.producedSmoke": false,
-      "B.wasInterrupted": false,
-      "B.interruptedIsRecorded": false,
-      "B.resumedToTerminal": false,
-      "B.sessionReused": false,
-      "B.twoAttempts": false,
-      "B.noLingeringApp": true,
-      "C.crashedAsExpected": true,
-      "C.crashLeftTaskRunning": true,
-      "C.recoveryProducedSmoke": false,
-      "C.sawInterruptedState": false,
-      "C.resumedToTerminal": false,
-      "C.recordedNewAttempt": false,
-      "C.appExited": false,
-      "C.noLingeringApp": true,
-      "C.disposeHadNoFailure": true,
-      "C.runtimeProcessGone": true,
-      "C.runtimeCheckStatus": "ABSENT",
-      "C.crashCapturedIdentity": true,
-      "C.crashOrphanStatus": "ABSENT,ABSENT",
-      "C.crashLeftNoOrphan": true,
-      "C.noIdentityWatchErrors": true
-    },
-    "note": "R6 真实运行。provider 安装成功（task.profile.ready ok:true），A/B/C runtime 均启动；模型调用被 RATE_LIMIT 阻断，未到终态。",
-    "r4Historical": {
-      "artifact": "evidence/phase-01-c/packaged/summary-r4.json",
-      "runRound": "R4",
-      "note": "R4 对正确构建的真实失败运行（PROFILE_NOT_READY），保留供审计"
-    }
+    "runRound": "R7",
+    "runAt": "2026-11-12T07:37:02.017Z",
+    "ok": true,
+    "checks": 43,
+    "failed": [],
+    "artifact": "evidence/phase-01-c/packaged/summary-r7.json",
+    "alsoAt": "evidence/phase-01-c/packaged/summary.json",
+    "command": "PNPM_CONFIG_STORE_DIR=C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7 node scripts/smoke-tasks-packaged.mjs \"H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked\"",
+    "exitCode": 0
   },
-  "packagedStatus": {
-    "status": "ENVIRONMENT_BLOCKED",
-    "why": "TaskService.ensureProfile() 调用 dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4，内部 pnpm add 在当前沙箱因 pnpm store unlink EPERM 失败，任务停在 PROFILE_NOT_READY",
-    "bRuntimeCount": 1,
-    "note": "B 只捕获到 1 个 runtime（provider 引导失败前产生的进程），未产生第二个任务 Runtime；不能判定通过。"
-  },
+  "packagedStatus": "PASS — 安装版 A/B/C 全部通过（ok:true，0 失败）",
   "commandcodeInvestigation": {
     "question": "R2 通过的安装包用了哪个 DSH 构建，为什么当前构建不再支持 commandcode",
     "findings": [
@@ -225,15 +127,7 @@
     ],
     "expectedB": "两个不同的 (pid, creationMs)，分别 verifyRuntimeIdentity 均为 ABSENT；任一捕获失败/歧义/查询失败/PRESENT/UNKNOWN 均判失败。"
   },
-  "environment": {
-    "status": "ENVIRONMENT_BLOCKED",
-    "reason": "沙箱 pnpm store 删除操作 EPERM，dsh plugin add 无法安装 commandcode 插件",
-    "retriedPnpmAdd": false,
-    "bypassedSafetyPad": false,
-    "replacedPnpm": false,
-    "changedProvider": false,
-    "rewroteDshCommunication": false
-  },
+  "environment": "UNBLOCKED — provider 插件安装成功；安装版 A/B/C 已真实执行并通过",
   "invalidated": [
     {
       "id": "INVALID-1",
@@ -243,16 +137,7 @@
       "status": "INVALID — 不作为通过依据"
     }
   ],
-  "blocked": [
-    {
-      "id": "B-MODEL-QUOTA",
-      "item": "安装版 A/B/C 真实模型回合",
-      "scope": "属于 PHASE 01-C 原始验收范围",
-      "why": "Command Code 账户用量窗口耗尽（RATE_LIMIT），最早 2026-11-12 15:33:12 重置",
-      "evidence": "evidence/phase-01-c/real-run-r6.md；A 运行 record jsonl 中的 llm/retry 事件",
-      "status": "WAITING_FOR_QUOTA_RESET"
-    }
-  ],
+  "blocked": [],
   "notRun": [
     {
       "id": "NOT_RUN-1",
@@ -276,34 +161,36 @@
     }
   ],
   "environmentCheck": {
-    "checkedAt": "2026-11-12T06:43:54.821Z",
+    "checkedAt": "2026-11-12T07:37:57.735Z",
     "currentSession": {
-      "status": "BLOCKED_BY_MODEL_QUOTA",
+      "status": "UNBLOCKED",
       "platform": "Windows 10.0.19045.6466（WorkBuddy 会话）",
       "node": "v22.22.2",
       "pnpm": "11.21.0",
       "npm": "10.9.7",
       "npmRegistry": "reachable (npm view @mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4)",
       "credentialsFile": "present (~/.dsh/.credentials.yaml; content not printed)",
-      "providerInstall": "OK — @mars-sea/dsh-commandcode-provider 0.15.4 installed in <userData>/dsh-home/profiles/sdk/node_modules",
-      "modelCall": "RATE_LIMIT — all 1 Command Code account(s) exhausted their usage window; earliest reset 2026-11-12T15:33:12+08:00",
-      "abcStatus": "EXECUTED_RATE_LIMITED",
-      "reason": "provider 安装已解阻塞；A/B/C 已真实运行到 runtime/中断/恢复阶段，但模型回合被账户用量窗口限流"
+      "providerInstall": "OK — task.profile.ready ok:true \"provider installed\"；@mars-sea/dsh-commandcode-provider 0.15.4 位于本次运行 profile",
+      "modelCall": "OK — 真实模型回合完成（turn/end reason.kind=completed），A/B/C 均到达终态",
+      "abcStatus": "EXECUTED_PASSED",
+      "reason": "C: 盘 %TEMP% 下的独立 store 可正常 registerProject；H: 盘上的 store（H:\\dev、H:\\ai_music_crew\\.tmp）仍会在 projects/<hash> 上失败",
+      "pnpmStoreDeleteProbe": "n/a — 本轮 store 位于 C: 盘 %TEMP%，registerProject 正常形成 junction，未触碰旧 store"
     },
     "normalWindowsPrerequisites": {
       "checked": [
-        "Node v22.22.2（>= 22.12）",
-        "pnpm 11.21.0 可用",
-        "npm registry 可达（0.15.4）",
-        "~/.dsh/.credentials.yaml 存在（未打印内容）",
-        "pnpm store 置于 %TEMP% 独立目录：pnpm add 成功，projects/<hash> 为 junction",
-        "打包 exe + ELECTRON_RUN_AS_NODE 执行 dsh plugin add：成功，目标 profile 出现 @mars-sea/dsh-commandcode-provider 0.15.4"
+        "Node v22.22.2 / pnpm 11.21.0 / npm 10.9.7 可用",
+        "npm registry 可达（@mars-sea/dsh-commandcode-provider@0.15.4）",
+        "~/.dsh/.credentials.yaml 存在（仅检查存在性）",
+        "Studio dshHome=<userData>/dsh-home，profile=sdk"
       ],
-      "notVerified": [
-        "A/B/C 真实模型回合完成（RATE_LIMIT 至 2026-11-12 15:33:12）"
+      "notVerified": [],
+      "resolvedInR7": [
+        "C: 盘 %TEMP% 下独立 pnpm store 写入/删除正常",
+        "dsh plugin add 真实安装成功（0.15.4 落盘）",
+        "安装版 A/B/C 全部真实执行通过"
       ]
     },
-    "abcStatus": "EXECUTED_RATE_LIMITED",
+    "abcStatus": "EXECUTED_PASSED",
     "pluginPaths": {
       "dshHome": "<userData>/dsh-home（默认；config.dsh.dshHome 可覆盖）",
       "profile": "sdk（config.ts:38 默认；smoke 写入 profile: sdk）",
@@ -311,11 +198,11 @@
       "targetProfilePluginInstalled": true,
       "targetProfilePluginInstalledNote": "R6 运行的目标 profile（临时 userData）；插件由真实 dsh plugin add 安装，非复制",
       "targetProfileResidualFiles": [
-        ".plugin-manager",
+        "node_modules/@mars-sea/dsh-commandcode-provider@0.15.4",
+        "pnpm-lock.yaml",
         "cordis.patch.yml",
         "package.json",
-        "pnpm-workspace.yaml",
-        "pnpm-lock.yaml"
+        "pnpm-workspace.yaml"
       ],
       "unrelatedProfilesWithPlugin": [
         "~/.dsh/profiles/desktop",
@@ -326,18 +213,18 @@
         "~/.dsh/profiles/sdk（存在但无 node_modules、无该插件；位于 ~/.dsh 下，不是 Studio 的 <userData>/dsh-home/profiles/sdk）"
       ],
       "unrelatedProfilesNote": "以上均为 ~/.dsh 下的其他 DSH Home，与 Studio 的 <userData>/dsh-home/profiles/sdk 无关，不能作为 Studio 目标 profile 已安装插件的证据。",
-      "credentialsPath": "~/.dsh/.credentials.yaml（仅检查文件存在性，未读取/输出内容）"
+      "credentialsPath": "~/.dsh/.credentials.yaml（仅检查文件存在性，未读取/输出内容）",
+      "note": "targetProfilePluginInstalled 反映 R7 运行 profile 的真实状态（本次运行已安装成功）"
     },
     "pnpmStore": {
-      "working": "C:\\Users\\LIN\\AppData\\Local\\Temp\\pnpm-store-ags-abc",
-      "failing": [
-        "H:\\dev\\pnpm-store",
-        "C:\\Users\\LIN\\AppData\\Local\\pnpm-store-*（非 %TEMP% 路径）"
+      "usedInR7": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+      "failed": [
+        "H:/dev/pnpm-store/v11（R6 前）",
+        "H:/ai_music_crew/.tmp/pnpm-store-ags-r7（R7 首次尝试，见 summary-r7-installfail.json）"
       ],
-      "evidence": "H: store：pnpm add 报 EPERM unlink projects/<hash>；%TEMP% store：pnpm add exit 0，projects/<hash> 为 junction",
-      "note": "仅调整 store 路径；未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm"
+      "note": "H: 盘 store 会在 projects/<hash> 上以真实目录落盘并导致 fs.unlink(dir) EPERM；C: 盘 %TEMP% store 正常形成 junction"
     },
-    "verdict": "BLOCKED"
+    "verdict": "PASSED"
   },
   "realRunR6": {
     "summaryGeneratedAt": "2026-11-12T06:41:51.506Z",
@@ -467,6 +354,171 @@
       "what": "provider 安装失败（pnpm store 在 H: / 非 %TEMP% 路径）",
       "resolution": "把 pnpm store 放到 %TEMP% 独立目录后，dsh plugin add 真实成功；目标 profile 出现 0.15.4",
       "evidence": "evidence/phase-01-c/real-run-r6.md"
+    },
+    {
+      "id": "B-MODEL-QUOTA",
+      "resolvedAt": "2026-11-12T07:37:57.735Z",
+      "resolution": "额度窗口于 2026-11-12 15:33:12 (+08:00) 重置后，真实模型回合全部成功；未额外消耗探测请求",
+      "evidence": "evidence/phase-01-c/packaged/summary-r7.json"
     }
-  ]
+  ],
+  "realRunR7": {
+    "generatedAt": "2026-11-12T07:37:02.017Z",
+    "appPath": "H:/workbuddy/AI_Game_Studio/release-r5/win-unpacked",
+    "appSha256": "1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96",
+    "storeDir": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+    "quotaWindowResetAt": "2026-11-12T15:33:12+08:00",
+    "quotaVerifiedBy": "首个真实模型回合于 15:34:16 (+08:00) 完成（turn/end reason.kind=completed）",
+    "A": {
+      "taskId": "task-cea17dc3",
+      "finalStatus": "SUCCEEDED",
+      "attempts": 1,
+      "sessions": 1,
+      "transitions": [
+        "CREATED",
+        "QUEUED",
+        "PREPARING",
+        "RUNNING",
+        "VERIFYING",
+        "SUCCEEDED"
+      ],
+      "identities": [
+        {
+          "pid": 25476,
+          "creationMs": 1794468973318,
+          "capturedAt": "2026-11-12T07:36:14.539Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "verdicts": [
+        "ABSENT"
+      ],
+      "checks": {
+        "exitZero": true,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCaptured": true,
+        "runtimeProcessGone": true,
+        "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "taskSucceeded": true,
+        "hadSession": true,
+        "verified": true,
+        "transitionsOk": true,
+        "runtimeClosedInLog": true,
+        "noLingeringApp": true
+      }
+    },
+    "B": {
+      "taskId": "task-bb42d7e9",
+      "finalStatus": "SUCCEEDED",
+      "attempts": 2,
+      "sessions": 1,
+      "sessionId": "studio-task-bb42d7e9-a1（两次 attempt 复用同一 session）",
+      "transitions": [
+        "CREATED",
+        "QUEUED",
+        "PREPARING",
+        "RUNNING",
+        "INTERRUPTING",
+        "INTERRUPTED",
+        "RESUMING",
+        "RUNNING",
+        "VERIFYING",
+        "SUCCEEDED"
+      ],
+      "interruptedAt": "INTERRUPTED",
+      "identities": [
+        {
+          "pid": 25652,
+          "creationMs": 1794468989474,
+          "capturedAt": "2026-11-12T07:36:30.084Z",
+          "source": "parent-and-bin"
+        },
+        {
+          "pid": 20992,
+          "creationMs": 1794468994654,
+          "capturedAt": "2026-11-12T07:36:35.703Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "verdicts": [
+        "ABSENT",
+        "ABSENT"
+      ],
+      "checks": {
+        "exitZero": true,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCount": true,
+        "runtimeIdentitiesDistinct": true,
+        "allRuntimeProcessesGone": true,
+        "runtimeCheckStatus": "ABSENT,ABSENT",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "wasInterrupted": true,
+        "interruptedIsRecorded": true,
+        "resumedToTerminal": true,
+        "sessionReused": true,
+        "twoAttempts": true,
+        "runtimeClosedInLog": true,
+        "noLingeringApp": true
+      }
+    },
+    "C": {
+      "taskId": "task-63b09ebc",
+      "finalStatus": "SUCCEEDED",
+      "attempts": 2,
+      "sessions": 1,
+      "recovered": true,
+      "crashIdentities": [
+        {
+          "pid": 25872,
+          "creationMs": 1794469007470,
+          "capturedAt": "2026-11-12T07:36:48.138Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "crashVerdicts": [
+        "ABSENT"
+      ],
+      "recoveryIdentities": [
+        {
+          "pid": 25092,
+          "creationMs": 1794469013475,
+          "capturedAt": "2026-11-12T07:36:54.372Z",
+          "source": "parent-and-bin"
+        }
+      ],
+      "recoveryVerdicts": [
+        "ABSENT"
+      ],
+      "checks": {
+        "crashedAsExpected": true,
+        "crashLeftTaskRunning": true,
+        "recoveryProducedSmoke": true,
+        "sawInterruptedState": true,
+        "resumedToTerminal": true,
+        "recordedNewAttempt": true,
+        "appExited": true,
+        "noLingeringApp": true,
+        "disposeHadNoFailure": true,
+        "runtimeProcessGone": true,
+        "runtimeCheckStatus": "ABSENT",
+        "crashCapturedIdentity": true,
+        "crashOrphanStatus": "ABSENT",
+        "crashLeftNoOrphan": true,
+        "noIdentityWatchErrors": true
+      }
+    },
+    "assertionFix": {
+      "file": "apps/studio/scripts/smoke-tasks-packaged.mjs",
+      "removed": "noRuntimeLeft（对 app 退出前快照判定，结构上不可满足）",
+      "added": "runtimeClosedInLog（每个 runtime.start 必须有对应 runtime.closed）",
+      "appliesTo": [
+        "A",
+        "B"
+      ],
+      "rationale": "smoke.json 在任务终态即写入，早于 app-quit 的 dispose，快照里 runtime 仍是 closing；退出证明以 OS 身份 ABSENT 为准，另以日志 runtime.closed 做补充强校验"
+    }
+  }
 }

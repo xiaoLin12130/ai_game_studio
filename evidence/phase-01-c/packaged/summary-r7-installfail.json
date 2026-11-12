@@ -1,0 +1,252 @@
+{
+  "generatedAt": "2026-11-12T07:33:42.947Z",
+  "exe": "<abs-path>",
+  "checks": {
+    "A.exitZero": false,
+    "A.disposeHadNoFailure": true,
+    "A.runtimeIdentityCaptured": false,
+    "A.runtimeProcessGone": false,
+    "A.runtimeCheckStatus": "",
+    "A.noIdentityWatchErrors": true,
+    "A.producedSmoke": true,
+    "A.taskSucceeded": false,
+    "A.hadSession": false,
+    "A.verified": false,
+    "A.transitionsOk": false,
+    "A.noRuntimeLeft": true,
+    "A.noLingeringApp": true,
+    "B.exitZero": false,
+    "B.disposeHadNoFailure": true,
+    "B.runtimeIdentityCount": false,
+    "B.runtimeIdentitiesDistinct": false,
+    "B.allRuntimeProcessesGone": false,
+    "B.runtimeCheckStatus": "",
+    "B.noIdentityWatchErrors": true,
+    "B.producedSmoke": true,
+    "B.wasInterrupted": false,
+    "B.interruptedIsRecorded": false,
+    "B.resumedToTerminal": false,
+    "B.sessionReused": false,
+    "B.twoAttempts": false,
+    "B.noLingeringApp": true,
+    "C.crashedAsExpected": false,
+    "C.crashLeftTaskRunning": false,
+    "C.recoveryProducedSmoke": true,
+    "C.sawInterruptedState": false,
+    "C.resumedToTerminal": false,
+    "C.recordedNewAttempt": false,
+    "C.appExited": true,
+    "C.noLingeringApp": true,
+    "C.disposeHadNoFailure": true,
+    "C.runtimeProcessGone": false,
+    "C.runtimeCheckStatus": "",
+    "C.crashCapturedIdentity": false,
+    "C.crashOrphanStatus": "",
+    "C.crashLeftNoOrphan": false,
+    "C.noIdentityWatchErrors": true
+  },
+  "failed": [
+    "A.exitZero",
+    "A.runtimeIdentityCaptured",
+    "A.runtimeProcessGone",
+    "A.runtimeCheckStatus",
+    "A.taskSucceeded",
+    "A.hadSession",
+    "A.verified",
+    "A.transitionsOk",
+    "B.exitZero",
+    "B.runtimeIdentityCount",
+    "B.runtimeIdentitiesDistinct",
+    "B.allRuntimeProcessesGone",
+    "B.runtimeCheckStatus",
+    "B.wasInterrupted",
+    "B.interruptedIsRecorded",
+    "B.resumedToTerminal",
+    "B.sessionReused",
+    "B.twoAttempts",
+    "C.crashedAsExpected",
+    "C.crashLeftTaskRunning",
+    "C.sawInterruptedState",
+    "C.resumedToTerminal",
+    "C.recordedNewAttempt",
+    "C.runtimeProcessGone",
+    "C.runtimeCheckStatus",
+    "C.crashCapturedIdentity",
+    "C.crashOrphanStatus",
+    "C.crashLeftNoOrphan"
+  ],
+  "ok": false,
+  "scenarios": {
+    "A": {
+      "mode": "task-run",
+      "wallMs": 4203,
+      "exitCode": 1,
+      "timedOut": false,
+      "smoke": {
+        "generatedAt": "2026-11-12T07:33:29.561Z",
+        "mode": "task-run",
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+      },
+      "logTail": [
+        "{\"ts\":\"2026-11-12T07:33:25.902Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
+        "{\"ts\":\"2026-11-12T07:33:26.106Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-e6bcac2d\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:33:29.557Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+      ],
+      "runtimeIdentities": [],
+      "runtimeIdentityCount": 0,
+      "identityWatchErrors": [],
+      "runtimeIdentitiesCaptured": [],
+      "runtimeChecks": {
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
+      },
+      "checks": {
+        "exitZero": false,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCaptured": false,
+        "runtimeProcessGone": false,
+        "runtimeCheckStatus": "",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "taskSucceeded": false,
+        "hadSession": false,
+        "verified": false,
+        "transitionsOk": false,
+        "noRuntimeLeft": true,
+        "noLingeringApp": true
+      }
+    },
+    "B": {
+      "mode": "task-interrupt-resume",
+      "wallMs": 3835,
+      "exitCode": 1,
+      "timedOut": false,
+      "smoke": {
+        "generatedAt": "2026-11-12T07:33:33.983Z",
+        "mode": "task-interrupt-resume",
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+      },
+      "logTail": [
+        "{\"ts\":\"2026-11-12T07:33:30.996Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
+        "{\"ts\":\"2026-11-12T07:33:31.169Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-cf024d0a\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T07:33:33.979Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+      ],
+      "runtimeIdentities": [],
+      "runtimeIdentityCount": 0,
+      "identityWatchErrors": [],
+      "runtimeIdentitiesCaptured": [],
+      "runtimeChecks": {
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
+      },
+      "checks": {
+        "exitZero": false,
+        "disposeHadNoFailure": true,
+        "runtimeIdentityCount": false,
+        "runtimeIdentitiesDistinct": false,
+        "allRuntimeProcessesGone": false,
+        "runtimeCheckStatus": "",
+        "noIdentityWatchErrors": true,
+        "producedSmoke": true,
+        "wasInterrupted": false,
+        "interruptedIsRecorded": false,
+        "resumedToTerminal": false,
+        "sessionReused": false,
+        "twoAttempts": false,
+        "noLingeringApp": true
+      }
+    },
+    "C": {
+      "crash": {
+        "mode": "task-start-and-crash",
+        "wallMs": 4074,
+        "exitCode": 1,
+        "timedOut": false,
+        "smoke": {
+          "generatedAt": "2026-11-12T07:33:39.655Z",
+          "mode": "task-start-and-crash",
+          "phase": "error",
+          "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
+        },
+        "logTail": [
+          "{\"ts\":\"2026-11-12T07:33:35.934Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:33:36.108Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-eff292b7\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:33:39.651Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
+        ],
+        "runtimeIdentities": [],
+        "runtimeIdentityCount": 0,
+        "identityWatchErrors": []
+      },
+      "recover": {
+        "mode": "task-recover",
+        "wallMs": 1118,
+        "exitCode": 0,
+        "timedOut": false,
+        "smoke": {
+          "generatedAt": "2026-11-12T07:33:41.150Z",
+          "mode": "task-recover",
+          "phase": "nothing-to-recover",
+          "tasks": [
+            {
+              "id": "task-eff292b7",
+              "status": "CREATED"
+            }
+          ]
+        },
+        "logTail": [
+          "{\"ts\":\"2026-11-12T07:33:35.934Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T07:33:36.108Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-eff292b7\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T07:33:39.651Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}",
+          "{\"ts\":\"2026-11-12T07:33:41.015Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
+          "{\"ts\":\"2026-11-12T07:33:41.152Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+          "{\"ts\":\"2026-11-12T07:33:41.155Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+        ],
+        "runtimeIdentities": [],
+        "runtimeIdentityCount": 0,
+        "identityWatchErrors": []
+      },
+      "orphanPidsAfterCrash": [],
+      "crashRuntimeIdentities": [],
+      "crashRuntimeChecks": {
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
+      },
+      "recoveryRuntimeIdentities": [],
+      "recoveryRuntimeChecks": {
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
+      },
+      "checks": {
+        "crashedAsExpected": false,
+        "crashLeftTaskRunning": false,
+        "recoveryProducedSmoke": true,
+        "sawInterruptedState": false,
+        "resumedToTerminal": false,
+        "recordedNewAttempt": false,
+        "appExited": true,
+        "noLingeringApp": true,
+        "disposeHadNoFailure": true,
+        "runtimeProcessGone": false,
+        "runtimeCheckStatus": "",
+        "crashCapturedIdentity": false,
+        "crashOrphanStatus": "",
+        "crashLeftNoOrphan": false,
+        "noIdentityWatchErrors": true
+      }
+    }
+  }
+}

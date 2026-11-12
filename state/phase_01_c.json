@@ -1,11 +1,11 @@
 {
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
-  "status": "BLOCKED",
-  "current_round": "R6-normal-windows-unblock",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "current_round": "R7-acceptance",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
-  "note": "R6：provider 安装问题已定位并解阻塞——pnpm store 放到 %TEMP% 独立目录后，TaskService.ensureProfile() 真实安装 @mars-sea/dsh-commandcode-provider 0.15.4 成功；A/B/C 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002），但模型回合被 Command Code 账户用量窗口限流（RATE_LIMIT，2026-11-12 15:33:12 重置），未到终态。阶段保持 BLOCKED。",
+  "note": "R7：环境已解阻塞（C: 盘 %TEMP% 独立 pnpm store），provider 插件真实安装；额度窗口重置后安装版 A/B/C 全部真实通过（ok:true，43 项检查 / 0 失败），B 两个 Runtime 与 C 崩溃/恢复 Runtime 均经 OS 身份复核为 ABSENT。本阶段不自行判定通过。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
     "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
@@ -17,12 +17,7 @@
   "verified_this_round": {
     "jsonAndConsistency": {
       "result": "PASS",
-      "note": "state / verification.json / README / report 一致"
-    },
-    "tsc": {
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/unit/tsc.txt",
-      "note": "本轮修改 processes.ts，已重跑"
+      "note": "state / verification.json / README / report / summary 一致"
     },
     "supervisorRaces": {
       "tests": 9,
@@ -32,25 +27,24 @@
     "processIdentity": {
       "tests": 12,
       "pass": 12,
-      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "新增 plugin CLI 排除用例"
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt"
     },
     "identityWatcher": {
       "tests": 6,
       "pass": 6,
       "artifact": "evidence/phase-01-c/unit/identity-watcher.txt"
     },
-    "packagedStatus": {
-      "status": "BLOCKED_BY_MODEL_QUOTA",
+    "packaged": {
+      "status": "PASS",
       "thisRoundRun": true,
-      "runRound": "R6",
-      "checks": 42,
-      "failed": 20,
-      "ok": false,
-      "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "插件真实安装成功；A/B/C runtime 均启动；模型 RATE_LIMIT 至 2026-11-12 15:33:12"
+      "runRound": "R7",
+      "checks": 43,
+      "failed": 0,
+      "ok": true,
+      "artifact": "evidence/phase-01-c/packaged/summary-r7.json",
+      "note": "A SUCCEEDED；B 双 Runtime 均 ABSENT 且复用同一 session；C app.exit(9) 后恢复并到终态；所有身份 ABSENT，无 watcher 错误"
     },
-    "historicalNote": "R4/R5 失败记录保留在 git 历史、packaged/summary-r4.json 与 review_correction_r4/r5。"
+    "historicalNote": "R4/R5/R6 的失败记录保留在 packaged/summary-r4.json、summary-r6.json、summary-r7-installfail.json 与 review_correction_r4/r5/r6。"
   },
   "verified_previous_round": {
     "unitTests": {
@@ -102,6 +96,12 @@
       "round": "R4",
       "historical": true,
       "note": "R4 执行；本轮未修改 TS，未重跑"
+    },
+    "tscR6": {
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-c/unit/tsc.txt",
+      "historical": true,
+      "note": "R6 修改 processes.ts 后的编译结果；R7 未改 TS，未重跑"
     }
   },
   "not_run": [
@@ -122,17 +122,8 @@
       "phase": "后续"
     }
   ],
-  "blocked": [
-    {
-      "id": "B-MODEL-QUOTA",
-      "item": "安装版 A/B/C 真实模型回合",
-      "scope": "属于 PHASE 01-C 原始验收范围",
-      "why": "Command Code 账户用量窗口耗尽（RATE_LIMIT），最早 2026-11-12 15:33:12 重置",
-      "evidence": "evidence/phase-01-c/real-run-r6.md",
-      "status": "WAITING_FOR_QUOTA_RESET"
-    }
-  ],
-  "updated_at": "2026-11-12T06:44:14.660Z",
+  "blocked": [],
+  "updated_at": "2026-11-12T07:40:07.157Z",
   "acceptance": [
     {
       "id": "C1",
@@ -143,9 +134,9 @@
     {
       "id": "C2",
       "item": "Session 生命周期（创建/中断/原生 resume/失败记录）",
-      "status": "BLOCKED",
-      "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary-r7.json",
+      "note": "R7 安装版 A 场景：task-cea17dc3 由 Studio 经 CREATED→…→VERIFYING→SUCCEEDED，session 1 个；B 场景复用同一 session（attempts=2/sessions=1）。历史 R4/R5 失败记录保留。"
     },
     {
       "id": "C3",
@@ -162,16 +153,16 @@
     {
       "id": "C5",
       "item": "中断与恢复（安装版验证）",
-      "status": "BLOCKED",
-      "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary-r7.json",
+      "note": "R7 安装版 B 场景：INTERRUPTING→INTERRUPTED→原生 resumeSession 复用 studio-task-bb42d7e9-a1→rt-002→SUCCEEDED；runtimeIdentityCount=2、distinct=2，pid 25652/1794468989474 与 20992/1794468994654 均 ABSENT，noIdentityWatchErrors=true。"
     },
     {
       "id": "C6",
       "item": "持久化与崩溃恢复（SQLite + app.exit(9) 实测）",
-      "status": "BLOCKED",
-      "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "R6 已真实执行到 runtime/中断/恢复阶段（B 用原生 resumeSession 复用原 session 并启动 rt-002；C 崩溃后重启恢复），但模型回合 RATE_LIMIT，未到终态；不能作为 PASS。"
+      "status": "PASS",
+      "evidence": "evidence/phase-01-c/packaged/summary-r7.json",
+      "note": "R7 安装版 C 场景：运行中 app.exit(9)→重启→识别 INTERRUPTED→task.resumed→SUCCEEDED（attempts=2）；崩溃前 pid 25872/1794469007470 与恢复 pid 25092/1794469013475 均 ABSENT，crashLeftNoOrphan=true。"
     },
     {
       "id": "C7",
@@ -182,9 +173,9 @@
     {
       "id": "C8",
       "item": "测试与真实运行证据",
-      "status": "PARTIALLY_VERIFIED",
+      "status": "PASS",
       "evidence": "evidence/phase-01-c/verification.json",
-      "note": "单元证据通过（tsc / process-identity 12 / supervisor 9 / identity-watcher 6）；安装版 provider 安装与 runtime 生命周期真实发生，但模型回合被 RATE_LIMIT 阻断，未达终态。"
+      "note": "R7 真实执行：process-identity 12/12、runtime-supervisor 9/9、identity-watcher 6/6、安装版 A/B/C 43 项 0 失败；历史 tsc 为 R6 结果，历史全量套件未重跑。"
     }
   ],
   "defects_found_and_fixed": [
@@ -446,6 +437,101 @@
       "what": "provider 安装失败",
       "resolution": "pnpm store 移到 %TEMP% 后 dsh plugin add 真实成功",
       "evidence": "evidence/phase-01-c/real-run-r6.md"
+    },
+    {
+      "id": "B-MODEL-QUOTA",
+      "what": "安装版 A/B/C 真实模型回合被用量窗口阻断",
+      "resolution": "窗口 2026-11-12 15:33:12 (+08:00) 重置后，R7 真实回合全部完成并到终态",
+      "evidence": "evidence/phase-01-c/packaged/summary-r7.json"
     }
-  ]
+  ],
+  "review_correction_r7": {
+    "round": "R7-acceptance",
+    "goal": "在正常环境完成安装版 A/B/C 最终验收",
+    "store": {
+      "used": "C:/Users/LIN/AppData/Local/Temp/pnpm-store-ags-r7",
+      "failed": [
+        "H:/dev/pnpm-store/v11",
+        "H:/ai_music_crew/.tmp/pnpm-store-ags-r7（首次尝试，留档 summary-r7-installfail.json）"
+      ],
+      "finding": "H: 盘 store 会让 projects/<hash> 落成真实目录，fs.unlink(dir) 触发 Windows 原生 EPERM；C: 盘 %TEMP% store 正常形成 junction"
+    },
+    "providerInstall": "task.profile.ready ok:true \"provider installed\"；@mars-sea/dsh-commandcode-provider 0.15.4",
+    "quota": {
+      "resetAt": "2026-11-12T15:33:12+08:00",
+      "verifiedBy": "首个真实回合 15:34:16 完成"
+    },
+    "result": {
+      "ok": true,
+      "checks": 43,
+      "failed": 0,
+      "A": {
+        "taskId": "task-cea17dc3",
+        "status": "SUCCEEDED",
+        "identities": [
+          {
+            "pid": 25476,
+            "creationMs": 1794468973318,
+            "capturedAt": "2026-11-12T07:36:14.539Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "verdicts": [
+          "ABSENT"
+        ]
+      },
+      "B": {
+        "taskId": "task-bb42d7e9",
+        "status": "SUCCEEDED",
+        "attempts": 2,
+        "sessions": 1,
+        "identities": [
+          {
+            "pid": 25652,
+            "creationMs": 1794468989474,
+            "capturedAt": "2026-11-12T07:36:30.084Z",
+            "source": "parent-and-bin"
+          },
+          {
+            "pid": 20992,
+            "creationMs": 1794468994654,
+            "capturedAt": "2026-11-12T07:36:35.703Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "verdicts": [
+          "ABSENT",
+          "ABSENT"
+        ]
+      },
+      "C": {
+        "taskId": "task-63b09ebc",
+        "status": "SUCCEEDED",
+        "attempts": 2,
+        "crashIdentities": [
+          {
+            "pid": 25872,
+            "creationMs": 1794469007470,
+            "capturedAt": "2026-11-12T07:36:48.138Z",
+            "source": "parent-and-bin"
+          }
+        ],
+        "recoveryIdentities": [
+          {
+            "pid": 25092,
+            "creationMs": 1794469013475,
+            "capturedAt": "2026-11-12T07:36:54.372Z",
+            "source": "parent-and-bin"
+          }
+        ]
+      }
+    },
+    "assertionFix": {
+      "file": "apps/studio/scripts/smoke-tasks-packaged.mjs",
+      "removed": "noRuntimeLeft",
+      "added": "runtimeClosedInLog",
+      "reason": "noRuntimeLeft 读取 app 退出前的 smoke 快照，此时 runtime 合法为 closing，结构上不可满足；新断言要求每个 runtime.start 都有 runtime.closed，更强"
+    },
+    "evidence": "evidence/phase-01-c/real-run-r7.md"
+  }
 }
