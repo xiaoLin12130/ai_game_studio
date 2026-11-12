@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T03:53:58.760Z",
+  "generatedAt": "2026-11-12T04:45:30.101Z",
   "phase": "PHASE_01_C",
   "round": "R5-record-correction-env-prep",
   "branch": "phase/01-c-session-task-lifecycle",
@@ -165,7 +165,24 @@
       "startsWith('task-')": 2,
       "dsh-commandcode-provider@0.15.4": 1
     },
-    "asarMarkersVerified": true
+    "asarMarkersVerified": true,
+    "builtFromCommit": "0268470e351303895ff825a95708bae5287fa69a",
+    "rebuild": {
+      "note": "R5 从当前 HEAD 干净重建（--dir），输出到仓库外以避开旧目录删除；产物与既有 release/win-unpacked 逐字节一致。",
+      "output": "release-r5/win-unpacked/AI Game Studio.exe（仓库外临时输出目录）",
+      "builtFromCommit": "0268470e351303895ff825a95708bae5287fa69a",
+      "builtAt": "2026-11-12T12:45:08+08:00",
+      "buildExitCode": 0,
+      "sizeBytes": 246302208,
+      "sha256": "1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96",
+      "identicalToPackagedWinUnpacked": true,
+      "asarMarkers": {
+        "task-interrupt-resume": 1,
+        "interrupt-failed": 1,
+        "startsWith('task-')": 2,
+        "dsh-commandcode-provider@0.15.4": 1
+      }
+    }
   },
   "pluginInstall": {
     "package": "@mars-sea/dsh-commandcode-provider@0.15.4",
@@ -248,6 +265,30 @@
       "id": "NOT_RUN-5",
       "item": "安装版 A/B/C 重跑",
       "reason": "环境阻断（沙箱 pnpm store EPERM）；按任务要求不反复尝试 pnpm add，保留 R4 真实失败运行"
+    },
+    {
+      "id": "NOT_RUN-6",
+      "item": "R5 安装版 A/B/C",
+      "reason": "环境阻断（pnpm store 删除 FAIL_CLOSED）；按禁止项不绕过安全限制，本轮未执行"
     }
-  ]
+  ],
+  "environmentCheck": {
+    "checkedAt": "2026-11-12T04:43:14.754Z",
+    "node": "v22.22.2",
+    "pnpm": "11.21.0",
+    "npm": "10.9.7",
+    "npmRegistry": "reachable (npm view @mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4)",
+    "credentialsFile": "present (~/.dsh/.credentials.yaml; content not printed)",
+    "pluginPreinstalledIn": [
+      "~/.dsh/profiles/desktop",
+      "~/.dsh/profiles/headless",
+      "~/.dsh/profiles/web"
+    ],
+    "pnpmStorePath": "H:\\dev\\pnpm-store\\v11",
+    "pnpmStoreDeleteProbe": "FAIL -> [safe-delete][SAFE_DELETE_FAIL_CLOSED] trash-failed (target: pnpm store); %TEMP% write+delete OK",
+    "verdict": "ENVIRONMENT_BLOCKED",
+    "reason": "本会话仍是 WorkBuddy 沙箱：pnpm store 的删除被安全垫 FAIL_CLOSED 拒绝，dsh plugin add 内部的 pnpm add 无法完成。未采用修改 store 目录、关闭安全垫、替换 pnpm 等绕过方式。",
+    "abcExecutedThisRound": false,
+    "note": "R4 对正确构建的真实失败运行仍保留在 packagedScenarios（runRound=R4, thisRound=false）。"
+  }
 }

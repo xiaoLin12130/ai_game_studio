@@ -50,6 +50,8 @@
 `commandcode` 是外部插件（非 DSH 内置），`dsh-sdk-client`/`@deepseek-ai/dsh` 全程 `0.2.1-rc.3`（依赖未变）。
 本轮未改 Provider、未重写 DSH 通信、未伪造成功；`packaged/summary.json` 保留为真实实跑结果（`ok:false`）。
 
+**R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在 / 插件已在 `desktop`、`headless`、`web` profile；但 pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 删除正常），故 R5 未执行 A/B/C，未采用改 store 目录/关闭安全垫等绕过方式。详见 `verification.json` 的 `environmentCheck`。
+
 **A/B/C 属 PHASE 01-C 原始验收范围**，不因环境阻断而移出范围。正常 Windows 环境复验：
 
 ```

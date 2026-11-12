@@ -95,6 +95,8 @@
 
 **因此 A/B/C 仍为 `BLOCKED`（环境层）；但 A/B/C 属 PHASE 01-C 原始验收范围，不因环境阻断而移出范围。** 未伪造通过、未改 Provider、未重写 DSH 通信。 `evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
 
+**R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在 / 插件已在 `desktop`·`headless`·`web` profile；但 pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 删除正常）。故 R5 未执行 A/B/C，未采用任何绕过方式。详见 `verification.json#environmentCheck`。
+
 ### 6.3 第 2 轮历史结果（保留，仅供审计）
 
 第 2 轮报告 A/B/C **38/38 断言通过**；但其进程检查采用的"按 DSH home 字符串匹配"已在 `INVALID-1` 标记为无效，故第 2 轮的 A/B/C 安装版结论**不作为通过依据**。本轮未重跑以复现该结论。

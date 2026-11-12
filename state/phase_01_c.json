@@ -121,14 +121,16 @@
   "blocked": [
     {
       "id": "B-INSTALL-1",
-      "item": "安装版 A/B/C 复验（本轮目标：B 场景两个 Runtime 均 ABSENT）",
+      "run_round": "R4",
+      "r5_rerun": false,
+      "item": "安装版 A/B/C 复验（B 场景两个 Runtime 均 ABSENT）",
       "why": "两层原因：(1) 首跑使用的 out-g 是陈旧打包（asar 不含 task-interrupt-resume 分支），回落启动探测 → ROUTE_UNKNOWN，只捕获探测 runtime；(2) 改用当前 HEAD 构建（release/win-unpacked，asar 含任务场景与 task-* 探测门控）后，ensureProfile 通过 dsh plugin add 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时，pnpm add 因本机 pnpm store 的 unlink EPERM（沙箱文件删除保护）失败，任务在 profile 引导处 PROFILE_NOT_READY，仍未产生第二个 Runtime。非依赖版本变化（全程 dsh-sdk-client/@deepseek-ai/dsh 0.2.1-rc.3），非 Provider 注册代码缺陷。",
       "scope": "属于 PHASE 01-C 原始验收范围，但当前执行环境因 pnpm 文件操作限制而阻断，等待正常 Windows 环境复验。",
       "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink pnpm store)",
       "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
     }
   ],
-  "updated_at": "2026-11-12T03:58:00.000Z",
+  "updated_at": "2026-11-12T04:44:00.000Z",
   "acceptance": [
     {
       "id": "C1",
@@ -141,7 +143,7 @@
       "item": "Session 生命周期（创建/中断/原生 resume/失败记录）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "代码实现完成；本轮安装版 summary.json 为 ok:false（provider 引导被环境阻断），不再作为 PASS 依据。历史 R2 曾验证通过，但当时进程判据已判定 INVALID-1。"
+      "note": "代码实现完成。安装版证据来自 R4 对正确构建的真实运行：summary.json 为 ok:false，失败原因是 PROFILE_NOT_READY（provider 插件安装被沙箱 pnpm 限制阻断）。R5 本轮未重跑安装版 A/B/C。该结果不能作为 PASS 依据。历史 R2 曾通过，但其进程判据已被 INVALID-1 判定无效。"
     },
     {
       "id": "C3",
@@ -160,14 +162,14 @@
       "item": "中断与恢复（安装版验证）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "本轮安装版 B 场景在 provider 引导处失败（PROFILE_NOT_READY），未产生第二个 Runtime，不能作为 PASS。B 双 Runtime 捕获/复核代码已由 identity-watcher 单测覆盖。"
+      "note": "安装版 B 场景仅在 R4 对正确构建运行过：在 provider 引导处失败（PROFILE_NOT_READY），只捕获 1 个 Runtime，未产生第二个，不能作为 PASS。R5 本轮未重跑。B 双 Runtime 捕获/复核代码已由 identity-watcher 6/6 单测覆盖。"
     },
     {
       "id": "C6",
       "item": "持久化与崩溃恢复（SQLite + app.exit(9) 实测）",
       "status": "BLOCKED",
       "evidence": "evidence/phase-01-c/packaged/summary.json",
-      "note": "本轮安装版 C 场景在 provider 引导处失败，未完成崩溃恢复链路，不能作为 PASS。代码与历史 R2 结果保留，但历史进程判据为 INVALID-1。"
+      "note": "安装版 C 场景仅在 R4 对正确构建运行过：在 provider 引导处失败，未完成崩溃恢复链路，不能作为 PASS。R5 本轮未重跑。代码保留；历史 R2 结果不可用（INVALID-1）。"
     },
     {
       "id": "C7",
@@ -180,7 +182,7 @@
       "item": "测试与真实运行证据",
       "status": "PARTIALLY_VERIFIED",
       "evidence": "evidence/phase-01-c/verification.json",
-      "note": "单元证据真实且通过（tsc / process-identity 11 / supervisor 9 / identity-watcher 6）；安装版证据为真实失败运行（ok:false），未达通过。"
+      "note": "分项：TypeScript 检查为 R4 历史结果（exit 0，R5 未改 TS、未重跑）；process-identity 为 R5 本轮 11/11；runtime-supervisor 为 R5 本轮 9/9；identity-watcher 为 R5 本轮 6/6；安装版 A/B/C 为 R4 真实失败结果（ok:false），R5 未重跑。不得把历史 tsc 描述为 R5 执行。"
     }
   ],
   "defects_found_and_fixed": [
@@ -290,8 +292,9 @@
       "verified_this_round 仅保留本轮真实执行；fullSuite/realDsh/phase00/tsc 移入 verified_previous_round 并标 historical",
       "确认正确构建产物与 4 个标记；记录产物 SHA-256/大小/时间；给出正常 Windows A/B/C 命令"
     ],
-    "environment": "ENVIRONMENT_BLOCKED — 沙箱 pnpm store unlink EPERM，未重复尝试 pnpm add，未绕过安全垫",
-    "packaged_installed": "未完成（环境阻断）；A/B/C 属原始验收范围"
+    "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（H:\\\\dev\\\\pnpm-store\\\\v11）删除仍被安全垫 SAFE_DELETE_FAIL_CLOSED 拒绝（%TEMP% 正常）；未重试 pnpm add、未改 store 目录、未绕过安全垫",
+    "r5_env_recheck": "Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在 / 插件已在 desktop·headless·web profile；A/B/C 未执行",
+    "packaged_installed": "未完成（环境阻断）；A/B/C 属原始验收范围；R5 未重跑"
   },
   "invalidated": [
     {
