@@ -1,10 +1,10 @@
 {
   "phase": "PHASE_01_C",
   "title": "DSH Session 生命周期与 Studio Task 状态管理",
-  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "status": "BLOCKED",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
-  "note": "原始目标已实现并有证据；本阶段不自行判定通过。",
+  "note": "B 场景第二个 Runtime 的 OS 进程退出验证代码已补齐并由单元测试覆盖（11/11）；安装版 A/B/C 复验被环境阻断（commandcode provider 不在当前 DSH 0.2.1-rc.3），无法交付两 Runtime 均 ABSENT 的安装版实证。本阶段不自行判定通过。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
     "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
@@ -33,9 +33,10 @@
       "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     "processIdentity": {
-      "tests": 8,
-      "pass": 8,
-      "artifact": "evidence/phase-01-c/unit/process-identity.txt"
+      "tests": 11,
+      "pass": 11,
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
+      "note": "本轮新增 discoverRuntimeIdentities 返回全部 Runtime / 查询失败 / 全退出 3 个用例"
     },
     "realDsh": {
       "tests": 2,
@@ -43,10 +44,11 @@
       "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
     },
     "packaged": {
-      "checks": 38,
-      "failed": 0,
+      "checks": 39,
+      "failed": 19,
+      "ok": false,
       "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "Runtime 身份捕获并在退出后复核"
+      "note": "BLOCKED：commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN；B 仅捕获 1 Runtime（已 ABSENT）。真实实跑结果，ok:false，不作通过依据"
     },
     "phase00": {
       "suite": "166/166",
@@ -90,8 +92,17 @@
       "phase": "后续"
     }
   ],
-  "blocked": [],
-  "updated_at": "2026-11-11T12:56:42.694Z",
+  "blocked": [
+    {
+      "id": "B-INSTALL-1",
+      "item": "安装版 A/B/C 复验（本轮目标：B 场景两个 Runtime 均 ABSENT）",
+      "why": "commandcode provider 在当前 DSH 0.2.1-rc.3（仓库 node_modules 与 out-c/d/g 三个打包 exe）中未被注册，runtime 启动即 ROUTE_UNKNOWN，无法驱动 B 场景中断→恢复以产生第二个 Runtime（rt-002 从未启动）",
+      "scope": "超出 PHASE 01-C 范围；需具备 commandcode provider 的 DSH 构建/凭据方可复验",
+      "evidence": "/tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (state.status=FAILED, code=ROUTE_UNKNOWN, raw=\"no adapter registered for provider \\\"commandcode\\\"\")",
+      "code_status": "B 修复代码已完成：processes.ts 新增 discoverRuntimeIdentities；smoke-tasks-packaged.mjs 新增 startIdentityWatcher + checkAllIdentities；B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone"
+    }
+  ],
+  "updated_at": "2026-11-12T03:10:00.000Z",
   "acceptance": [
     {
       "id": "C1",
@@ -205,6 +216,24 @@
         ]
       }
     }
+  },
+  "takeover_round_r3": {
+    "round": "R3-takeover",
+    "executor": "WorkBuddy (接管 DSH 未完成工作)",
+    "goal": "补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证",
+    "work": [
+      "processes.ts 新增 discoverRuntimeIdentities：返回父进程下所有匹配 dsh CLI 的子进程身份",
+      "smoke-tasks-packaged.mjs 用 startIdentityWatcher 全程轮询收集全部 (pid,creationMs) 身份 + checkAllIdentities 逐个复核",
+      "B 场景新增 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone 强制校验",
+      "process-identity.test.js 新增 3 个 discoverRuntimeIdentities 用例（11/11）"
+    ],
+    "verification": {
+      "tsc": "exit 0",
+      "processIdentity": "11/11",
+      "runtimeSupervisor": "9/9",
+      "packaged_installed": "BLOCKED — commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN"
+    },
+    "note": "B 修复代码完整且单元验证通过；安装版复验被环境阻断（B-INSTALL-1），非代码缺陷。"
   },
   "invalidated": [
     {

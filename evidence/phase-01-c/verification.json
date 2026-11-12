@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-11T12:56:30.881Z",
+  "generatedAt": "2026-11-12T03:03:58.225Z",
   "phase": "PHASE_01_C",
-  "round": "R2",
+  "round": "R3-takeover",
   "branch": "phase/01-c-session-task-lifecycle",
   "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "note": "Only commands actually run in this round. Counts parsed from the artefact next to each entry; artefacts listed by path.",
+  "note": "This round (WorkBuddy takeover) re-verifies the B-scenario second-runtime OS-process check. Only commands actually run this round are listed with real results; historical R2 evidence (full suite / phase00 / real-dsh) is preserved in its own artefact files and not re-run this round.",
   "matrix": [
     {
       "name": "typescript",
@@ -15,28 +15,17 @@
       "artifact": "evidence/phase-01-c/unit/tsc.txt"
     },
     {
-      "name": "studio-full-suite-run-1",
-      "command": "node --test",
+      "name": "process-identity",
+      "command": "node --test test/process-identity.test.js",
       "cwd": "apps/studio",
       "exitCode": 0,
       "counts": {
-        "tests": 101,
-        "pass": 101,
+        "tests": 11,
+        "pass": 11,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/full-suite-1.txt"
-    },
-    {
-      "name": "studio-full-suite-run-2",
-      "command": "node --test",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 101,
-        "pass": 101,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/unit/full-suite-2.txt"
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
+      "note": "四态 PRESENT/ABSENT/FAILED/UNKNOWN + discoverRuntimeIdentities 返回全部/查询失败/全退出（共 11 项）"
     },
     {
       "name": "runtime-supervisor-races",
@@ -49,97 +38,78 @@
         "fail": 0
       },
       "artifact": "evidence/phase-01-c/unit/supervisor-race.txt",
-      "note": "关闭竞态 6 项 + 启动失败清理 3 项"
-    },
-    {
-      "name": "process-identity",
-      "command": "node --test test/process-identity.test.js",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 8,
-        "pass": 8,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "PRESENT/ABSENT/FAILED/UNKNOWN 的全部分支"
-    },
-    {
-      "name": "real-dsh-task-integration",
-      "command": "node --test test/task-integration.test.js",
-      "cwd": "apps/studio",
-      "exitCode": 0,
-      "counts": {
-        "tests": 2,
-        "pass": 2,
-        "fail": 0
-      },
-      "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
+      "note": "关闭竞态 6 + 启动失败清理 3"
     },
     {
       "name": "packaged-task-scenarios",
-      "command": "node scripts/smoke-tasks-packaged.mjs <installed app>",
+      "command": "node scripts/smoke-tasks-packaged.mjs /tmp/pkg-exp/out-g/win-unpacked",
       "cwd": "apps/studio",
-      "exitCode": 0,
+      "exitCode": 1,
       "counts": {
-        "checks": 38,
-        "failed": 0
+        "checks": 39,
+        "failed": 19
       },
       "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "A/B/C 均使用捕获的 (pid, creationMs) 身份复核"
-    },
-    {
-      "name": "phase00-gates",
-      "command": "node scripts/run-gates.mjs",
-      "cwd": "spike/dsh-probe/current-0.2.1",
-      "exitCode": 0,
-      "artifact": "evidence/phase-01-c/regression/phase00-gates.json"
-    },
-    {
-      "name": "phase00-suite",
-      "command": "node tests/run-tests.mjs",
-      "cwd": "spike/dsh-probe/current-0.2.1",
-      "exitCode": 0,
-      "counts": {
-        "pass": 166,
-        "total": 166
-      },
-      "artifact": "evidence/phase-01-c/regression/phase00-suite.txt"
+      "status": "BLOCKED",
+      "note": "commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN；B 仅捕获 1 Runtime（已 ABSENT），无法证明两 Runtime 均退出"
     }
   ],
   "packagedScenarios": {
+    "ok": false,
+    "failed": [
+      "A.exitZero",
+      "A.taskSucceeded",
+      "A.hadSession",
+      "A.verified",
+      "A.transitionsOk",
+      "B.exitZero",
+      "B.runtimeIdentityCount",
+      "B.runtimeIdentitiesDistinct",
+      "B.wasInterrupted",
+      "B.interruptedIsRecorded",
+      "B.resumedToTerminal",
+      "B.sessionReused",
+      "B.twoAttempts",
+      "C.crashedAsExpected",
+      "C.crashLeftTaskRunning",
+      "C.sawInterruptedState",
+      "C.resumedToTerminal",
+      "C.recordedNewAttempt",
+      "C.appExited"
+    ],
     "checks": {
-      "A.exitZero": true,
+      "A.exitZero": false,
       "A.disposeHadNoFailure": true,
       "A.runtimeIdentityCaptured": true,
       "A.runtimeProcessGone": true,
       "A.runtimeCheckStatus": "ABSENT",
       "A.producedSmoke": true,
-      "A.taskSucceeded": true,
-      "A.hadSession": true,
-      "A.verified": true,
-      "A.transitionsOk": true,
+      "A.taskSucceeded": false,
+      "A.hadSession": false,
+      "A.verified": false,
+      "A.transitionsOk": false,
       "A.noRuntimeLeft": true,
       "A.noLingeringApp": true,
-      "B.exitZero": true,
+      "B.exitZero": false,
       "B.disposeHadNoFailure": true,
-      "B.runtimeIdentityCaptured": true,
-      "B.runtimeProcessGone": true,
+      "B.runtimeIdentityCount": false,
+      "B.runtimeIdentitiesDistinct": false,
+      "B.allRuntimeProcessesGone": true,
       "B.runtimeCheckStatus": "ABSENT",
       "B.producedSmoke": true,
-      "B.wasInterrupted": true,
-      "B.interruptedIsRecorded": true,
-      "B.resumedToTerminal": true,
-      "B.sessionReused": true,
-      "B.twoAttempts": true,
+      "B.wasInterrupted": false,
+      "B.interruptedIsRecorded": false,
+      "B.resumedToTerminal": false,
+      "B.sessionReused": false,
+      "B.twoAttempts": false,
       "B.noLingeringApp": true,
-      "C.crashedAsExpected": true,
-      "C.crashLeftTaskRunning": true,
+      "C.crashedAsExpected": false,
+      "C.crashLeftTaskRunning": false,
       "C.recoveryProducedSmoke": true,
-      "C.sawInterruptedState": true,
-      "C.resumedToTerminal": true,
-      "C.recordedNewAttempt": true,
-      "C.appExited": true,
+      "C.sawInterruptedState": false,
+      "C.resumedToTerminal": false,
+      "C.recordedNewAttempt": false,
+      "C.appExited": false,
       "C.noLingeringApp": true,
       "C.disposeHadNoFailure": true,
       "C.runtimeProcessGone": true,
@@ -148,15 +118,24 @@
       "C.crashOrphanStatus": "ABSENT",
       "C.crashLeftNoOrphan": true
     },
-    "failed": []
+    "note": "真实实跑结果（ok:false）。失败根因为 commandcode provider 路由缺失，非 B 修复代码问题；身份捕获/复核机制本身工作正常（捕获到的 Runtime 均验证 ABSENT）。"
   },
   "invalidated": [
     {
       "id": "INVALID-1",
       "what": "上一轮的 A/B/C 进程检查使用了 proc.commandLine.includes(dshHome)",
       "why": "DSH home 通过环境变量传递，运行中的 Runtime 命令行不含它；该判据在 Runtime 仍然运行时也会返回 ABSENT，属于错误的 PASS 依据",
-      "evidence": "evidence/phase-01-c/packaged/summary.json（本轮已用身份检查重写）",
+      "evidence": "evidence/phase-01-c/packaged/summary.json（本轮已重写，但仍因环境阻断未达通过）",
       "status": "INVALID — 不作为通过依据"
+    }
+  ],
+  "blocked": [
+    {
+      "id": "B-INSTALL-1",
+      "item": "安装版 A/B/C 复验",
+      "why": "commandcode provider 在当前 DSH 0.2.1-rc.3（仓库 node_modules 与 out-c/d/g 三个打包 exe）中未被注册，runtime 启动即 ROUTE_UNKNOWN，无法驱动 B 场景中断→恢复以产生第二个 Runtime",
+      "scope": "超出 PHASE 01-C 范围；需具备 commandcode provider 的 DSH 构建/凭据方可复验",
+      "evidence": "/tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (state.status=FAILED, code=ROUTE_UNKNOWN, raw=\"no adapter registered for provider \\\"commandcode\\\"\")"
     }
   ],
   "notRun": [
@@ -169,6 +148,11 @@
       "id": "NOT_RUN-2",
       "item": "npm audit 依赖审计",
       "reason": "本轮未改动依赖树"
+    },
+    {
+      "id": "NOT_RUN-3",
+      "item": "应用全量 101/101 与 PHASE 00 套件/门禁",
+      "reason": "本轮最小验证范围不要求重跑；历史证据保留于各自 artefact 文件（unit/full-suite-*.txt、regression/phase00-*.txt）"
     }
   ]
 }

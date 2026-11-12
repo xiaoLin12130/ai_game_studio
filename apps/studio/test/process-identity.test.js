@@ -9,7 +9,7 @@
  */
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { captureRuntimeIdentity, verifyRuntimeIdentity } = require('../dist/main/dsh/processes.js')
+const { captureRuntimeIdentity, discoverRuntimeIdentities, verifyRuntimeIdentity } = require('../dist/main/dsh/processes.js')
 
 const MARKER = '@deepseek-ai\\dsh\\lib\\bin.js'
 
@@ -115,4 +115,35 @@ test('capture pins exactly one runtime and keeps its creation time', async () =>
   assert.equal(capture.identity.pid, 11)
   assert.equal(capture.identity.creationMs, 111)
   assert.equal(capture.identity.source, 'parent-and-bin')
+})
+
+test('discovery returns every runtime, not just the first', async () => {
+  const table = tableWith({
+    children: [
+      { pid: 11, parentPid: 4242, name: 'node.exe', creationMs: 111, commandLine: MARKER },
+      { pid: 12, parentPid: 4242, name: 'node.exe', creationMs: 222, commandLine: MARKER },
+      { pid: 13, parentPid: 4242, name: 'powershell.exe', creationMs: 333, commandLine: 'Get-CimInstance' },
+    ],
+  })
+  const found = await discoverRuntimeIdentities(table, { parentPid: 4242, binMarker: MARKER })
+  assert.equal(found.ok, true)
+  assert.equal(found.identities.length, 2, 'both runtimes must be reported')
+  assert.deepEqual(found.identities.map((i) => i.pid).sort((a, b) => a - b), [11, 12])
+  assert.deepEqual(found.identities.map((i) => i.creationMs).sort((a, b) => a - b), [111, 222])
+  assert.equal(found.identities.every((i) => i.source === 'parent-and-bin'), true)
+})
+
+test('discovery reports a failed query instead of an empty list', async () => {
+  const table = tableWith({ childrenError: 'wmi unavailable' })
+  const found = await discoverRuntimeIdentities(table, { parentPid: 4242, binMarker: MARKER })
+  assert.equal(found.ok, false)
+  assert.match(String(found.error), /wmi unavailable/)
+  assert.deepEqual(found.identities, [], 'a failed query must not look like "nothing running"')
+})
+
+test('discovery finds nothing when the runtimes have exited', async () => {
+  const table = tableWith({ children: [] })
+  const found = await discoverRuntimeIdentities(table, { parentPid: 4242, binMarker: MARKER })
+  assert.equal(found.ok, true)
+  assert.equal(found.identities.length, 0)
 })

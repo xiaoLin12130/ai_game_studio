@@ -1,8 +1,8 @@
 # PHASE 01-C 工作报告 — DSH Session 生命周期与 Studio Task 状态管理
 
-> **状态：`READY_FOR_EXTERNAL_REVIEW`（第 2 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
+> **状态：`BLOCKED`（接管轮 / 第 3 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
 >
-> 第 1 轮评审基线 §8cb415b§；本轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。
+> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2），故无法交付"两个 Runtime 均 ABSENT"的安装版实证。
 
 ## 1. 本阶段原始目标
 
@@ -70,17 +70,33 @@
 | F-01C-2 | P1 | 会话未开始工作时的第一个 `idle` 被当作回合结束，任务 100ms 内以 0 事件"完成" |
 | F-01C-3 | P2 | 启动健康探测与任务 runtime 同父进程，身份捕获歧义时拒绝（安全但报 UNKNOWN） |
 
-## 6. 安装版验证（本轮核心）
+## 6. 安装版验证
 
-真实安装包（NSIS），静默安装后运行三个场景，**38/38 断言通过**（`evidence/phase-01-c/packaged/summary.json`）。每个场景都额外检查 §disposeHadNoFailure§（日志无 §task.service.dispose.failed§ / §runtime.close.failed§）与 §runtimeProcessGone§（按 DSH home 查进程表，状态必须为 §ABSENT§）：
+### 6.1 本轮对 B 场景第二个 Runtime 的修复（代码 + 单元验证）
 
-| 场景 | 内容 | 结果 |
-|---|---|---|
-| A 正常完成 | 创建任务 → 真实模型回合 → Studio 验收 → SUCCEEDED → 无残留 runtime、无残留 GUI 进程 | PASS |
-| B 中断恢复 | 启动 → 停止（经 INTERRUPTING）→ INTERRUPTED → resume → **同一 session** → 新 attempt → 终态 | PASS |
-| C 崩溃恢复 | 运行中 §app.exit(9)§（无优雅关闭）→ **崩溃后立即查进程表**（§crashLeftNoOrphan§）→ 重启 → 识别 INTERRUPTED → 恢复 → 新 attempt → 干净退出 | PASS |
+第 2 轮引入的"按 `(pid, creationMs)` 身份复核"解决了 `INVALID-1`（home 字符串匹配），但 B 场景只**单次**捕获一个 Runtime 身份，无法证明"中断→恢复"产生的**第二个** Runtime（rt-002）已退出。本轮补齐：
 
-C 场景是真实的异常退出，不是故障注入：进程被直接结束，没有 shutdown、没有 runtime close。
+- `apps/studio/src/main/dsh/processes.ts`：新增 `discoverRuntimeIdentities(table, {parentPid, binMarker})`，返回父进程下**所有**匹配 `dsh CLI` 的子进程身份（而非只取第一个）；保留既有 `captureRuntimeIdentity` / `verifyRuntimeIdentity` / `createProcessTable`。
+- `apps/studio/scripts/smoke-tasks-packaged.mjs`：把"单次 `captureIdentity`"替换为 `startIdentityWatcher`——在 App 整个生命周期内轮询（250ms），按 `(pid, creationMs)` 去重收集**所有** Runtime 身份；新增 `checkAllIdentities` 对每一个捕获身份执行 `verifyRuntimeIdentity`。B 场景新增三项强制校验：`runtimeIdentityCount === 2`、`runtimeIdentitiesDistinct === 2`、`allRuntimeProcessesGone`（仅当全部身份 `ABSENT` 才为真）。A/C 沿用同一机制独立验证各自 Runtime。
+- 禁止项均遵守：未使用 `commandLine.includes(dshHome)`；未以 GUI 进程退出代替 Runtime 进程检查；未以 SDK `runtime.closed` 日志代替 OS 进程身份检查；四态 `PRESENT/ABSENT/FAILED/UNKNOWN` 一致。
+
+该机制由**配额无关**的单元测试覆盖：`test/process-identity.test.js` 含 `discoverRuntimeIdentities` 返回全部 / 查询失败 / 全退出的用例，本轮 **11/11 通过**（见 §7）。
+
+### 6.2 安装版 A/B/C 复验 —— 被环境阻断（BLOCKED）
+
+第 3 轮对 `out-g` 打包构建（`/tmp/pkg-exp/out-g/win-unpacked`，DSH 0.2.1-rc.3）实跑了 A/B/C 三场景，结果 **无法达到通过**：
+
+- 三个场景的 DSH runtime 一启动即 `FAILED`，`code: ROUTE_UNKNOWN`，`raw: "no adapter registered for provider \"commandcode\""`（真实证据：`/tmp/studio-pkg-B-*`，`out-task-interrupt-resume/smoke.json`）。
+- `smoke-tasks-packaged.mjs`（HEAD 与本轮一致）写入 `provider: 'commandcode'`、`COMMANDCODE_API_KEY` 来自 `~/.dsh/.credentials.yaml`。但**当前仓库 `node_modules/@deepseek-ai/dsh-sdk-client@0.2.1-rc.3` 与全部三个打包 exe（out-c/d/g）的内置 DSH 均不含 `commandcode` provider**（受支持列表仅含 `deepseek`/`openai`/`anthropic` 等），grep 全磁盘 `AI Game Studio.exe` 亦无任何 `commandcode` 字符串。
+- 后果：runtime 进程虽启动（`runtimeExitCode: 0`），但任务立即失败，B 场景的"中断→恢复"流程从未发生，**rt-002 从未启动**；本轮实跑仅捕获到 1 个 Runtime（已验证 `ABSENT`），无法证明"两个 Runtime 均退出"。
+
+**这是环境/构建层面的阻断，不在 PHASE 01-C 范围内**（禁止重做 DSH 通信、禁止扩大验收范围、禁止伪造证据）。本轮**未**修改 provider 配置或伪造成功。`evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，19 项场景级断言失败，根因为 `commandcode` 路由缺失），不作通过依据。
+
+### 6.3 第 2 轮历史结果（保留，仅供审计）
+
+第 2 轮报告 A/B/C **38/38 断言通过**；但其进程检查采用的"按 DSH home 字符串匹配"已在 `INVALID-1` 标记为无效，故第 2 轮的 A/B/C 安装版结论**不作为通过依据**。本轮未重跑以复现该结论。
+
+C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、无 runtime close），崩溃后立即用崩溃前捕获的身份查进程表。该机制代码已就绪，待环境具备 `commandcode` provider 后可复验。
 
 ## 7. 测试与回归
 
@@ -89,7 +105,8 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 | `tsc -p tsconfig.json` | 0 | — | `unit/tsc.txt` |
 | `node --test`（应用全量，连续两次） | 0 / 0 | **101/101**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
 | `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
-| `node --test test/process-identity.test.js` | 0 | **8/8**（PRESENT/ABSENT/FAILED/UNKNOWN） | `unit/process-identity.txt` |
+| `node --test test/process-identity.test.js` | 0 | **11/11**（PRESENT/ABSENT/FAILED/UNKNOWN + `discoverRuntimeIdentities` 返回全部/查询失败/全退出） | `unit/process-identity.txt` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>` | 1 | **BLOCKED**：`commandcode` provider 不在当前 DSH 0.2.1-rc.3（仓库与 out-c/d/g 均不含），runtime 启动即 `ROUTE_UNKNOWN`，B 的 rt-002 从未启动，仅捕获 1 个 Runtime（已验证 ABSENT） | `packaged/summary.json` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |
@@ -119,10 +136,10 @@ C 场景是真实的异常退出，不是故障注入：进程被直接结束，
 | UNKNOWN | U-01C-1 第三方 Provider 限流/额度波动对长回合任务的影响 |
 | DEFERRED | D-01C-1 任务面板之外的会话事件流可视化 |
 | NOT_RUN | 静态吊销检查（未引入签名/OEM）；`npm audit` 依赖审计（本轮未改依赖树） |
-| BLOCKED | 无 |
+| BLOCKED | B-INSTALL-1 安装版 A/B/C 复验：`commandcode` provider 在当前 DSH 0.2.1-rc.3（仓库 + out-c/d/g exe）中未被注册，runtime 启动即 `ROUTE_UNKNOWN`，无法驱动 B 场景"中断→恢复"以产生第二个 Runtime；属环境/构建问题，超出 PHASE 01-C 范围，需具备 `commandcode` provider 的 DSH 构建/凭据方可复验 |
 
 ## 10. 结论
 
-原始目标 1–8 全部实现并有证据；安装版 A/B/C、三方回归、门禁均通过；无已知 P0/P1 遗留。
+原始目标 1–8 代码已实现；B 场景第二个 Runtime 的 OS 进程退出验证**代码已补齐并由单元测试覆盖**（11/11）。但**安装版 A/B/C 复验被环境阻断**（B-INSTALL-1：`commandcode` provider 在当前 DSH 构建中不可用），无法交付"两个 Runtime 均 ABSENT"的安装版实证。代码、单元证据、真实失败实跑证据均已就位，待环境具备 `commandcode` provider 后可复验。
 
-状态：**`READY_FOR_EXTERNAL_REVIEW`**，等待外部独立评审。
+状态：**`BLOCKED`**（代码完成，安装版复验被环境阻断），等待外部独立评审与具备 `commandcode` provider 的环境。

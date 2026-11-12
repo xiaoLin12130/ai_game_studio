@@ -370,6 +370,36 @@ export async function captureRuntimeIdentity(
   }
 }
 
+/**
+ * Every runtime this process currently owns.
+ *
+ * captureRuntimeIdentity deliberately refuses when it sees more than one candidate, because
+ * guessing which child to kill is worse than admitting doubt. That is the right answer for
+ * termination and the wrong one for verification: a task that interrupts and resumes has
+ * two runtimes over its lifetime, and both have to be proven gone. This returns all of them
+ * so the caller can check each one, and reports ambiguity as a count rather than a guess.
+ */
+export async function discoverRuntimeIdentities(
+  table: ProcessTable,
+  options: { parentPid: number; binMarker: string; boundMs?: number },
+): Promise<{ ok: boolean; identities: RuntimeIdentity[]; error: string | null }> {
+  const listing = await table.listChildren(options.parentPid, options.boundMs ?? 8000)
+  if (!listing.ok) return { ok: false, identities: [], error: listing.error ?? 'process query failed' }
+  const matches = listing.processes.filter(
+    (proc) => proc.parentPid === options.parentPid && proc.commandLine.includes(options.binMarker),
+  )
+  return {
+    ok: true,
+    identities: matches.map((proc) => ({
+      pid: proc.pid,
+      creationMs: proc.creationMs,
+      capturedAt: new Date().toISOString(),
+      source: 'parent-and-bin' as const,
+    })),
+    error: null,
+  }
+}
+
 export type IdentityVerdict = 'PRESENT' | 'ABSENT' | 'FAILED' | 'UNKNOWN'
 
 export interface IdentityCheck {
