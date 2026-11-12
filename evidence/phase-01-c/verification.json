@@ -1,18 +1,20 @@
 {
-  "generatedAt": "2026-11-12T03:32:39.999Z",
+  "generatedAt": "2026-11-12T03:45:10.411Z",
   "phase": "PHASE_01_C",
-  "round": "R4-review-correction",
+  "round": "R5-record-correction-env-prep",
   "branch": "phase/01-c-session-task-lifecycle",
   "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "note": "Review-correction round: watcher drain/error handling fixed and unit-tested; commandcode mismatch investigated; state C2/C5/C6 corrected. Only commands actually run this round are listed with real results. Historical R2 evidence (full suite / phase00 / real-dsh) is preserved in its own artefact files and not re-run.",
+  "previousDeliveryBaseline": "51d81dbb4a4b7cdebeb1261e4a3bff7a2676fb12",
+  "note": "Record-correction + environment-prep round. matrix lists ONLY commands actually run this round. The installed A/B/C run was NOT re-run this round (sandbox pnpm store EPERM); its R4 real result is kept in packagedScenarios with runRound=R4/thisRound=false, not claimed as this round.",
   "matrix": [
     {
-      "name": "typescript",
-      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
-      "cwd": "apps/studio",
+      "name": "json-and-consistency",
+      "command": "node -e \"JSON.parse(state/phase_01_c.json); JSON.parse(verification.json)\" + cross-file wording check",
       "exitCode": 0,
-      "artifact": "evidence/phase-01-c/unit/tsc.txt"
+      "result": "PASS",
+      "artifact": null,
+      "note": "state / verification.json / README / WORK_REPORT 对根因描述一致；禁止旧结论；verified_this_round 无历史项"
     },
     {
       "name": "process-identity",
@@ -24,8 +26,7 @@
         "pass": 11,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "四态 + discoverRuntimeIdentities 返回全部/查询失败/全退出"
+      "artifact": "evidence/phase-01-c/unit/process-identity.txt"
     },
     {
       "name": "runtime-supervisor-races",
@@ -37,8 +38,7 @@
         "pass": 9,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt",
-      "note": "关闭竞态 6 + 启动失败清理 3"
+      "artifact": "evidence/phase-01-c/unit/supervisor-race.txt"
     },
     {
       "name": "identity-watcher",
@@ -50,24 +50,14 @@
         "pass": 6,
         "fail": 0
       },
-      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt",
-      "note": "stop() 排空在途查询；watchErrors 计入 allGone；PRESENT/FAILED/UNKNOWN/空集不算通过"
-    },
-    {
-      "name": "packaged-task-scenarios",
-      "command": "node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked",
-      "cwd": "apps/studio",
-      "exitCode": 1,
-      "counts": {
-        "checks": 42,
-        "failed": 20
-      },
-      "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "status": "BLOCKED",
-      "note": "正确构建已进入任务场景，但 ensureProfile 的 dsh plugin add → pnpm add 因 pnpm store unlink EPERM（沙箱删除保护）失败（PROFILE_NOT_READY），B 未产生第二个 Runtime"
+      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt"
     }
   ],
   "packagedScenarios": {
+    "thisRound": false,
+    "runRound": "R4",
+    "command": "node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked",
+    "exitCode": 1,
     "ok": false,
     "failed": [
       "A.exitZero",
@@ -135,17 +125,85 @@
       "C.crashLeftNoOrphan": true,
       "C.noIdentityWatchErrors": true
     },
-    "note": "真实实跑结果（ok:false）。身份捕获/复核与 noIdentityWatchErrors 本身正常（捕获到的 runtime 均 ABSENT，watch 无错误）；失败根因是 provider 插件在沙箱内无法安装，非 B 修复代码问题。"
+    "note": "R4 对正确构建的真实失败运行（ok:false）。本轮未重跑（沙箱 pnpm EPERM）。失败根因是 provider 插件在沙箱内无法安装，非 B 修复代码问题；身份捕获/复核与 noIdentityWatchErrors 本身正常（捕获到的 runtime 均 ABSENT，watch 无错误）。"
+  },
+  "packagedStatus": {
+    "status": "ENVIRONMENT_BLOCKED",
+    "why": "TaskService.ensureProfile() 调用 dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4，内部 pnpm add 在当前沙箱因 pnpm store unlink EPERM 失败，任务停在 PROFILE_NOT_READY",
+    "bRuntimeCount": 1,
+    "note": "B 只捕获到 1 个 runtime（provider 引导失败前产生的进程），未产生第二个任务 Runtime；不能判定通过。"
   },
   "commandcodeInvestigation": {
     "question": "R2 通过的安装包用了哪个 DSH 构建，为什么当前构建不再支持 commandcode",
     "findings": [
       "不是依赖版本变化：dsh-sdk-client 与 @deepseek-ai/dsh 自 PHASE 01-A 起一直是 0.2.1-rc.3。",
       "不是 DSH 内置 provider 缺失：commandcode 是外部插件 @mars-sea/dsh-commandcode-provider@0.15.4，由 TaskService.ensureProfile() 在任务创建时用 dsh plugin add 安装，并在 task-runtime.cordis.yml 注册 provider 行。",
-      "首跑 out-g 是陈旧打包：其 asar 不含 task-interrupt-resume 分支，runtime 回落到启动探测并 ROUTE_UNKNOWN，只捕获到探测 runtime（这也是 B 只有 1 个 runtime 的直接原因）。",
-      "当前 HEAD 构建（release/win-unpacked）asar 含任务场景与 task-* 探测门控，但 dsh plugin add 的 pnpm add 在本沙箱因 pnpm store unlink EPERM 失败（沙箱文件删除保护），任务在 provider 引导处 PROFILE_NOT_READY。"
+      "第一层原因：首跑 out-g 是陈旧打包，其 asar 不含 task-interrupt-resume 分支，runtime 回落到启动探测并 ROUTE_UNKNOWN，只捕获到探测 runtime（这也是 B 只有 1 个 runtime 的直接原因）。",
+      "第二层原因：当前 HEAD 构建（release/win-unpacked）asar 含任务场景与 task-* 探测门控，但 dsh plugin add 的 pnpm add 在本沙箱因 pnpm store unlink EPERM（沙箱文件删除保护）失败，任务在 provider 引导处 PROFILE_NOT_READY。"
     ],
-    "conclusion": "构建/打包问题（陈旧 exe）已定位并可修正；剩余的 provider 引导失败是沙箱 pnpm 限制，非产品代码或 DSH 通信缺陷。未改 Provider、未重写 DSH 通信。"
+    "conclusion": "陈旧打包已定位并可修正；剩余 provider 引导失败是沙箱 pnpm 限制，非产品代码或 DSH 通信缺陷。未改 Provider、未重写 DSH 通信。A/B/C 仍属 PHASE 01-C 原始验收范围，只是当前环境无法执行。"
+  },
+  "buildArtifact": {
+    "electronBuilderConfig": "apps/studio/electron-builder.yml（asar: true；asarUnpack 含 *.node/dll/exe、node-pty、ripgrep 等；files 显式映射 node_modules 以保留 @deepseek-ai 依赖树；output: release）",
+    "installer": {
+      "path": "apps/studio/release/AI-Game-Studio-0.1.0-x64.exe",
+      "kind": "NSIS installer",
+      "sizeBytes": 237548789,
+      "sha256": "415c5003476f9e1d2acb1079c6137cc9c5537d8c9e443b2f1dccb87010a5d21e",
+      "builtAt": "2026-11-12T10:37:28+08:00"
+    },
+    "winUnpacked": {
+      "path": "apps/studio/release/win-unpacked/AI Game Studio.exe",
+      "kind": "win-unpacked executable (used by smoke script)",
+      "sizeBytes": 246302208,
+      "sha256": "1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96",
+      "builtAt": "2026-11-12T10:36:48+08:00"
+    },
+    "asarMarkers": {
+      "task-interrupt-resume": 1,
+      "interrupt-failed": 1,
+      "startsWith('task-')": 2,
+      "dsh-commandcode-provider@0.15.4": 1
+    },
+    "asarMarkersVerified": true
+  },
+  "pluginInstall": {
+    "package": "@mars-sea/dsh-commandcode-provider@0.15.4",
+    "installedBy": "TaskService.ensureProfile() → dsh plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4（内部调用 pnpm）",
+    "dshHome": "<userData>/dsh-home（可用 config.dsh.dshHome 覆盖，见 dsh/service.ts:101 与 main.ts:297）",
+    "profileDir": "<dshHome>/profiles/<config.dsh.profile>（默认 sdk）",
+    "pluginDirChecked": "<profileDir>/node_modules/@mars-sea/dsh-commandcode-provider",
+    "environmentStatus": "ENVIRONMENT_BLOCKED",
+    "blocker": "当前沙箱 pnpm store 的 unlink 报 EPERM（沙箱文件删除保护），pnpm.log: Command failed ... pnpm add \"@mars-sea/dsh-commandcode-provider@0.15.4\"",
+    "pnpmStoreSeen": "H:\\dev\\pnpm-store\\v11\\projects\\...",
+    "normalWindowsReady": true,
+    "prerequisites": [
+      "Node >= 22.12（仓库 engines 要求）与可用的 pnpm",
+      "可访问 npm registry（本机 npm view @mars-sea/dsh-commandcode-provider@0.15.4 返回 0.15.4）",
+      "pnpm store 可写（正常 Windows 用户目录即可；本沙箱因删除保护不可写）",
+      "~/.dsh/.credentials.yaml 含 COMMANDCODE_API_KEY（smoke 脚本读取后经 env 传入，不落日志）",
+      "该插件已存在于 ~/.dsh/profiles/{desktop,headless,web}/node_modules/@mars-sea/dsh-commandcode-provider，可作为离线可用性佐证"
+    ]
+  },
+  "abcCommands": {
+    "note": "在正常 Windows 环境执行；不要修改 Provider、不要重写 DSH 通信、不要手工构造 smoke.json。",
+    "steps": [
+      "1) 可选：静默安装 NSIS 包：apps\\\\studio\\\\release\\\\AI-Game-Studio-0.1.0-x64.exe /S",
+      "2) 进入仓库：cd apps\\\\studio",
+      "3) 运行安装版 A/B/C（win-unpacked）：node scripts\\\\smoke-tasks-packaged.mjs \"release\\\\win-unpacked\"",
+      "4) 或指向已安装目录：node scripts\\\\smoke-tasks-packaged.mjs \"%LOCALAPPDATA%\\\\Programs\\\\AI Game Studio\"",
+      "5) 查看结果：evidence\\\\phase-01-c\\\\packaged\\\\summary.json（ok 必须为 true；B 必须 runtimeIdentityCount=2、runtimeIdentitiesDistinct=true、allRuntimeProcessesGone=true、noIdentityWatchErrors=true）"
+    ],
+    "expectedB": "两个不同的 (pid, creationMs)，分别 verifyRuntimeIdentity 均为 ABSENT；任一捕获失败/歧义/查询失败/PRESENT/UNKNOWN 均判失败。"
+  },
+  "environment": {
+    "status": "ENVIRONMENT_BLOCKED",
+    "reason": "沙箱 pnpm store 删除操作 EPERM，dsh plugin add 无法安装 commandcode 插件",
+    "retriedPnpmAdd": false,
+    "bypassedSafetyPad": false,
+    "replacedPnpm": false,
+    "changedProvider": false,
+    "rewroteDshCommunication": false
   },
   "invalidated": [
     {
@@ -160,8 +218,8 @@
     {
       "id": "B-INSTALL-1",
       "item": "安装版 A/B/C 复验",
-      "why": "两层：out-g 陈旧打包（缺任务场景）已定位；改用当前 HEAD 构建后，dsh plugin add 的 pnpm add 因本机 pnpm store unlink EPERM 失败（PROFILE_NOT_READY），B 未产生第二个 Runtime",
-      "scope": "超出 PHASE 01-C 范围；需在可正常 pnpm add 的环境或预装插件的 profile 中复验",
+      "scope": "属于 PHASE 01-C 原始验收范围，但当前执行环境因 pnpm 文件操作限制而阻断，等待正常 Windows 环境复验。",
+      "why": "两层：首跑 out-g 陈旧打包（缺 task-interrupt-resume）→ 回落探测 ROUTE_UNKNOWN；当前正确构建已进任务场景，但 dsh plugin add 的 pnpm add 因本机 pnpm store unlink EPERM 失败（PROFILE_NOT_READY），B 未产生第二个 Runtime",
       "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink)"
     }
   ],
@@ -180,6 +238,16 @@
       "id": "NOT_RUN-3",
       "item": "应用全量 101/101 与 PHASE 00 套件/门禁",
       "reason": "本轮最小验证范围不要求重跑；历史证据保留于各自 artefact 文件"
+    },
+    {
+      "id": "NOT_RUN-4",
+      "item": "TypeScript 检查",
+      "reason": "本轮未修改 TS，按最小回归策略未重跑（R4 最后记录 exit 0）"
+    },
+    {
+      "id": "NOT_RUN-5",
+      "item": "安装版 A/B/C 重跑",
+      "reason": "环境阻断（沙箱 pnpm store EPERM）；按任务要求不反复尝试 pnpm add，保留 R4 真实失败运行"
     }
   ]
 }

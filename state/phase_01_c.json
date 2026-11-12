@@ -4,7 +4,7 @@
   "status": "BLOCKED",
   "verdict": null,
   "branch": "phase/01-c-session-task-lifecycle",
-  "note": "B 场景第二个 Runtime 的 OS 进程退出验证代码已补齐并由单元测试覆盖（11/11）；安装版 A/B/C 复验被环境阻断（commandcode provider 不在当前 DSH 0.2.1-rc.3），无法交付两 Runtime 均 ABSENT 的安装版实证。本阶段不自行判定通过。",
+  "note": "B 场景第二个 Runtime 的 OS 进程退出验证代码已补齐并由单元测试覆盖（process-identity 11/11、identity-watcher 6/6）。安装版 A/B/C 属 PHASE 01-C 原始验收范围，但被环境阻断：首跑 out-g 为陈旧构建（缺任务 smoke 分支）而回落启动探测（ROUTE_UNKNOWN）；改用当前正确构建后，TaskService.ensureProfile() 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时内部 pnpm add 因当前沙箱 pnpm store 删除操作 EPERM 失败，任务停在 PROFILE_NOT_READY。本阶段不自行判定通过。",
   "implemented": [
     "Task 状态机（表驱动，非法转换抛错）",
     "SQLite 持久化（node:sqlite，Electron 44.7 实测可用）",
@@ -14,18 +14,9 @@
     "IPC + preload 白名单 + 任务面板 UI"
   ],
   "verified_this_round": {
-    "tsc": {
-      "exitCode": 0
-    },
-    "fullSuite": {
-      "runs": 2,
-      "tests": 101,
-      "pass": 101,
-      "fail": 0,
-      "artifacts": [
-        "evidence/phase-01-c/unit/full-suite-1.txt",
-        "evidence/phase-01-c/unit/full-suite-2.txt"
-      ]
+    "jsonAndConsistency": {
+      "result": "PASS",
+      "note": "state / verification.json / README / WORK_REPORT 四者对根因描述一致；JSON 均可解析"
     },
     "supervisorRaces": {
       "tests": 9,
@@ -36,7 +27,7 @@
       "tests": 11,
       "pass": 11,
       "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "本轮新增 discoverRuntimeIdentities 返回全部 Runtime / 查询失败 / 全退出 3 个用例"
+      "note": "含 discoverRuntimeIdentities 返回全部 Runtime / 查询失败 / 全退出 3 个用例"
     },
     "identityWatcher": {
       "tests": 6,
@@ -44,26 +35,17 @@
       "artifact": "evidence/phase-01-c/unit/identity-watcher.txt",
       "note": "stop() 排空在途查询；watchErrors 计入 allGone；PRESENT/FAILED/UNKNOWN/空集不算通过"
     },
-    "realDsh": {
-      "tests": 2,
-      "pass": 2,
-      "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
-    },
-    "packaged": {
+    "packagedStatus": {
+      "status": "ENVIRONMENT_BLOCKED",
+      "thisRoundRun": false,
+      "runRound": "R4",
       "checks": 42,
       "failed": 20,
       "ok": false,
       "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "BLOCKED：正确构建已进入任务场景，但 ensureProfile 的 dsh plugin add → pnpm add 因 pnpm store unlink EPERM（沙箱删除保护）失败（PROFILE_NOT_READY），B 未产生第二个 Runtime。真实实跑结果 ok:false，不作通过依据"
+      "note": "本轮未重跑（沙箱 pnpm store EPERM，按任务要求不反复尝试 pnpm add）。引用的是 R4 对正确构建的真实失败运行：任务进入 task.create 后 ensureProfile 的 dsh plugin add → pnpm add 失败，PROFILE_NOT_READY，B 未产生第二个任务 Runtime。"
     },
-    "phase00": {
-      "suite": "166/166",
-      "gates": "PASS",
-      "artifacts": [
-        "evidence/phase-01-c/regression/phase00-suite.txt",
-        "evidence/phase-01-c/regression/phase00-gates.json"
-      ]
-    }
+    "historicalNote": "fullSuite(101/101)、realDsh(2/2)、phase00(166/166)、tsc(exit 0) 均为历史轮次（R2/R4）证据，已移入 verified_previous_round 并标记 historical，不是本轮重跑结果。"
   },
   "verified_previous_round": {
     "unitTests": {
@@ -78,6 +60,43 @@
       "pass": 83,
       "fail": 1,
       "note": "失败项为真实模型集成测试，满套件并行负载下不稳定"
+    },
+    "fullSuiteR2": {
+      "tests": 101,
+      "pass": 101,
+      "fail": 0,
+      "round": "R2",
+      "historical": true,
+      "artifacts": [
+        "evidence/phase-01-c/unit/full-suite-1.txt",
+        "evidence/phase-01-c/unit/full-suite-2.txt"
+      ],
+      "note": "历史轮次结果，本轮未重跑"
+    },
+    "realDshR2": {
+      "tests": 2,
+      "pass": 2,
+      "round": "R2",
+      "historical": true,
+      "artifact": "evidence/phase-01-c/real-dsh/integration.txt",
+      "note": "历史轮次结果，本轮未重跑"
+    },
+    "phase00R2": {
+      "suite": "166/166",
+      "gates": "PASS",
+      "round": "R2",
+      "historical": true,
+      "artifacts": [
+        "evidence/phase-01-c/regression/phase00-suite.txt",
+        "evidence/phase-01-c/regression/phase00-gates.json"
+      ],
+      "note": "历史轮次结果，本轮未重跑"
+    },
+    "tscR4": {
+      "exitCode": 0,
+      "round": "R4",
+      "historical": true,
+      "note": "R4 执行；本轮未修改 TS，未重跑"
     }
   },
   "not_run": [
@@ -103,12 +122,12 @@
       "id": "B-INSTALL-1",
       "item": "安装版 A/B/C 复验（本轮目标：B 场景两个 Runtime 均 ABSENT）",
       "why": "两层原因：(1) 首跑使用的 out-g 是陈旧打包（asar 不含 task-interrupt-resume 分支），回落启动探测 → ROUTE_UNKNOWN，只捕获探测 runtime；(2) 改用当前 HEAD 构建（release/win-unpacked，asar 含任务场景与 task-* 探测门控）后，ensureProfile 通过 dsh plugin add 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时，pnpm add 因本机 pnpm store 的 unlink EPERM（沙箱文件删除保护）失败，任务在 profile 引导处 PROFILE_NOT_READY，仍未产生第二个 Runtime。非依赖版本变化（全程 dsh-sdk-client/@deepseek-ai/dsh 0.2.1-rc.3），非 Provider 注册代码缺陷。",
-      "scope": "超出 PHASE 01-C 范围；需在无沙箱删除限制、可正常 pnpm add 的环境（或预先装好插件的 profile）中复验",
+      "scope": "属于 PHASE 01-C 原始验收范围，但当前执行环境因 pnpm 文件操作限制而阻断，等待正常 Windows 环境复验。",
       "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink pnpm store)",
       "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
     }
   ],
-  "updated_at": "2026-11-12T03:40:00.000Z",
+  "updated_at": "2026-11-12T03:52:00.000Z",
   "acceptance": [
     {
       "id": "C1",
@@ -241,7 +260,7 @@
       "tsc": "exit 0",
       "processIdentity": "11/11",
       "runtimeSupervisor": "9/9",
-      "packaged_installed": "BLOCKED — commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN"
+      "packaged_installed": "BLOCKED — 首跑 out-g 陈旧打包（缺任务 smoke 分支）→ 回落启动探测 ROUTE_UNKNOWN；正确构建后 dsh plugin add 的 pnpm add 因沙箱 EPERM 失败 → PROFILE_NOT_READY"
     },
     "note": "B 修复代码完整且单元验证通过；安装版复验被环境阻断（B-INSTALL-1），非代码缺陷。"
   },
@@ -261,6 +280,17 @@
       "identityWatcher": "6/6",
       "packaged_installed": "BLOCKED — 42 checks / 20 failed（PROFILE_NOT_READY，pnpm EPERM）"
     }
+  },
+  "review_correction_r5": {
+    "round": "R5-record-correction-env-prep",
+    "work": [
+      "state.note / blocked.scope / takeover_round_r3.packaged_installed 改为两层根因，删除“provider 不在 DSH 0.2.1-rc.3”旧结论",
+      "blocked.scope 改为“属于 PHASE 01-C 原始验收范围，环境阻断”",
+      "verified_this_round 仅保留本轮真实执行；fullSuite/realDsh/phase00/tsc 移入 verified_previous_round 并标 historical",
+      "确认正确构建产物与 4 个标记；记录产物 SHA-256/大小/时间；给出正常 Windows A/B/C 命令"
+    ],
+    "environment": "ENVIRONMENT_BLOCKED — 沙箱 pnpm store unlink EPERM，未重复尝试 pnpm add，未绕过安全垫",
+    "packaged_installed": "未完成（环境阻断）；A/B/C 属原始验收范围"
   },
   "invalidated": [
     {

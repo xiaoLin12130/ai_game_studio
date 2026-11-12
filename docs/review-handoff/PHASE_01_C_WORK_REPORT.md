@@ -93,7 +93,7 @@
 
 补充事实：`commandcode` 不是 DSH 内置 provider，而是外部插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，由 `TaskService.ensureProfile()` 在任务创建时安装并在 `task-runtime.cordis.yml` 注册；`dsh-sdk-client` 与 `@deepseek-ai/dsh` 自 PHASE 01-A 起一直是 `0.2.1-rc.3`，**依赖版本未变**。
 
-**因此 A/B/C 仍为 `BLOCKED`（环境层），未伪造通过、未改 Provider、未重写 DSH 通信。** `evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
+**因此 A/B/C 仍为 `BLOCKED`（环境层）；但 A/B/C 属 PHASE 01-C 原始验收范围，不因环境阻断而移出范围。** 未伪造通过、未改 Provider、未重写 DSH 通信。 `evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
 
 ### 6.3 第 2 轮历史结果（保留，仅供审计）
 
@@ -140,7 +140,7 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | UNKNOWN | U-01C-1 第三方 Provider 限流/额度波动对长回合任务的影响 |
 | DEFERRED | D-01C-1 任务面板之外的会话事件流可视化 |
 | NOT_RUN | 静态吊销检查（未引入签名/OEM）；`npm audit` 依赖审计（本轮未改依赖树） |
-| BLOCKED | B-INSTALL-1 安装版 A/B/C 复验：`commandcode` provider 在当前 DSH 0.2.1-rc.3（仓库 + out-c/d/g exe）中未被注册，runtime 启动即 `ROUTE_UNKNOWN`，无法驱动 B 场景"中断→恢复"以产生第二个 Runtime；属环境/构建问题，超出 PHASE 01-C 范围，需具备 `commandcode` provider 的 DSH 构建/凭据方可复验 |
+| BLOCKED | B-INSTALL-1 安装版 A/B/C 复验：**属 PHASE 01-C 原始验收范围**。两层根因：(1) 首跑 out-g 为陈旧构建（缺 task-interrupt-resume 分支）→ 回落启动探测 `ROUTE_UNKNOWN`，只捕获探测 runtime；(2) 当前正确构建已进入任务场景，但 `TaskService.ensureProfile()` 安装 `@mars-sea/dsh-commandcode-provider@0.15.4` 时内部 `pnpm add` 因当前沙箱 pnpm store 删除操作 `EPERM` 失败 → `PROFILE_NOT_READY`。等待正常 Windows 环境复验。 |
 
 ## 10. 结论
 

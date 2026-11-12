@@ -47,3 +47,14 @@
 
 `commandcode` 是外部插件（非 DSH 内置），`dsh-sdk-client`/`@deepseek-ai/dsh` 全程 `0.2.1-rc.3`（依赖未变）。
 本轮未改 Provider、未重写 DSH 通信、未伪造成功；`packaged/summary.json` 保留为真实实跑结果（`ok:false`）。
+
+**A/B/C 属 PHASE 01-C 原始验收范围**，不因环境阻断而移出范围。正常 Windows 环境复验：
+
+```
+cd apps\studio
+node scripts\smoke-tasks-packaged.mjs "release\win-unpacked"
+# 或已安装目录：node scripts\smoke-tasks-packaged.mjs "%LOCALAPPDATA%\Programs\AI Game Studio"
+```
+
+前置：Node ≥ 22.12、可访问 npm registry、pnpm store 可写、`~/.dsh/.credentials.yaml` 含 `COMMANDCODE_API_KEY`。
+构建产物：`release/AI-Game-Studio-0.1.0-x64.exe`（237,548,789 B，`415c5003…`）、`release/win-unpacked/AI Game Studio.exe`（246,302,208 B，`1255d65a…`）。
