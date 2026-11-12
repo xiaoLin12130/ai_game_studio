@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T05:56:11.216Z",
+  "generatedAt": "2026-11-12T06:03:54.760Z",
   "phase": "PHASE_01_C",
   "round": "R5-record-correction-env-prep",
   "branch": "phase/01-c-session-task-lifecycle",
@@ -184,7 +184,7 @@
       }
     },
     "headAtDelivery": "dc9cae8b8d89609e837f9bd86d7c3a43d7f43ff8",
-    "recordOnlyChangeNote": "构建基于 0268470；0268470..dc9cae8 仅 4 个记录文件变更（report/README/verification.json/state），业务代码未变；不得声称构建直接来自 dc9cae8。"
+    "recordOnlyChangeNote": "构建基于 0268470；此后的提交仅为记录文件变更（report/README/verification.json/state），业务代码未变；不得声称构建直接来自最终 HEAD。"
   },
   "pluginInstall": {
     "package": "@mars-sea/dsh-commandcode-provider@0.15.4",
@@ -204,27 +204,7 @@
     ],
     "targetProfileStatus": "NOT_INSTALLED — R4 的目标 profile（如 /tmp/studio-pkg-A-*/dsh-home/profiles/sdk）只有 .plugin-manager、cordis.patch.yml、package.json、pnpm-workspace.yaml，没有 node_modules，插件不在目标 profile",
     "targetProfilePluginInstalled": false,
-    "credentialsPathUsedBySmoke": "~/.dsh/.credentials.yaml（smoke 脚本按 COMMANDCODE_API_KEY 读取，经 env 传入；仅检查存在性，未打印内容）",
-    "currentSession": {
-      "status": "ENVIRONMENT_BLOCKED",
-      "reason": "pnpm store 删除被 SAFE_DELETE_FAIL_CLOSED 拒绝，dsh plugin add 的 pnpm add 无法完成",
-      "abcStatus": "NOT_RUN"
-    },
-    "normalWindowsPrerequisites": {
-      "checked": [
-        "Node v22.22.2（>= 22.12）",
-        "pnpm 11.21.0 可用",
-        "npm registry 可达（@mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4）",
-        "~/.dsh/.credentials.yaml 存在（未打印内容）",
-        "~/.dsh/profiles/sdk 存在，但该 profile 无 node_modules、无该插件"
-      ],
-      "notVerified": [
-        "普通 Windows 终端（无 WorkBuddy 的 NODE_OPTIONS/safe-delete 注入）下 pnpm store 删除是否正常",
-        "普通 Windows 终端下 dsh plugin add 能否成功安装该插件",
-        "A/B/C 三场景"
-      ]
-    },
-    "abcStatus": "NOT_RUN"
+    "environmentCheckRef": "see environmentCheck（currentSession / normalWindowsPrerequisites / abcStatus / pluginPaths）"
   },
   "abcCommands": {
     "note": "在正常 Windows 环境执行；不要修改 Provider、不要重写 DSH 通信、不要手工构造 smoke.json。",
@@ -297,25 +277,54 @@
     }
   ],
   "environmentCheck": {
-    "checkedAt": "2026-11-12T05:56:11.216Z",
-    "node": "v22.22.2",
-    "pnpm": "11.21.0",
-    "npm": "10.9.7",
-    "npmRegistry": "reachable (npm view @mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4)",
-    "credentialsFile": "present (~/.dsh/.credentials.yaml; content not printed)",
-    "pluginPreinstalledIn": [
-      "~/.dsh/profiles/desktop",
-      "~/.dsh/profiles/headless",
-      "~/.dsh/profiles/web"
-    ],
-    "pnpmStorePath": "H:\\dev\\pnpm-store\\v11",
-    "pnpmStoreDeleteProbe": "FAIL -> [safe-delete][SAFE_DELETE_FAIL_CLOSED] trash-failed (target: pnpm store); %TEMP% write+delete OK",
-    "verdict": "ENVIRONMENT_BLOCKED",
-    "reason": "本会话仍是 WorkBuddy 沙箱：pnpm store 的删除被安全垫 FAIL_CLOSED 拒绝，dsh plugin add 内部的 pnpm add 无法完成。未采用修改 store 目录、关闭安全垫、替换 pnpm 等绕过方式。",
-    "abcExecutedThisRound": false,
-    "note": "R4 对正确构建的真实失败运行仍保留在 packagedScenarios（runRound=R4, thisRound=false）。",
-    "pluginPreinstalledInNote": "这些是 ~/.dsh 下的其他 DSH Home，与 Studio 的 <userData>/dsh-home/profiles/sdk 无关；不能据此认为目标 profile 已安装插件。",
-    "targetProfilePluginInstalled": false,
-    "credentialsPathUsedBySmoke": "~/.dsh/.credentials.yaml（仅检查存在性）"
+    "checkedAt": "2026-11-12T06:03:54.760Z",
+    "currentSession": {
+      "status": "ENVIRONMENT_BLOCKED",
+      "platform": "WorkBuddy sandbox (Windows 10.0.19045)",
+      "node": "v22.22.2",
+      "pnpm": "11.21.0",
+      "npm": "10.9.7",
+      "npmRegistry": "reachable (npm view @mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4)",
+      "credentialsFile": "present (~/.dsh/.credentials.yaml; content not printed)",
+      "pnpmStorePath": "H:\\dev\\pnpm-store\\v11",
+      "pnpmStoreDeleteProbe": "FAIL -> [safe-delete][SAFE_DELETE_FAIL_CLOSED] trash-failed (target: pnpm store); %TEMP% write+delete OK",
+      "reason": "本会话仍是 WorkBuddy 沙箱：pnpm store 的删除被安全垫 FAIL_CLOSED 拒绝，dsh plugin add 内部的 pnpm add 无法完成。未采用修改 store 目录、关闭安全垫、替换 pnpm 等绕过方式。",
+      "abcStatus": "NOT_RUN"
+    },
+    "normalWindowsPrerequisites": {
+      "checked": [
+        "Node v22.22.2（>= 22.12）",
+        "pnpm 11.21.0 可用",
+        "npm registry 可达（@mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4）",
+        "~/.dsh/.credentials.yaml 存在（未打印内容）",
+        "~/.dsh/profiles/sdk 存在，但该 profile 无 node_modules、无该插件"
+      ],
+      "notVerified": [
+        "普通 Windows 终端（无 WorkBuddy 的 NODE_OPTIONS/safe-delete 注入）下 pnpm store 删除是否正常",
+        "普通 Windows 终端下 dsh plugin add 能否成功安装该插件",
+        "A/B/C 三场景"
+      ]
+    },
+    "abcStatus": "NOT_RUN",
+    "pluginPaths": {
+      "dshHome": "<userData>/dsh-home（默认；可用 config.dsh.dshHome 覆盖，见 dsh/service.ts:101 与 main.ts:297）",
+      "profile": "sdk（config.ts:38 默认；smoke 脚本写入 profile: 'sdk'）",
+      "targetPluginDir": "<dshHome>/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider",
+      "targetProfilePluginInstalled": false,
+      "targetProfileResidualFiles": [
+        ".plugin-manager",
+        "cordis.patch.yml",
+        "package.json",
+        "pnpm-workspace.yaml"
+      ],
+      "unrelatedProfilesWithPlugin": [
+        "~/.dsh/profiles/desktop",
+        "~/.dsh/profiles/headless",
+        "~/.dsh/profiles/web"
+      ],
+      "unrelatedProfilesNote": "这些是 ~/.dsh 下的其他 DSH Home，与 Studio 的 <userData>/dsh-home/profiles/sdk 无关，不能作为目标 profile 已安装插件的证据。",
+      "credentialsPath": "~/.dsh/.credentials.yaml（仅检查文件存在性，未读取/输出内容）"
+    },
+    "verdict": "ENVIRONMENT_BLOCKED"
   }
 }
