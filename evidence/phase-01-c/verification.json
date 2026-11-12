@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-11-12T03:03:58.225Z",
+  "generatedAt": "2026-11-12T03:32:39.999Z",
   "phase": "PHASE_01_C",
-  "round": "R3-takeover",
+  "round": "R4-review-correction",
   "branch": "phase/01-c-session-task-lifecycle",
   "reviewBaseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
   "stageBaseCommit": "908c2fbff9f1c311e3e28630cb91aaea3d5686c5",
-  "note": "This round (WorkBuddy takeover) re-verifies the B-scenario second-runtime OS-process check. Only commands actually run this round are listed with real results; historical R2 evidence (full suite / phase00 / real-dsh) is preserved in its own artefact files and not re-run this round.",
+  "note": "Review-correction round: watcher drain/error handling fixed and unit-tested; commandcode mismatch investigated; state C2/C5/C6 corrected. Only commands actually run this round are listed with real results. Historical R2 evidence (full suite / phase00 / real-dsh) is preserved in its own artefact files and not re-run.",
   "matrix": [
     {
       "name": "typescript",
@@ -25,7 +25,7 @@
         "fail": 0
       },
       "artifact": "evidence/phase-01-c/unit/process-identity.txt",
-      "note": "四态 PRESENT/ABSENT/FAILED/UNKNOWN + discoverRuntimeIdentities 返回全部/查询失败/全退出（共 11 项）"
+      "note": "四态 + discoverRuntimeIdentities 返回全部/查询失败/全退出"
     },
     {
       "name": "runtime-supervisor-races",
@@ -41,17 +41,30 @@
       "note": "关闭竞态 6 + 启动失败清理 3"
     },
     {
+      "name": "identity-watcher",
+      "command": "node --test test/identity-watcher.test.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt",
+      "note": "stop() 排空在途查询；watchErrors 计入 allGone；PRESENT/FAILED/UNKNOWN/空集不算通过"
+    },
+    {
       "name": "packaged-task-scenarios",
-      "command": "node scripts/smoke-tasks-packaged.mjs /tmp/pkg-exp/out-g/win-unpacked",
+      "command": "node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked",
       "cwd": "apps/studio",
       "exitCode": 1,
       "counts": {
-        "checks": 39,
-        "failed": 19
+        "checks": 42,
+        "failed": 20
       },
       "artifact": "evidence/phase-01-c/packaged/summary.json",
       "status": "BLOCKED",
-      "note": "commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN；B 仅捕获 1 Runtime（已 ABSENT），无法证明两 Runtime 均退出"
+      "note": "正确构建已进入任务场景，但 ensureProfile 的 dsh plugin add → pnpm add 因 pnpm store unlink EPERM（沙箱删除保护）失败（PROFILE_NOT_READY），B 未产生第二个 Runtime"
     }
   ],
   "packagedScenarios": {
@@ -75,7 +88,8 @@
       "C.sawInterruptedState",
       "C.resumedToTerminal",
       "C.recordedNewAttempt",
-      "C.appExited"
+      "C.runtimeProcessGone",
+      "C.runtimeCheckStatus"
     ],
     "checks": {
       "A.exitZero": false,
@@ -83,6 +97,7 @@
       "A.runtimeIdentityCaptured": true,
       "A.runtimeProcessGone": true,
       "A.runtimeCheckStatus": "ABSENT",
+      "A.noIdentityWatchErrors": true,
       "A.producedSmoke": true,
       "A.taskSucceeded": false,
       "A.hadSession": false,
@@ -96,6 +111,7 @@
       "B.runtimeIdentitiesDistinct": false,
       "B.allRuntimeProcessesGone": true,
       "B.runtimeCheckStatus": "ABSENT",
+      "B.noIdentityWatchErrors": true,
       "B.producedSmoke": true,
       "B.wasInterrupted": false,
       "B.interruptedIsRecorded": false,
@@ -109,23 +125,34 @@
       "C.sawInterruptedState": false,
       "C.resumedToTerminal": false,
       "C.recordedNewAttempt": false,
-      "C.appExited": false,
+      "C.appExited": true,
       "C.noLingeringApp": true,
       "C.disposeHadNoFailure": true,
-      "C.runtimeProcessGone": true,
-      "C.runtimeCheckStatus": "ABSENT",
+      "C.runtimeProcessGone": false,
+      "C.runtimeCheckStatus": "",
       "C.crashCapturedIdentity": true,
       "C.crashOrphanStatus": "ABSENT",
-      "C.crashLeftNoOrphan": true
+      "C.crashLeftNoOrphan": true,
+      "C.noIdentityWatchErrors": true
     },
-    "note": "真实实跑结果（ok:false）。失败根因为 commandcode provider 路由缺失，非 B 修复代码问题；身份捕获/复核机制本身工作正常（捕获到的 Runtime 均验证 ABSENT）。"
+    "note": "真实实跑结果（ok:false）。身份捕获/复核与 noIdentityWatchErrors 本身正常（捕获到的 runtime 均 ABSENT，watch 无错误）；失败根因是 provider 插件在沙箱内无法安装，非 B 修复代码问题。"
+  },
+  "commandcodeInvestigation": {
+    "question": "R2 通过的安装包用了哪个 DSH 构建，为什么当前构建不再支持 commandcode",
+    "findings": [
+      "不是依赖版本变化：dsh-sdk-client 与 @deepseek-ai/dsh 自 PHASE 01-A 起一直是 0.2.1-rc.3。",
+      "不是 DSH 内置 provider 缺失：commandcode 是外部插件 @mars-sea/dsh-commandcode-provider@0.15.4，由 TaskService.ensureProfile() 在任务创建时用 dsh plugin add 安装，并在 task-runtime.cordis.yml 注册 provider 行。",
+      "首跑 out-g 是陈旧打包：其 asar 不含 task-interrupt-resume 分支，runtime 回落到启动探测并 ROUTE_UNKNOWN，只捕获到探测 runtime（这也是 B 只有 1 个 runtime 的直接原因）。",
+      "当前 HEAD 构建（release/win-unpacked）asar 含任务场景与 task-* 探测门控，但 dsh plugin add 的 pnpm add 在本沙箱因 pnpm store unlink EPERM 失败（沙箱文件删除保护），任务在 provider 引导处 PROFILE_NOT_READY。"
+    ],
+    "conclusion": "构建/打包问题（陈旧 exe）已定位并可修正；剩余的 provider 引导失败是沙箱 pnpm 限制，非产品代码或 DSH 通信缺陷。未改 Provider、未重写 DSH 通信。"
   },
   "invalidated": [
     {
       "id": "INVALID-1",
       "what": "上一轮的 A/B/C 进程检查使用了 proc.commandLine.includes(dshHome)",
       "why": "DSH home 通过环境变量传递，运行中的 Runtime 命令行不含它；该判据在 Runtime 仍然运行时也会返回 ABSENT，属于错误的 PASS 依据",
-      "evidence": "evidence/phase-01-c/packaged/summary.json（本轮已重写，但仍因环境阻断未达通过）",
+      "evidence": "evidence/phase-01-c/packaged/summary.json",
       "status": "INVALID — 不作为通过依据"
     }
   ],
@@ -133,9 +160,9 @@
     {
       "id": "B-INSTALL-1",
       "item": "安装版 A/B/C 复验",
-      "why": "commandcode provider 在当前 DSH 0.2.1-rc.3（仓库 node_modules 与 out-c/d/g 三个打包 exe）中未被注册，runtime 启动即 ROUTE_UNKNOWN，无法驱动 B 场景中断→恢复以产生第二个 Runtime",
-      "scope": "超出 PHASE 01-C 范围；需具备 commandcode provider 的 DSH 构建/凭据方可复验",
-      "evidence": "/tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (state.status=FAILED, code=ROUTE_UNKNOWN, raw=\"no adapter registered for provider \\\"commandcode\\\"\")"
+      "why": "两层：out-g 陈旧打包（缺任务场景）已定位；改用当前 HEAD 构建后，dsh plugin add 的 pnpm add 因本机 pnpm store unlink EPERM 失败（PROFILE_NOT_READY），B 未产生第二个 Runtime",
+      "scope": "超出 PHASE 01-C 范围；需在可正常 pnpm add 的环境或预装插件的 profile 中复验",
+      "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink)"
     }
   ],
   "notRun": [
@@ -152,7 +179,7 @@
     {
       "id": "NOT_RUN-3",
       "item": "应用全量 101/101 与 PHASE 00 套件/门禁",
-      "reason": "本轮最小验证范围不要求重跑；历史证据保留于各自 artefact 文件（unit/full-suite-*.txt、regression/phase00-*.txt）"
+      "reason": "本轮最小验证范围不要求重跑；历史证据保留于各自 artefact 文件"
     }
   ]
 }

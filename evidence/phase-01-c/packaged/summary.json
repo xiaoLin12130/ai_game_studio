@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T02:54:00.214Z",
+  "generatedAt": "2026-11-12T03:30:43.406Z",
   "exe": "<abs-path>",
   "checks": {
     "A.exitZero": false,
@@ -7,6 +7,7 @@
     "A.runtimeIdentityCaptured": true,
     "A.runtimeProcessGone": true,
     "A.runtimeCheckStatus": "ABSENT",
+    "A.noIdentityWatchErrors": true,
     "A.producedSmoke": true,
     "A.taskSucceeded": false,
     "A.hadSession": false,
@@ -20,6 +21,7 @@
     "B.runtimeIdentitiesDistinct": false,
     "B.allRuntimeProcessesGone": true,
     "B.runtimeCheckStatus": "ABSENT",
+    "B.noIdentityWatchErrors": true,
     "B.producedSmoke": true,
     "B.wasInterrupted": false,
     "B.interruptedIsRecorded": false,
@@ -33,14 +35,15 @@
     "C.sawInterruptedState": false,
     "C.resumedToTerminal": false,
     "C.recordedNewAttempt": false,
-    "C.appExited": false,
+    "C.appExited": true,
     "C.noLingeringApp": true,
     "C.disposeHadNoFailure": true,
-    "C.runtimeProcessGone": true,
-    "C.runtimeCheckStatus": "ABSENT",
+    "C.runtimeProcessGone": false,
+    "C.runtimeCheckStatus": "",
     "C.crashCapturedIdentity": true,
     "C.crashOrphanStatus": "ABSENT",
-    "C.crashLeftNoOrphan": true
+    "C.crashLeftNoOrphan": true,
+    "C.noIdentityWatchErrors": true
   },
   "failed": [
     "A.exitZero",
@@ -61,78 +64,32 @@
     "C.sawInterruptedState",
     "C.resumedToTerminal",
     "C.recordedNewAttempt",
-    "C.appExited"
+    "C.runtimeProcessGone",
+    "C.runtimeCheckStatus"
   ],
   "ok": false,
   "scenarios": {
     "A": {
       "mode": "task-run",
-      "wallMs": 7171,
-      "exitCode": 3,
+      "wallMs": 10659,
+      "exitCode": 1,
       "timedOut": false,
       "smoke": {
-        "generatedAt": "2026-11-12T02:53:37.694Z",
+        "generatedAt": "2026-11-12T03:30:27.132Z",
         "mode": "task-run",
-        "appVersion": "0.1.0",
-        "versions": {
-          "electron": "44.7.0",
-          "chrome": "152.0.7977.130",
-          "node": "24.21.0"
-        },
-        "window": {
-          "count": 1,
-          "visible": true,
-          "title": "AI Game Studio",
-          "bounds": {
-            "x": 780,
-            "y": 340,
-            "width": 1000,
-            "height": 720
-          },
-          "imageSize": {
-            "width": 984,
-            "height": 655
-          },
-          "url": "fil<abs-path>"
-        },
-        "state": {
-          "status": "FAILED",
-          "detail": {
-            "code": "ROUTE_UNKNOWN",
-            "message": "DSH 没有为当前 provider / model 注册适配器。",
-            "raw": "no adapter registered for provider \"commandcode\""
-          },
-          "lastCheckedAt": "2026-11-12T02:53:37.524Z",
-          "lastDurationMs": 3954,
-          "serverInfo": null,
-          "dshVersion": "0.2.1-rc.3",
-          "entryKind": "bundled",
-          "entryPath": "<abs-path>",
-          "runtimeExitCode": 0,
-          "configRecovered": false,
-          "configRecoveryNote": null
-        },
-        "dom": {
-          "pill": "连接失败",
-          "headline": "DSH 没有为当前 provider / model 注册适配器。",
-          "recheckDisabled": false,
-          "factServer": "—",
-          "factExit": "0"
-        },
-        "second": null,
-        "totalMs": 4126
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
       },
       "logTail": [
-        "{\"ts\":\"2026-11-12T02:53:33.376Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
-        "{\"ts\":\"2026-11-12T02:53:33.565Z\",\"level\":\"info\",\"event\":\"dsh.probe.start\",\"reason\":\"startup\",\"entryKind\":\"bundled\",\"entryPath\":\"<abs-path>\",\"entryProblem\":null,\"profile\":\"sdk\",\"timeoutMs\":60000}",
-        "{\"ts\":\"2026-11-12T02:53:37.522Z\",\"level\":\"info\",\"event\":\"dsh.probe.end\",\"reason\":\"startup\",\"status\":\"FAILED\",\"code\":\"ROUTE_UNKNOWN\",\"durationMs\":3954,\"serverInfo\":null,\"runtimeExitCode\":0,\"teardown\":{\"attempted\":true,\"reason\":\"failed\",\"closed\":true,\"closeError\":null,\"exitCode\":0,\"processCheckStatus\":\"ABSENT\",\"firstCheckStatus\":\"ABSENT\",\"processAbsent\":true,\"runtimePid\":20664,\"identitySource\":\"parent-and-bin\",\"remainingPids\":[],\"forcedTerminationAttempted\":false,\"forcedTerminationSucceeded\":false,\"error\":null,\"durationMs\":1233,\"completed\":true},\"raw\":\"no adapter registered for provider \\\"commandcode\\\"\"}",
-        "{\"ts\":\"2026-11-12T02:53:37.696Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+        "{\"ts\":\"2026-11-12T03:30:21.245Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-run\"}",
+        "{\"ts\":\"2026-11-12T03:30:23.475Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-fc130d33\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T03:30:27.128Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
       ],
       "runtimeIdentities": [
         {
-          "pid": 20664,
-          "creationMs": 1794452013590,
-          "capturedAt": "2026-11-12T02:53:33.892Z",
+          "pid": 19244,
+          "creationMs": 1794454224002,
+          "capturedAt": "2026-11-12T03:30:24.732Z",
           "source": "parent-and-bin"
         }
       ],
@@ -140,9 +97,9 @@
       "identityWatchErrors": [],
       "runtimeIdentitiesCaptured": [
         {
-          "pid": 20664,
-          "creationMs": 1794452013590,
-          "capturedAt": "2026-11-12T02:53:33.892Z",
+          "pid": 19244,
+          "creationMs": 1794454224002,
+          "capturedAt": "2026-11-12T03:30:24.732Z",
           "source": "parent-and-bin"
         }
       ],
@@ -151,24 +108,25 @@
         "checks": [
           {
             "identity": {
-              "pid": 20664,
-              "creationMs": 1794452013590,
-              "capturedAt": "2026-11-12T02:53:33.892Z",
+              "pid": 19244,
+              "creationMs": 1794454224002,
+              "capturedAt": "2026-11-12T03:30:24.732Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 20664,
-              "creationMs": 1794452013590,
+              "pid": 19244,
+              "creationMs": 1794454224002,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
           }
         ],
-        "allGone": true,
         "statuses": [
           "ABSENT"
-        ]
+        ],
+        "watchErrors": [],
+        "allGone": true
       },
       "checks": {
         "exitZero": false,
@@ -176,6 +134,7 @@
         "runtimeIdentityCaptured": true,
         "runtimeProcessGone": true,
         "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
         "producedSmoke": true,
         "taskSucceeded": false,
         "hadSession": false,
@@ -187,72 +146,25 @@
     },
     "B": {
       "mode": "task-interrupt-resume",
-      "wallMs": 4503,
-      "exitCode": 3,
+      "wallMs": 3835,
+      "exitCode": 1,
       "timedOut": false,
       "smoke": {
-        "generatedAt": "2026-11-12T02:53:44.749Z",
+        "generatedAt": "2026-11-12T03:30:33.043Z",
         "mode": "task-interrupt-resume",
-        "appVersion": "0.1.0",
-        "versions": {
-          "electron": "44.7.0",
-          "chrome": "152.0.7977.130",
-          "node": "24.21.0"
-        },
-        "window": {
-          "count": 1,
-          "visible": true,
-          "title": "AI Game Studio",
-          "bounds": {
-            "x": 780,
-            "y": 340,
-            "width": 1000,
-            "height": 720
-          },
-          "imageSize": {
-            "width": 984,
-            "height": 655
-          },
-          "url": "fil<abs-path>"
-        },
-        "state": {
-          "status": "FAILED",
-          "detail": {
-            "code": "ROUTE_UNKNOWN",
-            "message": "DSH 没有为当前 provider / model 注册适配器。",
-            "raw": "no adapter registered for provider \"commandcode\""
-          },
-          "lastCheckedAt": "2026-11-12T02:53:44.594Z",
-          "lastDurationMs": 3498,
-          "serverInfo": null,
-          "dshVersion": "0.2.1-rc.3",
-          "entryKind": "bundled",
-          "entryPath": "<abs-path>",
-          "runtimeExitCode": 0,
-          "configRecovered": false,
-          "configRecoveryNote": null
-        },
-        "dom": {
-          "pill": "连接失败",
-          "headline": "DSH 没有为当前 provider / model 注册适配器。",
-          "recheckDisabled": false,
-          "factServer": "—",
-          "factExit": "0"
-        },
-        "second": null,
-        "totalMs": 3653
+        "phase": "error",
+        "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
       },
       "logTail": [
-        "{\"ts\":\"2026-11-12T02:53:40.594Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
-        "{\"ts\":\"2026-11-12T02:53:41.092Z\",\"level\":\"info\",\"event\":\"dsh.probe.start\",\"reason\":\"startup\",\"entryKind\":\"bundled\",\"entryPath\":\"<abs-path>\",\"entryProblem\":null,\"profile\":\"sdk\",\"timeoutMs\":60000}",
-        "{\"ts\":\"2026-11-12T02:53:44.593Z\",\"level\":\"info\",\"event\":\"dsh.probe.end\",\"reason\":\"startup\",\"status\":\"FAILED\",\"code\":\"ROUTE_UNKNOWN\",\"durationMs\":3498,\"serverInfo\":null,\"runtimeExitCode\":0,\"teardown\":{\"attempted\":true,\"reason\":\"failed\",\"closed\":true,\"closeError\":null,\"exitCode\":0,\"processCheckStatus\":\"ABSENT\",\"firstCheckStatus\":\"ABSENT\",\"processAbsent\":true,\"runtimePid\":23308,\"identitySource\":\"parent-and-bin\",\"remainingPids\":[],\"forcedTerminationAttempted\":false,\"forcedTerminationSucceeded\":false,\"error\":null,\"durationMs\":1254,\"completed\":true},\"raw\":\"no adapter registered for provider \\\"commandcode\\\"\"}",
-        "{\"ts\":\"2026-11-12T02:53:44.750Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+        "{\"ts\":\"2026-11-12T03:30:29.670Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-interrupt-resume\"}",
+        "{\"ts\":\"2026-11-12T03:30:29.857Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-6695c663\",\"isolation\":\"writable\"}",
+        "{\"ts\":\"2026-11-12T03:30:33.038Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
       ],
       "runtimeIdentities": [
         {
-          "pid": 23308,
-          "creationMs": 1794452021119,
-          "capturedAt": "2026-11-12T02:53:41.761Z",
+          "pid": 24052,
+          "creationMs": 1794454229879,
+          "capturedAt": "2026-11-12T03:30:30.659Z",
           "source": "parent-and-bin"
         }
       ],
@@ -260,9 +172,9 @@
       "identityWatchErrors": [],
       "runtimeIdentitiesCaptured": [
         {
-          "pid": 23308,
-          "creationMs": 1794452021119,
-          "capturedAt": "2026-11-12T02:53:41.761Z",
+          "pid": 24052,
+          "creationMs": 1794454229879,
+          "capturedAt": "2026-11-12T03:30:30.659Z",
           "source": "parent-and-bin"
         }
       ],
@@ -271,24 +183,25 @@
         "checks": [
           {
             "identity": {
-              "pid": 23308,
-              "creationMs": 1794452021119,
-              "capturedAt": "2026-11-12T02:53:41.761Z",
+              "pid": 24052,
+              "creationMs": 1794454229879,
+              "capturedAt": "2026-11-12T03:30:30.659Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 23308,
-              "creationMs": 1794452021119,
+              "pid": 24052,
+              "creationMs": 1794454229879,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
           }
         ],
-        "allGone": true,
         "statuses": [
           "ABSENT"
-        ]
+        ],
+        "watchErrors": [],
+        "allGone": true
       },
       "checks": {
         "exitZero": false,
@@ -297,6 +210,7 @@
         "runtimeIdentitiesDistinct": false,
         "allRuntimeProcessesGone": true,
         "runtimeCheckStatus": "ABSENT",
+        "noIdentityWatchErrors": true,
         "producedSmoke": true,
         "wasInterrupted": false,
         "interruptedIsRecorded": false,
@@ -309,72 +223,25 @@
     "C": {
       "crash": {
         "mode": "task-start-and-crash",
-        "wallMs": 4180,
-        "exitCode": 3,
+        "wallMs": 3901,
+        "exitCode": 1,
         "timedOut": false,
         "smoke": {
-          "generatedAt": "2026-11-12T02:53:51.207Z",
+          "generatedAt": "2026-11-12T03:30:38.371Z",
           "mode": "task-start-and-crash",
-          "appVersion": "0.1.0",
-          "versions": {
-            "electron": "44.7.0",
-            "chrome": "152.0.7977.130",
-            "node": "24.21.0"
-          },
-          "window": {
-            "count": 1,
-            "visible": true,
-            "title": "AI Game Studio",
-            "bounds": {
-              "x": 780,
-              "y": 340,
-              "width": 1000,
-              "height": 720
-            },
-            "imageSize": {
-              "width": 984,
-              "height": 655
-            },
-            "url": "fil<abs-path>"
-          },
-          "state": {
-            "status": "FAILED",
-            "detail": {
-              "code": "ROUTE_UNKNOWN",
-              "message": "DSH 没有为当前 provider / model 注册适配器。",
-              "raw": "no adapter registered for provider \"commandcode\""
-            },
-            "lastCheckedAt": "2026-11-12T02:53:51.168Z",
-            "lastDurationMs": 3616,
-            "serverInfo": null,
-            "dshVersion": "0.2.1-rc.3",
-            "entryKind": "bundled",
-            "entryPath": "<abs-path>",
-            "runtimeExitCode": 0,
-            "configRecovered": false,
-            "configRecoveryNote": null
-          },
-          "dom": {
-            "pill": "连接失败",
-            "headline": "DSH 没有为当前 provider / model 注册适配器。",
-            "recheckDisabled": false,
-            "factServer": "—",
-            "factExit": "0"
-          },
-          "second": null,
-          "totalMs": 3656
+          "phase": "error",
+          "error": "the DSH profile cannot load the configured provider: dsh: initialized profile sdk at <abs-path>"
         },
         "logTail": [
-          "{\"ts\":\"2026-11-12T02:53:47.398Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
-          "{\"ts\":\"2026-11-12T02:53:47.543Z\",\"level\":\"info\",\"event\":\"dsh.probe.start\",\"reason\":\"startup\",\"entryKind\":\"bundled\",\"entryPath\":\"<abs-path>\",\"entryProblem\":null,\"profile\":\"sdk\",\"timeoutMs\":60000}",
-          "{\"ts\":\"2026-11-12T02:53:51.167Z\",\"level\":\"info\",\"event\":\"dsh.probe.end\",\"reason\":\"startup\",\"status\":\"FAILED\",\"code\":\"ROUTE_UNKNOWN\",\"durationMs\":3616,\"serverInfo\":null,\"runtimeExitCode\":0,\"teardown\":{\"attempted\":true,\"reason\":\"failed\",\"closed\":true,\"closeError\":null,\"exitCode\":0,\"processCheckStatus\":\"ABSENT\",\"firstCheckStatus\":\"ABSENT\",\"processAbsent\":true,\"runtimePid\":20780,\"identitySource\":\"parent-and-bin\",\"remainingPids\":[],\"forcedTerminationAttempted\":false,\"forcedTerminationSucceeded\":false,\"error\":null,\"durationMs\":1275,\"completed\":true},\"raw\":\"no adapter registered for provider \\\"commandcode\\\"\"}",
-          "{\"ts\":\"2026-11-12T02:53:51.208Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+          "{\"ts\":\"2026-11-12T03:30:35.573Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T03:30:35.741Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-e0f5b1f6\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T03:30:38.367Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}"
         ],
         "runtimeIdentities": [
           {
-            "pid": 20780,
-            "creationMs": 1794452027581,
-            "capturedAt": "2026-11-12T02:53:48.744Z",
+            "pid": 24148,
+            "creationMs": 1794454235763,
+            "capturedAt": "2026-11-12T03:30:36.539Z",
             "source": "parent-and-bin"
           }
         ],
@@ -383,88 +250,38 @@
       },
       "recover": {
         "mode": "task-recover",
-        "wallMs": 4314,
-        "exitCode": 3,
+        "wallMs": 1077,
+        "exitCode": 0,
         "timedOut": false,
         "smoke": {
-          "generatedAt": "2026-11-12T02:53:57.918Z",
+          "generatedAt": "2026-11-12T03:30:41.659Z",
           "mode": "task-recover",
-          "appVersion": "0.1.0",
-          "versions": {
-            "electron": "44.7.0",
-            "chrome": "152.0.7977.130",
-            "node": "24.21.0"
-          },
-          "window": {
-            "count": 1,
-            "visible": true,
-            "title": "AI Game Studio",
-            "bounds": {
-              "x": 780,
-              "y": 340,
-              "width": 1000,
-              "height": 720
-            },
-            "imageSize": {
-              "width": 984,
-              "height": 655
-            },
-            "url": "fil<abs-path>"
-          },
-          "state": {
-            "status": "FAILED",
-            "detail": {
-              "code": "ROUTE_UNKNOWN",
-              "message": "DSH 没有为当前 provider / model 注册适配器。",
-              "raw": "no adapter registered for provider \"commandcode\""
-            },
-            "lastCheckedAt": "2026-11-12T02:53:57.757Z",
-            "lastDurationMs": 3613,
-            "serverInfo": null,
-            "dshVersion": "0.2.1-rc.3",
-            "entryKind": "bundled",
-            "entryPath": "<abs-path>",
-            "runtimeExitCode": 0,
-            "configRecovered": false,
-            "configRecoveryNote": null
-          },
-          "dom": {
-            "pill": "连接失败",
-            "headline": "DSH 没有为当前 provider / model 注册适配器。",
-            "recheckDisabled": false,
-            "factServer": "—",
-            "factExit": "0"
-          },
-          "second": null,
-          "totalMs": 3775
+          "phase": "nothing-to-recover",
+          "tasks": [
+            {
+              "id": "task-e0f5b1f6",
+              "status": "CREATED"
+            }
+          ]
         },
         "logTail": [
-          "{\"ts\":\"2026-11-12T02:53:47.398Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
-          "{\"ts\":\"2026-11-12T02:53:47.543Z\",\"level\":\"info\",\"event\":\"dsh.probe.start\",\"reason\":\"startup\",\"entryKind\":\"bundled\",\"entryPath\":\"<abs-path>\",\"entryProblem\":null,\"profile\":\"sdk\",\"timeoutMs\":60000}",
-          "{\"ts\":\"2026-11-12T02:53:51.167Z\",\"level\":\"info\",\"event\":\"dsh.probe.end\",\"reason\":\"startup\",\"status\":\"FAILED\",\"code\":\"ROUTE_UNKNOWN\",\"durationMs\":3616,\"serverInfo\":null,\"runtimeExitCode\":0,\"teardown\":{\"attempted\":true,\"reason\":\"failed\",\"closed\":true,\"closeError\":null,\"exitCode\":0,\"processCheckStatus\":\"ABSENT\",\"firstCheckStatus\":\"ABSENT\",\"processAbsent\":true,\"runtimePid\":20780,\"identitySource\":\"parent-and-bin\",\"remainingPids\":[],\"forcedTerminationAttempted\":false,\"forcedTerminationSucceeded\":false,\"error\":null,\"durationMs\":1275,\"completed\":true},\"raw\":\"no adapter registered for provider \\\"commandcode\\\"\"}",
-          "{\"ts\":\"2026-11-12T02:53:51.208Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}",
-          "{\"ts\":\"2026-11-12T02:53:53.962Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
-          "{\"ts\":\"2026-11-12T02:53:54.139Z\",\"level\":\"info\",\"event\":\"dsh.probe.start\",\"reason\":\"startup\",\"entryKind\":\"bundled\",\"entryPath\":\"<abs-path>\",\"entryProblem\":null,\"profile\":\"sdk\",\"timeoutMs\":60000}",
-          "{\"ts\":\"2026-11-12T02:53:57.756Z\",\"level\":\"info\",\"event\":\"dsh.probe.end\",\"reason\":\"startup\",\"status\":\"FAILED\",\"code\":\"ROUTE_UNKNOWN\",\"durationMs\":3613,\"serverInfo\":null,\"runtimeExitCode\":0,\"teardown\":{\"attempted\":true,\"reason\":\"failed\",\"closed\":true,\"closeError\":null,\"exitCode\":0,\"processCheckStatus\":\"ABSENT\",\"firstCheckStatus\":\"ABSENT\",\"processAbsent\":true,\"runtimePid\":10036,\"identitySource\":\"parent-and-bin\",\"remainingPids\":[],\"forcedTerminationAttempted\":false,\"forcedTerminationSucceeded\":false,\"error\":null,\"durationMs\":1271,\"completed\":true},\"raw\":\"no adapter registered for provider \\\"commandcode\\\"\"}",
-          "{\"ts\":\"2026-11-12T02:53:57.920Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
+          "{\"ts\":\"2026-11-12T03:30:35.573Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-start-and-crash\"}",
+          "{\"ts\":\"2026-11-12T03:30:35.741Z\",\"level\":\"info\",\"event\":\"task.create\",\"taskId\":\"task-e0f5b1f6\",\"isolation\":\"writable\"}",
+          "{\"ts\":\"2026-11-12T03:30:38.367Z\",\"level\":\"error\",\"event\":\"task.profile.not-ready\",\"ok\":false,\"detail\":\"dsh: initialized profile sdk at <abs-path>\"}",
+          "{\"ts\":\"2026-11-12T03:30:41.528Z\",\"level\":\"info\",\"event\":\"app.start\",\"version\":\"0.1.0\",\"userDataDir\":\"<abs-path>\",\"smoke\":\"task-recover\"}",
+          "{\"ts\":\"2026-11-12T03:30:41.660Z\",\"level\":\"info\",\"event\":\"task.service.dispose\",\"reason\":\"app-quit\",\"closed\":[],\"failed\":[]}",
+          "{\"ts\":\"2026-11-12T03:30:41.664Z\",\"level\":\"info\",\"event\":\"dsh.shutdown\",\"reason\":\"app-quit\",\"hadProbe\":false,\"completed\":true,\"confirmedGone\":true,\"durationMs\":0}"
         ],
-        "runtimeIdentities": [
-          {
-            "pid": 10036,
-            "creationMs": 1794452034168,
-            "capturedAt": "2026-11-12T02:53:55.333Z",
-            "source": "parent-and-bin"
-          }
-        ],
-        "runtimeIdentityCount": 1,
+        "runtimeIdentities": [],
+        "runtimeIdentityCount": 0,
         "identityWatchErrors": []
       },
       "orphanPidsAfterCrash": [],
       "crashRuntimeIdentities": [
         {
-          "pid": 20780,
-          "creationMs": 1794452027581,
-          "capturedAt": "2026-11-12T02:53:48.744Z",
+          "pid": 24148,
+          "creationMs": 1794454235763,
+          "capturedAt": "2026-11-12T03:30:36.539Z",
           "source": "parent-and-bin"
         }
       ],
@@ -473,56 +290,33 @@
         "checks": [
           {
             "identity": {
-              "pid": 20780,
-              "creationMs": 1794452027581,
-              "capturedAt": "2026-11-12T02:53:48.744Z",
+              "pid": 24148,
+              "creationMs": 1794454235763,
+              "capturedAt": "2026-11-12T03:30:36.539Z",
               "source": "parent-and-bin"
             },
             "verdict": {
               "status": "ABSENT",
-              "pid": 20780,
-              "creationMs": 1794452027581,
+              "pid": 24148,
+              "creationMs": 1794454235763,
               "observedCreationMs": null,
               "reason": "the pid no longer exists"
             }
           }
         ],
-        "allGone": true,
         "statuses": [
           "ABSENT"
-        ]
+        ],
+        "watchErrors": [],
+        "allGone": true
       },
-      "recoveryRuntimeIdentities": [
-        {
-          "pid": 10036,
-          "creationMs": 1794452034168,
-          "capturedAt": "2026-11-12T02:53:55.333Z",
-          "source": "parent-and-bin"
-        }
-      ],
+      "recoveryRuntimeIdentities": [],
       "recoveryRuntimeChecks": {
-        "count": 1,
-        "checks": [
-          {
-            "identity": {
-              "pid": 10036,
-              "creationMs": 1794452034168,
-              "capturedAt": "2026-11-12T02:53:55.333Z",
-              "source": "parent-and-bin"
-            },
-            "verdict": {
-              "status": "ABSENT",
-              "pid": 10036,
-              "creationMs": 1794452034168,
-              "observedCreationMs": null,
-              "reason": "the pid no longer exists"
-            }
-          }
-        ],
-        "allGone": true,
-        "statuses": [
-          "ABSENT"
-        ]
+        "count": 0,
+        "checks": [],
+        "statuses": [],
+        "watchErrors": [],
+        "allGone": false
       },
       "checks": {
         "crashedAsExpected": false,
@@ -531,14 +325,15 @@
         "sawInterruptedState": false,
         "resumedToTerminal": false,
         "recordedNewAttempt": false,
-        "appExited": false,
+        "appExited": true,
         "noLingeringApp": true,
         "disposeHadNoFailure": true,
-        "runtimeProcessGone": true,
-        "runtimeCheckStatus": "ABSENT",
+        "runtimeProcessGone": false,
+        "runtimeCheckStatus": "",
         "crashCapturedIdentity": true,
         "crashOrphanStatus": "ABSENT",
-        "crashLeftNoOrphan": true
+        "crashLeftNoOrphan": true,
+        "noIdentityWatchErrors": true
       }
     }
   }

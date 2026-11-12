@@ -2,7 +2,7 @@
 
 > **状态：`BLOCKED`（接管轮 / 第 3 轮）。** 本报告不宣告通过，是否关闭由外部独立评审决定。
 >
-> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2），故无法交付"两个 Runtime 均 ABSENT"的安装版实证。
+> 第 1 轮评审基线 §8cb415b§；第 2 轮修复 Runtime 关闭竞态、补齐两项缺失回归、修正交付记录。第 3 轮（WorkBuddy 接管）补齐 B 场景第二个 Runtime 的真实 OS 进程退出验证**代码**并完成**单元验证**；**安装版 A/B/C 复验被环境阻断**（见 §6.2）。第 4 轮（评审补正）修复 watcher 的异步排空与错误纳入验收（新增 6 项单测），查清 `commandcode` 不匹配的两层根因（陈旧打包 + 沙箱 pnpm 限制），并修正状态文件 C2/C5/C6（不再以失败证据显示 PASS）。
 
 ## 1. 本阶段原始目标
 
@@ -80,17 +80,20 @@
 - `apps/studio/scripts/smoke-tasks-packaged.mjs`：把"单次 `captureIdentity`"替换为 `startIdentityWatcher`——在 App 整个生命周期内轮询（250ms），按 `(pid, creationMs)` 去重收集**所有** Runtime 身份；新增 `checkAllIdentities` 对每一个捕获身份执行 `verifyRuntimeIdentity`。B 场景新增三项强制校验：`runtimeIdentityCount === 2`、`runtimeIdentitiesDistinct === 2`、`allRuntimeProcessesGone`（仅当全部身份 `ABSENT` 才为真）。A/C 沿用同一机制独立验证各自 Runtime。
 - 禁止项均遵守：未使用 `commandLine.includes(dshHome)`；未以 GUI 进程退出代替 Runtime 进程检查；未以 SDK `runtime.closed` 日志代替 OS 进程身份检查；四态 `PRESENT/ABSENT/FAILED/UNKNOWN` 一致。
 
+补正轮又修掉两个可靠性缺口（评审指出）：`stop()` 原先只置标志、不等待在途进程查询，App 恰在查询中退出时可能漏记身份；`identityWatchErrors` 原先未进入验收，查询失败仍可能按已捕获身份判定通过。现将 watcher 抽到 `scripts/lib/identity-watcher.mjs`：`stop()` 等待在途 tick 排空并返回最后捕获的身份；`verifyIdentities` 把 `watchErrors` 计入 `allGone`；smoke 脚本改为 `await watcher.stop()`，A/B/C 增加 `noIdentityWatchErrors`。新增 `test/identity-watcher.test.mjs`，**6/6 通过**。
+
 该机制由**配额无关**的单元测试覆盖：`test/process-identity.test.js` 含 `discoverRuntimeIdentities` 返回全部 / 查询失败 / 全退出的用例，本轮 **11/11 通过**（见 §7）。
 
-### 6.2 安装版 A/B/C 复验 —— 被环境阻断（BLOCKED）
+### 6.2 安装版 A/B/C 复验 —— 阻断根因的两层定位（BLOCKED）
 
-第 3 轮对 `out-g` 打包构建（`/tmp/pkg-exp/out-g/win-unpacked`，DSH 0.2.1-rc.3）实跑了 A/B/C 三场景，结果 **无法达到通过**：
+评审要求查清"R2 通过的安装包用了哪个 DSH 构建、为什么当前不支持 commandcode"。结论是**两层原因，均非 Provider 代码缺陷、也非依赖版本变化**：
 
-- 三个场景的 DSH runtime 一启动即 `FAILED`，`code: ROUTE_UNKNOWN`，`raw: "no adapter registered for provider \"commandcode\""`（真实证据：`/tmp/studio-pkg-B-*`，`out-task-interrupt-resume/smoke.json`）。
-- `smoke-tasks-packaged.mjs`（HEAD 与本轮一致）写入 `provider: 'commandcode'`、`COMMANDCODE_API_KEY` 来自 `~/.dsh/.credentials.yaml`。但**当前仓库 `node_modules/@deepseek-ai/dsh-sdk-client@0.2.1-rc.3` 与全部三个打包 exe（out-c/d/g）的内置 DSH 均不含 `commandcode` provider**（受支持列表仅含 `deepseek`/`openai`/`anthropic` 等），grep 全磁盘 `AI Game Studio.exe` 亦无任何 `commandcode` 字符串。
-- 后果：runtime 进程虽启动（`runtimeExitCode: 0`），但任务立即失败，B 场景的"中断→恢复"流程从未发生，**rt-002 从未启动**；本轮实跑仅捕获到 1 个 Runtime（已验证 `ABSENT`），无法证明"两个 Runtime 均退出"。
+1. **首跑 exe 是陈旧打包（主因）**：第 3 轮使用的 `out-g`（`/tmp/pkg-exp/out-g/win-unpacked`）asar **不含 `task-interrupt-resume` 分支**（grep `task-interrupt-resume` = 0、`interrupt-failed` = 0），该分支由 `d523346` 引入。因此 `runSmoke()` 未进入任务场景，回落到通用启动探测；探测在 `sdk` profile 上直接跑，而 `ensureProfile()`（负责安装 commandcode 插件）只在任务创建时调用，于是探测 `ROUTE_UNKNOWN`、App 在 `probe` 后即 `app-quit`。B 只捕获到 **1 个探测 runtime**（teardown 记录 `runtimePid` 与捕获 pid 一致，已验证 `ABSENT`），并非任务 runtime。
+2. **沙箱内 provider 插件装不上（环境）**：改用当前 HEAD 构建（`apps/studio/release/win-unpacked`，asar 含 `startsWith('task-')` 门控与 `task-interrupt-resume`）后，App 确实进入任务场景（日志出现 `task.create`），`ensureProfile()` 调用 `dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4`，其内部 `pnpm add` 在本机因 pnpm store 的 `unlink` **`EPERM`**（沙箱文件删除保护）失败，任务停在 `PROFILE_NOT_READY`，仍未创建第二个 Runtime。
 
-**这是环境/构建层面的阻断，不在 PHASE 01-C 范围内**（禁止重做 DSH 通信、禁止扩大验收范围、禁止伪造证据）。本轮**未**修改 provider 配置或伪造成功。`evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，19 项场景级断言失败，根因为 `commandcode` 路由缺失），不作通过依据。
+补充事实：`commandcode` 不是 DSH 内置 provider，而是外部插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，由 `TaskService.ensureProfile()` 在任务创建时安装并在 `task-runtime.cordis.yml` 注册；`dsh-sdk-client` 与 `@deepseek-ai/dsh` 自 PHASE 01-A 起一直是 `0.2.1-rc.3`，**依赖版本未变**。
+
+**因此 A/B/C 仍为 `BLOCKED`（环境层），未伪造通过、未改 Provider、未重写 DSH 通信。** `evidence/phase-01-c/packaged/summary.json` 保留为本轮真实实跑结果（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
 
 ### 6.3 第 2 轮历史结果（保留，仅供审计）
 
@@ -106,7 +109,8 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 | `node --test`（应用全量，连续两次） | 0 / 0 | **101/101**，0 失败 | `unit/full-suite-1.txt`、`unit/full-suite-2.txt` |
 | `node --test test/runtime-supervisor.test.js` | 0 | **9/9**（关闭竞态 6 + 启动失败清理 3） | `unit/supervisor-race.txt` |
 | `node --test test/process-identity.test.js` | 0 | **11/11**（PRESENT/ABSENT/FAILED/UNKNOWN + `discoverRuntimeIdentities` 返回全部/查询失败/全退出） | `unit/process-identity.txt` |
-| `node scripts/smoke-tasks-packaged.mjs <installed>` | 1 | **BLOCKED**：`commandcode` provider 不在当前 DSH 0.2.1-rc.3（仓库与 out-c/d/g 均不含），runtime 启动即 `ROUTE_UNKNOWN`，B 的 rt-002 从未启动，仅捕获 1 个 Runtime（已验证 ABSENT） | `packaged/summary.json` |
+| `node --test test/identity-watcher.test.mjs` | 0 | **6/6**（stop() 排空在途查询；watchErrors 计入 allGone；四态/空集不算通过） | `unit/identity-watcher.txt` |
+| `node scripts/smoke-tasks-packaged.mjs <installed>` | 1 | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） | `packaged/summary.json` |
 | `node --test test/task-integration.test.js` | 0 | **2/2**（真实 DSH + 真实模型） | `real-dsh/integration.txt` |
 | 隔离连续 3 次 | 0 | 3/3 | `real-dsh/isolated-1.txt`、`isolated-2.txt`、`isolated-3.txt` |
 | `node tests/run-tests.mjs`（PHASE 00） | 0 | **166/166** | `regression/phase00-suite.txt` |
@@ -140,6 +144,6 @@ C 场景是真实的异常退出（运行中 `app.exit(9)`，无优雅关闭、�
 
 ## 10. 结论
 
-原始目标 1–8 代码已实现；B 场景第二个 Runtime 的 OS 进程退出验证**代码已补齐并由单元测试覆盖**（11/11）。但**安装版 A/B/C 复验被环境阻断**（B-INSTALL-1：`commandcode` provider 在当前 DSH 构建中不可用），无法交付"两个 Runtime 均 ABSENT"的安装版实证。代码、单元证据、真实失败实跑证据均已就位，待环境具备 `commandcode` provider 后可复验。
+原始目标 1–8 代码已实现；B 场景第二个 Runtime 的 OS 进程退出验证**代码已补齐并由单元测试覆盖**（`process-identity` 11/11、`identity-watcher` 6/6）。补正轮修掉 watcher 的排空与错误缺口，并把 `commandcode` 不匹配定位为**陈旧打包（out-g 缺任务场景）+ 沙箱 pnpm 限制（provider 插件装不上）**，非依赖版本变化、非 Provider 代码缺陷。**安装版 A/B/C 复验仍被环境阻断**（B-INSTALL-1），无法交付"两个 Runtime 均 ABSENT"的安装版实证。状态文件 C2/C5/C6 已据实改为 `BLOCKED`。
 
-状态：**`BLOCKED`**（代码完成，安装版复验被环境阻断），等待外部独立评审与具备 `commandcode` provider 的环境。
+状态：**`BLOCKED`**（代码完成 + 单元验证；安装版复验被沙箱环境阻断），等待外部独立评审与可正常 `pnpm add` 的环境复验。

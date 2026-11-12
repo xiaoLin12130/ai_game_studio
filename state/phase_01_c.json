@@ -38,17 +38,23 @@
       "artifact": "evidence/phase-01-c/unit/process-identity.txt",
       "note": "本轮新增 discoverRuntimeIdentities 返回全部 Runtime / 查询失败 / 全退出 3 个用例"
     },
+    "identityWatcher": {
+      "tests": 6,
+      "pass": 6,
+      "artifact": "evidence/phase-01-c/unit/identity-watcher.txt",
+      "note": "stop() 排空在途查询；watchErrors 计入 allGone；PRESENT/FAILED/UNKNOWN/空集不算通过"
+    },
     "realDsh": {
       "tests": 2,
       "pass": 2,
       "artifact": "evidence/phase-01-c/real-dsh/integration.txt"
     },
     "packaged": {
-      "checks": 39,
-      "failed": 19,
+      "checks": 42,
+      "failed": 20,
       "ok": false,
       "artifact": "evidence/phase-01-c/packaged/summary.json",
-      "note": "BLOCKED：commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN；B 仅捕获 1 Runtime（已 ABSENT）。真实实跑结果，ok:false，不作通过依据"
+      "note": "BLOCKED：正确构建已进入任务场景，但 ensureProfile 的 dsh plugin add → pnpm add 因 pnpm store unlink EPERM（沙箱删除保护）失败（PROFILE_NOT_READY），B 未产生第二个 Runtime。真实实跑结果 ok:false，不作通过依据"
     },
     "phase00": {
       "suite": "166/166",
@@ -96,13 +102,13 @@
     {
       "id": "B-INSTALL-1",
       "item": "安装版 A/B/C 复验（本轮目标：B 场景两个 Runtime 均 ABSENT）",
-      "why": "commandcode provider 在当前 DSH 0.2.1-rc.3（仓库 node_modules 与 out-c/d/g 三个打包 exe）中未被注册，runtime 启动即 ROUTE_UNKNOWN，无法驱动 B 场景中断→恢复以产生第二个 Runtime（rt-002 从未启动）",
-      "scope": "超出 PHASE 01-C 范围；需具备 commandcode provider 的 DSH 构建/凭据方可复验",
-      "evidence": "/tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (state.status=FAILED, code=ROUTE_UNKNOWN, raw=\"no adapter registered for provider \\\"commandcode\\\"\")",
-      "code_status": "B 修复代码已完成：processes.ts 新增 discoverRuntimeIdentities；smoke-tasks-packaged.mjs 新增 startIdentityWatcher + checkAllIdentities；B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone"
+      "why": "两层原因：(1) 首跑使用的 out-g 是陈旧打包（asar 不含 task-interrupt-resume 分支），回落启动探测 → ROUTE_UNKNOWN，只捕获探测 runtime；(2) 改用当前 HEAD 构建（release/win-unpacked，asar 含任务场景与 task-* 探测门控）后，ensureProfile 通过 dsh plugin add 安装 @mars-sea/dsh-commandcode-provider@0.15.4 时，pnpm add 因本机 pnpm store 的 unlink EPERM（沙箱文件删除保护）失败，任务在 profile 引导处 PROFILE_NOT_READY，仍未产生第二个 Runtime。非依赖版本变化（全程 dsh-sdk-client/@deepseek-ai/dsh 0.2.1-rc.3），非 Provider 注册代码缺陷。",
+      "scope": "超出 PHASE 01-C 范围；需在无沙箱删除限制、可正常 pnpm add 的环境（或预先装好插件的 profile）中复验",
+      "evidence": "out-g: /tmp/studio-pkg-B-*/out-task-interrupt-resume/smoke.json (ROUTE_UNKNOWN)；正确构建: /tmp/studio-pkg-A-hV1ASF/dsh-home/profiles/sdk/.plugin-manager/logs/operation-rUSM2p/pnpm.log (EPERM unlink pnpm store)",
+      "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
     }
   ],
-  "updated_at": "2026-11-12T03:10:00.000Z",
+  "updated_at": "2026-11-12T03:40:00.000Z",
   "acceptance": [
     {
       "id": "C1",
@@ -113,8 +119,9 @@
     {
       "id": "C2",
       "item": "Session 生命周期（创建/中断/原生 resume/失败记录）",
-      "status": "PASS",
-      "evidence": "evidence/phase-01-c/packaged/summary.json"
+      "status": "BLOCKED",
+      "evidence": "evidence/phase-01-c/packaged/summary.json",
+      "note": "代码实现完成；本轮安装版 summary.json 为 ok:false（provider 引导被环境阻断），不再作为 PASS 依据。历史 R2 曾验证通过，但当时进程判据已判定 INVALID-1。"
     },
     {
       "id": "C3",
@@ -131,14 +138,16 @@
     {
       "id": "C5",
       "item": "中断与恢复（安装版验证）",
-      "status": "PASS",
-      "evidence": "evidence/phase-01-c/packaged/summary.json"
+      "status": "BLOCKED",
+      "evidence": "evidence/phase-01-c/packaged/summary.json",
+      "note": "本轮安装版 B 场景在 provider 引导处失败（PROFILE_NOT_READY），未产生第二个 Runtime，不能作为 PASS。B 双 Runtime 捕获/复核代码已由 identity-watcher 单测覆盖。"
     },
     {
       "id": "C6",
       "item": "持久化与崩溃恢复（SQLite + app.exit(9) 实测）",
-      "status": "PASS",
-      "evidence": "evidence/phase-01-c/packaged/summary.json"
+      "status": "BLOCKED",
+      "evidence": "evidence/phase-01-c/packaged/summary.json",
+      "note": "本轮安装版 C 场景在 provider 引导处失败，未完成崩溃恢复链路，不能作为 PASS。代码与历史 R2 结果保留，但历史进程判据为 INVALID-1。"
     },
     {
       "id": "C7",
@@ -149,8 +158,9 @@
     {
       "id": "C8",
       "item": "测试与真实运行证据",
-      "status": "PASS",
-      "evidence": "evidence/phase-01-c/verification.json"
+      "status": "PARTIALLY_VERIFIED",
+      "evidence": "evidence/phase-01-c/verification.json",
+      "note": "单元证据真实且通过（tsc / process-identity 11 / supervisor 9 / identity-watcher 6）；安装版证据为真实失败运行（ok:false），未达通过。"
     }
   ],
   "defects_found_and_fixed": [
@@ -234,6 +244,23 @@
       "packaged_installed": "BLOCKED — commandcode provider 未在 DSH 0.2.1-rc.3 注册，runtime 启动即 ROUTE_UNKNOWN"
     },
     "note": "B 修复代码完整且单元验证通过；安装版复验被环境阻断（B-INSTALL-1），非代码缺陷。"
+  },
+  "review_correction_r4": {
+    "round": "R4-review-correction",
+    "issues_fixed": [
+      "watcher stop() 未等待在途查询 → 现 await 排空（scripts/lib/identity-watcher.mjs）",
+      "identityWatchErrors 未进入验收 → verifyIdentities 把 watchErrors 计入 allGone；A/B/C 增加 noIdentityWatchErrors",
+      "新增 test/identity-watcher.test.mjs 6/6"
+    ],
+    "commandcode_investigation": "两层根因：out-g 陈旧打包（缺 task-interrupt-resume，回落探测→ROUTE_UNKNOWN，仅 1 探测 runtime）；正确构建 release/win-unpacked 已进任务场景，但 dsh plugin add 的 pnpm add 因 pnpm store unlink EPERM（沙箱）失败→PROFILE_NOT_READY。依赖全程 0.2.1-rc.3，commandcode 为外部插件。",
+    "state_correction": "C2/C5/C6 由 PASS 改为 BLOCKED，C8 改为 PARTIALLY_VERIFIED；不再以本轮失败 summary.json 作为 PASS 依据。",
+    "verification": {
+      "tsc": "exit 0",
+      "processIdentity": "11/11",
+      "runtimeSupervisor": "9/9",
+      "identityWatcher": "6/6",
+      "packaged_installed": "BLOCKED — 42 checks / 20 failed（PROFILE_NOT_READY，pnpm EPERM）"
+    }
   },
   "invalidated": [
     {

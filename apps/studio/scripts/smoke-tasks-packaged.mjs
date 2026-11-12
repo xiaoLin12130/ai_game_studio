@@ -16,6 +16,7 @@ import path from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
+import { createIdentityWatcher, verifyIdentities } from './lib/identity-watcher.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const REPO = path.resolve(HERE, '..', '..', '..')
@@ -71,7 +72,14 @@ async function run(mode, userData, timeoutMs = 420000) {
     },
     stdio: 'ignore',
   })
-  const watcher = child.pid ? startIdentityWatcher(child.pid) : null
+  const watcher = child.pid
+    ? createIdentityWatcher({
+        appPid: child.pid,
+        binMarker: path.join('@deepseek-ai', 'dsh', 'lib', 'bin.js'),
+        discover: (appPid, binMarker) =>
+          discoverRuntimeIdentities(createProcessTable(), { parentPid: appPid, binMarker, boundMs: 6000 }),
+      })
+    : null
   const exit = await new Promise((resolve) => {
     const timer = setTimeout(() => resolve({ timedOut: true, code: null }), timeoutMs)
     child.on('exit', (code) => {
@@ -79,7 +87,8 @@ async function run(mode, userData, timeoutMs = 420000) {
       resolve({ timedOut: false, code })
     })
   })
-  const identities = watcher ? watcher.stop() : []
+  // Await the drain: an identity still being discovered when the app exits must be kept.
+  const identities = watcher ? await watcher.stop() : []
   const watcherErrors = watcher ? watcher.errors : []
   const smokePath = path.join(outDir, 'smoke.json')
   const smoke = fs.existsSync(smokePath) ? JSON.parse(fs.readFileSync(smokePath, 'utf8')) : null
@@ -104,76 +113,23 @@ const { createProcessTable, discoverRuntimeIdentities, verifyRuntimeIdentity } =
 )
 
 /**
- * Capture the runtime's OS identity while it is alive.
+ * Watch the app for every runtime it starts, and verify each one is gone.
  *
- * The DSH home is an environment variable, so it is not in the runtime's command line; a
- * home-based matcher reports ABSENT while the process runs. Identity is captured the way
- * PHASE 01-A established: a child of the app process that runs the dsh CLI, pinned with its
- * creation time.
+ * The watcher lives in ./lib/identity-watcher.mjs so its drain and error behaviour can be
+ * tested without spawning the installed app. `stop()` waits for the query already in
+ * flight; the identities it returns are then checked through the same PHASE 01-A
+ * (pid, creationMs) mechanism. A watcher error is folded into `allGone`, so a failed query
+ * can never read as "nothing leaked".
  */
-/**
- * Watch the app for the whole run and record every runtime it starts.
- *
- * A task that interrupts and resumes owns two runtimes over its lifetime, so a single
- * capture cannot prove the scenario is clean. This polls while the app lives and keeps each
- * distinct (pid, creationMs) it sees; the caller then verifies every one of them.
- */
-function startIdentityWatcher(appPid, intervalMs = 250) {
-  const table = createProcessTable()
-  const marker = path.join('@deepseek-ai', 'dsh', 'lib', 'bin.js')
-  const seen = new Map()
-  const errors = []
-  let stopped = false
-
-  const tick = async () => {
-    if (stopped) return
-    const found = await discoverRuntimeIdentities(table, { parentPid: appPid, binMarker: marker, boundMs: 6000 })
-    if (!found.ok) {
-      if (found.error) errors.push(found.error)
-    } else {
-      for (const identity of found.identities) {
-        const key = identity.pid + ':' + identity.creationMs
-        if (!seen.has(key)) seen.set(key, identity)
-      }
-    }
-    if (!stopped) setTimeout(tick, intervalMs)
-  }
-  void tick()
-
-  return {
-    stop() {
-      stopped = true
-      return [...seen.values()]
-    },
-    get identities() {
-      return [...seen.values()]
-    },
-    get errors() {
-      return [...errors]
-    },
-  }
-}
-
-/** Verify every captured identity; only all-ABSENT counts as clean. */
-async function checkAllIdentities(identities) {
-  const checks = []
-  for (const identity of identities) {
-    checks.push({ identity, verdict: await checkIdentity(identity) })
-  }
-  return {
-    count: identities.length,
-    checks,
-    allGone: checks.length > 0 && checks.every((entry) => entry.verdict.status === 'ABSENT'),
-    statuses: checks.map((entry) => entry.verdict.status),
-  }
-}
-
-/** Ask the OS whether that identity is still alive. Never turns doubt into ABSENT. */
-async function checkIdentity(identity) {
-  if (!identity) return { status: 'UNKNOWN', pid: null, creationMs: null, observedCreationMs: null, reason: 'no identity was captured' }
-  const table = createProcessTable()
-  return verifyRuntimeIdentity(table, identity, 8000)
-}
+const checkAllIdentities = (identities, watchErrors = []) =>
+  verifyIdentities(
+    identities,
+    (identity) =>
+      identity
+        ? verifyRuntimeIdentity(createProcessTable(), identity, 8000)
+        : { status: 'UNKNOWN', pid: null, creationMs: null, observedCreationMs: null, reason: 'no identity was captured' },
+    watchErrors,
+  )
 
 const disposeFailed = (logTail) => (logTail ?? []).some((line) => line.includes('task.service.dispose.failed') || line.includes('runtime.close.failed'))
 
@@ -194,7 +150,7 @@ fs.mkdirSync(OUT, { recursive: true })
   scenarios.A = result
   scenarios.A.runtimeIdentitiesCaptured = result.runtimeIdentities
   scenarios.A.runtimeIdentityCount = result.runtimeIdentityCount
-  scenarios.A.runtimeChecks = await checkAllIdentities(result.runtimeIdentities)
+  scenarios.A.runtimeChecks = await checkAllIdentities(result.runtimeIdentities, result.identityWatchErrors)
   scenarios.A.checks = {
     exitZero: result.exitCode === 0,
     disposeHadNoFailure: !disposeFailed(result.logTail),
@@ -202,6 +158,7 @@ fs.mkdirSync(OUT, { recursive: true })
     // A failed or unknown check is never "gone".
     runtimeProcessGone: scenarios.A.runtimeChecks.allGone,
     runtimeCheckStatus: scenarios.A.runtimeChecks.statuses.join(','),
+    noIdentityWatchErrors: result.identityWatchErrors.length === 0,
     producedSmoke: Boolean(result.smoke),
     taskSucceeded: result.smoke?.finalStatus === 'SUCCEEDED',
     hadSession: (result.smoke?.task?.sessions ?? 0) >= 1,
@@ -219,7 +176,7 @@ fs.mkdirSync(OUT, { recursive: true })
   scenarios.B = result
   scenarios.B.runtimeIdentitiesCaptured = result.runtimeIdentities
   scenarios.B.runtimeIdentityCount = result.runtimeIdentityCount
-  scenarios.B.runtimeChecks = await checkAllIdentities(result.runtimeIdentities)
+  scenarios.B.runtimeChecks = await checkAllIdentities(result.runtimeIdentities, result.identityWatchErrors)
   const distinctB = new Set(result.runtimeIdentities.map((i) => i.pid + ':' + i.creationMs)).size
   scenarios.B.checks = {
     exitZero: result.exitCode === 0,
@@ -229,6 +186,7 @@ fs.mkdirSync(OUT, { recursive: true })
     runtimeIdentitiesDistinct: distinctB === 2,
     allRuntimeProcessesGone: scenarios.B.runtimeChecks.allGone,
     runtimeCheckStatus: scenarios.B.runtimeChecks.statuses.join(','),
+    noIdentityWatchErrors: result.identityWatchErrors.length === 0,
     producedSmoke: Boolean(result.smoke),
     wasInterrupted: result.smoke?.atInterrupt?.status === 'INTERRUPTED',
     interruptedIsRecorded: (result.smoke?.atInterrupt?.transitions ?? []).includes('INTERRUPTING'),
@@ -246,12 +204,12 @@ fs.mkdirSync(OUT, { recursive: true })
   const afterCrash = lingering()
   // Checked against the identity captured while the runtime was alive, immediately after
   // the crash — before any recovery could clean it up.
-  const orphanChecks = await checkAllIdentities(crash.runtimeIdentities)
+  const orphanChecks = await checkAllIdentities(crash.runtimeIdentities, crash.identityWatchErrors)
   for (const pid of afterCrash) {
     try { spawnSync('taskkill', ['/F', '/PID', pid], { windowsHide: true, timeout: 15000 }) } catch { /* gone */ }
   }
   const recover = await run('task-recover', userData)
-  const runtimeChecksAfter = await checkAllIdentities(recover.runtimeIdentities)
+  const runtimeChecksAfter = await checkAllIdentities(recover.runtimeIdentities, recover.identityWatchErrors)
   scenarios.C = {
     crash,
     recover,
@@ -276,6 +234,7 @@ fs.mkdirSync(OUT, { recursive: true })
     crashCapturedIdentity: crash.runtimeIdentityCount >= 1,
     crashOrphanStatus: orphanChecks.statuses.join(','),
     crashLeftNoOrphan: orphanChecks.allGone,
+    noIdentityWatchErrors: crash.identityWatchErrors.length === 0 && recover.identityWatchErrors.length === 0,
   }
 }
 

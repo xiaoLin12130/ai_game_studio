@@ -8,9 +8,10 @@
 | `unit/full-suite-1.txt` / `unit/full-suite-2.txt` | 应用全量测试，连续两次 | **101/101，0 失败**（各一次） |
 | `unit/supervisor-race.txt` | Runtime 关闭竞态（6）+ 启动失败清理（3） | **9/9** |
 | `unit/process-identity.txt` | 进程身份判定四态 + `discoverRuntimeIdentities` 返回全部 Runtime | **11/11** |
+| `unit/identity-watcher.txt` | watcher 排空在途查询 + 错误纳入验收 | **6/6** |
 | `real-dsh/integration.txt` | 真实 DSH + 真实模型回合 | 2/2 |
 | `real-dsh/isolated-1/2/3.txt` | 隔离连续三次 | 各 2/2 |
-| `packaged/summary.json` | **安装版 A/B/C 复验（接管轮）** | **BLOCKED**：`commandcode` provider 在当前 DSH 0.2.1-rc.3 中未注册，runtime 启动即 `ROUTE_UNKNOWN`，B 仅捕获 1 Runtime（已 ABSENT） |
+| `packaged/summary.json` | **安装版 A/B/C 复验（补正轮）** | **BLOCKED**：正确构建已进任务场景，但 `dsh plugin add` 的 `pnpm add` 因 pnpm store unlink EPERM（沙箱）失败 → `PROFILE_NOT_READY`，B 未产生第二个 Runtime（42 项检查 / 20 失败） |
 | `packaged/mcp-tool-call.json` | 安装版 MCP 真实工具调用 | `toolCalled: true` |
 | `regression/phase00-suite.txt` / `phase00-gates.json` | PHASE 00 套件与门禁 | 166/166，PASS，0 泄漏 |
 | `regression/phase01a-*.txt` | PHASE 01-A 三个冒烟 | 退出码 0 |
@@ -25,19 +26,24 @@
 现在用 PHASE 01-A 的实例身份：
 
 1. Runtime 运行时用 `captureRuntimeIdentity` 捕获「父进程 + dsh CLI + `creationMs`」；
-2. **B 场景（中断→恢复）会先后产生两个 Runtime**。接管轮新增 `discoverRuntimeIdentities` 与
-   `startIdentityWatcher`：在 App 整个生命周期内轮询，按 `(pid, creationMs)` 去重收集**所有**
-   Runtime 身份，再逐个用 `verifyRuntimeIdentity` 复核；B 强制要求 `runtimeIdentityCount === 2`、
-   `runtimeIdentitiesDistinct === 2`、`allRuntimeProcessesGone`（全部 ABSENT）。
+2. **B 场景（中断→恢复）会先后产生两个 Runtime**。新增 `discoverRuntimeIdentities` 与
+   `scripts/lib/identity-watcher.mjs` 的 `createIdentityWatcher`：在 App 整个生命周期内轮询，按
+   `(pid, creationMs)` 去重收集**所有** Runtime 身份；`stop()` 会**等待在途查询排空**再返回（避免
+   App 退出瞬间漏记身份）。随后 `verifyIdentities` 逐个复核，并把 `watchErrors` 计入 `allGone`
+   （查询失败一律不算通过）。B 强制要求 `runtimeIdentityCount === 2`、`runtimeIdentitiesDistinct === 2`、
+   `allRuntimeProcessesGone`、`noIdentityWatchErrors`。
 3. 判定四态 `PRESENT` / `ABSENT` / `FAILED` / `UNKNOWN`，**只有 ABSENT 才算没有残留**；
 4. 查询失败、创建时间无法比较、捕获歧义一律不算成功。
 
 场景 C 在 `app.exit(9)` 之后**立即**用崩溃前捕获的身份检查（`crashOrphanStatus`），再启动恢复。
 
-### 接管轮安装版复验：BLOCKED（环境）
+### 补正轮安装版复验：BLOCKED（两层根因）
 
-对 `out-g` 打包构建（DSH 0.2.1-rc.3）实跑 A/B/C：`smoke-tasks-packaged.mjs` 写入
-`provider: 'commandcode'`，但当前 DSH 0.2.1-rc.3（仓库 `node_modules` 与 out-c/d/g 三个 exe）**均未注册
-`commandcode` provider**，runtime 启动即 `ROUTE_UNKNOWN`。B 场景"中断→恢复"从未发生，rt-002 未启动，
-仅捕获 1 个 Runtime（已验证 ABSENT）。此属环境/构建问题，超出 PHASE 01-C 范围；本轮未改 provider
-配置、未伪造成功。`packaged/summary.json` 保留为真实实跑结果（`ok:false`），不作通过依据。
+1. **陈旧打包**：首跑 `out-g` 的 asar 不含 `task-interrupt-resume` 分支（grep = 0），回落启动探测 →
+   `ROUTE_UNKNOWN`，只捕获探测 runtime（B 只有 1 个的直接原因）。
+2. **沙箱 pnpm 限制**：改用当前 HEAD 构建 `apps/studio/release/win-unpacked` 后已进入任务场景，
+   但 `ensureProfile()` 的 `dsh plugin add @mars-sea/dsh-commandcode-provider@0.15.4` 内部 `pnpm add`
+   因 pnpm store 的 `unlink` **EPERM**（沙箱删除保护）失败 → `PROFILE_NOT_READY`，B 仍未产生第二个 Runtime。
+
+`commandcode` 是外部插件（非 DSH 内置），`dsh-sdk-client`/`@deepseek-ai/dsh` 全程 `0.2.1-rc.3`（依赖未变）。
+本轮未改 Provider、未重写 DSH 通信、未伪造成功；`packaged/summary.json` 保留为真实实跑结果（`ok:false`）。
