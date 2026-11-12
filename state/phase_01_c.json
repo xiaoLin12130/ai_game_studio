@@ -179,8 +179,8 @@
     "initial_implementation_commit": "3e0c2821ea13d2d5a308eeb23d32d30c4b4a42fd",
     "first_review_baseline": "8cb415b1c37da72b318f4a00f551133357e587b9",
     "r2_review_baseline": "4171873dd2b6d27e36a5ad362d60283e69e76e5f",
-    "record_commit": null,
-    "record_commit_note": "本轮修复提交的 SHA 由评审方从分支 HEAD 读取；状态文件不写自身 SHA。"
+    "record_commit": "6983493e8ac0906db349ef21bb3d4a44bfd2c28b",
+    "record_commit_note": "接管轮实现提交 SHA（fix(phase-01-c): verify both B-scenario runtimes exit via OS identity）。状态文件不内嵌自身 SHA；评审方以分支 HEAD 为准。"
   },
   "review_round": {
     "round": "R2",
