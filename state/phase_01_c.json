@@ -123,7 +123,7 @@
     }
   ],
   "blocked": [],
-  "updated_at": "2026-11-12T07:53:24.225Z",
+  "updated_at": "2026-11-12T08:00:36.018Z",
   "acceptance": [
     {
       "id": "C1",
@@ -285,7 +285,7 @@
       "verified_this_round 仅保留本轮真实执行；fullSuite/realDsh/phase00/tsc 移入 verified_previous_round 并标 historical",
       "确认正确构建产物与 4 个标记；记录产物 SHA-256/大小/时间；给出正常 Windows A/B/C 命令"
     ],
-    "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（<store-path>",
+    "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（<H-drive-pnpm-store>）删除仍被安全垫 SAFE_DELETE_FAIL_CLOSED 拒绝（%TEMP% 正常）；未重试 pnpm add、未改 store 目录、未绕过安全垫",
     "r5_env_recheck": "Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（~/.dsh/.credentials.yaml，仅存在性）；Studio 目标 profile <userData>/dsh-home/profiles/sdk 无 node_modules、插件未安装；A/B/C NOT_RUN",
     "plugin_profile_check": {
       "dsh_home": "<userData>/dsh-home（默认；config.dsh.dshHome 可覆盖）",
@@ -321,7 +321,7 @@
     "goal": "解决 commandcode 插件安装并完成安装版 A/B/C",
     "environmentFix": {
       "rootCause": "pnpm store 位于 <store-path>",
-      "fix": "pnpm store 指向 %TEMP% 下的独立目录（本轮 <store-path>",
+      "fix": "pnpm store 指向 %TEMP% 下的独立目录（本轮 <C-temp-pnpm-store>）",
       "notDone": "未删除/覆盖现有 store，未关闭安全垫，未替换 pnpm，未改 Provider 或 DSH 通信"
     },
     "pluginInstall": {

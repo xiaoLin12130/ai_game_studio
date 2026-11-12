@@ -99,7 +99,12 @@
 
 ### 6.2 安装版 A/B/C 复验 —— 阻断根因的两层定位（历史：R4/R5，已在 R7 解除）
 
+> **以下结论仅代表 R4/R5 时点的历史调查结果，已被 R7 对照实验修正，不代表当前环境或阶段状态。**
+> 当前根因以 §6.5、§6.6 和 `verification.json` 的 `rootCauseR7` 为准。
+>
 > 本节保留 R4/R5 的失败根因调查，作为审计记录；R7 已在正常环境完成 A/B/C 真实通过（见 §6.5）。
+> 其中"沙箱文件删除保护导致 EPERM"是当时的假设，R7 已证明真实原因是 pnpm store 位于 H: 盘时
+> `projects/<hash>` 形成真实目录、随后 `fs.unlink(dir)` 触发 Windows 原生 EPERM（见 §6.6）。
 
 评审要求查清"R2 通过的安装包用了哪个 DSH 构建、为什么当前不支持 commandcode"。结论是**两层原因，均非 Provider 代码缺陷、也非依赖版本变化**：
 
@@ -108,7 +113,7 @@
 
 补充事实：`commandcode` 不是 DSH 内置 provider，而是外部插件 `@mars-sea/dsh-commandcode-provider@0.15.4`，由 `TaskService.ensureProfile()` 在任务创建时安装并在 `task-runtime.cordis.yml` 注册；`dsh-sdk-client` 与 `@deepseek-ai/dsh` 自 PHASE 01-A 起一直是 `0.2.1-rc.3`，**依赖版本未变**。
 
-**因此 A/B/C 仍为 `BLOCKED`（环境层）；但 A/B/C 属 PHASE 01-C 原始验收范围，不因环境阻断而移出范围。** 未伪造通过、未改 Provider、未重写 DSH 通信。 `evidence/phase-01-c/packaged/summary.json` 是 **R4 对正确构建的真实失败运行结果**（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）；**R5 本轮未重跑**。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
+**（R4/R5 时点）因此 A/B/C 当时为 `BLOCKED`（环境层）；但 A/B/C 属 PHASE 01-C 原始验收范围，不因环境阻断而移出范围。** 未伪造通过、未改 Provider、未重写 DSH 通信。该阻断已在 R7 解除，A/B/C 真实执行并通过（§6.5）。 `evidence/phase-01-c/packaged/summary.json` 是 **R4 对正确构建的真实失败运行结果**（`ok: false`，42 项检查 / 20 项失败，全部源于 provider 引导阻断）；**R5 本轮未重跑**。复验路径：在可正常 `pnpm add` 的环境（或预装该插件的 profile）重跑 `node scripts/smoke-tasks-packaged.mjs apps/studio/release/win-unpacked`，B 应捕获两个不同 `(pid, creationMs)` 且均 `ABSENT`。
 
 **R5 环境复核**：Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（`~/.dsh/.credentials.yaml`，smoke 脚本读取，未打印内容）。**路径澄清**：`~/.dsh/profiles/{desktop,headless,web}` 的插件属于其他 DSH Home，与 Studio 目标 profile 无关；Studio 实际 `dshHome=<userData>/dsh-home`、`profile=sdk`，其 `<userData>/dsh-home/profiles/sdk` **没有 `node_modules`，插件未安装**（仅 `.plugin-manager`、`cordis.patch.yml`、`package.json`、`pnpm-workspace.yaml`）。pnpm store（`H:\dev\pnpm-store\v11`）删除仍被安全垫 `SAFE_DELETE_FAIL_CLOSED` 拒绝（`%TEMP%` 正常）。故 R5 未执行 A/B/C，未采用任何绕过方式。详见 `verification.json` 的 `environmentCheck`（环境状态的唯一权威来源；`currentSession` / `normalWindowsPrerequisites.{checked,notVerified}` / `abcStatus=NOT_RUN` / `pluginPaths`）。 <!-- scrub:allow: 文档需要展示路径形态 -->
 

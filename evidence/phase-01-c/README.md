@@ -94,3 +94,10 @@ A/B/C 三个场景的成功判据统一为 `finalStatus === 'SUCCEEDED'`。
 随后 `fs.unlink(dir)` 触发 **Windows 原生 EPERM**；C: 盘 `%TEMP%` 独立 store 正常形成 junction 并安装成功。
 
 这不是 WorkBuddy safe-delete 拦截，也不是 DSH 通信或产品代码缺陷。历史失败证据全部保留。
+
+## 证据文本脱敏（R7 补正）
+
+早期脱敏正则会在盘符后吞掉整行，导致结论被截断（例如 `H: 盘 store（<store-path>` 丢了右括号与后续说明）。
+现在统一使用 `apps/studio/scripts/lib/redact-paths.mjs`：路径体在空白、引号、CJK 标点处终止，
+占位符按语义区分（`<H-drive-pnpm-store>` / `<C-temp-pnpm-store>` / `<install-directory>` / `<user-home>` / `<abs-path>`）。
+回归测试：`apps/studio/test/redact-paths.test.js`（11 项）。

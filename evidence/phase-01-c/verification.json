@@ -176,7 +176,7 @@
       "providerInstall": "OK — task.profile.ready ok:true \"provider installed\"；@mars-sea/dsh-commandcode-provider 0.15.4 位于本次运行 profile",
       "modelCall": "OK — 真实模型回合完成（turn/end reason.kind=completed），A/B/C 均到达终态",
       "abcStatus": "EXECUTED_PASSED",
-      "reason": "C: 盘 %TEMP% 下的独立 store 可正常 registerProject；H: 盘上的 store（<abs-path>",
+      "reason": "C: 盘 %TEMP% 下的独立 store 可正常 registerProject；H: 盘上的 store（<abs-path>、<abs-path>）仍会在 projects/<hash> 上失败",
       "pnpmStoreDeleteProbe": "n/a — 本轮 store 位于 C: 盘 %TEMP%，registerProject 正常形成 junction，未触碰旧 store"
     },
     "normalWindowsPrerequisites": {
@@ -220,10 +220,10 @@
       "note": "targetProfilePluginInstalled 反映 R7 运行 profile 的真实状态（本次运行已安装成功）"
     },
     "pnpmStore": {
-      "usedInR7": "<store-path>",
+      "usedInR7": "<C-temp-pnpm-store>",
       "failed": [
-        "<store-path>",
-        "<store-path>"
+        "<H-drive-pnpm-store>（R6 前）",
+        "<H-drive-pnpm-store>（R7 首次尝试，见 summary-r7-installfail.json）"
       ],
       "note": "H: 盘 store 会在 projects/<hash> 上以真实目录落盘并导致 fs.unlink(dir) EPERM；C: 盘 %TEMP% store 正常形成 junction"
     },
@@ -367,9 +367,9 @@
   ],
   "realRunR7": {
     "generatedAt": "2026-11-12T07:37:02.017Z",
-    "appPath": "<install-dir>",
+    "appPath": "<install-directory>",
     "appSha256": "1255d65ad1c7e4e547f541a3ca4323d243aa6abe709bf50cf92a15d404d11d96",
-    "storeDir": "<store-path>",
+    "storeDir": "<C-temp-pnpm-store>",
     "quotaWindowResetAt": "2026-11-12T15:33:12+08:00",
     "quotaVerifiedBy": "首个真实模型回合于 15:34:16 (+08:00) 完成（turn/end reason.kind=completed）",
     "A": {
@@ -529,7 +529,7 @@
     "question": "为什么 dsh plugin add 在 H: 盘失败、在 C: 盘 %TEMP% 成功",
     "method": "同一台机器、同一版本 pnpm 11.21.0 / dsh 0.2.1-rc.3 / provider 0.15.4，只改变 pnpm store 所在磁盘，做对照实验",
     "observations": [
-      "H: 盘 store（<store-path>",
+      "H: 盘 store（<H-drive-pnpm-store>、<H-drive-pnpm-store>）安装失败。",
       "C: 盘 %TEMP% 下的独立 store 安装成功，provider 0.15.4 真实落盘。",
       "成功路径：projects/<hash> 形成 junction（目录联接）。",
       "失败路径：projects/<hash> 出现真实目录，随后 fs.unlink(dir) 触发 Windows 原生 EPERM。"
@@ -611,5 +611,19 @@
       "未重跑 PHASE 00/01-A/01-B",
       "未重新构建安装包或重跑 A/B/C（R7 原始数据已足以复核严格条件）"
     ]
+  },
+  "evidenceIntegrityFix": {
+    "generatedAt": "2026-11-12T08:02:39.934Z",
+    "problem": "R7 的 JSON 脱敏正则 [^\"'\\r\\n]* 在盘符后吞掉整行剩余内容，导致「H: 盘 store（<真实路径>）发生失败」被截成「H: 盘 store（<store-path>」，右括号与结论丢失",
+    "fix": "新增 apps/studio/scripts/lib/redact-paths.mjs：路径体在空白、引号、CJK 标点处终止；占位符按语义区分（<H-drive-pnpm-store> / <C-temp-pnpm-store> / <install-directory> / <user-home> / <abs-path>）",
+    "restored": [
+      "rootCauseR7.observations[0]",
+      "environmentCheck.currentSession.reason",
+      "state.review_correction_r5.environment",
+      "state.review_correction_r6.environmentFix.fix"
+    ],
+    "test": "apps/studio/test/redact-paths.test.js",
+    "testResult": "11/11 通过",
+    "verification": "两个 JSON 全字段括号平衡检查：0 处不平衡；无截断占位符"
   }
 }

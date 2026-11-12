@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T07:53:42.026Z",
+  "generatedAt": "2026-11-12T08:02:59.600Z",
   "purpose": "PHASE 00 gate-only regression; the six real model probes were not repeated.",
   "modelProbesRun": false,
   "lastFullProbeRun": "spike/dsh-probe/current-0.2.1/evidence/r14/summary.json",
@@ -67,9 +67,9 @@
     },
     "leak": {
       "status": "PASS",
-      "scanned": 325,
+      "scanned": 327,
       "skippedBinary": 3,
-      "filesInPublishSet": 328,
+      "filesInPublishSet": 330,
       "leaks": [],
       "errors": []
     }
