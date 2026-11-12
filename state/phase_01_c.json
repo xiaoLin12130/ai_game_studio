@@ -130,7 +130,7 @@
       "code_status": "B 修复代码已完成并单测覆盖：processes.ts 的 discoverRuntimeIdentities；scripts/lib/identity-watcher.mjs 的 createIdentityWatcher(stop 排空在途查询) + verifyIdentities(watchErrors 计入 allGone)；smoke-tasks-packaged.mjs 的 B 强制 runtimeIdentityCount===2 / runtimeIdentitiesDistinct===2 / allRuntimeProcessesGone / noIdentityWatchErrors"
     }
   ],
-  "updated_at": "2026-11-12T04:44:00.000Z",
+  "updated_at": "2026-11-12T05:58:00.000Z",
   "acceptance": [
     {
       "id": "C1",
@@ -293,7 +293,26 @@
       "确认正确构建产物与 4 个标记；记录产物 SHA-256/大小/时间；给出正常 Windows A/B/C 命令"
     ],
     "environment": "ENVIRONMENT_BLOCKED — R5 复核：pnpm store（H:\\\\dev\\\\pnpm-store\\\\v11）删除仍被安全垫 SAFE_DELETE_FAIL_CLOSED 拒绝（%TEMP% 正常）；未重试 pnpm add、未改 store 目录、未绕过安全垫",
-    "r5_env_recheck": "Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在 / 插件已在 desktop·headless·web profile；A/B/C 未执行",
+    "r5_env_recheck": "Node v22.22.2 / pnpm 11.21.0 / npm registry 可达（0.15.4）/ 凭据存在（~/.dsh/.credentials.yaml，仅存在性）；Studio 目标 profile <userData>/dsh-home/profiles/sdk 无 node_modules、插件未安装；A/B/C NOT_RUN",
+    "plugin_profile_check": {
+      "dsh_home": "<userData>/dsh-home（默认；config.dsh.dshHome 可覆盖）",
+      "profile": "sdk（config.ts:38 默认）",
+      "plugin_dir": "<dshHome>/profiles/sdk/node_modules/@mars-sea/dsh-commandcode-provider",
+      "installed_in_target_profile": false,
+      "target_profile_residual_files": [
+        ".plugin-manager",
+        "cordis.patch.yml",
+        "package.json",
+        "pnpm-workspace.yaml"
+      ],
+      "unrelated_profiles_with_plugin": [
+        "~/.dsh/profiles/desktop",
+        "~/.dsh/profiles/headless",
+        "~/.dsh/profiles/web"
+      ],
+      "unrelated_profiles_note": "这些属于其他 DSH Home，不能作为 Studio 目标 profile 已安装插件的证据",
+      "credentials_path": "~/.dsh/.credentials.yaml（smoke 脚本按 COMMANDCODE_API_KEY 读取；仅检查存在性，未打印内容）"
+    },
     "packaged_installed": "未完成（环境阻断）；A/B/C 属原始验收范围；R5 未重跑"
   },
   "invalidated": [

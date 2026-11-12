@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T04:45:30.101Z",
+  "generatedAt": "2026-11-12T05:56:11.216Z",
   "phase": "PHASE_01_C",
   "round": "R5-record-correction-env-prep",
   "branch": "phase/01-c-session-task-lifecycle",
@@ -182,25 +182,49 @@
         "startsWith('task-')": 2,
         "dsh-commandcode-provider@0.15.4": 1
       }
-    }
+    },
+    "headAtDelivery": "dc9cae8b8d89609e837f9bd86d7c3a43d7f43ff8",
+    "recordOnlyChangeNote": "构建基于 0268470；0268470..dc9cae8 仅 4 个记录文件变更（report/README/verification.json/state），业务代码未变；不得声称构建直接来自 dc9cae8。"
   },
   "pluginInstall": {
     "package": "@mars-sea/dsh-commandcode-provider@0.15.4",
     "installedBy": "TaskService.ensureProfile() → dsh plugin --profile sdk add @mars-sea/dsh-commandcode-provider@0.15.4（内部调用 pnpm）",
-    "dshHome": "<userData>/dsh-home（可用 config.dsh.dshHome 覆盖，见 dsh/service.ts:101 与 main.ts:297）",
-    "profileDir": "<dshHome>/profiles/<config.dsh.profile>（默认 sdk）",
+    "dshHome": "<userData>/dsh-home（默认；可用 config.dsh.dshHome 覆盖，见 dsh/service.ts:101 与 main.ts:297）",
+    "profileDir": "<dshHome>/profiles/<config.dsh.profile>；默认 profile=sdk（config.ts:38）",
     "pluginDirChecked": "<profileDir>/node_modules/@mars-sea/dsh-commandcode-provider",
     "environmentStatus": "ENVIRONMENT_BLOCKED",
     "blocker": "当前沙箱 pnpm store 的 unlink 报 EPERM（沙箱文件删除保护），pnpm.log: Command failed ... pnpm add \"@mars-sea/dsh-commandcode-provider@0.15.4\"",
     "pnpmStoreSeen": "H:\\dev\\pnpm-store\\v11\\projects\\...",
-    "normalWindowsReady": true,
     "prerequisites": [
       "Node >= 22.12（仓库 engines 要求）与可用的 pnpm",
       "可访问 npm registry（本机 npm view @mars-sea/dsh-commandcode-provider@0.15.4 返回 0.15.4）",
       "pnpm store 可写（正常 Windows 用户目录即可；本沙箱因删除保护不可写）",
       "~/.dsh/.credentials.yaml 含 COMMANDCODE_API_KEY（smoke 脚本读取后经 env 传入，不落日志）",
-      "该插件已存在于 ~/.dsh/profiles/{desktop,headless,web}/node_modules/@mars-sea/dsh-commandcode-provider，可作为离线可用性佐证"
-    ]
+      "参考（非目标 profile）：~/.dsh/profiles/{desktop,headless,web} 存在该插件，但那是其他 DSH Home，与 Studio 的 <userData>/dsh-home/profiles/sdk 无关，不能作为目标 profile 已安装的证据"
+    ],
+    "targetProfileStatus": "NOT_INSTALLED — R4 的目标 profile（如 /tmp/studio-pkg-A-*/dsh-home/profiles/sdk）只有 .plugin-manager、cordis.patch.yml、package.json、pnpm-workspace.yaml，没有 node_modules，插件不在目标 profile",
+    "targetProfilePluginInstalled": false,
+    "credentialsPathUsedBySmoke": "~/.dsh/.credentials.yaml（smoke 脚本按 COMMANDCODE_API_KEY 读取，经 env 传入；仅检查存在性，未打印内容）",
+    "currentSession": {
+      "status": "ENVIRONMENT_BLOCKED",
+      "reason": "pnpm store 删除被 SAFE_DELETE_FAIL_CLOSED 拒绝，dsh plugin add 的 pnpm add 无法完成",
+      "abcStatus": "NOT_RUN"
+    },
+    "normalWindowsPrerequisites": {
+      "checked": [
+        "Node v22.22.2（>= 22.12）",
+        "pnpm 11.21.0 可用",
+        "npm registry 可达（@mars-sea/dsh-commandcode-provider@0.15.4 -> 0.15.4）",
+        "~/.dsh/.credentials.yaml 存在（未打印内容）",
+        "~/.dsh/profiles/sdk 存在，但该 profile 无 node_modules、无该插件"
+      ],
+      "notVerified": [
+        "普通 Windows 终端（无 WorkBuddy 的 NODE_OPTIONS/safe-delete 注入）下 pnpm store 删除是否正常",
+        "普通 Windows 终端下 dsh plugin add 能否成功安装该插件",
+        "A/B/C 三场景"
+      ]
+    },
+    "abcStatus": "NOT_RUN"
   },
   "abcCommands": {
     "note": "在正常 Windows 环境执行；不要修改 Provider、不要重写 DSH 通信、不要手工构造 smoke.json。",
@@ -273,7 +297,7 @@
     }
   ],
   "environmentCheck": {
-    "checkedAt": "2026-11-12T04:43:14.754Z",
+    "checkedAt": "2026-11-12T05:56:11.216Z",
     "node": "v22.22.2",
     "pnpm": "11.21.0",
     "npm": "10.9.7",
@@ -289,6 +313,9 @@
     "verdict": "ENVIRONMENT_BLOCKED",
     "reason": "本会话仍是 WorkBuddy 沙箱：pnpm store 的删除被安全垫 FAIL_CLOSED 拒绝，dsh plugin add 内部的 pnpm add 无法完成。未采用修改 store 目录、关闭安全垫、替换 pnpm 等绕过方式。",
     "abcExecutedThisRound": false,
-    "note": "R4 对正确构建的真实失败运行仍保留在 packagedScenarios（runRound=R4, thisRound=false）。"
+    "note": "R4 对正确构建的真实失败运行仍保留在 packagedScenarios（runRound=R4, thisRound=false）。",
+    "pluginPreinstalledInNote": "这些是 ~/.dsh 下的其他 DSH Home，与 Studio 的 <userData>/dsh-home/profiles/sdk 无关；不能据此认为目标 profile 已安装插件。",
+    "targetProfilePluginInstalled": false,
+    "credentialsPathUsedBySmoke": "~/.dsh/.credentials.yaml（仅检查存在性）"
   }
 }
