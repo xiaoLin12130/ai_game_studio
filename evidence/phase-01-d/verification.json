@@ -1,0 +1,180 @@
+{
+  "generatedAt": "2026-11-12T08:28:59.600Z",
+  "phase": "PHASE_01_D",
+  "branch": "phase/01-d-project-workspace",
+  "baseCommit": "fa453c96795e871dc3c612eced27043453b88136",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 181,
+        "pass": 181,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-d/unit/full-suite.txt"
+    },
+    {
+      "name": "project-tests",
+      "command": "node --test test/project-*.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 55,
+        "pass": 55,
+        "fail": 0
+      },
+      "artifact": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "store 7 + paths 10 + locks 13 + service 10 + backup 6 + rules 9"
+    },
+    {
+      "name": "desktop-project-smoke",
+      "command": "node scripts/smoke-projects.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "checks": 9,
+        "failed": 0
+      },
+      "artifact": "evidence/phase-01-d/desktop/summary.json",
+      "note": "真实创建→退出→重启→重新打开"
+    },
+    {
+      "name": "phase00-suite",
+      "command": "node tests/run-tests.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "counts": {
+        "pass": 166,
+        "total": 166
+      },
+      "artifact": "evidence/phase-01-d/regression/phase00-suite.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏，扫描 347/355"
+    },
+    {
+      "name": "phase01a-smoke-ready",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "phase01a-smoke-quit",
+      "command": "node scripts/smoke.mjs quit-during-probe",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d/regression/phase01a-quit.txt"
+    },
+    {
+      "name": "phase01b-mcp-handshake",
+      "command": "node scripts/mcp-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d/regression/phase01b-mcp.txt"
+    }
+  ],
+  "acceptance": {
+    "D1": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/desktop/summary.json",
+      "note": "创建/打开/关闭 + 重启后仍在"
+    },
+    "D2": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "Project/ProjectConfig/ProjectEvent/Approval + tasks.project_id"
+    },
+    "D3": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "v1→v2 迁移保留旧数据；迁移失败不推进版本、不丢行"
+    },
+    "D4": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "真实恢复并校验 project/task/session 关联"
+    },
+    "D5": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "穿越/跨盘/UNC/junction 逃逸全部拒绝"
+    },
+    "D6": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "两项目配置与事件互不可见"
+    },
+    "D7": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "同项目第二个写者被拒"
+    },
+    "D8": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "构建与写入互斥"
+    },
+    "D9": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "持有者进程消失或心跳超时即可回收"
+    },
+    "D10": {
+      "status": "PASS",
+      "evidence": "apps/studio/src/renderer/index.html",
+      "note": "五个一级入口；后三个明确标注待开发"
+    },
+    "D11": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt",
+      "note": "规则经受控服务读取，Renderer 不碰 FS"
+    },
+    "D12": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/desktop/summary.json",
+      "note": "Windows 桌面真实运行"
+    },
+    "D13": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/regression/phase00-suite.txt",
+      "note": "PHASE 00 166/166 + 门禁 PASS；01-A/01-B 冒烟退出码 0"
+    },
+    "D14": {
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/verification.json"
+    },
+    "D15": {
+      "status": "PASS",
+      "evidence": "docs/review-handoff/PHASE_01_D_WORK_REPORT.md"
+    }
+  },
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后项目链路",
+      "reason": "本轮未改打包配置；PHASE 01-B 的安装版证据仍有效"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    }
+  ]
+}

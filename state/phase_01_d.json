@@ -1,0 +1,166 @@
+{
+  "phase": "PHASE_01_D",
+  "title": "项目空间与基础设施",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "verdict": null,
+  "branch": "phase/01-d-project-workspace",
+  "base_commit": "fa453c96795e871dc3c612eced27043453b88136",
+  "note": "原始目标 D1–D15 已实现并有证据；本阶段不自行判定通过。",
+  "implemented": [
+    "项目数据模型（Project / ProjectConfig / ProjectEvent / Approval）作为 v2 迁移加入现有 SQLite",
+    "项目创建、打开、关闭、配置；重启后恢复",
+    "项目根路径安全（真实路径解析、分段比较、junction 逃逸拒绝）",
+    "项目写锁与构建锁（行记录 + 心跳 + 过期回收）",
+    "备份与恢复（VACUUM INTO + 恢复前安全副本 + 关联校验）",
+    "五个一级导航与项目页面",
+    "规则与状态读取（受控服务，Renderer 不碰 FS）"
+  ],
+  "acceptance": [
+    {
+      "id": "D1",
+      "item": "项目创建/打开/关闭",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/desktop/summary.json"
+    },
+    {
+      "id": "D2",
+      "item": "项目数据模型",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D3",
+      "item": "持久化与迁移",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D4",
+      "item": "备份与恢复",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D5",
+      "item": "路径安全",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D6",
+      "item": "项目隔离",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D7",
+      "item": "项目写锁",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D8",
+      "item": "构建锁",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D9",
+      "item": "锁恢复",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D10",
+      "item": "五个一级导航",
+      "status": "PASS",
+      "evidence": "apps/studio/src/renderer/index.html"
+    },
+    {
+      "id": "D11",
+      "item": "规则读取",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/unit/project-tests.txt"
+    },
+    {
+      "id": "D12",
+      "item": "桌面真实运行",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/desktop/summary.json"
+    },
+    {
+      "id": "D13",
+      "item": "历史阶段回归",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/regression/phase00-suite.txt"
+    },
+    {
+      "id": "D14",
+      "item": "证据可追溯",
+      "status": "PASS",
+      "evidence": "evidence/phase-01-d/verification.json"
+    },
+    {
+      "id": "D15",
+      "item": "报告与推送",
+      "status": "PASS",
+      "evidence": "docs/review-handoff/PHASE_01_D_WORK_REPORT.md"
+    }
+  ],
+  "schema": {
+    "version": 2,
+    "added_tables": [
+      "projects",
+      "project_configs",
+      "project_events",
+      "approvals",
+      "project_locks"
+    ],
+    "added_column": "tasks.project_id (nullable, ON DELETE SET NULL)",
+    "note": "项目表是现有任务库的 v2 迁移，不是第二套数据库；关闭项目不删除任务与会话。"
+  },
+  "locks": {
+    "kinds": [
+      "write",
+      "build"
+    ],
+    "storage": "project_locks 表（行记录，非锁文件）",
+    "staleness": "持有者进程不存在，或心跳超过 10 分钟",
+    "separation": "TaskRunner 单飞（任务级）/ Runtime 租约（运行时级）/ 项目写锁（项目级）/ 构建锁（构建输入级）"
+  },
+  "unknown": [
+    {
+      "id": "U-01D-1",
+      "item": "多引擎/多平台支持",
+      "condition_to_verify": "PHASE 03 之后"
+    },
+    {
+      "id": "U-01D-2",
+      "item": "安装包内的项目链路",
+      "condition_to_verify": "下次打包时验证"
+    }
+  ],
+  "deferred": [
+    {
+      "id": "D-01D-1",
+      "item": "AI 顾问对话与需求基线",
+      "phase": "PHASE 02"
+    },
+    {
+      "id": "D-01D-2",
+      "item": "素材库与素材识别",
+      "phase": "PHASE 03"
+    },
+    {
+      "id": "D-01D-3",
+      "item": "完整 Decision Center 与审批流",
+      "phase": "PHASE 02"
+    }
+  ],
+  "blocked": [],
+  "not_run": [
+    "安装包重建与安装后项目链路",
+    "npm audit / 静态吊销检查"
+  ],
+  "updated_at": "2026-11-12T08:29:15.379Z"
+}

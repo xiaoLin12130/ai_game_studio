@@ -21,104 +21,211 @@
       </div>
     </header>
 
+    <nav class="primary-nav" aria-label="主导航">
+      <button class="nav-item is-active" type="button" data-view="workbench">工作台</button>
+      <button class="nav-item" type="button" data-view="projects">游戏项目</button>
+      <button class="nav-item" type="button" data-view="advisor">AI 顾问</button>
+      <button class="nav-item" type="button" data-view="assets">设计与素材</button>
+      <button class="nav-item" type="button" data-view="decisions">决策中心</button>
+    </nav>
+
     <main class="content">
-      <section class="card" id="dsh-card">
-        <div class="card-head">
-          <h2>DSH 运行时</h2>
-          <button id="recheck" class="button" type="button">重新检测</button>
-        </div>
-
-        <p class="headline" id="headline">尚未检测 DSH。</p>
-
-        <dl class="facts">
-          <div class="fact"><dt>运行时版本</dt><dd id="fact-dsh-version">—</dd></div>
-          <div class="fact"><dt>协议服务</dt><dd id="fact-server">—</dd></div>
-          <div class="fact"><dt>最近检测</dt><dd id="fact-checked">—</dd></div>
-          <div class="fact"><dt>耗时</dt><dd id="fact-duration">—</dd></div>
-          <div class="fact"><dt>运行时退出码</dt><dd id="fact-exit">—</dd></div>
-          <div class="fact"><dt>入口来源</dt><dd id="fact-entry">—</dd></div>
-        </dl>
-
-        <div class="notice" id="config-notice" hidden></div>
-
-        <details class="diagnostics">
-          <summary>诊断信息</summary>
-          <pre id="diagnostics">加载中…</pre>
-        </details>
-      </section>
-
-      <section class="card tasks-card" id="tasks-card">
-        <div class="card-head">
-          <h2>任务</h2>
-          <div class="tasks-head-tools">
-            <span class="tasks-count" id="tasks-count">加载中…</span>
-            <button id="tasks-refresh" class="button button-ghost button-small" type="button">刷新</button>
+      <section class="view" id="view-workbench" data-view="workbench">
+        <div class="card">
+          <div class="card-head">
+            <h2>工作台</h2>
+            <button id="workbench-refresh" class="button button-ghost button-small" type="button">刷新</button>
+          </div>
+          <p class="headline" id="workbench-headline">正在加载项目…</p>
+          <div class="notice" id="workbench-current" hidden></div>
+          <ul class="project-list" id="workbench-projects"></ul>
+          <div class="empty-state" id="workbench-empty" hidden>
+            <p class="empty-title">还没有游戏项目</p>
+            <p class="empty-body">创建一个项目后，你的任务、会话和设计记录都会挂在它下面。</p>
+            <button class="button" type="button" id="workbench-create">创建第一个项目</button>
           </div>
         </div>
 
-        <div class="tasks-layout">
-          <aside class="task-list-pane" aria-label="任务列表">
-            <div class="tasks-alert" id="tasks-alert" role="alert" hidden></div>
+              <section class="card" id="dsh-card">
+                <div class="card-head">
+                  <h2>DSH 运行时</h2>
+                  <button id="recheck" class="button" type="button">重新检测</button>
+                </div>
 
-            <ul class="task-list" id="task-list">
-              <li class="task-list-empty">正在加载任务…</li>
-            </ul>
+                <p class="headline" id="headline">尚未检测 DSH。</p>
 
-            <form class="task-form" id="task-form" autocomplete="off">
-              <h3 class="task-form-title">新建任务</h3>
+                <dl class="facts">
+                  <div class="fact"><dt>运行时版本</dt><dd id="fact-dsh-version">—</dd></div>
+                  <div class="fact"><dt>协议服务</dt><dd id="fact-server">—</dd></div>
+                  <div class="fact"><dt>最近检测</dt><dd id="fact-checked">—</dd></div>
+                  <div class="fact"><dt>耗时</dt><dd id="fact-duration">—</dd></div>
+                  <div class="fact"><dt>运行时退出码</dt><dd id="fact-exit">—</dd></div>
+                  <div class="fact"><dt>入口来源</dt><dd id="fact-entry">—</dd></div>
+                </dl>
 
-              <label class="field">
-                <span class="field-label">标题</span>
-                <input
-                  class="input"
-                  id="task-title"
-                  name="title"
-                  type="text"
-                  maxlength="120"
-                  placeholder="例如：检查存档写入是否幂等"
-                  required
-                />
-              </label>
+                <div class="notice" id="config-notice" hidden></div>
 
-              <label class="field">
-                <span class="field-label">目标</span>
-                <textarea
-                  class="input"
-                  id="task-goal"
-                  name="goal"
-                  rows="3"
-                  maxlength="2000"
-                  placeholder="描述希望 DSH 完成的事情"
-                  required
-                ></textarea>
-              </label>
+                <details class="diagnostics">
+                  <summary>诊断信息</summary>
+                  <pre id="diagnostics">加载中…</pre>
+                </details>
+              </section>
 
-              <div class="field field-inline" role="radiogroup" aria-label="隔离类型">
-                <span class="field-label">隔离类型</span>
-                <label class="radio-pill">
-                  <input type="radio" name="isolation" value="readonly" />
-                  <span>只读</span>
-                </label>
-                <label class="radio-pill">
-                  <input type="radio" name="isolation" value="writable" checked />
-                  <span>写入</span>
-                </label>
-              </div>
+              <section class="card tasks-card" id="tasks-card">
+                <div class="card-head">
+                  <h2>任务</h2>
+                  <div class="tasks-head-tools">
+                    <span class="tasks-count" id="tasks-count">加载中…</span>
+                    <button id="tasks-refresh" class="button button-ghost button-small" type="button">刷新</button>
+                  </div>
+                </div>
 
-              <div class="task-form-foot">
-                <span class="task-form-error" id="task-form-error" role="alert" hidden></span>
-                <button class="button" id="task-create" type="submit">创建任务</button>
-              </div>
-            </form>
-          </aside>
+                <div class="tasks-layout">
+                  <aside class="task-list-pane" aria-label="任务列表">
+                    <div class="tasks-alert" id="tasks-alert" role="alert" hidden></div>
 
-          <div class="task-detail-pane">
-            <div class="task-detail-body" id="task-detail-body">
-              <p class="task-detail-placeholder">正在加载任务…</p>
-            </div>
+                    <ul class="task-list" id="task-list">
+                      <li class="task-list-empty">正在加载任务…</li>
+                    </ul>
+
+                    <form class="task-form" id="task-form" autocomplete="off">
+                      <h3 class="task-form-title">新建任务</h3>
+
+                      <label class="field">
+                        <span class="field-label">标题</span>
+                        <input
+                          class="input"
+                          id="task-title"
+                          name="title"
+                          type="text"
+                          maxlength="120"
+                          placeholder="例如：检查存档写入是否幂等"
+                          required
+                        />
+                      </label>
+
+                      <label class="field">
+                        <span class="field-label">目标</span>
+                        <textarea
+                          class="input"
+                          id="task-goal"
+                          name="goal"
+                          rows="3"
+                          maxlength="2000"
+                          placeholder="描述希望 DSH 完成的事情"
+                          required
+                        ></textarea>
+                      </label>
+
+                      <div class="field field-inline" role="radiogroup" aria-label="隔离类型">
+                        <span class="field-label">隔离类型</span>
+                        <label class="radio-pill">
+                          <input type="radio" name="isolation" value="readonly" />
+                          <span>只读</span>
+                        </label>
+                        <label class="radio-pill">
+                          <input type="radio" name="isolation" value="writable" checked />
+                          <span>写入</span>
+                        </label>
+                      </div>
+
+                      <div class="task-form-foot">
+                        <span class="task-form-error" id="task-form-error" role="alert" hidden></span>
+                        <button class="button" id="task-create" type="submit">创建任务</button>
+                      </div>
+                    </form>
+                  </aside>
+
+                  <div class="task-detail-pane">
+                    <div class="task-detail-body" id="task-detail-body">
+                      <p class="task-detail-placeholder">正在加载任务…</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+      </section>
+      </section>
+
+      <section class="view" id="view-projects" data-view="projects" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>游戏项目</h2>
+            <button id="projects-refresh" class="button button-ghost button-small" type="button">刷新</button>
+          </div>
+          <div class="notice" id="projects-alert" role="alert" hidden></div>
+          <ul class="project-list" id="projects-list"></ul>
+
+          <form class="project-form" id="project-form" autocomplete="off">
+            <h3 class="form-title">新建项目</h3>
+            <label class="field">
+              <span class="field-label">项目名称</span>
+              <input id="project-name" class="input" type="text" maxlength="60" placeholder="例如：星海农场" />
+            </label>
+            <label class="field">
+              <span class="field-label">项目目录（必须是空目录）</span>
+              <input id="project-root" class="input" type="text" placeholder="例如：D:\Games\StarFarm" <!-- scrub:allow: 输入框示例需要展示路径形态 --> />
+            </label>
+            <label class="field">
+              <span class="field-label">游戏引擎</span>
+              <select id="project-engine" class="input">
+                <option value="cocos-creator-3.8.6">Cocos Creator 3.8.6</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">目标平台</span>
+              <select id="project-platform" class="input">
+                <option value="wechat-minigame">微信小游戏</option>
+              </select>
+            </label>
+            <p class="form-hint">当前版本只支持 Cocos Creator 3.8.6 与微信小游戏。</p>
+            <div class="form-error" id="project-form-error" hidden></div>
+            <button class="button" type="submit" id="project-create">创建项目</button>
+          </form>
+        </div>
+
+        <div class="card" id="project-detail-card" hidden>
+          <div class="card-head">
+            <h2 id="project-detail-title">项目</h2>
+            <div class="detail-actions" id="project-detail-actions"></div>
+          </div>
+          <div class="notice" id="project-detail-alert" role="alert" hidden></div>
+          <dl class="facts" id="project-detail-facts"></dl>
+          <h3 class="section-title">最近活动</h3>
+          <ul class="event-list" id="project-detail-events"></ul>
+        </div>
+      </section>
+
+      <section class="view" id="view-advisor" data-view="advisor" hidden>
+        <div class="card">
+          <div class="card-head"><h2>AI 顾问</h2></div>
+          <div class="placeholder-state">
+            <p class="placeholder-title">尚未开发</p>
+            <p class="placeholder-body">AI 顾问会在 PHASE 02 提供需求讨论与正式基线。当前版本不会显示任何模拟对话。</p>
           </div>
         </div>
       </section>
+
+      <section class="view" id="view-assets" data-view="assets" hidden>
+        <div class="card">
+          <div class="card-head"><h2>设计与素材</h2></div>
+          <div class="placeholder-state">
+            <p class="placeholder-title">尚未开发</p>
+            <p class="placeholder-body">素材库、素材识别与导入属于 PHASE 03。当前版本不提供素材管理功能。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-decisions" data-view="decisions" hidden>
+        <div class="card">
+          <div class="card-head"><h2>决策中心</h2></div>
+          <div class="placeholder-state">
+            <p class="placeholder-title">尚未开发</p>
+            <p class="placeholder-body">需求冻结与审批流程属于 PHASE 02。当前版本只保存审批的数据结构，不提供审批操作。</p>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <footer class="footer">

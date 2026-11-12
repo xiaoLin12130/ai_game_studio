@@ -1,3 +1,13 @@
+## PHASE 01-D（READY_FOR_EXTERNAL_REVIEW）
+
+- 分支 `phase/01-d-project-workspace`，基线 `fa453c9`。
+- 项目空间：创建/打开/关闭/配置，重启后恢复；数据模型作为 v2 迁移加入现有 SQLite。
+- 安全：真实路径解析 + 分段比较（拒绝穿越/跨盘/UNC/junction 逃逸）；项目写锁与构建锁（行记录 + 心跳 + 过期回收）。
+- 备份恢复：VACUUM INTO + 恢复前安全副本 + 关联校验。
+- UI：五个一级入口，后三个明确标注待开发。
+- 测试：应用 181/181，新增项目测试 55/55，桌面冒烟 9/9；PHASE 00 166/166 + 门禁 PASS。
+- 报告：`docs/review-handoff/PHASE_01_D_WORK_REPORT.md`；证据：`evidence/phase-01-d/`。
+
 ## PHASE 01-B（APPROVED / PASS）
 
 - 分支 `phase/01-b-mcp-packaging`，基线 `45c8976`。

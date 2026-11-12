@@ -1,0 +1,109 @@
+/**
+ * Database backup and restore.
+ *
+ * A backup that has never been restored is a file, not a backup. So this module does two
+ * things the naive version does not: it verifies the copy by opening it and reading the
+ * schema, and restore takes a safety copy of the current database first, so a bad restore
+ * is recoverable rather than fatal.
+ */
+import fs from 'node:fs'
+import path from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
+
+export interface BackupResult {
+  ok: boolean
+  path: string | null
+  bytes: number
+  /** Tables found in the copy; empty means the copy is not a usable database. */
+  tables: string[]
+  error: string | null
+}
+
+export interface RestoreResult {
+  ok: boolean
+  /** Where the pre-restore copy was written, so a bad restore can be undone. */
+  safetyCopy: string | null
+  tables: string[]
+  error: string | null
+}
+
+const REQUIRED_TABLES = ['schema_version', 'tasks', 'projects']
+
+/** Copy the database and prove the copy is readable. */
+export function createBackup(dbPath: string, targetPath: string): BackupResult {
+  const result: BackupResult = { ok: false, path: null, bytes: 0, tables: [], error: null }
+  try {
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true })
+    // VACUUM INTO writes a consistent snapshot without stopping the writer, which a plain
+    // file copy cannot promise while WAL is active.
+    const source = new DatabaseSync(dbPath)
+    try {
+      source.exec(`VACUUM INTO '${targetPath.split("'").join("''")}'`)
+    } finally {
+      source.close()
+    }
+    result.bytes = fs.statSync(targetPath).size
+    result.tables = readTables(targetPath)
+    if (!REQUIRED_TABLES.every((name) => result.tables.includes(name))) {
+      result.error = 'the backup is missing required tables: ' + REQUIRED_TABLES.filter((n) => !result.tables.includes(n)).join(', ')
+      return result
+    }
+    result.ok = true
+    result.path = targetPath
+    return result
+  } catch (error) {
+    result.error = String((error as Error)?.message ?? error)
+    return result
+  }
+}
+
+/** Open a database file and list its tables; throws when it is not a database. */
+export function readTables(dbPath: string): string[] {
+  const db = new DatabaseSync(dbPath, { readOnly: true })
+  try {
+    const rows = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[]
+    return rows.map((row) => row.name)
+  } finally {
+    db.close()
+  }
+}
+
+/**
+ * Replace the live database with a backup.
+ *
+ * The current database is copied aside first. If the restore fails at any point, the caller
+ * still has both the original and the safety copy.
+ */
+export function restoreBackup(dbPath: string, backupPath: string, safetyPath: string): RestoreResult {
+  const result: RestoreResult = { ok: false, safetyCopy: null, tables: [], error: null }
+  try {
+    if (!fs.existsSync(backupPath)) {
+      result.error = 'backup file does not exist'
+      return result
+    }
+    const backupTables = readTables(backupPath)
+    if (!REQUIRED_TABLES.every((name) => backupTables.includes(name))) {
+      result.error = 'the backup is not a usable studio database'
+      return result
+    }
+
+    if (fs.existsSync(dbPath)) {
+      fs.mkdirSync(path.dirname(safetyPath), { recursive: true })
+      fs.copyFileSync(dbPath, safetyPath)
+      result.safetyCopy = safetyPath
+    }
+
+    // WAL side files belong to the old database; leaving them would mix two databases.
+    for (const suffix of ['-wal', '-shm']) {
+      const side = dbPath + suffix
+      if (fs.existsSync(side)) fs.rmSync(side, { force: true })
+    }
+    fs.copyFileSync(backupPath, dbPath)
+    result.tables = readTables(dbPath)
+    result.ok = true
+    return result
+  } catch (error) {
+    result.error = String((error as Error)?.message ?? error)
+    return result
+  }
+}

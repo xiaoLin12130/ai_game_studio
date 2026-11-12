@@ -105,8 +105,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "Await external PHASE 00 review. Then start PHASE 01 per phase_00_final.next_phase; do not open a new PHASE 00 remediation round.",
-  "updated_at": "2026-11-11T05:00:38.995Z",
+  "next_action": "PHASE 01-D 等待外部评审；PHASE 02 在评审通过后开始。",
+  "updated_at": "2026-11-12T08:29:15.380Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -893,5 +893,14 @@
       "model_probes_rerun": false,
       "retained_probe_evidence": "evidence/r14/summary.json at 2026-11-10T12:43:44.987Z, 6/6 PASS, exit 0"
     }
+  },
+  "phase_01_d": {
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "branch": "phase/01-d-project-workspace",
+    "base_commit": "fa453c96795e871dc3c612eced27043453b88136",
+    "state_file": "state/phase_01_d.json",
+    "report": "docs/review-handoff/PHASE_01_D_WORK_REPORT.md",
+    "evidence": "evidence/phase-01-d/",
+    "note": "PHASE 00 / 01-A / 01-B / 01-C 的关闭记录未改动。"
   }
 }

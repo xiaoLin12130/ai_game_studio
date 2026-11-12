@@ -17,6 +17,16 @@ const CHANNELS = {
   taskGet: 'studio:tasks:get',
   taskAct: 'studio:tasks:act',
   tasksChanged: 'studio:tasks:changed',
+  projectsList: 'studio:projects:list',
+  projectCreate: 'studio:projects:create',
+  projectOpen: 'studio:projects:open',
+  projectClose: 'studio:projects:close',
+  projectGet: 'studio:projects:get',
+  projectUpdateConfig: 'studio:projects:config',
+  rulesList: 'studio:rules:list',
+  rulesRead: 'studio:rules:read',
+  rulesState: 'studio:rules:state',
+  projectsChanged: 'studio:projects:changed',
 } as const
 
 const api = {
@@ -33,6 +43,22 @@ const api = {
     const listener = () => callback()
     ipcRenderer.on(CHANNELS.tasksChanged, listener)
     return () => ipcRenderer.removeListener(CHANNELS.tasksChanged, listener)
+  },
+  listProjects: () => ipcRenderer.invoke(CHANNELS.projectsList),
+  createProject: (input: { name: string; rootPath: string; engine: string; platform: string }) =>
+    ipcRenderer.invoke(CHANNELS.projectCreate, input),
+  openProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectOpen, id),
+  closeProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectClose, id),
+  getProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectGet, id),
+  updateProjectConfig: (id: string, settings: Record<string, unknown>) =>
+    ipcRenderer.invoke(CHANNELS.projectUpdateConfig, { id, settings }),
+  listRules: () => ipcRenderer.invoke(CHANNELS.rulesList),
+  readRule: (id: string) => ipcRenderer.invoke(CHANNELS.rulesRead, id),
+  getProjectState: () => ipcRenderer.invoke(CHANNELS.rulesState),
+  onProjectsChanged: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on(CHANNELS.projectsChanged, listener)
+    return () => ipcRenderer.removeListener(CHANNELS.projectsChanged, listener)
   },
   onState: (callback: (state: unknown) => void) => {
     const listener = (_event: unknown, state: unknown) => callback(state)

@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-11-12T08:26:22.062Z",
+  "checks": {
+    "createExitZero": true,
+    "createdProject": true,
+    "projectHasId": true,
+    "markerWritten": true,
+    "reopenExitZero": true,
+    "projectSurvivedRestart": true,
+    "sameProjectId": true,
+    "reopenedSuccessfully": true,
+    "eventsRecorded": true
+  },
+  "ok": true,
+  "created": {
+    "mode": "project-create",
+    "exitCode": 0,
+    "timedOut": false,
+    "smoke": {
+      "generatedAt": "2026-11-12T08:26:21.728Z",
+      "mode": "project-create",
+      "phase": "created",
+      "project": {
+        "id": "proj-588010a9",
+        "name": "冒烟项目",
+        "rootPath": "<abs-path>",
+        "engine": "cocos-creator-3.8.6",
+        "platform": "wechat-minigame",
+        "status": "ACTIVE",
+        "createdAt": "2026-11-12T08:26:21.722Z",
+        "updatedAt": "2026-11-12T08:26:21.726Z",
+        "lastOpenedAt": "2026-11-12T08:26:21.726Z",
+        "config": {
+          "projectId": "proj-588010a9",
+          "settings": {},
+          "updatedAt": "2026-11-12T08:26:21.722Z"
+        },
+        "events": [
+          {
+            "id": 2,
+            "projectId": "proj-588010a9",
+            "kind": "project.opened",
+            "summary": null,
+            "at": "2026-11-12T08:26:21.726Z"
+          },
+          {
+            "id": 1,
+            "projectId": "proj-588010a9",
+            "kind": "project.created",
+            "summary": "冒烟项目",
+            "at": "2026-11-12T08:26:21.722Z"
+          }
+        ],
+        "taskCount": 0
+      },
+      "openProject": "proj-588010a9"
+    }
+  },
+  "reopened": {
+    "mode": "project-reopen",
+    "exitCode": 0,
+    "timedOut": false,
+    "smoke": {
+      "generatedAt": "2026-11-12T08:26:21.993Z",
+      "mode": "project-reopen",
+      "phase": "reopened",
+      "count": 1,
+      "project": {
+        "id": "proj-588010a9",
+        "name": "冒烟项目",
+        "rootPath": "<abs-path>",
+        "engine": "cocos-creator-3.8.6",
+        "platform": "wechat-minigame",
+        "status": "ACTIVE",
+        "createdAt": "2026-11-12T08:26:21.722Z",
+        "updatedAt": "2026-11-12T08:26:21.986Z",
+        "lastOpenedAt": "2026-11-12T08:26:21.986Z",
+        "config": {
+          "projectId": "proj-588010a9",
+          "settings": {},
+          "updatedAt": "2026-11-12T08:26:21.722Z"
+        },
+        "events": [
+          {
+            "id": 3,
+            "projectId": "proj-588010a9",
+            "kind": "project.opened",
+            "summary": null,
+            "at": "2026-11-12T08:26:21.986Z"
+          },
+          {
+            "id": 2,
+            "projectId": "proj-588010a9",
+            "kind": "project.opened",
+            "summary": null,
+            "at": "2026-11-12T08:26:21.726Z"
+          },
+          {
+            "id": 1,
+            "projectId": "proj-588010a9",
+            "kind": "project.created",
+            "summary": "冒烟项目",
+            "at": "2026-11-12T08:26:21.722Z"
+          }
+        ],
+        "taskCount": 0
+      },
+      "openProject": "proj-588010a9"
+    }
+  }
+}

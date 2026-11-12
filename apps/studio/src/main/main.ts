@@ -13,6 +13,8 @@ import { configFilePath, loadConfig, saveConfig, type StudioConfig } from './con
 import { createLogger } from './logger'
 import { DshConnectionService, SHUTDOWN_BOUND_MS } from './dsh/service'
 import { TaskService } from './tasks/service'
+import { ProjectService } from './projects/service'
+import { RulesService } from './projects/rules'
 import { CHANNELS, registerIpc } from './ipc'
 import { createMainWindow } from './window'
 
@@ -28,6 +30,8 @@ if (process.env.STUDIO_USER_DATA) {
 let mainWindow: BrowserWindow | null = null
 let service: DshConnectionService | null = null
 let tasks: TaskService | null = null
+let projects: ProjectService | null = null
+let rules: RulesService | null = null
 let shutdownState: 'idle' | 'running' | 'done' = 'idle'
 
 function pushState(): void {
@@ -113,6 +117,43 @@ async function runSmoke(): Promise<void> {
     console.log('[smoke] quitting during probe, state=' + stateAtQuit.status)
     app.quit()
     return
+  }
+
+  // ---- project scenarios (PHASE 01-D) --------------------------------------------
+  if (SMOKE.startsWith('project-') && projects) {
+    const write = (payload: Record<string, unknown>) => {
+      fs.mkdirSync(SMOKE_OUT as string, { recursive: true })
+      fs.writeFileSync(path.join(SMOKE_OUT as string, 'smoke.json'), JSON.stringify({ generatedAt: new Date().toISOString(), mode: SMOKE, ...payload }, null, 2) + '\n')
+    }
+    try {
+      if (SMOKE === 'project-create') {
+        const rootDir = process.env.STUDIO_SMOKE_PROJECT_ROOT
+        if (!rootDir) throw new Error('STUDIO_SMOKE_PROJECT_ROOT is required')
+        const created = projects.create({ name: '冒烟项目', rootPath: rootDir, engine: 'cocos-creator-3.8.6', platform: 'wechat-minigame' })
+        projects.open(created.id)
+        write({ phase: 'created', project: projects.view(created.id), openProject: projects.openProject })
+        app.quit()
+        return
+      }
+      if (SMOKE === 'project-reopen') {
+        const list = projects.list()
+        if (list.length === 0) {
+          write({ phase: 'no-projects', count: 0 })
+          app.quit()
+          return
+        }
+        const target = list[0]
+        projects.open(target.id)
+        const view = projects.view(target.id)
+        write({ phase: 'reopened', count: list.length, project: view, openProject: projects.openProject })
+        app.quit()
+        return
+      }
+    } catch (error) {
+      write({ phase: 'error', error: String((error as Error)?.message ?? error) })
+      app.exit(1)
+      return
+    }
   }
 
   // ---- task lifecycle scenarios (PHASE 01-C) -------------------------------------
@@ -311,11 +352,22 @@ async function bootstrap(): Promise<void> {
     })
     .catch((error) => logger.error('task.recovery.failed', { error: String(error) }))
 
+  // Projects share the task database: a project owns tasks, and the foreign key is what
+  // makes that ownership real. The rules service reads through a fixed source list.
+  projects = new ProjectService({
+    db: tasks.store.db,
+    logger,
+    dataDir: path.join(userDataDir, 'project-data'),
+  })
+  rules = new RulesService({ repoRoot: app.getAppPath(), projectRoot: null })
+
   mainWindow = createMainWindow()
 
   registerIpc({
     service,
     tasks,
+    projects,
+    rules,
     logger,
     logDir,
     configPath: configFilePath(userDataDir),

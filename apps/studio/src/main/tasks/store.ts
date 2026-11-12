@@ -29,7 +29,7 @@ import type {
   VerificationRecord,
 } from './types'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 const MIGRATIONS: string[] = [
   // v1
@@ -129,6 +129,69 @@ const MIGRATIONS: string[] = [
   CREATE INDEX IF NOT EXISTS idx_events_task ON events(task_id, id);
 
   INSERT INTO schema_version (version) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM schema_version);
+  `,
+  // v2 — projects. Added in PHASE 01-D on top of the task tables, in the same database:
+  // a project owns tasks, and splitting them across two files would make the ownership
+  // unenforceable by the engine.
+  `
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    root_path TEXT NOT NULL,
+    engine TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('ACTIVE','ARCHIVED')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    last_opened_at TEXT
+  );
+  -- Two projects may not share a root: that is the isolation boundary.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_root ON projects(root_path);
+  CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status, updated_at DESC);
+
+  CREATE TABLE IF NOT EXISTS project_configs (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    settings TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS project_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    summary TEXT,
+    at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_project_events ON project_events(project_id, id);
+
+  CREATE TABLE IF NOT EXISTS approvals (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    subject TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('PENDING','APPROVED','REJECTED')),
+    requested_at TEXT NOT NULL,
+    decided_at TEXT,
+    decided_by TEXT,
+    note TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_approvals_project ON approvals(project_id, requested_at);
+
+  -- Tasks gain an owner. Nullable on purpose: tasks created before this migration have no
+  -- project, and deleting a project must not delete the history of what was attempted.
+  ALTER TABLE tasks ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE SET NULL;
+  CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id, updated_at DESC);
+
+  -- Project-level mutual exclusion. Rows, not files: a file that exists is not proof its
+  -- owner is alive, and treating it as proof is how a crash locks a project forever.
+  CREATE TABLE IF NOT EXISTS project_locks (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('write','build')),
+    owner_id TEXT NOT NULL,
+    owner_pid INTEGER NOT NULL,
+    acquired_at TEXT NOT NULL,
+    heartbeat_at TEXT NOT NULL,
+    PRIMARY KEY (project_id, kind)
+  );
   `,
 ]
 

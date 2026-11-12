@@ -135,6 +135,16 @@ interface StudioApi {
   getTask(id: string): Promise<TaskDetail | null>
   actOnTask(id: string, action: TaskAction): Promise<{ task: TaskSummary; runtimes: RuntimeSnapshot[] }>
   onTasksChanged(callback: () => void): () => void
+  listProjects(): Promise<ProjectSummary[]>
+  createProject(input: { name: string; rootPath: string; engine: string; platform: string }): Promise<ProjectSummary>
+  openProject(id: string): Promise<ProjectSummary>
+  closeProject(id: string): Promise<{ ok: boolean }>
+  getProject(id: string): Promise<ProjectDetail | null>
+  updateProjectConfig(id: string, settings: Record<string, unknown>): Promise<ProjectDetail | null>
+  listRules(): Promise<{ id: string; scope: string; title: string; description: string }[]>
+  readRule(id: string): Promise<Record<string, unknown>>
+  getProjectState(): Promise<{ phase: string | null; status: string | null; error: string | null }>
+  onProjectsChanged(callback: () => void): () => void
 }
 
 /** Merges into the DOM `Window` because this file is a script, not a module. */
@@ -1134,6 +1144,264 @@ async function main(): Promise<void> {
   }
 
   await initTasks()
+  await initProjects()
+}
+
+
+// ---------------------------------------------------------------------------
+// Navigation and projects (PHASE 01-D)
+// ---------------------------------------------------------------------------
+
+type ProjectSummary = {
+  id: string
+  name: string
+  rootPath: string
+  engine: string
+  platform: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  lastOpenedAt: string | null
+}
+
+type ProjectDetail = ProjectSummary & {
+  config: { settings: Record<string, unknown> } | null
+  events: { id: number; kind: string; summary: string | null; at: string }[]
+  taskCount: number
+}
+
+const ENGINE_LABEL: Record<string, string> = { 'cocos-creator-3.8.6': 'Cocos Creator 3.8.6' }
+const PLATFORM_LABEL: Record<string, string> = { 'wechat-minigame': '微信小游戏' }
+const EVENT_LABEL: Record<string, string> = {
+  'project.created': '创建项目',
+  'project.opened': '打开项目',
+  'project.closed': '关闭项目',
+  'project.config.updated': '更新配置',
+  'project.backup.created': '创建备份',
+  'project.backup.restored': '恢复备份',
+}
+
+let currentProjectId: string | null = null
+let selectedProjectId: string | null = null
+
+/** Switch the visible view. Only one is shown at a time. */
+function showView(view: string): void {
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('.nav-item'))) {
+    button.classList.toggle('is-active', button.dataset.view === view)
+  }
+  for (const section of Array.from(document.querySelectorAll<HTMLElement>('.view'))) {
+    section.hidden = section.dataset.view !== view
+  }
+}
+
+function projectRow(project: ProjectSummary, onSelect: () => void): HTMLLIElement {
+  const li = document.createElement('li')
+  li.className = 'project-row'
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'project-row-button'
+  button.addEventListener('click', onSelect)
+
+  const title = document.createElement('span')
+  title.className = 'project-row-title'
+  title.textContent = project.name
+  button.append(title)
+
+  const meta = document.createElement('span')
+  meta.className = 'project-row-meta'
+  meta.textContent = [ENGINE_LABEL[project.engine] ?? project.engine, PLATFORM_LABEL[project.platform] ?? project.platform].join(' · ')
+  button.append(meta)
+
+  const path = document.createElement('span')
+  path.className = 'project-row-path'
+  path.textContent = project.rootPath
+  button.append(path)
+
+  if (currentProjectId === project.id) {
+    const badge = document.createElement('span')
+    badge.className = 'project-row-badge'
+    badge.textContent = '当前项目'
+    button.append(badge)
+  }
+  li.append(button)
+  return li
+}
+
+async function refreshProjects(): Promise<void> {
+  const list = (await window.studio.listProjects()) as ProjectSummary[]
+  const workbenchList = byId('workbench-projects')
+  const projectsList = byId('projects-list')
+  workbenchList.replaceChildren()
+  projectsList.replaceChildren()
+
+  const empty = byId('workbench-empty')
+  empty.hidden = list.length > 0
+  setText('workbench-headline', list.length === 0 ? '还没有项目。' : `共 ${list.length} 个项目。`)
+
+  for (const project of list) {
+    workbenchList.append(projectRow(project, () => { void selectProject(project.id) }))
+    projectsList.append(projectRow(project, () => { void selectProject(project.id) }))
+  }
+
+  const current = byId('workbench-current')
+  if (currentProjectId) {
+    const project = list.find((entry) => entry.id === currentProjectId)
+    current.hidden = false
+    current.textContent = project ? `当前项目：${project.name}` : '当前项目已不可用。'
+  } else {
+    current.hidden = true
+  }
+}
+
+async function selectProject(id: string): Promise<void> {
+  selectedProjectId = id
+  const detail = (await window.studio.getProject(id)) as ProjectDetail | null
+  const card = byId('project-detail-card')
+  if (!detail) {
+    card.hidden = true
+    return
+  }
+  card.hidden = false
+  setText('project-detail-title', detail.name)
+
+  const facts = byId('project-detail-facts')
+  facts.replaceChildren()
+  const rows: [string, string][] = [
+    ['引擎', ENGINE_LABEL[detail.engine] ?? detail.engine],
+    ['目标平台', PLATFORM_LABEL[detail.platform] ?? detail.platform],
+    ['项目目录', detail.rootPath],
+    ['关联任务', String(detail.taskCount)],
+    ['创建时间', formatWhen(detail.createdAt)],
+    ['最近打开', detail.lastOpenedAt ? formatWhen(detail.lastOpenedAt) : '从未打开'],
+  ]
+  for (const [label, value] of rows) {
+    const wrap = document.createElement('div')
+    wrap.className = 'fact'
+    const dt = document.createElement('dt')
+    dt.textContent = label
+    const dd = document.createElement('dd')
+    dd.textContent = value
+    wrap.append(dt, dd)
+    facts.append(wrap)
+  }
+
+  const actions = byId('project-detail-actions')
+  actions.replaceChildren()
+  const openButton = document.createElement('button')
+  openButton.type = 'button'
+  openButton.className = 'button button-small'
+  openButton.textContent = currentProjectId === detail.id ? '已打开' : '打开项目'
+  openButton.disabled = currentProjectId === detail.id
+  openButton.addEventListener('click', () => { void runProjectAction('open', detail.id) })
+  actions.append(openButton)
+
+  const closeButton = document.createElement('button')
+  closeButton.type = 'button'
+  closeButton.className = 'button button-ghost button-small'
+  closeButton.textContent = '关闭项目'
+  closeButton.disabled = currentProjectId !== detail.id
+  closeButton.addEventListener('click', () => { void runProjectAction('close', detail.id) })
+  actions.append(closeButton)
+
+  const events = byId('project-detail-events')
+  events.replaceChildren()
+  if (detail.events.length === 0) {
+    const li = document.createElement('li')
+    li.className = 'event-empty'
+    li.textContent = '还没有活动记录。'
+    events.append(li)
+  }
+  for (const event of detail.events) {
+    const li = document.createElement('li')
+    li.className = 'event-row'
+    const label = document.createElement('span')
+    label.className = 'event-label'
+    label.textContent = EVENT_LABEL[event.kind] ?? event.kind
+    const when = document.createElement('span')
+    when.className = 'event-when'
+    when.textContent = formatWhen(event.at)
+    li.append(label, when)
+    events.append(li)
+  }
+}
+
+function formatWhen(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
+
+async function runProjectAction(action: 'open' | 'close', id: string): Promise<void> {
+  const alert = byId('project-detail-alert')
+  alert.hidden = true
+  try {
+    if (action === 'open') {
+      await window.studio.openProject(id)
+      currentProjectId = id
+    } else {
+      await window.studio.closeProject(id)
+      currentProjectId = null
+    }
+    await refreshProjects()
+    await selectProject(id)
+  } catch (error) {
+    alert.hidden = false
+    alert.textContent = '操作失败：' + describeError(error)
+  }
+}
+
+async function submitProjectForm(event: Event): Promise<void> {
+  event.preventDefault()
+  const errorBox = byId('project-form-error')
+  errorBox.hidden = true
+
+  const name = (byId('project-name') as HTMLInputElement).value.trim()
+  const rootPath = (byId('project-root') as HTMLInputElement).value.trim()
+  const engine = (byId('project-engine') as HTMLSelectElement).value
+  const platform = (byId('project-platform') as HTMLSelectElement).value
+
+  if (name.length === 0) {
+    errorBox.hidden = false
+    errorBox.textContent = '请填写项目名称。'
+    return
+  }
+  if (rootPath.length === 0) {
+    errorBox.hidden = false
+    errorBox.textContent = '请填写项目目录。'
+    return
+  }
+
+  const button = byId('project-create') as HTMLButtonElement
+  button.disabled = true
+  button.textContent = '创建中…'
+  try {
+    const created = (await window.studio.createProject({ name, rootPath, engine, platform })) as ProjectSummary
+    ;(byId('project-name') as HTMLInputElement).value = ''
+    ;(byId('project-root') as HTMLInputElement).value = ''
+    await refreshProjects()
+    await selectProject(created.id)
+  } catch (error) {
+    errorBox.hidden = false
+    errorBox.textContent = describeError(error)
+  } finally {
+    button.disabled = false
+    button.textContent = '创建项目'
+  }
+}
+
+async function initProjects(): Promise<void> {
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('.nav-item'))) {
+    button.addEventListener('click', () => showView(button.dataset.view ?? 'workbench'))
+  }
+  byId('project-form').addEventListener('submit', (event) => { void submitProjectForm(event) })
+  byId('workbench-refresh').addEventListener('click', () => { void refreshProjects() })
+  byId('projects-refresh').addEventListener('click', () => { void refreshProjects() })
+  byId('workbench-create').addEventListener('click', () => {
+    showView('projects')
+    ;(byId('project-name') as HTMLInputElement).focus()
+  })
+  window.studio.onProjectsChanged(() => { void refreshProjects() })
+  await refreshProjects()
 }
 
 void main()

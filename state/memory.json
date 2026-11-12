@@ -79,5 +79,11 @@
     "Do not re-run the six real model probes for a change that touches only state, docs or gate orchestration; label the retained evidence as such instead of claiming a new test.",
     "Do not invent a DSH/HY4 compatibility result, require a paid API key, or use WorkBuddy private interfaces as a product dependency.",
     "Do not open another PHASE 00 remediation round after this finalisation; the remaining items belong to PHASE 01 or to a user decision."
-  ]
+  ],
+  "phase_01_d": {
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "summary": "项目空间与基础设施：项目 CRUD、v2 迁移、路径安全、写锁/构建锁、备份恢复、五个一级入口。",
+    "evidence": "evidence/phase-01-d/"
+  },
+  "updated_at": "2026-11-12T08:29:51.562Z"
 }
