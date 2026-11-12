@@ -202,6 +202,8 @@ export interface CreateTaskInput {
   type: string
   isolation: TaskIsolation
   acceptance: AcceptanceSpec
+  /** Optional: tasks created before PHASE 01-D have no project. */
+  projectId?: string | null
   now?: string
 }
 
@@ -219,7 +221,8 @@ export interface TransitionInput {
 const iso = (value?: string) => value ?? new Date().toISOString()
 
 export class TaskStore {
-  readonly db: DatabaseSync
+  /** The live connection. Replaced by adopt() after a restore swaps the file. */
+  db: DatabaseSync
   readonly #dbPath: string
 
   constructor(dbPath: string) {
@@ -262,6 +265,22 @@ export class TaskStore {
     return Number(row?.version ?? 0)
   }
 
+  /**
+   * Point this store at a new connection.
+   *
+   * Used after a restore: the old connection refers to a file that was replaced, so every
+   * prepared statement on it is stale. Swapping the handle keeps one store object for the
+   * whole app instead of threading a new one through every caller.
+   */
+  adopt(db: DatabaseSync): void {
+    try {
+      this.db.close()
+    } catch {
+      /* already closed */
+    }
+    this.db = db
+  }
+
   close(): void {
     try {
       this.db.close()
@@ -289,10 +308,10 @@ export class TaskStore {
     return this.#transaction(() => {
       this.db
         .prepare(
-          `INSERT INTO tasks (id, title, goal, type, isolation, status, created_at, updated_at, current_attempt_id, acceptance, last_error_code, last_error_message)
-           VALUES (?, ?, ?, ?, ?, 'CREATED', ?, ?, NULL, ?, NULL, NULL)`,
+          `INSERT INTO tasks (id, title, goal, type, isolation, status, created_at, updated_at, current_attempt_id, acceptance, last_error_code, last_error_message, project_id)
+           VALUES (?, ?, ?, ?, ?, 'CREATED', ?, ?, NULL, ?, NULL, NULL, ?)`,
         )
-        .run(input.id, input.title, input.goal, input.type, input.isolation, now, now, JSON.stringify(input.acceptance))
+        .run(input.id, input.title, input.goal, input.type, input.isolation, now, now, JSON.stringify(input.acceptance), input.projectId ?? null)
       this.db
         .prepare(
           `INSERT INTO task_transitions (task_id, from_status, to_status, reason, source, at, session_id, attempt_id, error_code)
@@ -319,6 +338,7 @@ export class TaskStore {
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at),
       currentAttemptId: row.current_attempt_id ? String(row.current_attempt_id) : null,
+      projectId: row.project_id ? String(row.project_id) : null,
       acceptance: JSON.parse(String(row.acceptance)) as AcceptanceSpec,
       lastErrorCode: row.last_error_code ? String(row.last_error_code) : null,
       lastErrorMessage: row.last_error_message ? String(row.last_error_message) : null,

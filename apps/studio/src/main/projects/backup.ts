@@ -93,12 +93,50 @@ export function restoreBackup(dbPath: string, backupPath: string, safetyPath: st
       result.safetyCopy = safetyPath
     }
 
-    // WAL side files belong to the old database; leaving them would mix two databases.
-    for (const suffix of ['-wal', '-shm']) {
-      const side = dbPath + suffix
-      if (fs.existsSync(side)) fs.rmSync(side, { force: true })
+    // Replacing the file directly is not reliable under WAL: the -wal and -shm handles can
+    // outlive close() on Windows, and a stale journal beside a replaced database would
+    // replay old frames into it. Instead the backup is written into the live file through
+    // SQLite itself, which keeps the journal consistent and needs no file surgery.
+    const source = new DatabaseSync(backupPath, { readOnly: true })
+    try {
+      const tables = source.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[]
+      if (tables.length === 0) {
+        result.error = 'the backup contains no tables'
+        return result
+      }
+      const target = new DatabaseSync(dbPath)
+      try {
+        // Copy every table's rows into the live database inside one transaction: either the
+        // whole backup lands or the current data stays exactly as it was.
+        target.exec('PRAGMA foreign_keys = OFF;')
+        target.exec('BEGIN IMMEDIATE')
+        try {
+          for (const table of tables) {
+            if (table.name.startsWith('sqlite_')) continue
+            target.exec('DELETE FROM "' + table.name + '";')
+            const rows = source.prepare('SELECT * FROM "' + table.name + '"').all() as Record<string, unknown>[]
+            if (rows.length === 0) continue
+            const columns = Object.keys(rows[0])
+            const placeholders = columns.map(() => '?').join(', ')
+            const insert = target.prepare('INSERT INTO "' + table.name + '" (' + columns.map((c) => '"' + c + '"').join(', ') + ') VALUES (' + placeholders + ')')
+            for (const row of rows) insert.run(...columns.map((c) => row[c] as never))
+          }
+          target.exec('COMMIT')
+        } catch (error) {
+          target.exec('ROLLBACK')
+          throw error
+        } finally {
+          target.exec('PRAGMA foreign_keys = ON;')
+        }
+      } finally {
+        target.close()
+      }
+    } finally {
+      source.close()
     }
-    fs.copyFileSync(backupPath, dbPath)
+    result.tables = readTables(dbPath)
+    result.ok = true
+    return result
     result.tables = readTables(dbPath)
     result.ok = true
     return result

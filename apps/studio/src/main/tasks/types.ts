@@ -40,6 +40,11 @@ export interface TaskRecord {
   createdAt: string
   updatedAt: string
   currentAttemptId: string | null
+  /**
+   * The project this task belongs to, or null for tasks created before projects existed.
+   * A task with no project keeps the PHASE 01-C behaviour exactly: no project lock.
+   */
+  projectId: string | null
   /** Structured acceptance rules this task must satisfy (JSON). */
   acceptance: AcceptanceSpec
   lastErrorCode: string | null

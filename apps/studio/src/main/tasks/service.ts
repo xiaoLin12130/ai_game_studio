@@ -13,6 +13,7 @@ import { spawnSync } from 'node:child_process'
 import { bundledDsh, type DshEntry } from '../dsh/locate'
 import { EventEmitter } from 'node:events'
 import { RuntimeSupervisor } from '../runtime/supervisor'
+import type { ProjectLocks } from '../projects/locks'
 import { resolveDshEntry } from '../dsh/locate'
 import { TaskRunner } from './runner'
 import { TaskStore } from './store'
@@ -38,6 +39,12 @@ export interface TaskServiceOptions {
   /** Test seams. */
   store?: TaskStore
   supervisor?: RuntimeSupervisor
+  /** Project lookup, so a task cannot be attached to a project that does not exist. */
+  projectExists?: (projectId: string) => boolean
+  /** Project locks; when present, writable project tasks take the write lock. */
+  projectLocks?: ProjectLocks
+  /** How long one attempt may run; tests set this short. */
+  runTimeoutMs?: number
 }
 
 export interface CreateTaskRequest {
@@ -46,6 +53,8 @@ export interface CreateTaskRequest {
   type?: string
   isolation?: TaskIsolation
   acceptance?: Partial<AcceptanceSpec>
+  /** Optional project this task belongs to; validated against the project table. */
+  projectId?: string | null
 }
 
 export interface TaskSummary extends TaskRecord {
@@ -106,6 +115,8 @@ export class TaskService extends EventEmitter {
       supervisor: this.supervisor,
       logger: options.logger,
       recordsDir: path.join(options.userDataDir, 'records'),
+      projectLocks: options.projectLocks,
+      runTimeoutMs: options.runTimeoutMs,
     })
     this.supervisor.on('task:changed', () => this.emit('changed'))
   }
@@ -175,6 +186,13 @@ export class TaskService extends EventEmitter {
   create(request: CreateTaskRequest): TaskSummary {
     const id = 'task-' + crypto.randomUUID().slice(0, 8)
     const acceptance: AcceptanceSpec = { ...DEFAULT_ACCEPTANCE, ...(request.acceptance ?? {}) }
+    const projectId = request.projectId ?? null
+    if (projectId !== null) {
+      // A task attached to a project that does not exist would be unreachable from the
+      // project view and would take a lock on a row that is not there.
+      const exists = this.#options.projectExists ? this.#options.projectExists(projectId) : true
+      if (!exists) throw new Error('unknown project: ' + projectId)
+    }
     this.store.createTask({
       id,
       title: request.title.trim(),
@@ -182,8 +200,9 @@ export class TaskService extends EventEmitter {
       type: request.type ?? 'analysis',
       isolation: request.isolation ?? 'writable',
       acceptance,
+      projectId,
     })
-    this.#logger.info('task.create', { taskId: id, isolation: request.isolation ?? 'writable' })
+    this.#logger.info('task.create', { taskId: id, isolation: request.isolation ?? 'writable', projectId })
     this.emit('changed')
     return this.#summary(this.store.getTask(id) as TaskRecord)
   }
@@ -256,7 +275,15 @@ export class TaskService extends EventEmitter {
   async dispose(reason: string): Promise<{ closed: string[]; failed: string[]; ok: boolean }> {
     if (this.#disposed) return { closed: [], failed: [], ok: true }
     this.#disposed = true
+    // Order matters and each step exists for a reason:
+    //   1. stop the runtimes, which makes every in-flight run fail fast;
+    //   2. wait for those runs to finish unwinding, because they still write to the
+    //      database (attempt rows, transitions) and closing it underneath them throws;
+    //   3. release the locks, since a task that was still unwinding could have re-taken one;
+    //   4. close the database.
     const summary = await this.supervisor.shutdownAll(reason)
+    await this.runner.waitForIdle(10000)
+    this.runner.releaseAllProjectLocks()
     const ok = summary.failed.length === 0
     if (ok) {
       this.#logger.info('task.service.dispose', { reason, ...summary })

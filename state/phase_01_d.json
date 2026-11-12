@@ -162,5 +162,31 @@
     "安装包重建与安装后项目链路",
     "npm audit / 静态吊销检查"
   ],
-  "updated_at": "2026-11-12T08:29:15.379Z"
+  "updated_at": "2026-11-12T09:28:40.139Z",
+  "remediation": {
+    "round": "R1",
+    "base_commit": "bacd0eb0587d3d288b928209c383b6204b21c8d6",
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "findings": {
+      "P1-PATH": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-01-d-remediation/integration/resolve-path.txt"
+      },
+      "P1-LOCK": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-01-d-remediation/integration/task-project-lock.txt"
+      },
+      "P1-BACKUP": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-01-d-remediation/integration/backup-app.txt"
+      }
+    },
+    "defects_found_during_fix": [
+      "dispose 先释放锁再停 Runtime，收尾中的任务会重新取锁",
+      "waitForIdle 只等 #active，而该映射在最终写库前已删除，导致关库时仍有写入",
+      "resolveProjectPath 空路径解析成项目根目录本身，被包含检查放过"
+    ],
+    "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_REPORT.md",
+    "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_AUDIT.md"
+  }
 }

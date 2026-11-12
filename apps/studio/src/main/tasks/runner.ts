@@ -12,6 +12,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { RuntimeLease, RuntimeSupervisor } from '../runtime/supervisor'
+import type { ProjectLocks } from '../projects/locks'
 import { statusForAction } from './machine'
 import type { TaskStore } from './store'
 import type { AttemptRecord, TaskRecord, TaskStatus, TransitionSource } from './types'
@@ -26,6 +27,12 @@ export interface RunnerOptions {
   store: TaskStore
   supervisor: RuntimeSupervisor
   logger: RunnerLogger
+  /**
+   * Project write lock. Optional so the PHASE 01-C tests keep working unchanged; when a
+   * task has a project and this is present, a writable task must hold the lock for its
+   * whole execution.
+   */
+  projectLocks?: ProjectLocks
   /** Where full event streams are written (relative to here is recorded in the db). */
   recordsDir: string
   /** Prompt text applied to the task goal. */
@@ -54,7 +61,18 @@ export class TaskRunner {
   readonly #buildPrompt: (task: TaskRecord, attempt: AttemptRecord) => string
   readonly #runTimeoutMs: number
   readonly #waitForIdle?: RunnerOptions['waitForIdle']
+  readonly #projectLocks?: ProjectLocks
   readonly #active = new Map<string, ActiveRun>()
+  /** Which project lock each running task holds, so release is exact. */
+  readonly #heldLocks = new Map<string, { projectId: string; ownerId: string }>()
+  /**
+   * Every execution still in flight.
+   *
+   * #active is removed before the final database writes, so waiting on it alone lets
+   * shutdown close the database while a run is still recording its outcome. These promises
+   * settle only when the whole execution — including those writes — is done.
+   */
+  readonly #inflight = new Set<Promise<void>>()
 
   constructor(options: RunnerOptions) {
     this.#store = options.store
@@ -64,6 +82,7 @@ export class TaskRunner {
     this.#buildPrompt = options.buildPrompt ?? DEFAULT_PROMPT
     this.#runTimeoutMs = options.runTimeoutMs ?? 600000
     this.#waitForIdle = options.waitForIdle
+    this.#projectLocks = options.projectLocks
     fs.mkdirSync(this.#recordsDir, { recursive: true })
     this.#supervisor.on('runtime:exited', (event: { runtimeId: string; reason: string; error: string | null; taskIds: string[] }) => {
       void this.#onRuntimeExited(event)
@@ -87,7 +106,7 @@ export class TaskRunner {
     this.#move(taskId, next, { reason: 'user started the task', source: 'user' })
     // Execute without blocking the caller: the IPC call returns the QUEUED state and the
     // UI follows transitions through state events.
-    void this.#execute(taskId, 'new').catch((error) => this.#fail(taskId, 'INTERNAL', String(error?.message ?? error)))
+    this.#launch(taskId, 'new', (error) => this.#fail(taskId, 'INTERNAL', String(error?.message ?? error)))
     return this.#require(taskId)
   }
 
@@ -96,7 +115,7 @@ export class TaskRunner {
     const next = statusForAction(task.status, 'retry')
     if (!next) throw new Error('task ' + taskId + ' cannot retry from ' + task.status)
     this.#move(taskId, next, { reason: 'user retried the task', source: 'user', attemptId: task.currentAttemptId ?? undefined })
-    void this.#execute(taskId, 'new').catch((error) => this.#fail(taskId, 'INTERNAL', String(error?.message ?? error)))
+    this.#launch(taskId, 'new', (error) => this.#fail(taskId, 'INTERNAL', String(error?.message ?? error)))
     return this.#require(taskId)
   }
 
@@ -105,7 +124,7 @@ export class TaskRunner {
     const next = statusForAction(task.status, 'resume')
     if (!next) throw new Error('task ' + taskId + ' cannot resume from ' + task.status)
     this.#move(taskId, next, { reason: 'user resumed the task', source: 'user' })
-    void this.#execute(taskId, 'resume').catch((error) => this.#fail(taskId, 'RESUME_FAILED', String(error?.message ?? error)))
+    this.#launch(taskId, 'resume', (error) => this.#fail(taskId, 'RESUME_FAILED', String(error?.message ?? error)))
     return this.#require(taskId)
   }
 
@@ -144,8 +163,23 @@ export class TaskRunner {
       this.#move(taskId, 'PREPARING', { reason: 'preparing to run', source: 'scheduler' })
     }
 
+    // The project lock is taken before the runtime: a second writer must be refused before
+    // a runtime is spawned, not after. Read-only tasks never take it, so they can run in
+    // parallel within one project.
+    const lock = this.#acquireProjectLock(task)
+    if (!lock.ok) {
+      this.#fail(taskId, 'PROJECT_LOCKED', lock.reason)
+      return
+    }
+
     const isolation = task.isolation
-    const lease = await this.#supervisor.acquire({ taskId, isolation, label: task.title })
+    let lease: RuntimeLease
+    try {
+      lease = await this.#supervisor.acquire({ taskId, isolation, label: task.title })
+    } catch (error) {
+      this.#releaseProjectLock(taskId)
+      throw error
+    }
 
     let sessionId: string
     let attempt: AttemptRecord
@@ -225,11 +259,13 @@ export class TaskRunner {
         this.#move(taskId, 'INTERRUPTED', { reason: 'stop requested', source: 'runtime', sessionId, attemptId: attempt.id })
         this.#store.upsertSession({ id: sessionId, taskId, attemptId: attempt.id, state: 'INTERRUPTED' })
         await lease.release('interrupted')
+        this.#releaseProjectLock(taskId)
         return
       }
       if (observed.error) {
         this.#fail(taskId, 'RUN_FAILED', observed.error)
         await lease.release('run-failed')
+        this.#releaseProjectLock(taskId)
         return
       }
 
@@ -244,6 +280,7 @@ export class TaskRunner {
         this.#fail(taskId, verdict.code ?? 'ACCEPTANCE_FAILED', verdict.detail ?? 'acceptance failed', { sessionId, attemptId: attempt.id })
       }
       await lease.release(verdict.ok ? 'completed' : 'acceptance-failed')
+      this.#releaseProjectLock(taskId)
     } catch (error) {
       try {
         recordStream.close()
@@ -254,7 +291,73 @@ export class TaskRunner {
       this.#store.endAttempt({ attemptId: attempt.id, status: 'FAILED', errorCode: 'RUN_ERROR', errorMessage: String((error as Error)?.message ?? error), recordPath: path.relative(this.#recordsDir, recordPath) })
       this.#fail(taskId, 'RUN_ERROR', String((error as Error)?.message ?? error))
       await lease.release('run-error')
+      this.#releaseProjectLock(taskId)
     }
+  }
+
+  /**
+   * Take the project write lock for a writable task that belongs to a project.
+   *
+   * Read-only tasks skip it entirely: they cannot change project files, so serialising them
+   * would only make the app slower. A task with no project keeps the PHASE 01-C behaviour.
+   */
+  #acquireProjectLock(task: TaskRecord): { ok: true } | { ok: false; reason: string } {
+    if (!this.#projectLocks || !task.projectId || task.isolation !== 'writable') return { ok: true }
+    try {
+      this.#projectLocks.acquireWrite(task.projectId, task.id)
+      this.#heldLocks.set(task.id, { projectId: task.projectId, ownerId: task.id })
+      this.#logger.info('task.project-lock.acquired', { taskId: task.id, projectId: task.projectId })
+      return { ok: true }
+    } catch (error) {
+      const message = String((error as Error)?.message ?? error)
+      this.#logger.warn('task.project-lock.refused', { taskId: task.id, projectId: task.projectId, error: message })
+      return { ok: false, reason: message }
+    }
+  }
+
+  /** Release the project lock this task holds, if any. Safe to call more than once. */
+  #releaseProjectLock(taskId: string): void {
+    const held = this.#heldLocks.get(taskId)
+    if (!held || !this.#projectLocks) return
+    this.#heldLocks.delete(taskId)
+    try {
+      this.#projectLocks.release(held.projectId, 'write', held.ownerId)
+      this.#logger.info('task.project-lock.released', { taskId, projectId: held.projectId })
+    } catch (error) {
+      this.#logger.error('task.project-lock.release-failed', { taskId, error: String((error as Error)?.message ?? error) })
+    }
+  }
+
+  /**
+   * Wait until no task is executing.
+   *
+   * Shutdown needs this: a run that is still unwinding writes attempt rows and transitions,
+   * and closing the database underneath it turns a clean exit into a stream of errors.
+   */
+  async waitForIdle(timeoutMs = 10000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs
+    while (this.#inflight.size > 0 && Date.now() < deadline) {
+      await Promise.race([
+        Promise.allSettled([...this.#inflight]),
+        new Promise((resolve) => setTimeout(resolve, 25)),
+      ])
+    }
+    return this.#inflight.size === 0
+  }
+
+  /** Run an execution and keep it visible to waitForIdle until it fully settles. */
+  #launch(taskId: string, mode: 'new' | 'resume', onError: (error: Error) => void): void {
+    const run = this.#execute(taskId, mode)
+      .catch((error: unknown) => onError(error instanceof Error ? error : new Error(String(error))))
+      .finally(() => {
+        this.#inflight.delete(run)
+      })
+    this.#inflight.add(run)
+  }
+
+  /** Release every project lock this runner holds; used on shutdown. */
+  releaseAllProjectLocks(): void {
+    for (const taskId of [...this.#heldLocks.keys()]) this.#releaseProjectLock(taskId)
   }
 
   /** Open the notification stream for one session, before its prompt is queued. */

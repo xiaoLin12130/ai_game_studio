@@ -1,0 +1,44 @@
+✔ shutdown with no probe in flight completes immediately (1.5487ms)
+✔ quitting during the handshake reaps the runtime (real runtime) (2549.4629ms)
+✔ repeated quit requests join one shutdown and one close (2496.4032ms)
+✔ a probe requested after shutdown is refused and spawns nothing (0.568ms)
+✔ stop() is idempotent and reports the same teardown twice (real runtime) (2537.2302ms)
+✔ close ok + OS ABSENT → completed (97.2296ms)
+✔ close ok + OS PRESENT → fallback reclaims, but the clean path still failed (92.4341ms)
+✔ close ok + OS fails to answer → not completed (93.4359ms)
+✔ close throws + OS ABSENT → close success is not faked (92.9357ms)
+✔ close throws + OS PRESENT → fallback reclaims, clean path still failed (95.1757ms)
+✔ forced termination fails → residual PID kept, nothing claims success (82.1626ms)
+✔ identity capture failure is unknown, not success (88.9973ms)
+✔ a recycled PID is treated as ours being gone, not as a process to kill (91.8396ms)
+✔ close never resolves → shutdown is bounded by its own budget (406.8193ms)
+✔ a stop before the handshake answers still closes the runtime (93.1914ms)
+✔ the legal edges are exactly the ones we intend (0.705ms)
+✔ terminal states never move again (0.5112ms)
+✔ an illegal transition throws, and says which one (0.4593ms)
+✔ the UI action list is derived from the same table, so they cannot drift (0.4244ms)
+✔ actions map to the states a user would expect (0.1708ms)
+✔ a run that ends with evidence reaches SUCCEEDED through VERIFYING (100.5922ms)
+✔ a run with no evidence is not success, whatever the model says (101.2776ms)
+✔ stop moves through INTERRUPTING to INTERRUPTED and releases the runtime (67.9929ms)
+✔ a second stop is a no-op rather than a second close (82.0857ms)
+✔ resume reuses the persisted session and records a new attempt (91.7517ms)
+✔ a failed resume is reported, never hidden behind a new session (97.8501ms)
+✔ a runtime that dies moves the task out of RUNNING (47.7045ms)
+✔ startup recovery marks unfinished tasks INTERRUPTED, not failed (29.8879ms)
+✔ the schema is created at the expected version (41.8868ms)
+✔ a task starts in CREATED and can move on (35.3094ms)
+✔ an illegal move is refused and nothing is written (38.3538ms)
+✔ attempt numbers are unique per task (37.5478ms)
+✔ an attempt, its session and the task stay linked (45.9115ms)
+✔ state survives reopening the database (37.5539ms)
+✔ unfinished tasks are the ones a restart has to reconcile (62.7674ms)
+✔ verification results are recorded in order (49.6264ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30508.1846

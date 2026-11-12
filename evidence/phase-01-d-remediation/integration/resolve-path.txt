@@ -1,0 +1,16 @@
+✔ a normal relative path resolves inside the project (31.9168ms)
+✔ a single .. escape is refused (25.1503ms)
+✔ a multi-level ../../ escape is refused (24.0526ms)
+✔ an absolute path outside the project is refused (27.905ms)
+✔ an unknown project is refused (24.0297ms)
+✔ an empty path is refused (27.9423ms)
+✔ a junction pointing outside the project is refused (48.5588ms)
+✔ a path that does not exist yet is still checked (29.2448ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 321.0702

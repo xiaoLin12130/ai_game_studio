@@ -1,0 +1,20 @@
+{
+  "scenario": "ready",
+  "ok": true,
+  "checks": {
+    "exitCodeZero": true,
+    "producedSmokeJson": true,
+    "noLingeringRuntime": true,
+    "windowVisible": true,
+    "singleWindow": true,
+    "rendererLoaded": true,
+    "screenshotWritten": true,
+    "expectedStatus": true,
+    "domMatchesState": true,
+    "pillRendered": true,
+    "handshakeIdentity": true,
+    "exitCodeObservedInUi": true
+  },
+  "wallMs": 3407,
+  "exitCode": 0
+}

@@ -14,6 +14,8 @@ import { createLogger } from './logger'
 import { DshConnectionService, SHUTDOWN_BOUND_MS } from './dsh/service'
 import { TaskService } from './tasks/service'
 import { ProjectService } from './projects/service'
+import { ProjectStore } from './projects/store'
+import { TaskStore } from './tasks/store'
 import { RulesService } from './projects/rules'
 import { CHANNELS, registerIpc } from './ipc'
 import { createMainWindow } from './window'
@@ -354,10 +356,34 @@ async function bootstrap(): Promise<void> {
 
   // Projects share the task database: a project owns tasks, and the foreign key is what
   // makes that ownership real. The rules service reads through a fixed source list.
+  const dbPath = path.join(userDataDir, 'studio.db')
   projects = new ProjectService({
     db: tasks.store.db,
     logger,
     dataDir: path.join(userDataDir, 'project-data'),
+    dbPath,
+    // A restore replaces the database file, so the connection has to be closed first and
+    // reopened after. The owner of the connection supplies that, and verification reads
+    // back through the normal store rather than trusting the copy.
+    closeDatabase: () => {
+      tasks!.store.close()
+    },
+    reopenDatabase: () => {
+      const reopened = new TaskStore(dbPath)
+      tasks!.store.adopt(reopened.db)
+      return {
+        db: reopened.db,
+        verify: () => {
+          try {
+            const projects = new ProjectStore({ db: reopened.db })
+            return projects.list().length >= 0 && reopened.schemaVersion >= 1
+          } catch {
+            return false
+          }
+        },
+      }
+    },
+    hasActiveWork: () => (tasks ? tasks.runner.activeTasks.length > 0 : false),
   })
   rules = new RulesService({ repoRoot: app.getAppPath(), projectRoot: null })
 

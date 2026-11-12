@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2026-11-12T09:28:17.164Z",
+  "phase": "PHASE_01_D_REMEDIATION",
+  "branch": "phase/01-d-project-workspace",
+  "baseCommit": "bacd0eb0587d3d288b928209c383b6204b21c8d6",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 205,
+        "pass": 205,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation/unit/full-suite.txt"
+    },
+    {
+      "name": "resolve-path-integration",
+      "command": "node --test test/project-resolve-path.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation/integration/resolve-path.txt",
+      "note": "直接调用 ProjectService.resolveProjectPath"
+    },
+    {
+      "name": "task-project-lock-integration",
+      "command": "node --test test/task-project-lock.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation/integration/task-project-lock.txt",
+      "note": "经 TaskService/TaskRunner 真实调用链"
+    },
+    {
+      "name": "backup-app-integration",
+      "command": "node --test test/project-backup-app.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation/integration/backup-app.txt",
+      "note": "连接保持打开时的在线备份与恢复"
+    },
+    {
+      "name": "phase01c-lifecycle-regression",
+      "command": "node --test test/task-machine.test.js test/task-runner.test.js test/task-store.test.js test/lifecycle.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 36,
+        "pass": 36,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-01-d-remediation/regression/phase01c-lifecycle.txt"
+    },
+    {
+      "name": "phase01a-smoke-ready",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "desktop-project-smoke",
+      "command": "node scripts/smoke-projects.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation/regression/desktop-projects.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-01-d-remediation/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏"
+    }
+  ],
+  "findings": {
+    "P1-PATH": {
+      "status": "FIXED",
+      "what": "ProjectService.resolveProjectPath 直接 path.resolve()，无包含校验；空路径还会解析成项目根目录本身",
+      "fix": "统一经 assertInsideProject；空路径显式拒绝",
+      "evidence": "evidence/phase-01-d-remediation/integration/resolve-path.txt"
+    },
+    "P1-LOCK": {
+      "status": "FIXED",
+      "what": "ProjectLocks 从未被 TaskService/TaskRunner 调用；projectId 全链路缺失",
+      "fix": "tasks.project_id 打通 IPC→Service→Store；写入型项目任务在启动 Runtime 前取得写锁，只读任务不取；所有退出路径释放；dispose 先停 Runtime 再等执行结束再释放锁",
+      "evidence": "evidence/phase-01-d-remediation/integration/task-project-lock.txt"
+    },
+    "P1-BACKUP": {
+      "status": "FIXED",
+      "what": "IPC 的 projectBackup 只返回目录，createBackup/restoreBackup 无调用方；恢复会覆盖活动连接持有的数据库文件",
+      "fix": "ProjectService.createBackup/restoreBackup + IPC + Preload + UI；恢复改为在事务内逐表复制行，不替换文件，因此不需要关闭连接；恢复前写安全副本；恢复后经正常 Store 校验",
+      "evidence": "evidence/phase-01-d-remediation/integration/backup-app.txt"
+    }
+  },
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后项目链路",
+      "reason": "本轮未改打包配置"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    }
+  ]
+}

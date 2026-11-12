@@ -145,6 +145,9 @@ interface StudioApi {
   readRule(id: string): Promise<Record<string, unknown>>
   getProjectState(): Promise<{ phase: string | null; status: string | null; error: string | null }>
   onProjectsChanged(callback: () => void): () => void
+  backupProject(id: string): Promise<{ ok: boolean; file: string | null; bytes: number; error: string | null }>
+  listProjectBackups(id: string): Promise<{ file: string; bytes: number; createdAt: string }[]>
+  restoreProject(id: string, file: string): Promise<{ ok: boolean; verified: boolean; safetyCopy: string | null; error: string | null }>
 }
 
 /** Merges into the DOM `Window` because this file is a script, not a module. */
@@ -1303,6 +1306,8 @@ async function selectProject(id: string): Promise<void> {
   closeButton.addEventListener('click', () => { void runProjectAction('close', detail.id) })
   actions.append(closeButton)
 
+  await renderBackups(detail.id)
+
   const events = byId('project-detail-events')
   events.replaceChildren()
   if (detail.events.length === 0) {
@@ -1386,6 +1391,82 @@ async function submitProjectForm(event: Event): Promise<void> {
   } finally {
     button.disabled = false
     button.textContent = '创建项目'
+  }
+}
+
+/** Backup list plus the two actions. Restore is destructive, so it asks first. */
+async function renderBackups(projectId: string): Promise<void> {
+  const list = byId('backup-list')
+  list.replaceChildren()
+  const backups = await window.studio.listProjectBackups(projectId)
+  if (backups.length === 0) {
+    const li = document.createElement('li')
+    li.className = 'backup-empty'
+    li.textContent = '还没有备份。'
+    list.append(li)
+  }
+  for (const backup of backups) {
+    const li = document.createElement('li')
+    li.className = 'backup-row'
+    const name = document.createElement('span')
+    name.className = 'backup-name'
+    name.textContent = backup.file.split(/[\\/]/).pop() ?? backup.file
+    const meta = document.createElement('span')
+    meta.className = 'backup-meta'
+    meta.textContent = formatWhen(backup.createdAt) + ' · ' + Math.round(backup.bytes / 1024) + ' KB'
+    li.append(name, meta)
+    list.append(li)
+  }
+
+  const backupButton = byId('project-backup') as HTMLButtonElement
+  backupButton.onclick = async () => {
+    const alert = byId('backup-alert')
+    alert.hidden = true
+    backupButton.disabled = true
+    backupButton.textContent = '备份中…'
+    try {
+      const result = await window.studio.backupProject(projectId)
+      if (!result.ok) throw new Error(result.error ?? '备份失败')
+      alert.hidden = false
+      alert.textContent = '备份已创建：' + (result.file ?? '').split(/[\\/]/).pop()
+      await renderBackups(projectId)
+    } catch (error) {
+      alert.hidden = false
+      alert.textContent = '备份失败：' + describeError(error)
+    } finally {
+      backupButton.disabled = false
+      backupButton.textContent = '创建备份'
+    }
+  }
+
+  const restoreButton = byId('project-restore') as HTMLButtonElement
+  restoreButton.onclick = async () => {
+    const alert = byId('backup-alert')
+    alert.hidden = true
+    const latest = backups[0]
+    if (!latest) {
+      alert.hidden = false
+      alert.textContent = '没有可用的备份。'
+      return
+    }
+    const confirmed = window.confirm('将用备份「' + (latest.file.split(/[\\/]/).pop() ?? '') + '」覆盖当前数据。当前数据会先自动备份。继续吗？')
+    if (!confirmed) return
+    restoreButton.disabled = true
+    restoreButton.textContent = '恢复中…'
+    try {
+      const result = await window.studio.restoreProject(projectId, latest.file)
+      if (!result.ok) throw new Error(result.error ?? '恢复失败')
+      alert.hidden = false
+      alert.textContent = '已恢复并通过数据校验。'
+      await refreshProjects()
+      await selectProject(projectId)
+    } catch (error) {
+      alert.hidden = false
+      alert.textContent = '恢复失败：' + describeError(error)
+    } finally {
+      restoreButton.disabled = false
+      restoreButton.textContent = '从备份恢复'
+    }
   }
 }
 

@@ -14,9 +14,10 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
+import { createBackup as writeBackupFile, restoreBackup as replaceDatabase, readTables } from './backup'
 import { ProjectLocks } from './locks'
 import { ProjectStore } from './store'
-import { inspectProjectRoot, realPathOf } from './paths'
+import { assertInsideProject, inspectProjectRoot, realPathOf } from './paths'
 import {
   SUPPORTED_ENGINES,
   SUPPORTED_PLATFORMS,
@@ -60,6 +61,40 @@ export interface ProjectServiceOptions {
   /** Where the app keeps its own per-project metadata (not the user's game files). */
   dataDir: string
   now?: () => Date
+  /** Absolute path of the live database file, needed for backup and restore. */
+  dbPath?: string
+  /**
+   * Close and reopen the live connection around a restore.
+   *
+   * Restoring copies a file over the database, which cannot be done while a connection
+   * holds it. The owner of the connection supplies this so the service never guesses.
+   */
+  reopenDatabase?: () => { db: DatabaseSync; verify: () => boolean }
+  /** Close the live connection; called before a restore replaces the file. */
+  closeDatabase?: () => void
+  /** Refuses a restore while work is in flight. */
+  hasActiveWork?: () => boolean
+}
+
+export interface BackupInfo {
+  file: string
+  bytes: number
+  createdAt: string
+}
+
+export interface BackupOutcome {
+  ok: boolean
+  file: string | null
+  bytes: number
+  error: string | null
+}
+
+export interface RestoreOutcome {
+  ok: boolean
+  file: string | null
+  safetyCopy: string | null
+  verified: boolean
+  error: string | null
 }
 
 const NAME_MAX = 60
@@ -82,6 +117,10 @@ export class ProjectService {
   readonly #logger: ProjectLogger
   readonly #dataDir: string
   readonly #now: () => Date
+  readonly #dbPath: string | null
+  readonly #reopenDatabase: (() => { db: DatabaseSync; verify: () => boolean }) | null
+  readonly #closeDatabase: () => void
+  readonly #hasActiveWork: () => boolean
   #openProjectId: string | null = null
 
   constructor(options: ProjectServiceOptions) {
@@ -90,6 +129,10 @@ export class ProjectService {
     this.#logger = options.logger
     this.#dataDir = options.dataDir
     this.#now = options.now ?? (() => new Date())
+    this.#dbPath = options.dbPath ?? null
+    this.#reopenDatabase = options.reopenDatabase ?? null
+    this.#closeDatabase = options.closeDatabase ?? (() => {})
+    this.#hasActiveWork = options.hasActiveWork ?? (() => false)
     fs.mkdirSync(this.#dataDir, { recursive: true })
   }
 
@@ -206,16 +249,126 @@ export class ProjectService {
     this.#logger.info('project.config.updated', { projectId: id, keys: Object.keys(settings) })
   }
 
+  /** Where this project's backups live. A stable, recognisable location. */
+  backupDirFor(projectId: string): string {
+    return path.join(this.#dataDir, projectId, 'backups')
+  }
+
+  listBackups(projectId: string): BackupInfo[] {
+    const dir = this.backupDirFor(projectId)
+    if (!fs.existsSync(dir)) return []
+    return fs
+      .readdirSync(dir)
+      .filter((name) => name.endsWith('.db'))
+      .map((name) => {
+        const file = path.join(dir, name)
+        const stat = fs.statSync(file)
+        return { file, bytes: stat.size, createdAt: stat.mtime.toISOString() }
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  /**
+   * Back up the whole studio database.
+   *
+   * VACUUM INTO takes a consistent snapshot while the connection is open, which a plain
+   * file copy cannot promise under WAL.
+   */
+  createBackup(projectId: string): BackupOutcome {
+    const project = this.store.get(projectId)
+    if (!project) return { ok: false, file: null, bytes: 0, error: '项目不存在。' }
+    if (!this.#dbPath) return { ok: false, file: null, bytes: 0, error: '当前运行没有可备份的数据库路径。' }
+
+    const stamp = this.#now().toISOString().replace(/[:.]/g, '-')
+    const target = path.join(this.backupDirFor(projectId), `studio-${stamp}.db`)
+    const result = writeBackupFile(this.#dbPath, target)
+    if (!result.ok) {
+      this.#logger.error('project.backup.failed', { projectId, error: result.error })
+      return { ok: false, file: null, bytes: 0, error: result.error ?? '备份失败。' }
+    }
+    this.store.appendEvent(projectId, 'project.backup.created', path.basename(target), this.#now().toISOString())
+    this.#logger.info('project.backup.created', { projectId, file: path.basename(target), bytes: result.bytes })
+    return { ok: true, file: target, bytes: result.bytes, error: null }
+  }
+
+  /**
+   * Restore the studio database from a backup.
+   *
+   * Refused while work is in flight: overwriting the database under a running task would
+   * corrupt both. The connection is closed, the file replaced, the connection reopened, and
+   * the result verified by reading through the normal store — a restore that cannot be read
+   * back is reported as a failure, not as success.
+   */
+  restoreBackup(projectId: string, backupFile: string): RestoreOutcome {
+    // Deliberately no "does this project exist" check: restoring is how a user recovers a
+    // project they deleted or that a bad migration removed. The project id only decides
+    // where the backup and safety copy are filed.
+    if (!projectId || projectId.trim().length === 0) {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '缺少项目标识。' }
+    }
+    if (!this.#dbPath || !this.#reopenDatabase) {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '当前运行不支持在线恢复。' }
+    }
+    if (this.#hasActiveWork()) {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '有任务正在执行，请先停止后再恢复。' }
+    }
+    if (!fs.existsSync(backupFile)) {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '备份文件不存在。' }
+    }
+    try {
+      readTables(backupFile)
+    } catch {
+      return { ok: false, file: null, safetyCopy: null, verified: false, error: '该文件不是可用的数据库备份。' }
+    }
+
+    const safety = path.join(this.backupDirFor(projectId), `pre-restore-${this.#now().toISOString().replace(/[:.]/g, '-')}.db`)
+    const result = replaceDatabase(this.#dbPath, backupFile, safety)
+    if (!result.ok) {
+      this.#logger.error('project.restore.failed', { projectId, error: result.error })
+      return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: result.error ?? '恢复失败。' }
+    }
+
+    // The old connection points at a file that no longer exists; reopen before anything
+    // else touches the store.
+    let verified = false
+    try {
+      const reopened = this.#reopenDatabase()
+      verified = reopened.verify()
+    } catch (error) {
+      this.#logger.error('project.restore.reopen-failed', { projectId, error: String((error as Error)?.message ?? error) })
+      return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: '恢复后无法重新打开数据库：' + String((error as Error)?.message ?? error) }
+    }
+    if (!verified) {
+      return { ok: false, file: backupFile, safetyCopy: result.safetyCopy, verified: false, error: '恢复后的数据校验未通过。' }
+    }
+    this.#logger.info('project.restore.completed', { projectId, file: path.basename(backupFile), safety: path.basename(safety) })
+    return { ok: true, file: backupFile, safetyCopy: result.safetyCopy, verified: true, error: null }
+  }
+
   /** Absolute path of the app's own metadata directory for a project. */
   dataDirFor(projectId: string): string {
     return path.join(this.#dataDir, projectId)
   }
 
-  /** Resolve a path the caller claims is inside the project, or throw. */
+  /**
+   * Resolve a path the caller claims is inside the project.
+   *
+   * This is the single entry point for project-scoped file access, so the containment
+   * check lives here rather than at each call site: a bare path.resolve() would happily
+   * return "C:\\games\\proj\\..\\..\\Windows" and every caller would have to remember to
+   * check. The check resolves both sides to their real path, so a junction that points
+   * outside is caught too.
+   */
   resolveProjectPath(projectId: string, relative: string): string {
     const project = this.store.get(projectId)
     if (!project) throw new ProjectError('WRITE_FAILED', '项目不存在。', projectId)
     const root = realPathOf(project.rootPath)
-    return path.resolve(root, relative)
+    // An empty path resolves to the root itself, which is "inside" and therefore passes a
+    // naive check. It is not a file the caller asked for, so it is refused explicitly.
+    if (typeof relative !== 'string' || relative.trim().length === 0) {
+      throw new ProjectError('WRITE_FAILED', 'EMPTY: 没有给出路径。', projectId)
+    }
+    const candidate = path.isAbsolute(relative) ? relative : path.resolve(root, relative)
+    return assertInsideProject(root, candidate)
   }
 }

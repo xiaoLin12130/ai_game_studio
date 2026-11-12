@@ -1,3 +1,11 @@
+## PHASE 01-D 补正（READY_FOR_EXTERNAL_REVIEW）
+
+- 基线 `bacd0eb`，分支 `phase/01-d-project-workspace`。
+- 修复外部评审的三个问题：`resolveProjectPath` 无包含校验、`ProjectLocks` 未接入任务链路、备份恢复无应用调用链。
+- 恢复改为事务内逐表复制行（不替换文件），因此活动连接无需关闭。
+- 测试：应用 205/205；路径 8/8、项目锁 9/9、在线备份恢复 7/7；PHASE 01-C 生命周期 36/36；PHASE 00 门禁 PASS。
+- 报告：`docs/review-handoff/PHASE_01_D_REMEDIATION_REPORT.md`；盘点：`..._AUDIT.md`；证据：`evidence/phase-01-d-remediation/`。
+
 ## PHASE 01-D（READY_FOR_EXTERNAL_REVIEW）
 
 - 分支 `phase/01-d-project-workspace`，基线 `fa453c9`。

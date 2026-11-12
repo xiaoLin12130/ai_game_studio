@@ -493,3 +493,17 @@ body { display: flex; flex-direction: column; }
 
 .event-empty { color: var(--text-dim); }
 .event-when { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.backup-block { display: grid; gap: 10px; }
+.backup-actions { display: flex; gap: 8px; }
+.backup-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.backup-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.backup-empty { color: var(--text-dim); font-size: 13px; }
+.backup-meta { color: var(--text-dim); font-variant-numeric: tabular-nums; }

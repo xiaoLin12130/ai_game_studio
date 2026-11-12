@@ -31,6 +31,8 @@ export const CHANNELS = {
   projectGet: 'studio:projects:get',
   projectUpdateConfig: 'studio:projects:config',
   projectBackup: 'studio:projects:backup',
+  projectRestore: 'studio:projects:restore',
+  projectBackups: 'studio:projects:backups',
   rulesList: 'studio:rules:list',
   rulesRead: 'studio:rules:read',
   rulesState: 'studio:rules:state',
@@ -122,9 +124,15 @@ export function registerIpc(deps: IpcDeps): void {
   })
 
   ipcMain.handle(CHANNELS.projectBackup, (_event, id: string) => {
-    const project = deps.projects.store.get(String(id))
-    if (!project) throw new Error('unknown project: ' + id)
-    return { ok: true, projectId: project.id, dataDir: deps.projects.dataDirFor(project.id) }
+    deps.logger.info('ui.project.backup', { projectId: String(id) })
+    return deps.projects.createBackup(String(id))
+  })
+
+  ipcMain.handle(CHANNELS.projectBackups, (_event, id: string) => deps.projects.listBackups(String(id)))
+
+  ipcMain.handle(CHANNELS.projectRestore, (_event, payload: { id: string; file: string }) => {
+    deps.logger.info('ui.project.restore', { projectId: String(payload?.id), file: String(payload?.file) })
+    return deps.projects.restoreBackup(String(payload.id), String(payload.file))
   })
 
   ipcMain.handle(CHANNELS.rulesList, () => deps.rules.list())
