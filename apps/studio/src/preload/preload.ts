@@ -55,6 +55,10 @@ const CHANNELS = {
   proposalList: 'studio:proposals:list',
   proposalCreate: 'studio:proposals:create',
   proposalDecide: 'studio:proposals:decide',
+  candidateList: 'studio:candidates:list',
+  candidateCreate: 'studio:candidates:create',
+  candidateDiff: 'studio:candidates:diff',
+  candidateFreeze: 'studio:candidates:freeze',
   requirementsChanged: 'studio:requirements:changed',
 } as const
 
@@ -121,6 +125,11 @@ const api = {
     ipcRenderer.invoke(CHANNELS.proposalCreate, { projectId, baselineId, title, description }),
   decideProposal: (projectId: string, proposalId: string, status: string, decidedBy: string, note?: string | null) =>
     ipcRenderer.invoke(CHANNELS.proposalDecide, { projectId, proposalId, status, decidedBy, note }),
+  listCandidates: (projectId: string) => ipcRenderer.invoke(CHANNELS.candidateList, projectId),
+  createCandidate: (projectId: string, proposalId: string) => ipcRenderer.invoke(CHANNELS.candidateCreate, { projectId, proposalId }),
+  candidateDiff: (projectId: string, candidateId: string) => ipcRenderer.invoke(CHANNELS.candidateDiff, { projectId, candidateId }),
+  freezeCandidate: (projectId: string, candidateId: string, confirmedBy: string) =>
+    ipcRenderer.invoke(CHANNELS.candidateFreeze, { projectId, candidateId, confirmedBy }),
   listRules: () => ipcRenderer.invoke(CHANNELS.rulesList),
   readRule: (id: string) => ipcRenderer.invoke(CHANNELS.rulesRead, id),
   getProjectState: () => ipcRenderer.invoke(CHANNELS.rulesState),

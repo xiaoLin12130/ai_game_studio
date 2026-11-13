@@ -1,8 +1,8 @@
 {
   "phase": "PHASE_01_D",
   "title": "项目空间与基础设施",
-  "status": "READY_FOR_EXTERNAL_REVIEW",
-  "verdict": null,
+  "status": "CLOSED_PASS",
+  "verdict": "APPROVED_BY_EXTERNAL_REVIEW",
   "branch": "phase/01-d-project-workspace",
   "base_commit": "fa453c96795e871dc3c612eced27043453b88136",
   "note": "原始目标 D1–D15 已实现并有证据；本阶段不自行判定通过。",
@@ -162,7 +162,7 @@
     "安装包重建与安装后项目链路",
     "npm audit / 静态吊销检查"
   ],
-  "updated_at": "2026-11-12T14:14:28.534Z",
+  "updated_at": "2026-11-13T04:29:05.434Z",
   "remediation": {
     "round": "R1",
     "base_commit": "bacd0eb0587d3d288b928209c383b6204b21c8d6",
@@ -237,5 +237,15 @@
     "report": "docs/review-handoff/PHASE_01_D_REMEDIATION_3_REPORT.md",
     "audit": "docs/review-handoff/PHASE_01_D_REMEDIATION_3_AUDIT.md",
     "evidence": "evidence/phase-01-d-remediation-3/"
+  },
+  "closure": {
+    "closes_phase": "PHASE_01_D",
+    "result": "PASS",
+    "attestation": "外部评审通过结论由项目负责人转达；评审记录不在本仓库内。",
+    "attestation_source": "user instruction (2026-11-13)",
+    "final_code_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
+    "final_code_branch": "phase/01-d-project-workspace",
+    "remediation_rounds": 3,
+    "note": "本文件的 status 由 READY_FOR_EXTERNAL_REVIEW 更新为 CLOSED_PASS；此前三轮补正的记录保持原样，未回写。"
   }
 }

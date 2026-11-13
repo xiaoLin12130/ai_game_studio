@@ -29,7 +29,7 @@ import type {
   VerificationRecord,
 } from './types'
 
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 const MIGRATIONS: string[] = [
   // v1
@@ -345,6 +345,50 @@ const MIGRATIONS: string[] = [
   BEFORE DELETE ON requirement_baselines
   BEGIN
     SELECT RAISE(ABORT, 'a frozen requirement baseline cannot be deleted');
+  END;
+  `,
+  // v4 — the step between "the user approved a change" and "there is a new frozen version".
+  // An approved proposal is not a baseline: it produces a candidate the user must look at
+  // and confirm, and only that confirmation freezes anything.
+  `
+  CREATE TABLE IF NOT EXISTS baseline_candidates (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    proposal_id TEXT NOT NULL REFERENCES change_proposals(id) ON DELETE CASCADE,
+    baseline_id TEXT NOT NULL REFERENCES requirement_baselines(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    frozen_baseline_id TEXT
+  );
+  -- One candidate per proposal: applying the same approval twice must not produce two
+  -- versions of the same change.
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_proposal ON baseline_candidates(proposal_id);
+
+  -- History that must not be rewritten. The v3 unique indexes only keep seq and version
+  -- numbers distinct; they do not stop an existing row from being edited or deleted.
+  CREATE TRIGGER IF NOT EXISTS trg_message_immutable_update
+  BEFORE UPDATE ON advisor_messages
+  BEGIN
+    SELECT RAISE(ABORT, 'a stored conversation message cannot be modified');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_message_immutable_delete
+  BEFORE DELETE ON advisor_messages
+  BEGIN
+    SELECT RAISE(ABORT, 'a stored conversation message cannot be deleted');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_draft_version_immutable_update
+  BEFORE UPDATE ON draft_versions
+  BEGIN
+    SELECT RAISE(ABORT, 'a saved draft version cannot be modified');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_draft_version_immutable_delete
+  BEFORE DELETE ON draft_versions
+  BEGIN
+    SELECT RAISE(ABORT, 'a saved draft version cannot be deleted');
   END;
   `,
 ]

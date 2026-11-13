@@ -6,7 +6,7 @@
  * database trigger refuses. A UI that hides an edit button is not one of them.
  */
 import type { RequirementStore } from './store'
-import type { BaselineRecord, ChangeImpact, ChangeProposalRecord, DraftRecord } from './types'
+import type { BaselineCandidateRecord, BaselineRecord, ChangeImpact, ChangeProposalRecord, DraftRecord } from './types'
 
 export interface BaselineSection {
   id: string
@@ -224,6 +224,112 @@ export class BaselineService {
         '影响分析基于关键词匹配，不是对变更语义的理解。',
       ],
     }
+  }
+
+  /**
+   * Turn an approved proposal into a candidate version.
+   *
+   * This is the step approval alone does not take. The proposal is applied to the baseline's
+   * content and the result is stored as a candidate; nothing is frozen and the current
+   * baseline keeps its bytes and its hash.
+   */
+  createCandidate(input: { projectId: string; proposalId: string }): BaselineCandidateRecord {
+    const proposal = this.#store.getProposal(input.projectId, input.proposalId)
+    if (!proposal) throw new Error('unknown proposal: ' + input.proposalId)
+    if (proposal.status !== 'APPROVED') {
+      throw new Error('CANDIDATE_NOT_ALLOWED: 只有已批准的变更提案才能生成候选版本。')
+    }
+    const baseline = this.#store.getBaseline(input.projectId, proposal.baselineId)
+    if (!baseline) throw new Error('unknown baseline: ' + proposal.baselineId)
+
+    const next = this.#applyToContent(baseline.content, proposal)
+    return this.#store.createCandidate({
+      projectId: input.projectId,
+      proposalId: proposal.id,
+      baselineId: baseline.id,
+      content: next,
+    })
+  }
+
+  /**
+   * Apply a change to a baseline's content.
+   *
+   * The baseline is structured JSON; a change appends a section describing it rather than
+   * pretending to know which existing section it rewrites. An honest append is better than a
+   * guessed rewrite.
+   */
+  #applyToContent(baselineContent: string, proposal: ChangeProposalRecord): string {
+    let parsed: BaselineContent
+    try {
+      parsed = JSON.parse(baselineContent) as BaselineContent
+    } catch {
+      parsed = { name: 'baseline', summary: '', sections: [], scope: [], outOfScope: [], openQuestions: [], risks: [], milestones: [], acceptance: [], sources: [] }
+    }
+    const touched = new Set(proposal.impact?.sections ?? [])
+    const sections = parsed.sections.map((section) =>
+      touched.has(section.title)
+        ? { ...section, confirmed: false, body: section.body + '\n\n**待确认变更（提案：' + proposal.title + '）**\n' + proposal.description }
+        : section,
+    )
+    return JSON.stringify(
+      {
+        ...parsed,
+        sections,
+        openQuestions: [...parsed.openQuestions, '变更提案「' + proposal.title + '」需要确认后才会生效'],
+      },
+      null,
+      2,
+    )
+  }
+
+  /** The candidate waiting for the user's decision, if any. */
+  pendingCandidate(projectId: string): BaselineCandidateRecord | null {
+    const candidates = this.#store.listCandidates(projectId)
+    return candidates.find((candidate) => candidate.frozenBaselineId === null) ?? null
+  }
+
+  listCandidates(projectId: string): BaselineCandidateRecord[] {
+    return this.#store.listCandidates(projectId)
+  }
+
+  /** What freezing this candidate would change, relative to the baseline it replaces. */
+  candidateDiff(projectId: string, candidateId: string): { added: string[]; removed: string[]; changed: string[] } | null {
+    const candidate = this.#store.getCandidate(projectId, candidateId)
+    if (!candidate) return null
+    const baseline = this.#store.getBaseline(projectId, candidate.baselineId)
+    if (!baseline) return null
+    return this.#diff(baseline.content, candidate.content)
+  }
+
+  /**
+   * Freeze a candidate as a new baseline version.
+   *
+   * Refused without an explicit confirmation. The old baseline is not touched: the new row
+   * points back at it through previous_baseline_id, and its own bytes never change.
+   */
+  freezeCandidate(input: { projectId: string; candidateId: string; confirmedBy: string }): BaselineRecord {
+    if (!input.confirmedBy || input.confirmedBy.trim().length === 0) {
+      throw new Error('BASELINE_NOT_CONFIRMED: 冻结必须由用户明确确认。')
+    }
+    const candidate = this.#store.getCandidate(input.projectId, input.candidateId)
+    if (!candidate) throw new Error('unknown candidate: ' + input.candidateId)
+    if (candidate.frozenBaselineId) throw new Error('CANDIDATE_ALREADY_FROZEN: 该候选版本已经冻结。')
+
+    let name = '需求基线'
+    try {
+      name = (JSON.parse(candidate.content) as BaselineContent).name
+    } catch {
+      /* keep the default name */
+    }
+
+    const baseline = this.#store.freezeBaseline({
+      projectId: input.projectId,
+      name,
+      content: candidate.content,
+      confirmedBy: input.confirmedBy,
+    })
+    this.#store.markCandidateFrozen(input.projectId, candidate.id, baseline.id)
+    return this.#store.getBaseline(input.projectId, baseline.id) as BaselineRecord
   }
 
   decide(input: {

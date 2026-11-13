@@ -2,16 +2,19 @@
   "project_id": "ai-game-studio",
   "project_name": "AI Game Studio",
   "product_status": "PHASE_00_APPROVED",
-  "current_phase": "PHASE_00",
+  "current_phase": "PHASE_02",
   "phase_status": {
     "PHASE_00": "PASS",
-    "PHASE_01": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_02": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_03": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_04": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_05": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_06": "BLOCKED_BY_PREVIOUS_REVIEW",
-    "PHASE_07": "BLOCKED_BY_PREVIOUS_REVIEW",
+    "PHASE_01-A": "READY_FOR_EXTERNAL_REVIEW",
+    "PHASE_01-B": "APPROVED",
+    "PHASE_01-C": "READY_FOR_EXTERNAL_REVIEW",
+    "PHASE_01-D": "CLOSED_PASS",
+    "PHASE_02": "READY_FOR_EXTERNAL_REVIEW",
+    "PHASE_03": "NOT_STARTED",
+    "PHASE_04": "NOT_STARTED",
+    "PHASE_05": "NOT_STARTED",
+    "PHASE_06": "NOT_STARTED",
+    "PHASE_07": "NOT_STARTED",
     "PHASE_00-R1": "HISTORICAL",
     "PHASE_00-R1.4": "HISTORICAL",
     "PHASE_00-R1.4.1": "HISTORICAL"
@@ -31,7 +34,7 @@
   },
   "github": {
     "remote_url": "https://github.com/xiaoLin12130/ai_game_studio.git",
-    "current_branch": "phase/00-feasibility",
+    "current_branch": "phase/02-advisor-requirements-baseline",
     "last_reviewed_commit": "6943618efa63b60193eda2749782b856ea54d58f",
     "last_review_result": "PARTIALLY_VERIFIED (external review of 6943618) — convergence round r15 addresses gates 1/4/6; awaiting re-review",
     "push_status": "PUSHED",
@@ -47,7 +50,15 @@
     "r1_4_commit": "1928fb1628b8dc3ac057fd618936aa601d9267ef",
     "r1_4_1_commit": "7ba76e07998f769ed570404bd1784444feca6b10",
     "pushed": true,
-    "push_note": "push 状态为真；不在仓库内固化「本次交付提交」自身的 SHA。原因：写入 SHA 会产生新提交，新提交又使该 SHA 失效，评审打开的提交与本文件所指的提交永远差一个。因此约定：交付点 = 分支 phase/00-feasibility 的 HEAD，由评审方 pin；仓库内只记录历史不可变的 SHA。"
+    "push_note": "push 状态为真；不在仓库内固化「本次交付提交」自身的 SHA。原因：写入 SHA 会产生新提交，新提交又使该 SHA 失效，评审打开的提交与本文件所指的提交永远差一个。因此约定：交付点 = 分支 phase/00-feasibility 的 HEAD，由评审方 pin；仓库内只记录历史不可变的 SHA。",
+    "branch_history": [
+      "phase/00-feasibility",
+      "phase/01-a-windows-foundation",
+      "phase/01-b-mcp-packaging",
+      "phase/01-c-session-task-lifecycle",
+      "phase/01-d-project-workspace",
+      "phase/02-advisor-requirements-baseline"
+    ]
   },
   "phase_00": {
     "gate_results": {
@@ -105,8 +116,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "PHASE 02 等待外部评审；PHASE 03 在评审通过后开始。",
-  "updated_at": "2026-11-13T04:02:06.416Z",
+  "next_action": "PHASE 02 已提交补正，等待外部复审；PHASE 03 在复审通过后开始。",
+  "updated_at": "2026-11-13T08:03:50.376Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -909,7 +920,42 @@
     "base_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
     "state_file": "state/phase_02.json",
     "report": "docs/review-handoff/PHASE_02_REPORT.md",
+    "remediation_report": "docs/review-handoff/PHASE_02_REMEDIATION_REPORT.md",
     "evidence": "evidence/phase-02/",
+    "remediation_evidence": "evidence/phase-02-remediation/",
     "note": "PHASE 00 / 01-A / 01-B / 01-C / 01-D 的关闭记录未改动。"
-  }
+  },
+  "stage_closures": {
+    "PHASE_00": {
+      "recorded_status": "PASS",
+      "note": "PHASE 00 的关闭记录在 phase_00_final 与 closure 字段中；本文件只引用，不改写"
+    },
+    "PHASE_01-A": {
+      "recorded_status": "READY_FOR_EXTERNAL_REVIEW",
+      "state": "state/phase_01_a.json",
+      "evidence": "evidence/phase-01-a/"
+    },
+    "PHASE_01-B": {
+      "recorded_status": "APPROVED",
+      "state": "state/phase_01_b.json",
+      "evidence": "evidence/phase-01-b/"
+    },
+    "PHASE_01-C": {
+      "recorded_status": "READY_FOR_EXTERNAL_REVIEW",
+      "state": "state/phase_01_c.json",
+      "evidence": "evidence/phase-01-c/"
+    },
+    "PHASE_01-D": {
+      "recorded_status": "CLOSED_PASS",
+      "state": "state/phase_01_d.json",
+      "evidence": "evidence/phase-01-d/",
+      "attestation": "外部评审通过结论由项目负责人转达；评审记录不在本仓库内。"
+    },
+    "PHASE_02": {
+      "recorded_status": "READY_FOR_EXTERNAL_REVIEW",
+      "state": "state/phase_02.json",
+      "evidence": "evidence/phase-02/"
+    }
+  },
+  "state_consistency_note": "phase_status 的值直接取自各 state/phase_0X_*.json 的 status 字段，不由本文件另行判断。"
 }

@@ -1,0 +1,17 @@
+✔ every state file parses (2.7304ms)
+✔ current_phase matches the work actually on the branch (1.0329ms)
+✔ phase_status is copied from the per-phase files, not invented (1.1342ms)
+✔ PHASE 01-D is recorded as closed, with its attestation named (0.2948ms)
+✔ PHASE 02 is not marked approved (0.5112ms)
+✔ no phase is claimed closed on a branch that never delivered it (0.5965ms)
+✔ the branch history ends at the current branch (0.4343ms)
+✔ the active task points at the current phase (0.4953ms)
+✔ no future phase is started (0.4325ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 86.52

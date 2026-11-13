@@ -29,10 +29,10 @@ const input = (overrides = {}) => ({
   ...overrides,
 })
 
-test('the schema is at v3 and has the project tables', (t) => {
+test('the schema is at the current version and has the project tables', (t) => {
   const { store } = fresh(t)
   assert.equal(store.schemaVersion, SCHEMA_VERSION)
-  assert.equal(SCHEMA_VERSION, 3)
+  assert.equal(SCHEMA_VERSION, 4)
   const tables = store.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((r) => r.name)
   for (const name of ['projects', 'project_configs', 'project_events', 'approvals', 'project_locks']) {
     assert.ok(tables.includes(name), 'missing table: ' + name)
@@ -101,7 +101,7 @@ test('a v1 database migrates to the current version and keeps its tasks', (t) =>
 
   const upgraded = new TaskStore(dbPath)
   t.after(() => upgraded.close())
-  assert.equal(upgraded.schemaVersion, 3)
+  assert.equal(upgraded.schemaVersion, 4)
   assert.equal(upgraded.getTask('old-task').title, 'old', 'existing rows must survive the migration')
   const columns = upgraded.db.prepare('PRAGMA table_info(tasks)').all().map((c) => c.name)
   assert.ok(columns.includes('project_id'), 'the new column must be added')

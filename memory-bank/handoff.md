@@ -1,3 +1,13 @@
+## PHASE 02 补正（READY_FOR_EXTERNAL_REVIEW）
+
+- 基线 `aca0d0a`，分支 `phase/02-advisor-requirements-baseline`。
+- **P1-A 研究执行器**：接通真实 DSH 研究与联网工具；来源只从工具结果生成，模型正文里的 URL 不算来源。
+- **P1-B 变更闭环**：批准 → 候选版本 → 用户确认 → 新基线（`previous_baseline_id` 关联）；旧基线字节与哈希不变。
+- **P1-C 状态一致性**：`project_state.json` 的 `phase_status` 改为直接取自各阶段 state 文件；PHASE 01-D 记为 `CLOSED_PASS`（外部评审结论由项目负责人转达，评审记录不在仓库内）。
+- **P2-A DOCX**：用 `node:zlib` 真正读 ZIP 里的 `word/document.xml`；夹具是 python-docx 生成的真实压缩 DOCX。
+- **P2-B 历史保护**：`advisor_messages` 与 `draft_versions` 加不可变触发器，直接 SQL 测试验证。
+- 注意：`phase_01_a.json` 与 `phase_01_c.json` 仍记录为 `READY_FOR_EXTERNAL_REVIEW`，本轮未改写它们。
+
 ## PHASE 02（READY_FOR_EXTERNAL_REVIEW）
 
 - 分支 `phase/02-advisor-requirements-baseline`，基线 `ea6c593`。

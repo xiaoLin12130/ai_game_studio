@@ -55,7 +55,7 @@
   "next_actions": [
     "等待外部评审；PHASE 03 在评审通过后开始"
   ],
-  "updated_at": "2026-11-13T04:02:06.415Z",
+  "updated_at": "2026-11-13T08:03:50.375Z",
   "defects_found_and_fixed": [
     "应用从不读取凭据文件，模型调用必然 MISSING_CREDENTIAL",
     "默认 provider 是 deepseek-official，本机只有 commandcode 凭据",
@@ -68,5 +68,41 @@
     "第二轮 resumeSession 与已打开的 session 冲突",
     "影响分析的中文分词方向反了",
     "上下文裁剪从尾部截断，切掉了刚保留的最新消息"
-  ]
+  ],
+  "remediation": {
+    "round": "R1",
+    "base_commit": "aca0d0aed80b8cb414c4a9882b9d42ead5c1ee79",
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "findings": {
+      "P1-A": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-02-remediation/research/research-chain.json"
+      },
+      "P1-B": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-02-remediation/unit/candidate.txt"
+      },
+      "P1-C": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-02-remediation/unit/state.txt"
+      },
+      "P2-A": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-02-remediation/unit/docx.txt"
+      },
+      "P2-B": {
+        "status": "FIXED",
+        "evidence": "evidence/phase-02-remediation/unit/candidate.txt"
+      }
+    },
+    "schema_version": 4,
+    "report": "docs/review-handoff/PHASE_02_REMEDIATION_REPORT.md",
+    "audit": "docs/review-handoff/PHASE_02_REMEDIATION_AUDIT.md",
+    "evidence": "evidence/phase-02-remediation/",
+    "known_limitations": [
+      "研究来源以搜索结果为主：web_fetch 常被目标站点拦截（403），多数来源标记为 via=search、正文未抓取",
+      "PDF 只提取文本层；扫描件与复杂版式不支持",
+      "DOCX 提取正文文本，样式、图片与表格排版丢失"
+    ]
+  }
 }

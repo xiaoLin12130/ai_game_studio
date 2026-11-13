@@ -8,6 +8,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import zlib from 'node:zlib'
 import type { AttachmentKind, AttachmentRecord } from './types'
 import { assertInsideProject } from '../projects/paths'
 import type { RequirementStore } from './store'
@@ -20,6 +21,106 @@ const DOCUMENT_MIMES = ['application/pdf', 'application/vnd.openxmlformats-offic
 
 /** How much text one document may contribute. */
 const MAX_EXTRACTED = 60000
+
+/**
+ * Read one file out of a ZIP container.
+ *
+ * Node ships zlib, so no dependency is needed: walk the central directory, find the entry,
+ * and inflate it. Both stored (method 0) and deflated (method 8) entries are handled, because
+ * a Word document may use either.
+ */
+export function readZipEntry(zip: Buffer, entryName: string): string | null {
+  try {
+    // The end-of-central-directory record sits at the tail, after an optional comment.
+    let eocd = -1
+    for (let i = zip.length - 22; i >= Math.max(0, zip.length - 65557); i -= 1) {
+      if (zip.readUInt32LE(i) === 0x06054b50) {
+        eocd = i
+        break
+      }
+    }
+    if (eocd < 0) return null
+
+    const entries = zip.readUInt16LE(eocd + 10)
+    let offset = zip.readUInt32LE(eocd + 16)
+
+    for (let i = 0; i < entries; i += 1) {
+      if (offset + 46 > zip.length) return null
+      if (zip.readUInt32LE(offset) !== 0x02014b50) return null
+
+      const method = zip.readUInt16LE(offset + 10)
+      const compressedSize = zip.readUInt32LE(offset + 20)
+      const nameLength = zip.readUInt16LE(offset + 28)
+      const extraLength = zip.readUInt16LE(offset + 30)
+      const commentLength = zip.readUInt16LE(offset + 32)
+      const localOffset = zip.readUInt32LE(offset + 42)
+      const name = zip.toString('utf8', offset + 46, offset + 46 + nameLength)
+
+      if (name === entryName) {
+        if (localOffset + 30 > zip.length) return null
+        const localNameLength = zip.readUInt16LE(localOffset + 26)
+        const localExtraLength = zip.readUInt16LE(localOffset + 28)
+        const dataStart = localOffset + 30 + localNameLength + localExtraLength
+        const data = zip.subarray(dataStart, dataStart + compressedSize)
+        if (method === 0) return data.toString('utf8')
+        if (method === 8) return zlib.inflateRawSync(data).toString('utf8')
+        return null
+      }
+      offset += 46 + nameLength + extraLength + commentLength
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Decode the body of a Word document into text.
+ *
+ * Runs are visited in document order together with paragraph ends, because a paragraph break
+ * lives outside the <w:t> elements: extracting runs first and then looking for paragraphs
+ * finds none, since the first pass already rewrote them.
+ */
+export function documentXmlToText(xml: string): string {
+  const parts: string[] = []
+  let paragraphs = 0
+
+  for (const match of xml.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:tab\b[^>]*\/>|<w:br\b[^>]*\/>|<\/w:p>/g)) {
+    const token = match[0]
+    if (token === '</w:p>') {
+      parts.push('\n')
+      paragraphs += 1
+      continue
+    }
+    if (token.startsWith('<w:tab')) {
+      parts.push('\t')
+      continue
+    }
+    if (token.startsWith('<w:br')) {
+      parts.push('\n')
+      continue
+    }
+    parts.push(decodeXmlEntities(match[1] ?? ''))
+  }
+
+  if (paragraphs === 0 && parts.length === 0) return ''
+
+  return parts
+    .join('')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+export function decodeXmlEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_all, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_all, code: string) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&amp;/g, '&')
+}
 
 export interface AttachmentFailure {
   ok: false
@@ -65,15 +166,18 @@ export function extractText(buffer: Buffer, mime: string): { text: string | null
     return { text: text.slice(0, MAX_EXTRACTED), note: 'PDF 文本层提取，版式与图片丢失' }
   }
   if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    // DOCX is a zip; the text is in word/document.xml. Without a zip reader, pull the
-    // readable runs out of the raw bytes and strip the XML.
-    const raw = buffer.toString('utf8')
-    const matches = [...raw.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((m) => m[1])
-    const text = matches.join(' ').trim()
-    if (text.length === 0) {
-      return { text: null, note: 'DOCX 未提取到文本（可能为压缩存储）' }
+    // A DOCX is a ZIP whose text lives in word/document.xml, deflated. Reading the bytes as
+    // UTF-8 finds nothing, because the content is compressed — the earlier implementation
+    // did exactly that and reported every standard DOCX as unreadable.
+    const xml = readZipEntry(buffer, 'word/document.xml')
+    if (!xml) {
+      return { text: null, note: 'DOCX 中找不到 word/document.xml（文件可能损坏或不是 Word 文档）' }
     }
-    return { text: text.slice(0, MAX_EXTRACTED), note: 'DOCX 文本提取，样式与图片丢失' }
+    const text = documentXmlToText(xml)
+    if (text.length === 0) {
+      return { text: null, note: 'DOCX 正文为空' }
+    }
+    return { text: text.slice(0, MAX_EXTRACTED), note: 'DOCX 文本提取，样式、图片与表格排版丢失' }
   }
   return { text: null, note: '该格式不支持文本提取' }
 }

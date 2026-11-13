@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-11-13T08:00:44.462Z",
+  "kind": "REAL_RUN",
+  "note": "真实 Electron 窗口中的真实点击流程；截图是同一次运行的真实捕获。",
+  "elapsedMs": 22089,
+  "exitCode": 0,
+  "timedOut": false,
+  "screenshots": [
+    "01-advisor-empty.png",
+    "02-advisor-conversation.png",
+    "03-drafts.png",
+    "04-baseline-preview.png",
+    "05-baseline-frozen.png",
+    "06-proposals.png",
+    "07-proposal-approved.png",
+    "08-candidate-ready.png",
+    "09-new-baseline.png",
+    "10-research-page.png"
+  ],
+  "progress": [
+    "2026-11-13T08:00:22.609Z project-created",
+    "2026-11-13T08:00:23.417Z advisor-view",
+    "2026-11-13T08:00:23.857Z waiting-for-reply",
+    "2026-11-13T08:00:33.897Z waiting-10s",
+    "2026-11-13T08:00:35.907Z reply-window-closed"
+  ],
+  "checks": {
+    "exitZero": true,
+    "journeyCompleted": true,
+    "advisorViewOpened": true,
+    "starterStateShown": true,
+    "oneSentenceStartedDiscussion": true,
+    "messagesPersisted": true,
+    "assistantReplied": true,
+    "draftCreated": true,
+    "freezePageShown": true,
+    "baselineFrozen": true,
+    "freezeReported": true,
+    "proposalCreated": true,
+    "proposalApproved": true,
+    "candidateGenerated": true,
+    "candidateFrozen": true,
+    "newBaselineVersion": true,
+    "researchPagePresent": true,
+    "screenshotsCaptured": true
+  },
+  "ok": true,
+  "smoke": {
+    "generatedAt": "2026-11-13T08:00:44.443Z",
+    "mode": "advisor-journey",
+    "phase": "journey",
+    "projectId": "proj-3719b918",
+    "advisor": {
+      "visible": true,
+      "emptyShown": true,
+      "messageCount": 2,
+      "roles": [
+        "user",
+        "assistant"
+      ],
+      "conversations": 1
+    },
+    "drafts": {
+      "rows": 1
+    },
+    "baseline": {
+      "previewVisible": true,
+      "rows": 1,
+      "alert": "已冻结 v1，哈希 d3cb841cf01c4993。"
+    },
+    "proposals": {
+      "rows": 1,
+      "approvedStage": "已批准，尚未生成候选版本",
+      "candidateStage": "候选版本待确认",
+      "finalStage": "已冻结为新基线"
+    },
+    "baselinesAfterCandidate": 2,
+    "research": {
+      "formPresent": true
+    }
+  }
+}

@@ -130,10 +130,20 @@ export interface ResearchRequestRecord {
 export interface ResearchSource {
   title: string
   url: string
+  /** When the tool actually produced this result. Never a model-authored timestamp. */
   fetchedAt: string
-  /** 'search' when it came from a search result, 'fetch' when the page was read. */
+  /** 'search' when a search result listed it, 'fetch' when the page was read. */
   via: 'search' | 'fetch' | 'user'
   note: string | null
+  /**
+   * True only when a tool call actually produced this URL.
+   *
+   * A model can write a plausible URL. Marking it verified would be a fabrication, so a
+   * source is created from tool results and never from the report's prose.
+   */
+  verified: boolean
+  /** What the tool returned: 'ok' when content came back, otherwise the failure. */
+  status: 'ok' | 'empty' | 'failed'
 }
 
 export interface ResearchReportRecord {
@@ -169,6 +179,25 @@ export interface BaselineRecord {
 }
 
 export type ProposalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION'
+
+/**
+ * A proposed next version of a baseline.
+ *
+ * Approval creates a candidate; only the user's confirmation freezes it. Until then the
+ * frozen baseline is untouched and the candidate can be looked at, compared, or abandoned.
+ */
+export interface BaselineCandidateRecord {
+  id: string
+  projectId: string
+  proposalId: string
+  /** The baseline this candidate would replace. */
+  baselineId: string
+  content: string
+  contentHash: string
+  createdAt: string
+  /** Set when the user confirmed: the baseline that was created from this candidate. */
+  frozenBaselineId: string | null
+}
 
 export interface ChangeProposalRecord {
   id: string

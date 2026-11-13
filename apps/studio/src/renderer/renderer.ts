@@ -171,6 +171,10 @@ interface StudioApi {
   listProposals(projectId: string): Promise<ReqProposal[]>
   createProposal(projectId: string, baselineId: string, title: string, description: string): Promise<ReqProposal>
   decideProposal(projectId: string, proposalId: string, status: string, decidedBy: string, note?: string | null): Promise<ReqProposal>
+  listCandidates(projectId: string): Promise<{ id: string; proposalId: string; baselineId: string; content: string; contentHash: string; createdAt: string; frozenBaselineId: string | null }[]>
+  createCandidate(projectId: string, proposalId: string): Promise<{ id: string; proposalId: string; baselineId: string; content: string; contentHash: string; createdAt: string; frozenBaselineId: string | null }>
+  candidateDiff(projectId: string, candidateId: string): Promise<{ added: string[]; removed: string[]; changed: string[] } | null>
+  freezeCandidate(projectId: string, candidateId: string, confirmedBy: string): Promise<ReqBaseline>
   backupProject(id: string): Promise<{ ok: boolean; file: string | null; bytes: number; error: string | null }>
   listProjectBackups(id: string): Promise<{ file: string; bytes: number; createdAt: string }[]>
   restoreProject(id: string, file: string): Promise<{ ok: boolean; verified: boolean; safetyCopy: string | null; error: string | null }>

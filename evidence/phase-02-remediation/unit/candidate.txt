@@ -1,0 +1,27 @@
+✔ the schema is at v4 with the candidate table and the immutability triggers (35.8975ms)
+✔ B1: rejecting a proposal leaves the baseline untouched (36.782ms)
+✔ B2: approving a proposal does not modify the baseline (38.0929ms)
+✔ B3: an approved proposal produces a candidate (39.9277ms)
+✔ a pending proposal cannot produce a candidate (33.921ms)
+✔ B4: the candidate diff shows what would change (38.0115ms)
+✔ B5: abandoning a candidate leaves the baseline unchanged (37.6203ms)
+✔ B6/B7: confirming a candidate freezes a new version with a hash and a predecessor (42.0022ms)
+✔ B8: the old baseline still refuses direct SQL modification after a new version exists (42.0223ms)
+✔ B8: the new version is immutable too (42.318ms)
+✔ B9: applying the same proposal twice does not create two versions (39.3343ms)
+✔ freezing a candidate twice is refused (42.1113ms)
+✔ freezing a candidate without a confirmation is refused (37.8837ms)
+✔ the frozen candidate records the baseline it became (42.0725ms)
+✔ a candidate cannot be frozen for another project (35.8538ms)
+✔ P2-B: a stored message cannot be modified or deleted (38.1384ms)
+✔ P2-B: a saved draft version cannot be modified or deleted (35.954ms)
+✔ P2-B: normal editing appends a version and never rewrites one (39.9138ms)
+✔ P2-B: messages stay in append order and cannot be renumbered (37.9032ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 818.8514

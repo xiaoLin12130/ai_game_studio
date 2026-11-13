@@ -1,0 +1,246 @@
+{
+  "generatedAt": "2026-11-13T07:31:32.249Z",
+  "steps": [
+    {
+      "step": "request-created",
+      "ok": true,
+      "status": "REQUESTED"
+    },
+    {
+      "step": "research-ran",
+      "ok": true,
+      "error": null,
+      "incomplete": []
+    },
+    {
+      "step": "sources-recorded",
+      "ok": true,
+      "total": 15,
+      "verified": 15,
+      "fetched": 0,
+      "searched": 15,
+      "sample": [
+        {
+          "url": "https://www.kokutech.com/blog/gamedev/design-patterns/power-fantasy/vampire-survivors",
+          "via": "search",
+          "verified": true,
+          "status": "ok"
+        },
+        {
+          "url": "https://blog.csdn.net/weixin_32570803/article/details/163352298",
+          "via": "search",
+          "verified": true,
+          "status": "ok"
+        },
+        {
+          "url": "https://www.linkedin.com/pulse/game-design-players-core-loop-vampire-survivors-p%C3%A9rez-gonz%C3%A1lez",
+          "via": "search",
+          "verified": true,
+          "status": "ok"
+        },
+        {
+          "url": "https://taobaisu.art/docs/portfolio/vampire-survivors-breakdown",
+          "via": "search",
+          "verified": true,
+          "status": "ok"
+        },
+        {
+          "url": "https://www.reddit.com/r/gamedev/comments/waki9e/essay_how_vampire_survivors_made_me_rethink_the/",
+          "via": "search",
+          "verified": true,
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "step": "has-verified-source",
+      "ok": true
+    },
+    {
+      "step": "content-has-sections",
+      "ok": true
+    },
+    {
+      "step": "report-stored",
+      "ok": true
+    },
+    {
+      "step": "reloadable",
+      "ok": true
+    },
+    {
+      "step": "project-scoped",
+      "ok": true
+    },
+    {
+      "step": "second-run-ran",
+      "ok": true,
+      "ok2": true
+    },
+    {
+      "step": "every-saved-report-has-a-source",
+      "ok": true,
+      "count": 2
+    },
+    {
+      "step": "final-report-has-sections",
+      "ok": true
+    },
+    {
+      "step": "final-report-has-verified-source",
+      "ok": true
+    }
+  ],
+  "error": null,
+  "report": {
+    "id": "rep-d6d78161",
+    "title": "吸血鬼幸存者这类自动攻击游戏的核心循环是什么",
+    "contentHead": "## 已验证事实\n本次检索围绕：吸血鬼幸存者这类自动攻击游戏的核心循环是什么\n工具实际返回的来源（16 条，其中抓取正文 0 条、搜索结果 16 条）：\n- [vampire survivors](https://www.kokutech.com/blog/gamedev/design-patterns/power-fantasy/vampire-survivors) — search，2026-11-13T07:36:39.146Z\n- [163352298](https://blog.csdn.net/weixin_32570803/article/details/163352298) — search，2026-11-13T07:36:39.146Z\n- [core gameplay loops](https://teemo.dev/game-design/vampire-survivors/systems/core-gameplay-loops/) — search，2026-11-13T07:36:39.146Z\n- [81ibn69q0iy](https://wenku.csdn.net/column/81ibn69q0iy) — search，2026-11-13T07:36:39.146Z\n- [vampire survivors evolution chart](https://twinfinite.net/guides/vampire-survivors-evolution-chart/) — search，2026-11-13T07:36:39.146Z\n- [essay how vampire survivors made me rethink the](https://www.reddit.com/r/gamedev/comments/waki9e/essay_how_vampire_survivors_made_me_rethink_the/) — search，2026-11-13T07:36:39.146Z\n- [162497273](https://blog.csdn.net/anliuyu/article/details/162497273) — search，2026-11-13T07:36:39.146Z\n- [core mechanics and systems architecture](https://teemo.dev/game-design/vampire-survivors/systems/core-mechanics-and-systems-architecture/) — search，2026-11-13T07:36:39.146Z\n- [watch](https://www.youtube.com/watch?v=rs5dsv7QxYY) — search，2026-11-13T07:36:39.147Z\n- [goal of vampire survivors guide](https://gamerguru.blog/goal-of-vampire-survivors-guide) — search，2026-11-13T07:36:39.147Z\n- [rouge prototype](https://github.com/Wiki1220/rouge-prototype) — search，2026-11-13T07:36:39.147Z\n- [vampire survivors guide](https://rogueranker.com/vampire-survivors-guide/) — search，2026-11-13T07:36:39.147Z\n## 未验证信息",
+    "sources": [
+      {
+        "title": "vampire survivors",
+        "url": "https://www.kokutech.com/blog/gamedev/design-patterns/power-fantasy/vampire-survivors",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "163352298",
+        "url": "https://blog.csdn.net/weixin_32570803/article/details/163352298",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "core gameplay loops",
+        "url": "https://teemo.dev/game-design/vampire-survivors/systems/core-gameplay-loops/",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "81ibn69q0iy",
+        "url": "https://wenku.csdn.net/column/81ibn69q0iy",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "vampire survivors evolution chart",
+        "url": "https://twinfinite.net/guides/vampire-survivors-evolution-chart/",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "essay how vampire survivors made me rethink the",
+        "url": "https://www.reddit.com/r/gamedev/comments/waki9e/essay_how_vampire_survivors_made_me_rethink_the/",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "162497273",
+        "url": "https://blog.csdn.net/anliuyu/article/details/162497273",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "core mechanics and systems architecture",
+        "url": "https://teemo.dev/game-design/vampire-survivors/systems/core-mechanics-and-systems-architecture/",
+        "fetchedAt": "2026-11-13T07:36:39.146Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "watch",
+        "url": "https://www.youtube.com/watch?v=rs5dsv7QxYY",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "goal of vampire survivors guide",
+        "url": "https://gamerguru.blog/goal-of-vampire-survivors-guide",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "rouge prototype",
+        "url": "https://github.com/Wiki1220/rouge-prototype",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "vampire survivors guide",
+        "url": "https://rogueranker.com/vampire-survivors-guide/",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "roguelike and roguelite design",
+        "url": "https://gamedesign.gg/articles/roguelike-and-roguelite-design/",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "vampire survivors 30 minutes reaper boss death beat kill",
+        "url": "https://gamerant.com/vampire-survivors-30-minutes-reaper-boss-death-beat-kill/",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "watch",
+        "url": "https://www.youtube.com/watch?v=zRfJsVs-els",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      },
+      {
+        "title": "Guide:Gold farming",
+        "url": "https://vampire.survivors.wiki/w/Guide:Gold_farming",
+        "fetchedAt": "2026-11-13T07:36:39.147Z",
+        "via": "search",
+        "note": "搜索结果；正文未抓取",
+        "verified": true,
+        "status": "ok"
+      }
+    ]
+  }
+}

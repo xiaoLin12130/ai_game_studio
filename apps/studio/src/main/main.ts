@@ -224,13 +224,40 @@ async function runSmoke(): Promise<void> {
       const proposalRows = await evaluate("document.querySelectorAll('.proposal-row').length")
       await shot('06-proposals')
 
+      // Approve the proposal, generate the candidate, and confirm it into a new version.
+      await evaluate("Array.from(document.querySelectorAll('.proposal-actions .button')).find(function (b) { return b.textContent === '批准' }).click(); true")
+      await wait(900)
+      const approvedStage = await evaluate("(document.querySelector('.proposal-status') || {}).textContent || ''")
+      await shot('07-proposal-approved')
+
+      await evaluate("Array.from(document.querySelectorAll('.proposal-actions .button')).find(function (b) { return b.textContent === '生成候选版本' }).click(); true")
+      await wait(1200)
+      const candidateStage = await evaluate("(document.querySelector('.proposal-status') || {}).textContent || ''")
+      await shot('08-candidate-ready')
+
+      // The confirmation is a window.confirm; accept it.
+      await evaluate("window.confirm = function () { return true }; true")
+      await evaluate("Array.from(document.querySelectorAll('.proposal-actions .button')).find(function (b) { return b.textContent === '确认冻结为新版本' }).click(); true")
+      await wait(1500)
+      const finalStage = await evaluate("(document.querySelector('.proposal-status') || {}).textContent || ''")
+      const baselineCount = await evaluate("document.querySelectorAll('.baseline-row').length")
+      await shot('09-new-baseline')
+
+      // The research page: create a request and check the report list renders.
+      await evaluate("document.querySelector('[data-view=\"assets\"]').click(); true")
+      await wait(300)
+      const researchFormPresent = await evaluate("Boolean(document.getElementById('research-form'))")
+      await shot('10-research-page')
+
       write({
         phase: 'journey',
         projectId: created.id,
         advisor: { visible: advisorVisible, emptyShown, messageCount: messages.length, roles: messages.map((x: { role: string }) => x.role), conversations },
         drafts: { rows: draftRows },
         baseline: { previewVisible, rows: baselineRows, alert: baselineAlert },
-        proposals: { rows: proposalRows },
+        proposals: { rows: proposalRows, approvedStage, candidateStage, finalStage },
+        baselinesAfterCandidate: baselineCount,
+        research: { formPresent: researchFormPresent },
       })
       app.quit()
       return

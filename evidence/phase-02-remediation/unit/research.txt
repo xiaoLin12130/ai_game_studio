@@ -1,0 +1,23 @@
+✔ a request starts REQUESTED and becomes COMPLETED on success (44.9072ms)
+✔ a failed run is FAILED and produces no report (37.2698ms)
+✔ a run that throws is FAILED, not completed (40.0105ms)
+✔ a report with no verified source carries a notice saying so (41.8138ms)
+✔ a report that cites nothing does not claim verified facts (39.8198ms)
+✔ an incomplete report names its missing sections (41.9686ms)
+✔ research is project-scoped (42.0398ms)
+✔ an empty question is refused (33.9278ms)
+✔ a source comes from a tool result, not from the report text (0.5915ms)
+✔ a URL the model merely wrote is never a source (0.1727ms)
+✔ a failed fetch is recorded as failed, not as a verified source (0.1409ms)
+✔ a call with no result produces no source (0.1054ms)
+✔ duplicate URLs collapse to one source (0.1485ms)
+✔ urlsIn finds URLs and strips trailing punctuation (0.6794ms)
+✔ completion requires an actual report body (39.8581ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 449.4114

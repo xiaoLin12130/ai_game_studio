@@ -1,0 +1,18 @@
+✔ the fixture is a real compressed DOCX (1.5103ms)
+✔ the old approach would not have worked (0.553ms)
+✔ the fixture text is extracted (0.5336ms)
+✔ paragraph breaks survive extraction (0.3025ms)
+✔ XML entities are decoded (0.2903ms)
+✔ a file that is not a ZIP is refused (0.1262ms)
+✔ a ZIP without the document entry is refused (0.3365ms)
+✔ an empty document is reported as empty, not as success (0.147ms)
+✔ entity decoding handles numeric forms (0.7559ms)
+✔ a real DOCX attachment is stored with its text and its hash (38.4077ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.91

@@ -1,22 +1,27 @@
 {
-  "task_id": "phase-00-convergence-r15",
-  "phase": "PHASE_00",
-  "status": "AWAITING_EXTERNAL_REVIEW",
-  "title": "PHASE 00 convergence: exit-code evidence, gate hardening, state/doc unification",
+  "task_id": "phase-02-remediation-r1",
+  "phase": "PHASE_02",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "title": "PHASE 02 remediation: research execution, baseline candidates, state consistency",
+  "superseded_task": {
+    "task_id": "phase-00-convergence-r15",
+    "phase": "PHASE_00",
+    "status": "AWAITING_EXTERNAL_REVIEW",
+    "note": "由 phase-02-remediation-r1 取代；该阶段的关闭记录见 state/project_state.json"
+  },
   "dsh_session_id": null,
   "workspace": null,
-  "allowed_write_roots": ["./"],
+  "allowed_write_roots": [
+    "./"
+  ],
   "forbidden_actions": [
-    "Do not skip PHASE_00",
-    "Do not implement future phases",
-    "Do not hand-roll DSH JSON-RPC",
+    "Do not reopen PHASE 00 / 01-A / 01-B / 01-C / 01-D",
+    "Do not start PHASE 03",
+    "Do not add a second AI runtime or model API layer",
     "Do not commit secrets",
-    "Do not force-push or delete user data"
+    "Do not force-push or reset history"
   ],
   "checkpoint": null,
-  "next_action": "Await external PHASE 00 review. Do not start PHASE 01 business features before it confirms.",
-  "authoritative_source": {
-    "current_record": "phase_00_final",
-    "file": "state/project_state.json"
-  }
+  "next_action": "Await external PHASE 02 review. Do not start PHASE 03.",
+  "updated_at": "2026-11-13T04:29:43.433Z"
 }

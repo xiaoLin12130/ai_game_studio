@@ -1,0 +1,48 @@
+✔ one writer at a time (63.8092ms)
+✔ the same owner can re-acquire without deadlocking itself (61.802ms)
+✔ releasing lets the next writer in (59.2998ms)
+✔ only the owner may release (57.9797ms)
+✔ a build excludes writers and a writer excludes builds (73.9619ms)
+✔ two builds cannot overlap (49.9473ms)
+✔ a lock whose owner process is gone is reclaimable (58.0081ms)
+✔ a live owner is not reclaimed just because time passed (51.6592ms)
+✔ a lock that stopped heartbeating is reclaimable even if the pid is alive (45.9472ms)
+✔ heartbeat keeps a long operation from looking abandoned (35.9953ms)
+✔ a non-owner cannot heartbeat (52.2804ms)
+✔ shutdown releases everything a process held (38.4058ms)
+✔ locks on different projects do not interfere (39.4227ms)
+✔ a path inside the project is allowed (3.1904ms)
+✔ a path that climbs out with .. is refused (1.9667ms)
+✔ a sibling directory with a shared prefix is not inside (1.9414ms)
+✔ a path on another drive is refused (4.4502ms)
+✔ a UNC path is refused (0.7229ms)
+✔ a relative path is refused rather than guessed (0.5396ms)
+✔ an empty path is refused (0.5182ms)
+✔ a junction pointing outside the root is refused (33.4021ms)
+✔ a path that does not exist yet is still checked against the root (1.8046ms)
+✔ inspectProjectRoot reports why a directory is unusable (2.2444ms)
+✔ a project is created in an empty directory and marked on disk (58.0752ms)
+✔ a non-empty directory is refused, and nothing is written into it (51.2853ms)
+✔ the same directory cannot become two projects (55.9713ms)
+✔ an invalid name is refused with a readable reason (49.9119ms)
+✔ an unsupported engine or platform is refused rather than silently accepted (51.9743ms)
+✔ a missing or unwritable directory is refused (53.8453ms)
+✔ open and close are recorded, and the project survives a restart (63.7425ms)
+✔ opening a project whose directory disappeared fails with a reason (48.2517ms)
+✔ config is saved and read back (47.6546ms)
+✔ two projects keep separate configs and event streams (50.0138ms)
+✔ the schema is at the current version and has the project tables (52.3499ms)
+✔ a project round-trips with its config and events (55.0237ms)
+✔ two projects cannot share a root (58.0558ms)
+✔ tasks can belong to a project, and closing a project keeps them (66.4837ms)
+✔ approvals exist as a shape with a status (53.2707ms)
+✔ a v1 database migrates to the current version and keeps its tasks (85.8552ms)
+✔ a failed migration leaves the database at its previous version (74.9007ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 785.9188

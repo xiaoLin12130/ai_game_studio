@@ -1,0 +1,4 @@
+command: node node_modules/typescript/bin/tsc -p tsconfig.json
+cwd: apps/studio
+result: no diagnostics
+exit code: 0

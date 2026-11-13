@@ -1,0 +1,229 @@
+{
+  "generatedAt": "2026-11-13T08:03:00.601Z",
+  "phase": "PHASE_02_REMEDIATION",
+  "branch": "phase/02-advisor-requirements-baseline",
+  "baseCommit": "aca0d0aed80b8cb414c4a9882b9d42ead5c1ee79",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02-remediation/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 344,
+        "pass": 344,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/full-suite.txt"
+    },
+    {
+      "name": "research",
+      "command": "node --test test/research-executor.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 15,
+        "pass": 15,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/research.txt"
+    },
+    {
+      "name": "baseline-candidate",
+      "command": "node --test test/baseline-candidate.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 19,
+        "pass": 19,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/candidate.txt"
+    },
+    {
+      "name": "docx",
+      "command": "node --test test/docx-extraction.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/docx.txt"
+    },
+    {
+      "name": "state-consistency",
+      "command": "node --test test/state-consistency.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/state.txt"
+    },
+    {
+      "name": "requirements",
+      "command": "node --test test/requirement-store.test.js test/requirement-services.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 35,
+        "pass": 35,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/requirements.txt"
+    },
+    {
+      "name": "project-isolation",
+      "command": "node --test test/project-*.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/unit/project-isolation.txt"
+    },
+    {
+      "name": "research-real-chain",
+      "command": "node scripts/research-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "steps": 12,
+        "failed": 0
+      },
+      "artifact": "evidence/phase-02-remediation/research/research-chain.json",
+      "note": "真实 DSH 检索 + 真实 web_search 工具结果"
+    },
+    {
+      "name": "desktop-journey",
+      "command": "node scripts/smoke-advisor.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "checks": 18,
+        "failed": 0,
+        "screenshots": 10
+      },
+      "artifact": "evidence/phase-02-remediation/desktop/summary.json",
+      "note": "含批准 → 候选 → 冻结新版本完整流程"
+    },
+    {
+      "name": "phase01c-d-tasks",
+      "command": "node --test test/task-*.test.js test/lifecycle.test.js test/lock-heartbeat.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02-remediation/regression/phase01c-d-tasks.txt"
+    },
+    {
+      "name": "phase01a-smoke",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02-remediation/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "phase01b-mcp",
+      "command": "node scripts/mcp-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02-remediation/regression/phase01b-mcp.txt"
+    },
+    {
+      "name": "phase01d-projects",
+      "command": "node scripts/smoke-projects.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02-remediation/regression/phase01d-projects.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02-remediation/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏，扫描 455/475"
+    }
+  ],
+  "findings": {
+    "P1-A": {
+      "status": "FIXED",
+      "what": "生产装配里 runResearch 硬编码返回「研究执行器尚未接入。」，研究页面永远无法完成研究",
+      "fix": "新增 ResearchExecutor，复用 RuntimeSupervisor 与 Session；来源只从真实工具结果生成，模型正文里的 URL 不算来源；没有工具调用即判失败",
+      "evidence": "evidence/phase-02-remediation/research/research-chain.json"
+    },
+    "P1-B": {
+      "status": "FIXED",
+      "what": "批准提案只更新状态，没有候选版本流程",
+      "fix": "v4 新增 baseline_candidates；批准 → 生成候选 → 用户确认 → 新基线（previous_baseline_id 关联）；旧基线字节与哈希不变；同一提案只能生成一个候选",
+      "evidence": "evidence/phase-02-remediation/unit/candidate.txt"
+    },
+    "P1-C": {
+      "status": "FIXED",
+      "what": "project_state.json 仍指向 PHASE 00，phase_status 把 01–07 一律标成 BLOCKED_BY_PREVIOUS_REVIEW",
+      "fix": "phase_status 改为直接取自各 state/phase_0X_*.json；PHASE 01-D 记为 CLOSED_PASS 并写明外部评审结论由项目负责人转达；current_phase/branch/next_action 与事实一致",
+      "evidence": "evidence/phase-02-remediation/unit/state.txt"
+    },
+    "P2-A": {
+      "status": "FIXED",
+      "what": "DOCX 提取把 ZIP 当 UTF-8 读，标准压缩 DOCX 匹配不到任何内容",
+      "fix": "用 node:zlib 读 ZIP 中央目录并 inflate word/document.xml；夹具是 python-docx 生成的真实压缩 DOCX",
+      "evidence": "evidence/phase-02-remediation/unit/docx.txt"
+    },
+    "P2-B": {
+      "status": "FIXED",
+      "what": "advisor_messages 与 draft_versions 只有唯一索引，不阻止已有行被 UPDATE/DELETE",
+      "fix": "v4 新增四个不可变触发器；直接 SQL 测试验证 UPDATE 与 DELETE 都被拒绝",
+      "evidence": "evidence/phase-02-remediation/unit/candidate.txt"
+    }
+  },
+  "defects_found_during_fix": [
+    "研究执行器两阶段在同一 session 上第二轮拿不到回复，改为单轮 + 硬性工具预算",
+    "模型只宣布意图不写正文，报告结构改由 Studio 从工具结果组装",
+    "PHASE 00 门禁硬编码 current_phase === 'PHASE_00'，后续阶段无法通过；改为校验 PHASE 00 记录仍为 PASS 且 current_phase 是已知阶段",
+    "v4 迁移后 10 项测试的版本断言与必需表清单过时"
+  ],
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后研究链路",
+      "reason": "本轮未改打包配置"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    }
+  ],
+  "knownLimitations": [
+    "研究来源以搜索结果为主：web_fetch 常被目标站点拦截（403），因此多数来源标记为 via=search、正文未抓取",
+    "PDF 只提取文本层；扫描件与复杂版式不支持，已在 note 中标注",
+    "DOCX 提取正文文本，样式、图片与表格排版丢失"
+  ]
+}

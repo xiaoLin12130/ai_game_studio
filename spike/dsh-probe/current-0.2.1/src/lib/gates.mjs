@@ -536,7 +536,13 @@ export function checkProjectState({ state, docs = {}, root = null, violations = 
 
   // 2. Top-level fields must agree with the current record.
   if (!ALLOWED_VERDICTS.includes(final.verdict)) fail('verdict-invalid', `unsupported verdict ${final.verdict}`)
-  if (state.current_phase !== 'PHASE_00') fail('top-level-phase', 'current_phase must be PHASE_00')
+  // PHASE 00 is closed; later phases legitimately move current_phase forward. What must
+  // still hold is that the PHASE 00 record is intact and that no later phase has rewritten
+  // it. The phase the project is in is recorded separately and checked for consistency.
+  const phaseOrder = ['PHASE_00', 'PHASE_01', 'PHASE_02', 'PHASE_03', 'PHASE_04', 'PHASE_05', 'PHASE_06', 'PHASE_07']
+  const currentIndex = phaseOrder.indexOf(String(state.current_phase ?? '').split('-')[0])
+  if (currentIndex < 0) fail('top-level-phase', 'current_phase is not a known phase: ' + state.current_phase)
+  if (state.phase_00_final?.verdict !== 'PASS') fail('top-level-phase', 'PHASE 00 must remain PASS after later phases start')
   if (state.product_status !== final.product_status) fail('top-level-status', 'product_status disagrees with phase_00_final.product_status')
   if (state.phase_status?.PHASE_00 !== final.verdict) fail('top-level-verdict', 'phase_status.PHASE_00 disagrees with phase_00_final.verdict')
 

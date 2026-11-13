@@ -126,7 +126,7 @@ test('a corrupt backup is refused and the live database keeps working', (t) => {
   assert.equal(result.ok, false)
   assert.ok(result.error)
   assert.equal(service.store.get(project.id).name, 'P', 'the live database must be untouched')
-  assert.equal(getStore().schemaVersion, 3, 'the connection must still be usable')
+  assert.equal(getStore().schemaVersion, 4, 'the connection must still be usable')
 })
 
 test('a restore is refused while work is in flight', (t) => {

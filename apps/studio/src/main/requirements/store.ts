@@ -34,6 +34,7 @@ import type {
   ResearchRequestRecord,
   ResearchSource,
   ResearchStatus,
+  BaselineCandidateRecord,
   SessionLinkRecord,
   SessionLinkState,
 } from './types'
@@ -600,6 +601,83 @@ export class RequirementStore {
    */
   updateBaseline(): never {
     throw new BaselineFrozenError('a frozen baseline cannot be modified; create a new version instead')
+  }
+
+  // ------------------------------------------------------------------ baseline candidates
+
+  /**
+   * Turn an approved proposal into a candidate version.
+   *
+   * Refused when the proposal is not approved, and refused when a candidate already exists:
+   * applying one approval twice must not produce two versions of the same change.
+   */
+  createCandidate(input: {
+    projectId: string
+    proposalId: string
+    baselineId: string
+    content: string
+    now?: string
+  }): BaselineCandidateRecord {
+    const at = iso(input.now)
+    return this.#transaction(() => {
+      const proposal = this.getProposal(input.projectId, input.proposalId)
+      if (!proposal) throw new Error('unknown proposal: ' + input.proposalId)
+      if (proposal.status !== 'APPROVED') {
+        throw new Error('CANDIDATE_NOT_ALLOWED: 只有已批准的变更提案才能生成候选版本。')
+      }
+      const existing = this.getCandidateByProposal(input.projectId, input.proposalId)
+      if (existing) {
+        throw new Error('CANDIDATE_EXISTS: 该提案已经生成过候选版本。')
+      }
+      const candidateId = id('cand')
+      this.#db
+        .prepare(
+          'INSERT INTO baseline_candidates (id, project_id, proposal_id, baseline_id, content, content_hash, created_at, frozen_baseline_id) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)',
+        )
+        .run(candidateId, input.projectId, input.proposalId, input.baselineId, input.content, hashContent(input.content), at)
+      return this.getCandidate(input.projectId, candidateId) as BaselineCandidateRecord
+    })
+  }
+
+  getCandidate(projectId: string, candidateId: string): BaselineCandidateRecord | null {
+    const row = this.#db
+      .prepare('SELECT * FROM baseline_candidates WHERE id = ? AND project_id = ?')
+      .get(candidateId, projectId) as Record<string, unknown> | undefined
+    return row ? this.#mapCandidate(row) : null
+  }
+
+  getCandidateByProposal(projectId: string, proposalId: string): BaselineCandidateRecord | null {
+    const row = this.#db
+      .prepare('SELECT * FROM baseline_candidates WHERE project_id = ? AND proposal_id = ?')
+      .get(projectId, proposalId) as Record<string, unknown> | undefined
+    return row ? this.#mapCandidate(row) : null
+  }
+
+  listCandidates(projectId: string): BaselineCandidateRecord[] {
+    const rows = this.#db
+      .prepare('SELECT * FROM baseline_candidates WHERE project_id = ? ORDER BY created_at DESC')
+      .all(projectId) as Record<string, unknown>[]
+    return rows.map((row) => this.#mapCandidate(row))
+  }
+
+  /** Record that a candidate became a frozen baseline. Does not touch the baseline itself. */
+  markCandidateFrozen(projectId: string, candidateId: string, frozenBaselineId: string): void {
+    this.#db
+      .prepare('UPDATE baseline_candidates SET frozen_baseline_id = ? WHERE id = ? AND project_id = ?')
+      .run(frozenBaselineId, candidateId, projectId)
+  }
+
+  #mapCandidate(row: Record<string, unknown>): BaselineCandidateRecord {
+    return {
+      id: String(row.id),
+      projectId: String(row.project_id),
+      proposalId: String(row.proposal_id),
+      baselineId: String(row.baseline_id),
+      content: String(row.content),
+      contentHash: String(row.content_hash),
+      createdAt: String(row.created_at),
+      frozenBaselineId: row.frozen_baseline_id ? String(row.frozen_baseline_id) : null,
+    }
   }
 
   // ------------------------------------------------------------------ change proposals

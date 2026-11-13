@@ -67,6 +67,10 @@ export const CHANNELS = {
   proposalList: 'studio:proposals:list',
   proposalCreate: 'studio:proposals:create',
   proposalDecide: 'studio:proposals:decide',
+  candidateList: 'studio:candidates:list',
+  candidateCreate: 'studio:candidates:create',
+  candidateDiff: 'studio:candidates:diff',
+  candidateFreeze: 'studio:candidates:freeze',
   requirementsChanged: 'studio:requirements:changed',
 } as const
 
@@ -323,6 +327,24 @@ export function registerIpc(deps: IpcDeps): void {
       status: payload.status as never,
       decidedBy: String(payload.decidedBy),
       note: payload.note ?? null,
+    }),
+  )
+
+  ipcMain.handle(CHANNELS.candidateList, (_event, projectId: string) => deps.baselines.listCandidates(String(projectId)))
+
+  ipcMain.handle(CHANNELS.candidateCreate, (_event, payload: { projectId: string; proposalId: string }) =>
+    deps.baselines.createCandidate({ projectId: String(payload.projectId), proposalId: String(payload.proposalId) }),
+  )
+
+  ipcMain.handle(CHANNELS.candidateDiff, (_event, payload: { projectId: string; candidateId: string }) =>
+    deps.baselines.candidateDiff(String(payload.projectId), String(payload.candidateId)),
+  )
+
+  ipcMain.handle(CHANNELS.candidateFreeze, (_event, payload: { projectId: string; candidateId: string; confirmedBy: string }) =>
+    deps.baselines.freezeCandidate({
+      projectId: String(payload.projectId),
+      candidateId: String(payload.candidateId),
+      confirmedBy: String(payload.confirmedBy),
     }),
   )
 

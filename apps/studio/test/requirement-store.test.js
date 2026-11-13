@@ -26,10 +26,10 @@ function setup(t) {
   return { dir, store, projects, req: new RequirementStore(store.db) }
 }
 
-test('the schema is at v3 with the requirement tables', (t) => {
+test('the schema is at the current version with the requirement tables', (t) => {
   const { store } = setup(t)
-  assert.equal(SCHEMA_VERSION, 3)
-  assert.equal(store.schemaVersion, 3)
+  assert.equal(SCHEMA_VERSION, 4)
+  assert.equal(store.schemaVersion, 4)
   const tables = store.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((r) => r.name)
   for (const name of ['advisor_conversations', 'advisor_messages', 'advisor_session_links', 'context_snapshots', 'attachments', 'drafts', 'draft_versions', 'research_requests', 'research_reports', 'requirement_baselines', 'change_proposals']) {
     assert.ok(tables.includes(name), 'missing table: ' + name)
@@ -188,7 +188,7 @@ test('research reports keep their sources', (t) => {
   assert.equal(req.getResearchReport('proj-b', report.id), null)
 })
 
-test('a v2 database migrates to v3 and keeps its projects and tasks', (t) => {
+test('a v2 database migrates to the current version and keeps its projects and tasks', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-mig3-'))
   const dbPath = path.join(dir, 'studio.db')
 
@@ -209,7 +209,7 @@ test('a v2 database migrates to v3 and keeps its projects and tasks', (t) => {
 
   const upgraded = new TaskStore(dbPath)
   t.after(() => upgraded.close())
-  assert.equal(upgraded.schemaVersion, 3)
+  assert.equal(upgraded.schemaVersion, 4)
   assert.equal(upgraded.getTask('old').title, 'old', 'existing rows must survive')
   assert.equal(new ProjectStore(upgraded).get('p1').name, 'Old')
   const tables = upgraded.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((r) => r.name)

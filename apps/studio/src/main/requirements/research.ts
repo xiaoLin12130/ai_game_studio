@@ -74,7 +74,13 @@ export interface ResearchServiceOptions {
   store: RequirementStore
   logger: ResearchLogger
   /** Runs one research turn through the advisor and returns the model's markdown. */
-  runResearch: (input: { projectId: string; question: string; scope: string | null }) => Promise<{ ok: boolean; markdown: string; sources: ResearchSource[]; error: string | null }>
+  runResearch: (input: { projectId: string; question: string; scope: string | null }) => Promise<{
+    ok: boolean
+    markdown: string
+    sources: ResearchSource[]
+    error: string | null
+    hasVerifiedSources?: boolean
+  }>
 }
 
 export class ResearchService {
@@ -132,16 +138,31 @@ export class ResearchService {
       }
 
       const parsed = parseReport(result.markdown)
+
+      // A report that cited nothing real is still a report, but it must say so where a
+      // reader will see it — not quietly look like researched output.
+      const verified = result.sources.filter((source) => source.verified)
+      const notice = verified.length === 0
+        ? '\n\n---\n\n> 本次研究没有获得可验证的外部来源。以上内容来自模型知识与推理，未经外部核实。'
+        : ''
+      const content = result.markdown + notice
+
       const report = this.#store.createResearchReport({
         projectId,
         requestId,
         title: request.question.slice(0, 60),
-        content: result.markdown,
+        content,
         sources: result.sources,
         status: 'COMPLETED',
       })
       this.#store.setResearchStatus(projectId, requestId, 'COMPLETED')
-      this.#logger.info('research.completed', { projectId, requestId, sources: result.sources.length, incomplete: parsed.missing.length })
+      this.#logger.info('research.completed', {
+        projectId,
+        requestId,
+        sources: result.sources.length,
+        verified: verified.length,
+        incomplete: parsed.missing.length,
+      })
       return { ok: true, report, error: null, incomplete: parsed.missing }
     } catch (error) {
       this.#store.setResearchStatus(projectId, requestId, 'FAILED')

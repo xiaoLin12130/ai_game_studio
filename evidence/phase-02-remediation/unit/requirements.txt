@@ -1,0 +1,43 @@
+✔ the context includes the user message and the project identity (53.8381ms)
+✔ the context stays inside its budget (51.3593ms)
+✔ the context records what it used (49.9244ms)
+✔ the newest history survives trimming (0.308ms)
+✔ images are classified as inline-capable (0.1252ms)
+✔ an image attachment is stored and can be read back inline (49.5275ms)
+✔ an attachment cannot be read from another project (50.0378ms)
+✔ an unsupported type is refused with a readable reason (47.8207ms)
+✔ a text file is stored with its text extracted (51.7927ms)
+✔ a PDF with no text layer is refused rather than stored empty (47.9158ms)
+✔ a PDF with a text layer yields its text (0.249ms)
+✔ a preview shows unconfirmed sections and open questions without writing anything (43.6062ms)
+✔ freezing without a confirmation is refused (45.9687ms)
+✔ freezing stores the content and its hash (55.8623ms)
+✔ the second freeze diffs against the first (52.122ms)
+✔ a change proposal records an impact analysis that names its own gaps (49.8141ms)
+✔ an approved proposal does not rewrite the frozen baseline (56.16ms)
+✔ a rejected proposal leaves the baseline untouched (55.6918ms)
+✔ a proposal cannot be decided without a user (58.1386ms)
+✔ the schema is at the current version with the requirement tables (55.9566ms)
+✔ a conversation round-trips with ordered messages (59.4073ms)
+✔ conversations are isolated per project (51.9096ms)
+✔ messages cannot be read across conversations (60.1194ms)
+✔ a draft keeps every version (51.8648ms)
+✔ a baseline freezes with a stable hash (47.7867ms)
+✔ the hash does not depend on key order (0.2141ms)
+✔ a second freeze becomes version 2 and links to version 1 (53.8487ms)
+✔ a frozen baseline cannot be updated, even by direct SQL (43.8141ms)
+✔ a frozen baseline cannot be deleted (49.9755ms)
+✔ baselines are isolated per project and version numbers are per project (53.9486ms)
+✔ a change proposal starts pending and records a decision (50.4355ms)
+✔ an approved proposal does not modify the baseline it targets (51.3601ms)
+✔ attachments are project-scoped (43.839ms)
+✔ research reports keep their sources (52.0295ms)
+✔ a v2 database migrates to the current version and keeps its projects and tasks (94.0109ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 909.9622

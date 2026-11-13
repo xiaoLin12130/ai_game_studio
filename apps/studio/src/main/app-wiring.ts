@@ -15,6 +15,7 @@ import { AdvisorService } from './requirements/advisor'
 import { AttachmentService } from './requirements/attachments'
 import { BaselineService } from './requirements/baseline'
 import { ContextCompiler } from './requirements/context'
+import { ResearchExecutor } from './requirements/research-executor'
 import { ResearchService } from './requirements/research'
 import { RequirementStore } from './requirements/store'
 import { ProjectService } from './projects/service'
@@ -179,10 +180,27 @@ export function wireServices(options: WiringOptions): WiredApp {
     },
   })
   const baselines = new BaselineService(requirements)
+  // Research runs on the same supervisor and the same session machinery as the advisor:
+  // one AI runtime, one way to talk to it.
+  const executor = new ResearchExecutor({
+    supervisor: tasks.supervisor,
+    logger: options.logger,
+    projectContext: (projectId: string) => {
+      const project = projects!.store.get(projectId)
+      const config = project ? projects!.store.getConfig(projectId) : null
+      const settings = (config?.settings ?? {}) as Record<string, unknown>
+      return {
+        name: project?.name ?? projectId,
+        engine: project?.engine ?? 'cocos-creator-3.8.6',
+        platform: project?.platform ?? 'wechat-minigame',
+        facts: Array.isArray(settings.facts) ? (settings.facts as string[]) : [],
+      }
+    },
+  })
   const research = new ResearchService({
     store: requirements,
     logger: options.logger,
-    runResearch: async () => ({ ok: false, markdown: '', sources: [], error: '研究执行器尚未接入。' }),
+    runResearch: (input) => executor.run(input),
   })
 
   return {

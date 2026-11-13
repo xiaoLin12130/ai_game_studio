@@ -12,6 +12,7 @@ type ReqDraft = { id: string; projectId: string; kind: string; title: string; st
 type ReqDraftVersion = { id: string; draftId: string; version: number; content: string; note: string | null; createdAt: string }
 type ReqBaseline = { id: string; projectId: string; version: number; name: string; content: string; contentHash: string; status: string; frozenAt: string; confirmedBy: string; previousBaselineId: string | null }
 type ReqProposal = { id: string; baselineId: string; title: string; description: string; status: string; impact: { sections: string[]; drafts: string[]; rework: string[]; risks: string[]; notAnalyzed: string[] } | null; createdAt: string }
+type ReqCandidate = { id: string; proposalId: string; baselineId: string; content: string; contentHash: string; createdAt: string; frozenBaselineId: string | null }
 type ReqReport = { id: string; title: string; content: string; sources: { title: string; url: string; fetchedAt: string; via: string }[]; createdAt: string }
 type ReqAttachment = { id: string; filename: string; kind: string; bytes: number }
 
@@ -38,6 +39,10 @@ interface RequirementsApi {
   getBaseline(projectId: string, baselineId: string): Promise<ReqBaseline | null>
   compareBaselines(projectId: string, leftId: string, rightId: string): Promise<{ added: string[]; removed: string[]; changed: string[] } | null>
   listProposals(projectId: string): Promise<ReqProposal[]>
+  listCandidates(projectId: string): Promise<ReqCandidate[]>
+  createCandidate(projectId: string, proposalId: string): Promise<ReqCandidate>
+  candidateDiff(projectId: string, candidateId: string): Promise<{ added: string[]; removed: string[]; changed: string[] } | null>
+  freezeCandidate(projectId: string, candidateId: string, confirmedBy: string): Promise<ReqBaseline>
   createProposal(projectId: string, baselineId: string, title: string, description: string): Promise<ReqProposal>
   decideProposal(projectId: string, proposalId: string, status: string, decidedBy: string, note?: string | null): Promise<ReqProposal>
 }
@@ -131,11 +136,28 @@ function renderMarkdown(target: HTMLElement, source: string): void {
 const DRAFT_KIND_LABEL: Record<string, string> = { idea: '想法', design: '设计', gdd: 'GDD' }
 const PROPOSAL_LABEL: Record<string, string> = { PENDING: '待审批', APPROVED: '已批准', REJECTED: '已拒绝', NEEDS_REVISION: '需修改' }
 
+/**
+ * What the user needs to know about a proposal, which is more than its own status.
+ *
+ * "Approved" and "waiting for you to confirm the new version" are different situations and
+ * the screen has to say which one it is.
+ */
+function proposalStage(proposal: ReqProposal, candidates: ReqCandidate[]): { label: string; className: string; candidate: ReqCandidate | null } {
+  const candidate = candidates.find((entry) => entry.proposalId === proposal.id) ?? null
+  if (proposal.status === 'REJECTED') return { label: '已拒绝', className: 'rejected', candidate }
+  if (proposal.status === 'NEEDS_REVISION') return { label: '需要修改', className: 'needs_revision', candidate }
+  if (proposal.status === 'PENDING') return { label: '待审批', className: 'pending', candidate }
+  if (candidate?.frozenBaselineId) return { label: '已冻结为新基线', className: 'approved', candidate }
+  if (candidate) return { label: '候选版本待确认', className: 'pending', candidate }
+  return { label: '已批准，尚未生成候选版本', className: 'approved', candidate }
+}
+
 class RequirementsUi {
   readonly #deps: RequirementsUiDeps
   #conversationId: string | null = null
   #draftId: string | null = null
   #pendingAttachments: string[] = []
+  #candidates: ReqCandidate[] = []
   #previewContent: unknown = null
 
   constructor(deps: RequirementsUiDeps) {
@@ -745,6 +767,8 @@ class RequirementsUi {
     list.replaceChildren()
     if (!projectId) return
     const proposals = await this.#deps.api.listProposals(projectId)
+    const candidates = await this.#deps.api.listCandidates(projectId)
+    this.#candidates = candidates
     if (proposals.length === 0) {
       const li = document.createElement('li')
       li.className = 'proposal-empty'
@@ -760,9 +784,10 @@ class RequirementsUi {
       const title = document.createElement('span')
       title.className = 'proposal-title'
       title.textContent = proposal.title
+      const stage = proposalStage(proposal, candidates)
       const status = document.createElement('span')
-      status.className = 'proposal-status proposal-status-' + proposal.status.toLowerCase()
-      status.textContent = PROPOSAL_LABEL[proposal.status] ?? proposal.status
+      status.className = 'proposal-status proposal-status-' + stage.className
+      status.textContent = stage.label
       head.append(title, status)
       li.append(head)
 
@@ -794,9 +819,10 @@ class RequirementsUi {
         li.append(impact)
       }
 
+      const actions = document.createElement('div')
+      actions.className = 'proposal-actions'
+
       if (proposal.status === 'PENDING') {
-        const actions = document.createElement('div')
-        actions.className = 'proposal-actions'
         for (const [label, value] of [['批准', 'APPROVED'], ['拒绝', 'REJECTED'], ['需要修改', 'NEEDS_REVISION']] as const) {
           const button = document.createElement('button')
           button.type = 'button'
@@ -809,9 +835,72 @@ class RequirementsUi {
           })
           actions.append(button)
         }
-        li.append(actions)
       }
+
+      // An approved change is not a new version yet. The user asks for the candidate, looks
+      // at the difference, and only then freezes it.
+      if (proposal.status === 'APPROVED' && !stage.candidate) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'button button-small'
+        button.textContent = '生成候选版本'
+        button.addEventListener('click', async () => {
+          try {
+            await this.#deps.api.createCandidate(projectId, proposal.id)
+          } catch (error) {
+            const alert = this.#deps.byId('proposal-alert')
+            alert.hidden = false
+            alert.textContent = this.#deps.describeError(error)
+          }
+          await this.refreshProposals()
+          this.#deps.onChanged()
+        })
+        actions.append(button)
+      }
+
+      if (proposal.status === 'APPROVED' && stage.candidate && !stage.candidate.frozenBaselineId) {
+        const confirm = document.createElement('button')
+        confirm.type = 'button'
+        confirm.className = 'button button-danger button-small'
+        confirm.textContent = '确认冻结为新版本'
+        confirm.addEventListener('click', () => { void this.#confirmCandidate(projectId, stage.candidate!) })
+        actions.append(confirm)
+
+        const discard = document.createElement('button')
+        discard.type = 'button'
+        discard.className = 'button button-ghost button-small'
+        discard.textContent = '放弃候选版本'
+        discard.addEventListener('click', () => { void this.refreshProposals() })
+        actions.append(discard)
+      }
+
+      if (actions.childElementCount > 0) li.append(actions)
       list.append(li)
+    }
+  }
+
+  /** Show the candidate's difference from the baseline it would replace, then ask. */
+  async #confirmCandidate(projectId: string, candidate: ReqCandidate): Promise<void> {
+    const alert = this.#deps.byId('proposal-alert')
+    alert.hidden = true
+    const diff = await this.#deps.api.candidateDiff(projectId, candidate.id)
+    const lines: string[] = ['这个候选版本将被冻结为新的正式版本，当前基线不会被修改。']
+    if (diff) {
+      if (diff.added.length) lines.push('新增章节：' + diff.added.join('、'))
+      if (diff.removed.length) lines.push('移除章节：' + diff.removed.join('、'))
+      if (diff.changed.length) lines.push('修改章节：' + diff.changed.join('、'))
+      if (!diff.added.length && !diff.removed.length && !diff.changed.length) lines.push('章节结构没有变化。')
+    }
+    const proceed = window.confirm(lines.join('\n') + '\n\n确认冻结吗？')
+    if (!proceed) return
+    try {
+      await this.#deps.api.freezeCandidate(projectId, candidate.id, 'user')
+      await this.refreshProposals()
+      await this.refreshBaselines()
+      this.#deps.onChanged()
+    } catch (error) {
+      alert.hidden = false
+      alert.textContent = this.#deps.describeError(error)
     }
   }
 

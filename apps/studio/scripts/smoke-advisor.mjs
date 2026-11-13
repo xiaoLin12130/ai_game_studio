@@ -17,7 +17,9 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(HERE, '..')
 const REPO = path.resolve(ROOT, '..', '..')
-const OUT = path.join(REPO, 'evidence', 'phase-02', 'desktop')
+// Each round keeps its own evidence directory: a later run must not overwrite the
+// screenshots a previous round's report cites.
+const OUT = path.join(REPO, 'evidence', process.env.SMOKE_EVIDENCE_DIR ?? 'phase-02-remediation', 'desktop')
 const electron = path.join(ROOT, 'node_modules', 'electron', 'dist', 'electron.exe')
 
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-adv-smoke-'))
@@ -89,7 +91,12 @@ const checks = {
   baselineFrozen: smoke?.baseline?.rows >= 1,
   freezeReported: /已冻结/.test(String(smoke?.baseline?.alert ?? '')),
   proposalCreated: smoke?.proposals?.rows >= 1,
-  screenshotsCaptured: shots.length >= 5,
+  proposalApproved: /已批准/.test(String(smoke?.proposals?.approvedStage ?? '')),
+  candidateGenerated: /候选版本待确认/.test(String(smoke?.proposals?.candidateStage ?? '')),
+  candidateFrozen: /已冻结为新基线/.test(String(smoke?.proposals?.finalStage ?? '')),
+  newBaselineVersion: smoke?.baselinesAfterCandidate >= 2,
+  researchPagePresent: smoke?.research?.formPresent === true,
+  screenshotsCaptured: shots.length >= 9,
 }
 
 const summary = {
