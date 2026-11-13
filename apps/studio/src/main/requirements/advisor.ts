@@ -32,6 +32,13 @@ export interface AdvisorOptions {
   projectExists: (projectId: string) => boolean
   /** Project facts and open questions, read from the project's own state. */
   projectContext: (projectId: string) => { facts: string[]; openQuestions: string[]; rules: { title: string; content: string }[] }
+  /**
+   * Make sure the runtime profile can actually serve a model.
+   *
+   * A task checks this before it starts; the advisor has to do the same, or the first
+   * conversation in a fresh install fails with a runtime that never answers.
+   */
+  ensureProfile?: () => { ok: boolean; detail: string }
   /** How long one advisor turn may run. */
   turnTimeoutMs?: number
 }
@@ -133,6 +140,13 @@ export class AdvisorService {
       size: compiled.size,
     })
 
+    const profile = this.#options.ensureProfile?.() ?? { ok: true, detail: 'no check configured' }
+    if (!profile.ok) {
+      const message = '运行时配置尚未就绪：' + profile.detail
+      this.#store.appendMessage({ conversationId: conversation.id, role: 'system', kind: 'error', content: message })
+      return { ok: false, conversationId: conversation.id, sessionId: null, reply: '', toolCalls: [], error: message, timedOut: false }
+    }
+
     const existing = this.#existingSession(conversation.id)
     const sessionId = existing ?? this.#newSession(conversation.id)
     let lease: RuntimeLease | null = null
@@ -141,11 +155,17 @@ export class AdvisorService {
       lease.bindSession(sessionId)
       this.#store.linkSession({ conversationId: conversation.id, sessionId, runtimeId: lease.runtimeId, state: 'ACTIVE' })
 
-      // A session that already exists must be restored before it can be prompted: the
-      // runtime rejects a prompt for a session it has already created. This is also what
-      // makes the conversation continuous rather than starting from nothing each turn.
+      // A session that already exists must be restored before it can be prompted — but only
+      // when the runtime does not already own it. A pooled runtime keeps the session open
+      // between turns, and resuming an open session is rejected outright.
       if (existing) {
-        await lease.client.resumeSession(sessionId)
+        try {
+          await lease.client.resumeSession(sessionId)
+        } catch (error) {
+          const message = String((error as Error)?.message ?? error)
+          if (!/already open|already exists/i.test(message)) throw error
+          this.#logger.info('advisor.session.already-open', { conversationId: conversation.id, sessionId })
+        }
       }
 
       const blocks: Record<string, unknown>[] = [{ type: 'text', text: compiled.text }]
@@ -231,10 +251,12 @@ export class AdvisorService {
         ])
         if (next === null) continue
         const notification = next as { method?: string; params?: Record<string, unknown> }
+        this.#options.logger.info('advisor.notification', { method: notification?.method ?? null })
         if (notification?.method !== 'session.event') continue
         const event = notification.params?.event as Record<string, unknown> | undefined
         const payload = (event?.data ?? event) as Record<string, unknown> | undefined
         const type = String(event?.type ?? '')
+        this.#options.logger.info('advisor.event', { type, detail: type === 'assistant/attempt' ? JSON.stringify(payload).slice(0, 600) : undefined })
         if (type === 'step/start') sawWork = true
         if (type === 'assistant/message') {
           for (const block of (payload?.message as { content?: Record<string, unknown>[] } | undefined)?.content ?? []) {

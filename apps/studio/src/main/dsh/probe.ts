@@ -20,6 +20,7 @@
 import path from 'node:path'
 import { classifyProbeError, type DshServerInfo, type DshStatus, type DshStatusDetail } from '../../shared/status'
 import type { DshEntry } from './locate'
+import { withCredential } from './credentials'
 import {
   captureRuntimeIdentity,
   defaultKiller,
@@ -394,7 +395,7 @@ export function runProbe(request: ProbeRequest): ProbeHandle {
         // The SDK launches the runtime with `process.execPath`. Inside Electron that is
         // electron.exe, which starts a GUI app rather than a Node program and never speaks
         // JSON-RPC on stdio — the handshake then times out with no other explanation.
-        env: childEnvironment(),
+        env: withCredential(childEnvironment(), 'COMMANDCODE_API_KEY', request.dshHome).env,
       }
       if (request.entry.bin) options.dshBin = request.entry.bin
 

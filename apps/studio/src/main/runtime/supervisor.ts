@@ -12,6 +12,7 @@
  */
 import { EventEmitter } from 'node:events'
 import { childEnvironment, loadSdk, sdkEntryPath, type HarnessClientLike } from '../dsh/probe'
+import { withCredential } from '../dsh/credentials'
 import type { DshEntry } from '../dsh/locate'
 import type { TaskIsolation } from '../tasks/types'
 
@@ -82,6 +83,8 @@ export interface SupervisorOptions {
   closeTimeoutMs?: number
   /** Cordis patches applied to every runtime this supervisor starts. */
   patches?: string[]
+  /** Environment variable the provider reads its key from. */
+  apiKeyEnv?: string
   /** Test seam: build a client without spawning the real SDK. */
   clientFactory?: (options: Record<string, unknown>) => HarnessClientLike
 }
@@ -145,7 +148,9 @@ export class RuntimeSupervisor extends EventEmitter {
       profile: this.#options.profile,
       initializeTimeoutMs: 60000,
       disposeGraceMs: 4000,
-      env: childEnvironment(),
+      // The provider authenticates through an environment variable. Without this the
+      // runtime starts, accepts a prompt, and the model call fails with nothing to show.
+      env: withCredential(childEnvironment(), this.#options.apiKeyEnv ?? 'COMMANDCODE_API_KEY', this.#options.dshHome).env,
     }
     if (this.#options.entry.bin) options.dshBin = this.#options.entry.bin
     if (this.#options.patches?.length) options.patches = this.#options.patches
@@ -268,7 +273,11 @@ export class RuntimeSupervisor extends EventEmitter {
         const busy = Math.max(0, (this.#busy.get(runtime!.id) ?? 1) - 1)
         this.#busy.set(runtime!.id, busy)
         if (busy === 0) runtime!.taskIds.delete(input.taskId)
-        if (runtime!.isolation === 'writable' || busy === 0) {
+        // Writable runtimes are closed on release: they are exclusive and short-lived.
+        // A pooled readonly runtime stays warm instead — closing it after every turn makes
+        // the next turn pay a cold start, and a turn still draining its stream would lose
+        // the runtime underneath it.
+        if (runtime!.isolation === 'writable') {
           const result = await this.#close(runtime!, reason)
           if (!result.ok) {
             this.#options.logger.error('runtime.release.failed', { runtimeId: runtime!.id, reason, error: result.error })

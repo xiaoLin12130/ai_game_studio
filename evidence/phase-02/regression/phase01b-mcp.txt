@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "mode": "handshake-only",
+  "initialized": true,
+  "toolCalled": false,
+  "exitCode": 0,
+  "events": 0
+}

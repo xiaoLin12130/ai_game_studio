@@ -34,6 +34,7 @@ export const CHANNELS = {
   projectOpen: 'studio:projects:open',
   projectClose: 'studio:projects:close',
   projectGet: 'studio:projects:get',
+  projectCurrent: 'studio:projects:current',
   projectUpdateConfig: 'studio:projects:config',
   projectBackup: 'studio:projects:backup',
   projectRestore: 'studio:projects:restore',
@@ -162,6 +163,9 @@ export function registerIpc(deps: IpcDeps): void {
   })
 
   ipcMain.handle(CHANNELS.projectGet, (_event, id: string) => deps.projects.view(String(id)))
+
+  // Which project is open is main-process state; the renderer asks rather than assumes.
+  ipcMain.handle(CHANNELS.projectCurrent, () => deps.projects.openProject)
 
   ipcMain.handle(CHANNELS.projectUpdateConfig, (_event, payload: { id: string; settings: Record<string, unknown> }) => {
     deps.projects.updateConfig(String(payload.id), payload.settings ?? {})

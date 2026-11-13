@@ -1,8 +1,8 @@
 {
   "phase": "PHASE_02",
   "title": "AI 顾问、需求讨论与正式需求基线",
-  "status": "IN_PROGRESS",
-  "note": "本轮完成 M0–M8 的主要实现与真实链路验证；M9 回归与 M10 交付尚未完成，故未标记 READY_FOR_EXTERNAL_REVIEW。",
+  "status": "READY_FOR_EXTERNAL_REVIEW",
+  "note": "M0–M10 全部完成；真实 DSH 顾问链路与真实 Electron 旅程均有证据。",
   "branch": "phase/02-advisor-requirements-baseline",
   "base_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
   "base_branch": "phase/01-d-project-workspace",
@@ -16,26 +16,34 @@
     "M5": "正式需求基线：预览、确认、冻结、规范化哈希、数据库触发器强制不可覆盖",
     "M6": "变更提案与影响分析（明示未分析范围）",
     "M7": "SQLite v3 迁移，11 张新表，v2→v3 升级保留旧数据",
-    "M8": "UI：顾问三栏布局、草稿页、基线冻结确认页、变更提案页"
+    "M8": "UI：顾问三栏布局、草稿页、基线冻结确认页、变更提案页",
+    "M9": "回归：PHASE 00 门禁、PHASE 01-A/01-B/01-C/01-D 冒烟、桌面旅程 13/13、6 张真实截图",
+    "M10": "报告、证据索引、state 收尾、推送"
   },
-  "pending": {
-    "M9": "回归（PHASE 00 门禁、PHASE 01 冒烟、桌面运行、截图证据）",
-    "M10": "阶段报告、证据索引、state 收尾、推送"
-  },
+  "pending": {},
   "verified": {
     "full_suite": {
       "command": "node --test",
       "result": "291/291 pass",
-      "artifact": "evidence/phase-02/"
+      "artifact": "evidence/phase-02/unit/full-suite.txt"
     },
     "advisor_real_chain": {
       "command": "node scripts/advisor-probe.mjs",
-      "result": "11/11 steps OK",
+      "result": "11/11 steps",
       "artifact": "evidence/phase-02/advisor/advisor-chain.json"
+    },
+    "desktop_journey": {
+      "command": "node scripts/smoke-advisor.mjs",
+      "result": "13/13 checks, 6 screenshots",
+      "artifact": "evidence/phase-02/desktop/summary.json"
     },
     "web_capability": {
       "result": "web_fetch 与 web_search 均实测可用",
       "artifact": "evidence/phase-02/capability/web-capability.json"
+    },
+    "phase00_gates": {
+      "result": "PASS，0 泄漏",
+      "artifact": "evidence/phase-02/regression/phase00-gates.json"
     }
   },
   "key_findings": [
@@ -45,10 +53,20 @@
     "冻结基线不可覆盖由数据库触发器强制，不只是 UI 禁用"
   ],
   "next_actions": [
-    "M9：跑 PHASE 00 门禁、PHASE 01-A/01-B/01-C/01-D 回归、桌面冒烟",
-    "M9：补 UI 截图证据（区分真实运行与夹具）",
-    "M10：写 PHASE_02_REPORT.md、evidence 索引、verification.json",
-    "M10：更新 handoff / decisions / state，推送分支"
+    "等待外部评审；PHASE 03 在评审通过后开始"
   ],
-  "updated_at": "2026-11-12T16:40:27.078Z"
+  "updated_at": "2026-11-13T04:02:06.415Z",
+  "defects_found_and_fixed": [
+    "应用从不读取凭据文件，模型调用必然 MISSING_CREDENTIAL",
+    "默认 provider 是 deepseek-official，本机只有 commandcode 凭据",
+    "顾问路径未调用 ensureProfile()，新装环境 provider 插件缺失",
+    "只读 runtime 池在租约释放时关闭，下一轮要冷启动",
+    "冒烟看门狗硬编码 180 秒，长任务被误杀",
+    "renderer 不知道主进程已打开的项目，重启后顾问拒绝工作",
+    "空状态未隐藏（组件 display 覆盖 hidden 属性）",
+    "顾问回复的 Markdown 原样显示",
+    "第二轮 resumeSession 与已打开的 session 冲突",
+    "影响分析的中文分词方向反了",
+    "上下文裁剪从尾部截断，切掉了刚保留的最新消息"
+  ]
 }

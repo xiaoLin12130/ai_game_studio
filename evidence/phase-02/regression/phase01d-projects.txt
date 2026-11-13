@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "checks": {
+    "createExitZero": true,
+    "createdProject": true,
+    "projectHasId": true,
+    "markerWritten": true,
+    "reopenExitZero": true,
+    "projectSurvivedRestart": true,
+    "sameProjectId": true,
+    "reopenedSuccessfully": true,
+    "eventsRecorded": true
+  }
+}

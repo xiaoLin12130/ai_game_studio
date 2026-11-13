@@ -22,6 +22,7 @@ const CHANNELS = {
   projectOpen: 'studio:projects:open',
   projectClose: 'studio:projects:close',
   projectGet: 'studio:projects:get',
+  projectCurrent: 'studio:projects:current',
   projectUpdateConfig: 'studio:projects:config',
   projectBackup: 'studio:projects:backup',
   projectRestore: 'studio:projects:restore',
@@ -78,6 +79,7 @@ const api = {
   openProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectOpen, id),
   closeProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectClose, id),
   getProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectGet, id),
+  getCurrentProject: () => ipcRenderer.invoke(CHANNELS.projectCurrent),
   updateProjectConfig: (id: string, settings: Record<string, unknown>) =>
     ipcRenderer.invoke(CHANNELS.projectUpdateConfig, { id, settings }),
   backupProject: (id: string) => ipcRenderer.invoke(CHANNELS.projectBackup, id),

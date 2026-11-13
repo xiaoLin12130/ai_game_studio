@@ -105,8 +105,8 @@
     "report": "docs/phase-reports/PHASE_00_REPORT.md",
     "reproduce": "cd spike/dsh-probe && node run-all.mjs"
   },
-  "next_action": "PHASE 01-D 等待外部评审；PHASE 02 在评审通过后开始。",
-  "updated_at": "2026-11-12T08:29:15.380Z",
+  "next_action": "PHASE 02 等待外部评审；PHASE 03 在评审通过后开始。",
+  "updated_at": "2026-11-13T04:02:06.416Z",
   "phase_00_r1": {
     "authored_at": "2026-11-10T10:48:46.579Z",
     "runtime_under_test": "DSH 0.2.1-rc.3 (DSH Desktop bundled runtime)",
@@ -902,5 +902,14 @@
     "report": "docs/review-handoff/PHASE_01_D_WORK_REPORT.md",
     "evidence": "evidence/phase-01-d/",
     "note": "PHASE 00 / 01-A / 01-B / 01-C 的关闭记录未改动。"
+  },
+  "phase_02": {
+    "status": "READY_FOR_EXTERNAL_REVIEW",
+    "branch": "phase/02-advisor-requirements-baseline",
+    "base_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
+    "state_file": "state/phase_02.json",
+    "report": "docs/review-handoff/PHASE_02_REPORT.md",
+    "evidence": "evidence/phase-02/",
+    "note": "PHASE 00 / 01-A / 01-B / 01-C / 01-D 的关闭记录未改动。"
   }
 }

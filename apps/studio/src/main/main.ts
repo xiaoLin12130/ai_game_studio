@@ -122,6 +122,124 @@ async function runSmoke(): Promise<void> {
     return
   }
 
+  // ---- advisor journey (PHASE 02) -------------------------------------------------
+  if (SMOKE === 'advisor-journey' && projects) {
+    const write = (payload: Record<string, unknown>) => {
+      fs.mkdirSync(SMOKE_OUT as string, { recursive: true })
+      fs.writeFileSync(path.join(SMOKE_OUT as string, 'smoke.json'), JSON.stringify({ generatedAt: new Date().toISOString(), mode: SMOKE, ...payload }, null, 2) + '\n')
+    }
+    const shot = async (name: string) => {
+      const image = await window.webContents.capturePage()
+      fs.mkdirSync(SMOKE_OUT as string, { recursive: true })
+      fs.writeFileSync(path.join(SMOKE_OUT as string, name + '.png'), image.toPNG())
+    }
+    const evaluate = (script: string) => window.webContents.executeJavaScript(script, true)
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+    // A marker per step: if the run dies, the last marker says where.
+    const mark = (step: string) => {
+      fs.mkdirSync(SMOKE_OUT as string, { recursive: true })
+      fs.appendFileSync(path.join(SMOKE_OUT as string, 'progress.log'), new Date().toISOString() + ' ' + step + '\n')
+    }
+
+    try {
+      const projectRoot = process.env.STUDIO_SMOKE_PROJECT_ROOT
+      if (!projectRoot) throw new Error('STUDIO_SMOKE_PROJECT_ROOT is required')
+      const created = projects.create({ name: '鸽子幸存者', rootPath: projectRoot, engine: 'cocos-creator-3.8.6', platform: 'wechat-minigame' })
+      projects.open(created.id)
+
+      mark('project-created')
+      await wait(800)
+      await evaluate("document.querySelector('[data-view=\"advisor\"]').click(); true")
+      mark('advisor-view')
+      await wait(400)
+      const advisorVisible = await evaluate("!document.getElementById('view-advisor').hidden")
+      const emptyShown = await evaluate("!document.getElementById('advisor-empty').hidden")
+      await shot('01-advisor-empty')
+
+      await evaluate([
+        '(function () {',
+        "  var input = document.getElementById('composer-input')",
+        "  input.value = '我想做一个像素风格的微信小游戏，玩法类似吸血鬼幸存者，但角色是鸽子。'",
+        "  document.getElementById('composer').dispatchEvent(new Event('submit', { cancelable: true }))",
+        '  return true',
+        '})()',
+      ].join('\n'))
+      // Wait for the reply rather than sleeping a fixed time: a cold runtime plus a real
+      // model turn is minutes, and a fixed sleep either wastes time or cuts the turn off.
+      const deadline = Date.now() + Number(process.env.STUDIO_SMOKE_TURN_WAIT_MS ?? 240000)
+      mark('waiting-for-reply')
+      let sawAssistant = false
+      let beat = 0
+      while (Date.now() < deadline) {
+        await wait(2000)
+        beat += 1
+        if (beat % 5 === 0) mark('waiting-' + Math.round((Date.now() - (deadline - Number(process.env.STUDIO_SMOKE_TURN_WAIT_MS ?? 240000))) / 1000) + 's')
+        const roles = (await evaluate("Array.from(document.querySelectorAll('.message')).map(function (n) { return n.className })")) as string[]
+        if (roles.some((cls) => cls.includes('message-assistant'))) {
+          sawAssistant = true
+          break
+        }
+      }
+
+      mark('reply-window-closed')
+      const messages = await evaluate("Array.from(document.querySelectorAll('.message')).map(function (n) { return { role: n.className.replace('message message-', ''), text: (n.querySelector('.message-body') || {}).textContent || '' } })")
+      const conversations = await evaluate("document.querySelectorAll('.conversation-row').length")
+      await shot('02-advisor-conversation')
+
+      await evaluate("document.querySelector('[data-view=\"assets\"]').click(); true")
+      await wait(300)
+      await evaluate([
+        '(function () {',
+        "  document.getElementById('draft-title').value = '核心玩法'",
+        "  document.getElementById('draft-form').dispatchEvent(new Event('submit', { cancelable: true }))",
+        '  return true',
+        '})()',
+      ].join('\n'))
+      await wait(700)
+      const draftRows = await evaluate("document.querySelectorAll('.draft-row').length")
+      await shot('03-drafts')
+
+      await evaluate("document.querySelector('[data-view=\"decisions\"]').click(); true")
+      await wait(300)
+      await evaluate("document.getElementById('baseline-prepare').click(); true")
+      await wait(1000)
+      const previewVisible = await evaluate("!document.getElementById('baseline-preview-card').hidden")
+      await shot('04-baseline-preview')
+
+      await evaluate("document.getElementById('preview-confirm').click(); true")
+      await wait(1000)
+      const baselineRows = await evaluate("document.querySelectorAll('.baseline-row').length")
+      const baselineAlert = await evaluate("document.getElementById('baseline-alert').textContent || ''")
+      await shot('05-baseline-frozen')
+
+      await evaluate([
+        '(function () {',
+        "  document.getElementById('proposal-title').value = '加入 Boss 战'",
+        "  document.getElementById('proposal-description').value = '核心玩法需要加入 Boss 战'",
+        "  document.getElementById('proposal-form').dispatchEvent(new Event('submit', { cancelable: true }))",
+        '  return true',
+        '})()',
+      ].join('\n'))
+      await wait(1000)
+      const proposalRows = await evaluate("document.querySelectorAll('.proposal-row').length")
+      await shot('06-proposals')
+
+      write({
+        phase: 'journey',
+        projectId: created.id,
+        advisor: { visible: advisorVisible, emptyShown, messageCount: messages.length, roles: messages.map((x: { role: string }) => x.role), conversations },
+        drafts: { rows: draftRows },
+        baseline: { previewVisible, rows: baselineRows, alert: baselineAlert },
+        proposals: { rows: proposalRows },
+      })
+      app.quit()
+      return
+    } catch (error) {
+      write({ phase: 'error', error: String((error as Error)?.message ?? error) })
+      app.exit(1)
+      return
+    }
+  }
   // ---- project scenarios (PHASE 01-D) --------------------------------------------
   if (SMOKE.startsWith('project-') && projects) {
     const write = (payload: Record<string, unknown>) => {
@@ -425,9 +543,12 @@ if (!gotLock) {
   })
 
   if (SMOKE) {
+    // A smoke run must not hang forever, but the budget has to fit the scenario: an advisor
+    // turn waits on a real model, and a fixed three minutes killed runs that were working.
+    const watchdogMs = Number(process.env.STUDIO_SMOKE_WATCHDOG_MS ?? 600000)
     setTimeout(() => {
-      console.error('[smoke] watchdog fired')
+      console.error('[smoke] watchdog fired after ' + watchdogMs + 'ms')
       app.exit(4)
-    }, 180000).unref()
+    }, watchdogMs).unref()
   }
 }

@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-11-13T03:51:09.565Z",
+  "kind": "REAL_RUN",
+  "note": "真实 Electron 窗口中的真实点击流程；截图是同一次运行的真实捕获。",
+  "elapsedMs": 18103,
+  "exitCode": 0,
+  "timedOut": false,
+  "screenshots": [
+    "01-advisor-empty.png",
+    "02-advisor-conversation.png",
+    "03-drafts.png",
+    "04-baseline-preview.png",
+    "05-baseline-frozen.png",
+    "06-proposals.png"
+  ],
+  "progress": [
+    "2026-11-13T03:50:51.686Z project-created",
+    "2026-11-13T03:50:52.490Z advisor-view",
+    "2026-11-13T03:50:52.940Z waiting-for-reply",
+    "2026-11-13T03:51:02.983Z waiting-10s",
+    "2026-11-13T03:51:04.989Z reply-window-closed"
+  ],
+  "checks": {
+    "exitZero": true,
+    "journeyCompleted": true,
+    "advisorViewOpened": true,
+    "starterStateShown": true,
+    "oneSentenceStartedDiscussion": true,
+    "messagesPersisted": true,
+    "assistantReplied": true,
+    "draftCreated": true,
+    "freezePageShown": true,
+    "baselineFrozen": true,
+    "freezeReported": true,
+    "proposalCreated": true,
+    "screenshotsCaptured": true
+  },
+  "ok": true,
+  "smoke": {
+    "generatedAt": "2026-11-13T03:51:09.473Z",
+    "mode": "advisor-journey",
+    "phase": "journey",
+    "projectId": "proj-9eafa91e",
+    "advisor": {
+      "visible": true,
+      "emptyShown": true,
+      "messageCount": 2,
+      "roles": [
+        "user",
+        "assistant"
+      ],
+      "conversations": 1
+    },
+    "drafts": {
+      "rows": 1
+    },
+    "baseline": {
+      "previewVisible": true,
+      "rows": 1,
+      "alert": "已冻结 v1，哈希 4973c809b5cfccfe。"
+    },
+    "proposals": {
+      "rows": 1
+    }
+  }
+}

@@ -55,6 +55,79 @@ interface RequirementsUiDeps {
 }
 
 const ROLE_LABEL: Record<string, string> = { user: '你', assistant: '顾问', tool: '工具', system: '系统' }
+
+/**
+ * Render the small markdown subset a model actually uses in conversation.
+ *
+ * Bold, inline code, bullet and numbered lists, and headings. Everything is created as a
+ * text node or an element with textContent, so nothing the model writes can become markup.
+ */
+function renderMarkdown(target: HTMLElement, source: string): void {
+  const inline = (text: string): DocumentFragment => {
+    const fragment = document.createDocumentFragment()
+    const pattern = /\*\*([^*]+)\*\*|`([^`]+)`/g
+    let last = 0
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index > last) fragment.append(document.createTextNode(text.slice(last, match.index)))
+      if (match[1] !== undefined) {
+        const strong = document.createElement('strong')
+        strong.textContent = match[1]
+        fragment.append(strong)
+      } else {
+        const code = document.createElement('code')
+        code.textContent = match[2]
+        fragment.append(code)
+      }
+      last = match.index + match[0].length
+    }
+    if (last < text.length) fragment.append(document.createTextNode(text.slice(last)))
+    return fragment
+  }
+
+  let list: HTMLElement | null = null
+  let listKind: 'ul' | 'ol' | null = null
+
+  for (const raw of source.split(/\r?\n/)) {
+    const line = raw.trimEnd()
+    const bullet = /^\s*[-*]\s+(.*)$/.exec(line)
+    const numbered = /^\s*\d+[.)]\s+(.*)$/.exec(line)
+    const heading = /^(#{1,4})\s+(.*)$/.exec(line)
+
+    if (bullet || numbered) {
+      const kind: 'ul' | 'ol' = bullet ? 'ul' : 'ol'
+      if (!list || listKind !== kind) {
+        list = document.createElement(kind)
+        listKind = kind
+        target.append(list)
+      }
+      const item = document.createElement('li')
+      item.append(inline((bullet ?? numbered)![1]))
+      list.append(item)
+      continue
+    }
+
+    list = null
+    listKind = null
+
+    if (heading) {
+      const level = Math.min(4, heading[1].length + 2)
+      const element = document.createElement('h' + level)
+      element.append(inline(heading[2]))
+      target.append(element)
+      continue
+    }
+
+    if (line.trim().length === 0) {
+      target.append(document.createElement('br'))
+      continue
+    }
+
+    const paragraph = document.createElement('p')
+    paragraph.append(inline(line))
+    target.append(paragraph)
+  }
+}
 const DRAFT_KIND_LABEL: Record<string, string> = { idea: '想法', design: '设计', gdd: 'GDD' }
 const PROPOSAL_LABEL: Record<string, string> = { PENDING: '待审批', APPROVED: '已批准', REJECTED: '已拒绝', NEEDS_REVISION: '需修改' }
 
@@ -137,6 +210,26 @@ class RequirementsUi {
     list.scrollTop = list.scrollHeight
   }
 
+  /** Append the pending user message so the conversation responds immediately. */
+  #showOptimisticUserMessage(text: string): void {
+    const list = this.#deps.byId('message-list')
+    const empty = this.#deps.byId('advisor-empty')
+    empty.hidden = true
+    list.hidden = false
+    const node = this.#messageNode({
+      id: 'pending',
+      conversationId: this.#conversationId ?? '',
+      role: 'user',
+      kind: 'text',
+      content: text,
+      seq: Number.MAX_SAFE_INTEGER,
+      createdAt: new Date().toISOString(),
+    })
+    node.classList.add('message-pending')
+    list.append(node)
+    list.scrollTop = list.scrollHeight
+  }
+
   #messageNode(message: ReqMessage): HTMLElement {
     const wrap = document.createElement('div')
     wrap.className = 'message message-' + message.role
@@ -151,7 +244,13 @@ class RequirementsUi {
     head.append(who, when)
     const body = document.createElement('div')
     body.className = 'message-body'
-    body.textContent = message.content
+    if (message.role === 'assistant') {
+      // The model writes markdown. Showing the asterisks makes a good answer look broken,
+      // and innerHTML would let model output become markup, so this builds nodes.
+      renderMarkdown(body, message.content)
+    } else {
+      body.textContent = message.content
+    }
     wrap.append(head, body)
     return wrap
   }
@@ -173,6 +272,10 @@ class RequirementsUi {
     sendButton.disabled = true
     sendButton.textContent = '思考中…'
     this.#deps.setText('advisor-status', '顾问正在回应…')
+
+    // Show the user's own words at once. A real turn can take minutes, and a composer that
+    // appears to swallow the message for that long reads as broken.
+    this.#showOptimisticUserMessage(trimmed)
 
     try {
       if (!this.#conversationId) {

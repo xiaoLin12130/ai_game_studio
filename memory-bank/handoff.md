@@ -1,12 +1,11 @@
-## PHASE 02（进行中，未完成）
+## PHASE 02（READY_FOR_EXTERNAL_REVIEW）
 
 - 分支 `phase/02-advisor-requirements-baseline`，基线 `ea6c593`。
-- **已完成 M0–M8**：顾问对话与 Session 映射、附件与上下文编译、研究报告、设计草稿/GDD 版本、正式基线冻结（规范化哈希 + 数据库触发器强制不可覆盖）、变更提案与影响分析、SQLite v3 迁移（11 张新表）、三栏顾问 UI 与冻结确认页。
-- **验证**：应用全量 291/291；真实 DSH 顾问链路 11/11（真实 provider、真实模型，两轮对话有记忆、只追问 1–2 个问题、区分「用户说的/推测/建议」）。
-- **能力实测**：`web_fetch` 与 `web_search` 均可用（走 commandcode provider）；PDF/DOCX 需本地提取文本。
-- **未完成**：M9 回归（PHASE 00 门禁、PHASE 01 各阶段冒烟、桌面截图证据）、M10 报告与推送。
-- **前置事实**：`state/phase_01_d.json` 仍是 READY_FOR_EXTERNAL_REVIEW，仓库内无法自证外部评审已通过。
-- 状态文件：`state/phase_02.json`。
+- 顾问对话与 Session 映射、附件与上下文编译、研究报告、设计草稿/GDD 版本、正式基线冻结（规范化哈希 + 数据库触发器强制不可覆盖）、变更提案与影响分析、SQLite v3 迁移（11 张新表）、三栏顾问 UI 与冻结确认页。
+- **验证**：应用全量 291/291；真实 DSH 顾问链路 11/11；真实 Electron 旅程 13/13（6 张真实截图）；PHASE 01-C/D 57/57；PHASE 00 门禁 PASS。
+- **修复的真实缺陷**：应用从不读凭据、默认 provider 无凭据、顾问未调 `ensureProfile()`、只读 runtime 池过早关闭、冒烟看门狗硬编码、renderer 不知道已打开项目、空状态未隐藏、Markdown 原样显示、第二轮 session 冲突、影响分析分词方向反、上下文裁剪切掉最新消息。
+- **能力实测**：`web_fetch` 与 `web_search` 均可用（走 commandcode provider）。
+- 报告：`docs/review-handoff/PHASE_02_REPORT.md`；证据：`evidence/phase-02/`。
 
 ## PHASE 01-D 第三轮补正（READY_FOR_EXTERNAL_REVIEW）
 

@@ -368,7 +368,9 @@ body { display: flex; flex-direction: column; }
   border-bottom-color: var(--accent);
 }
 
-.view[hidden] { display: none; }
+/* A component that sets its own display (grid, flex) beats the hidden attribute, which is
+   how the advisor's empty state stayed on screen behind the conversation. */
+[hidden] { display: none !important; }
 
 .project-list {
   list-style: none;
@@ -557,6 +559,11 @@ body { display: flex; flex-direction: column; }
 .proposal-list,
 .research-list,
 .context-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+
+/* A grid item defaults to min-width:auto, which lets a long title push the column wider
+   than its track. The sidebar must stay put and the title must ellipsise. */
+.conversation-list > li,
+.draft-list > li { min-width: 0; }
 
 .conversation-row,
 .draft-row {
@@ -814,3 +821,22 @@ body { display: flex; flex-direction: column; }
 .impact-row { display: flex; gap: 8px; }
 .impact-label { color: var(--text-dim); min-width: 84px; }
 .proposal-actions { display: flex; gap: 8px; }
+
+.message-pending .message-body { opacity: 0.6; }
+
+.message-body p { margin: 0 0 6px; }
+.message-body p:last-child { margin-bottom: 0; }
+.message-body ul,
+.message-body ol { margin: 4px 0 8px; padding-left: 20px; }
+.message-body li { margin: 2px 0; }
+.message-body h3,
+.message-body h4,
+.message-body h5 { margin: 10px 0 4px; font-size: 13px; }
+.message-body code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.message-body strong { color: var(--text); }

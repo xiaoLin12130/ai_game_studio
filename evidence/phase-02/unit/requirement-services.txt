@@ -1,0 +1,27 @@
+✔ the context includes the user message and the project identity (33.9404ms)
+✔ the context stays inside its budget (31.1369ms)
+✔ the context records what it used (30.414ms)
+✔ the newest history survives trimming (0.3184ms)
+✔ images are classified as inline-capable (0.1374ms)
+✔ an image attachment is stored and can be read back inline (32.8815ms)
+✔ an attachment cannot be read from another project (35.925ms)
+✔ an unsupported type is refused with a readable reason (31.8492ms)
+✔ a text file is stored with its text extracted (37.8297ms)
+✔ a PDF with no text layer is refused rather than stored empty (34.1165ms)
+✔ a PDF with a text layer yields its text (0.2379ms)
+✔ a preview shows unconfirmed sections and open questions without writing anything (31.418ms)
+✔ freezing without a confirmation is refused (33.9564ms)
+✔ freezing stores the content and its hash (33.9899ms)
+✔ the second freeze diffs against the first (33.8069ms)
+✔ a change proposal records an impact analysis that names its own gaps (34.1352ms)
+✔ an approved proposal does not rewrite the frozen baseline (38.1106ms)
+✔ a rejected proposal leaves the baseline untouched (37.7333ms)
+✔ a proposal cannot be decided without a user (38.0101ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 644.5785

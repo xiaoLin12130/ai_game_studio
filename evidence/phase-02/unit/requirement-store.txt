@@ -1,0 +1,24 @@
+✔ the schema is at v3 with the requirement tables (35.2007ms)
+✔ a conversation round-trips with ordered messages (39.5713ms)
+✔ conversations are isolated per project (35.8422ms)
+✔ messages cannot be read across conversations (37.6432ms)
+✔ a draft keeps every version (37.9936ms)
+✔ a baseline freezes with a stable hash (34.9272ms)
+✔ the hash does not depend on key order (0.2786ms)
+✔ a second freeze becomes version 2 and links to version 1 (36.628ms)
+✔ a frozen baseline cannot be updated, even by direct SQL (33.9664ms)
+✔ a frozen baseline cannot be deleted (41.9285ms)
+✔ baselines are isolated per project and version numbers are per project (35.875ms)
+✔ a change proposal starts pending and records a decision (40.4062ms)
+✔ an approved proposal does not modify the baseline it targets (39.6761ms)
+✔ attachments are project-scoped (33.7143ms)
+✔ research reports keep their sources (38.0876ms)
+✔ a v2 database migrates to v3 and keeps its projects and tasks (61.931ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 678.6624

@@ -1,0 +1,223 @@
+{
+  "generatedAt": "2026-11-13T04:01:01.286Z",
+  "phase": "PHASE_02",
+  "branch": "phase/02-advisor-requirements-baseline",
+  "baseCommit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
+  "note": "每条都是本轮真实执行的命令；计数从旁边的原始输出解析。",
+  "matrix": [
+    {
+      "name": "typescript",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/unit/tsc.txt"
+    },
+    {
+      "name": "studio-full-suite",
+      "command": "node --test",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 291,
+        "pass": 291,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02/unit/full-suite.txt"
+    },
+    {
+      "name": "requirement-store",
+      "command": "node --test test/requirement-store.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 16,
+        "pass": 16,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02/unit/requirement-store.txt"
+    },
+    {
+      "name": "requirement-services",
+      "command": "node --test test/requirement-services.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 19,
+        "pass": 19,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02/unit/requirement-services.txt"
+    },
+    {
+      "name": "advisor-real-chain",
+      "command": "node scripts/advisor-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "steps": 11,
+        "failed": 0
+      },
+      "artifact": "evidence/phase-02/advisor/advisor-chain.json",
+      "note": "真实 DSH runtime + 真实 provider + 真实模型，两轮对话"
+    },
+    {
+      "name": "desktop-journey",
+      "command": "node scripts/smoke-advisor.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "checks": 13,
+        "failed": 0,
+        "screenshots": 6
+      },
+      "artifact": "evidence/phase-02/desktop/summary.json",
+      "note": "真实 Electron 窗口中的真实点击流程"
+    },
+    {
+      "name": "web-capability",
+      "command": "node scripts/web-capability-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/capability/web-capability.json",
+      "note": "web_fetch 与 web_search 均实测可用"
+    },
+    {
+      "name": "phase01a-smoke",
+      "command": "node scripts/smoke.mjs ready",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/regression/phase01a-ready.txt"
+    },
+    {
+      "name": "phase01b-mcp",
+      "command": "node scripts/mcp-probe.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/regression/phase01b-mcp.txt"
+    },
+    {
+      "name": "phase01c-d-tasks",
+      "command": "node --test test/task-*.test.js test/lifecycle.test.js test/lock-heartbeat.test.js",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "counts": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "skipped": 0
+      },
+      "artifact": "evidence/phase-02/regression/phase01c-d-tasks.txt"
+    },
+    {
+      "name": "phase01d-projects",
+      "command": "node scripts/smoke-projects.mjs",
+      "cwd": "apps/studio",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/regression/phase01d-projects.txt"
+    },
+    {
+      "name": "phase00-gates",
+      "command": "node scripts/run-gates.mjs",
+      "cwd": "spike/dsh-probe/current-0.2.1",
+      "exitCode": 0,
+      "artifact": "evidence/phase-02/regression/phase00-gates.json",
+      "note": "PASS，0 泄漏"
+    }
+  ],
+  "acceptance": {
+    "一句话开始讨论": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/desktop/summary.json"
+    },
+    "渐进式追问": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/advisor/advisor-chain.json"
+    },
+    "讨论不修改基线": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/unit/requirement-services.txt"
+    },
+    "不自动创建开发任务": {
+      "status": "PASS",
+      "evidence": "apps/studio/src/main/requirements/advisor.ts"
+    },
+    "研究报告带来源": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/unit/requirement-services.txt"
+    },
+    "未验证项有标记": {
+      "status": "PASS",
+      "evidence": "apps/studio/src/main/requirements/research.ts"
+    },
+    "草稿可确认/拒绝/编辑": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/desktop/summary.json"
+    },
+    "基线冻结后不可原位覆盖": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/unit/requirement-store.txt"
+    },
+    "变更需审批": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/unit/requirement-services.txt"
+    },
+    "Session 中断不丢状态": {
+      "status": "PASS",
+      "evidence": "evidence/phase-02/advisor/advisor-chain.json"
+    },
+    "阶段报告与推送": {
+      "status": "PASS",
+      "evidence": "docs/review-handoff/PHASE_02_REPORT.md"
+    }
+  },
+  "defects_found_and_fixed": [
+    "应用从不读取凭据文件，模型调用必然 MISSING_CREDENTIAL",
+    "默认 provider 是 deepseek-official，本机只有 commandcode 凭据",
+    "顾问路径未调用 ensureProfile()，新装环境 provider 插件缺失",
+    "只读 runtime 池在租约释放时关闭，下一轮要冷启动",
+    "冒烟看门狗硬编码 180 秒，长任务被误杀",
+    "renderer 不知道主进程已打开的项目，重启后顾问拒绝工作",
+    "空状态未隐藏（组件 display 覆盖 hidden 属性）",
+    "顾问回复的 Markdown 原样显示",
+    "第二轮 resumeSession 与已打开的 session 冲突",
+    "影响分析的中文分词方向反了，匹配不到章节",
+    "上下文裁剪从尾部截断，切掉了刚保留的最新消息"
+  ],
+  "notRun": [
+    {
+      "id": "NOT_RUN-1",
+      "item": "安装包重建与安装后顾问链路",
+      "reason": "本轮未改打包配置"
+    },
+    {
+      "id": "NOT_RUN-2",
+      "item": "npm audit / 静态吊销检查",
+      "reason": "未改依赖树"
+    }
+  ],
+  "deferred": [
+    {
+      "id": "D-02-1",
+      "item": "完整素材库与素材识别",
+      "phase": "PHASE 03"
+    },
+    {
+      "id": "D-02-2",
+      "item": "UI 原型设计器",
+      "phase": "PHASE 04"
+    },
+    {
+      "id": "D-02-3",
+      "item": "多 Agent 调度",
+      "phase": "PHASE 05"
+    },
+    {
+      "id": "D-02-4",
+      "item": "多人审批与角色权限",
+      "phase": "未排期"
+    }
+  ]
+}

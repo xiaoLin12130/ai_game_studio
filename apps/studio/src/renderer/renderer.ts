@@ -141,6 +141,7 @@ interface StudioApi {
   openProject(id: string): Promise<ProjectSummary>
   closeProject(id: string): Promise<{ ok: boolean }>
   getProject(id: string): Promise<ProjectDetail | null>
+  getCurrentProject(): Promise<string | null>
   updateProjectConfig(id: string, settings: Record<string, unknown>): Promise<ProjectDetail | null>
   listRules(): Promise<{ id: string; scope: string; title: string; description: string }[]>
   readRule(id: string): Promise<Record<string, unknown>>
@@ -1275,6 +1276,17 @@ function updateTaskProjectHint(): void {
 
 async function refreshProjects(): Promise<void> {
   const list = (await window.studio.listProjects()) as ProjectSummary[]
+  // The open project lives in the main process: after a restart, or when a smoke run opens
+  // one directly, the renderer has to adopt it rather than start out believing nothing is
+  // open. Without this the advisor refuses to work in a project that is plainly open.
+  if (!currentProjectId) {
+    try {
+      const open = await window.studio.getCurrentProject()
+      if (open) currentProjectId = open
+    } catch {
+      /* an older main process without the channel: stay with what we know */
+    }
+  }
   const workbenchList = byId('workbench-projects')
   const projectsList = byId('projects-list')
   workbenchList.replaceChildren()

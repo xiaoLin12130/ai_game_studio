@@ -9,6 +9,7 @@
  * store. The lookup is a closure over a variable filled in immediately after, and it refuses
  * rather than guessing while the project service does not exist yet.
  */
+import { readCredential } from './dsh/credentials'
 import { ProjectLocks } from './projects/locks'
 import { AdvisorService } from './requirements/advisor'
 import { AttachmentService } from './requirements/attachments'
@@ -75,9 +76,43 @@ export class WiringError extends Error {
  * the project/task foreign key unenforceable, and a second lock table would let two writers
  * into the same project.
  */
+/**
+ * Choose the provider route the runtime can actually authenticate.
+ *
+ * The default route is deepseek-official, which needs DEEPSEEK_API_KEY. A machine that only
+ * has the commandcode key would start a runtime, accept a prompt, and fail the model call
+ * with MISSING_CREDENTIAL — a failure the user cannot act on. Picking the route that has a
+ * credential turns that into a working conversation.
+ */
+export function resolveRoute(options: {
+  provider: string
+  model: string
+  dshHome: string
+  logger: WiringLogger
+}): { provider: string; model: string; note: string | null } {
+  const hasDeepseek = Boolean(process.env.DEEPSEEK_API_KEY) || readCredential('DEEPSEEK_API_KEY', options.dshHome).ok
+  const hasCommandcode = Boolean(process.env.COMMANDCODE_API_KEY) || readCredential('COMMANDCODE_API_KEY', options.dshHome).ok
+
+  if (options.provider === 'commandcode') {
+    return { provider: 'commandcode', model: options.model, note: hasCommandcode ? null : '没有找到 COMMANDCODE_API_KEY' }
+  }
+  if (hasDeepseek) return { provider: options.provider, model: options.model, note: null }
+  if (hasCommandcode) {
+    options.logger.warn('route.fallback', { from: options.provider, to: 'commandcode', reason: 'no DEEPSEEK_API_KEY' })
+    return { provider: 'commandcode', model: 'deepseek/deepseek-v4-flash', note: '已切换到 commandcode 路由（本机没有 DEEPSEEK_API_KEY）' }
+  }
+  return { provider: options.provider, model: options.model, note: '没有找到任何可用的模型凭据' }
+}
+
 export function wireServices(options: WiringOptions): WiredApp {
   const store = options.store ?? new TaskStore(options.dbPath)
   const locks = new ProjectLocks(store.db)
+  const route = resolveRoute({
+    provider: options.provider,
+    model: options.model,
+    dshHome: options.dshHome,
+    logger: options.logger,
+  })
 
   let projects: ProjectService | null = null
   let disposed = false
@@ -87,8 +122,8 @@ export function wireServices(options: WiringOptions): WiredApp {
     userDataDir: options.userDataDir,
     dshHome: options.dshHome,
     profile: options.profile,
-    provider: options.provider,
-    model: options.model,
+    provider: route.provider,
+    model: route.model,
     cwd: options.cwd,
     entryPath: options.entryPath ?? null,
     store,
@@ -129,6 +164,7 @@ export function wireServices(options: WiringOptions): WiredApp {
     attachments,
     logger: options.logger,
     projectExists: (projectId: string) => Boolean(projects!.store.get(projectId)),
+    ensureProfile: () => tasks.ensureProfile(),
     projectContext: (projectId: string) => {
       const project = projects!.store.get(projectId)
       const config = project ? projects!.store.getConfig(projectId) : null
