@@ -6,7 +6,7 @@
   "branch": "phase/02-advisor-requirements-baseline",
   "base_commit": "ea6c593301595e6909ff0b0a65de859eba41ca05",
   "base_branch": "phase/01-d-project-workspace",
-  "precondition_note": "state/phase_01_d.json 仍为 READY_FOR_EXTERNAL_REVIEW（verdict 为 null）。仓库内无法自证该阶段已通过外部评审；本轮按用户明确指令继续，此事实记录在 M0 审计中。",
+  "precondition_note": "PHASE 01-D 已于 2026-11-13 记录为 CLOSED_PASS（verdict: APPROVED_BY_EXTERNAL_REVIEW），外部评审结论由项目负责人转达，评审记录不在本仓库内（见 state/phase_01_d.json 的 closure 字段）。本阶段（PHASE 02）自身状态不受影响，仍为 READY_FOR_EXTERNAL_REVIEW，等待外部评审。",
   "completed_milestones": {
     "M0": "只读审计 + 实施计划；真实探针修正了联网能力的静态推断",
     "M1": "顾问对话、Session 映射、消息持久化、项目隔离",
@@ -55,7 +55,7 @@
   "next_actions": [
     "等待外部评审；PHASE 03 在评审通过后开始"
   ],
-  "updated_at": "2026-11-13T08:03:50.375Z",
+  "updated_at": "2026-11-14T04:13:11.876Z",
   "defects_found_and_fixed": [
     "应用从不读取凭据文件，模型调用必然 MISSING_CREDENTIAL",
     "默认 provider 是 deepseek-official，本机只有 commandcode 凭据",
